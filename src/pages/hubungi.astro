@@ -1,0 +1,85 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Hubungi Kami - Email Rakyat</title>
+  </head>
+  <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+    
+    <Navbar />
+
+    <header class="relative h-[600px] flex items-center justify-center border-b-4 border-yellow-500 shadow-xl overflow-hidden bg-gray-800">
+        
+        <img 
+            src="/hubungi-banner.png" 
+            alt="Hubungi Banner" 
+            class="absolute inset-0 w-full h-full object-cover z-0"
+        />
+
+        
+    </header>
+
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-16 text-center">
+      
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">
+        Secure <span class="text-yellow-500">Channel</span>
+      </h2>
+      
+      <p class="text-gray-400 text-lg max-w-2xl mb-12">
+        To maintain the integrity of our communications, we do not expose our direct contact lines to bots. Please confirm you are human below to reveal the contact address.
+      </p>
+
+      <div class="bg-black border border-gray-800 p-8 rounded-2xl w-full max-w-md relative overflow-hidden group shadow-2xl">
+        
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent opacity-50"></div>
+
+        <div class="space-y-6">
+          <div class="text-6xl">🔒</div>
+          
+          <h3 class="text-xl font-bold text-white">Encrypted Reception</h3>
+          
+          <div id="secure-container">
+            <button id="reveal-btn" class="w-full bg-yellow-500 text-black font-bold py-3 rounded hover:bg-yellow-400 transition-all transform active:scale-95">
+              Click to Reveal Email
+            </button>
+            
+            <div id="email-display" class="hidden animate-fade-in">
+              <p class="text-sm text-gray-500 mb-2">Direct Line:</p>
+              <a href="mailto:contact@emailrakyat.com" class="text-2xl font-mono text-yellow-500 hover:underline">
+                contact@emailrakyat.com
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <p class="mt-12 text-sm text-gray-600">
+        *All incoming messages are scanned for malware automatically.
+      </p>
+
+    </main>
+
+    <Footer />
+
+    <script>
+      const btn = document.getElementById('reveal-btn');
+      const display = document.getElementById('email-display');
+
+      if (btn && display) {
+        btn.addEventListener('click', () => {
+          btn.style.display = 'none'; // Hide button
+          display.classList.remove('hidden'); // Show email
+        });
+      }
+    </script>
+
+  </body>
+</html>

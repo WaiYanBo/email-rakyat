@@ -1,0 +1,163 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+const newsSeries = [
+  {
+    id: 1,
+    videoId: "aG9Hck9dloQ",
+    category: "ISU SEMASA",
+    date: "23 NOV 2025",
+    title: "Saman Kerajaan Malaysia jika keselamatan rakyat tidak dijaga",
+    thumbnail: "https://img.youtube.com/vi/aG9Hck9dloQ/hqdefault.jpg", 
+    duration: "01:55",
+    episodes: [
+      { label: "Part 1: Tindakan Saman", time: "00:53" },
+      { label: "Part 2: Isu Keselamatan", time: "01:02" }
+    ]
+  },
+  {
+    id: 2,
+    videoId: "LabuboNDKNQ",
+    category: "ISU SEMASA",
+    date: "10 NOV 2025",
+    title: "HENTI BAYAR AH LONG!! GUNA KUASA UNDANG-UNDANG",
+    thumbnail: "https://img.youtube.com/vi/LabuboNDKNQ/hqdefault.jpg", 
+    duration: "00:43",
+    episodes: [
+      { label: "Part 1: Jangan Bayar", time: "00:20" },
+      { label: "Part 2: Lapor Polis", time: "00:23" }
+    ]
+  },
+  {
+    id: 3,
+    videoId: "WwjMB9csqJA",
+    category: "ISU SEMASA",
+    date: "09 OCT 2025",
+    title: "Siapa cakap kami rakyat Malaysia takut pergi misi bantuan gaza",
+    thumbnail: "https://img.youtube.com/vi/WwjMB9csqJA/hqdefault.jpg", 
+    duration: "02:33",
+    episodes: [
+      { label: "Part 1: Misi Bantuan", time: "00:53" },
+      { label: "Part 2: Realiti Gaza", time: "01:40" }
+    ]
+  }
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Berita - Email Rakyat</title>
+  </head>
+  <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+    
+    <Navbar />
+
+    <header class="relative h-[600px] border-b-4 border-yellow-500 shadow-xl overflow-hidden bg-gray-800">
+        
+        <img 
+            src="/berita-banner.png" 
+            alt="Berita Banner" 
+            class="w-full h-full object-cover"
+        />
+
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-16 w-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {newsSeries.map((item) => (
+            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 hover:border-yellow-500 transition-all group">
+                <div class="relative h-48 bg-black">
+                    <img src={item.thumbnail} alt={item.title} class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                    <div class="absolute top-4 left-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded uppercase">
+                        {item.category}
+                    </div>
+                    <button class="absolute inset-0 flex items-center justify-center w-full h-full group-hover:bg-black/20 transition-colors play-trigger" data-video={item.videoId}>
+                        <div class="w-12 h-12 bg-black bg-opacity-60 rounded-full border-2 border-white flex items-center justify-center hover:scale-110 transition-transform">
+                            <span class="ml-1 text-white text-lg">▶</span>
+                        </div>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="text-yellow-500 text-xs font-bold mb-2 uppercase">
+                        {item.date}
+                    </div>
+                    <h3 class="text-white font-bold text-lg leading-tight mb-4 min-h-[3.5rem] line-clamp-2">
+                        {item.title}
+                    </h3>
+                    <div class="mb-6">
+                        <span class="text-yellow-500 text-xs font-bold uppercase mb-2 block">Siri Episod:</span>
+                        <div class="space-y-3 bg-gray-900 p-4 rounded-lg">
+                            {item.episodes.map(ep => (
+                                <div class="flex justify-between items-center text-gray-300 text-sm">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-5 h-5 bg-yellow-600 rounded-full flex items-center justify-center text-black text-[10px] font-bold">▶</div>
+                                        <span>{ep.label}</span>
+                                    </div>
+                                    <span class="font-mono text-gray-500 text-xs">{ep.time}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <button class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 rounded text-sm uppercase tracking-wide play-trigger" data-video={item.videoId}>
+                        Tonton Siri Penuh
+                    </button>
+                </div>
+            </div>
+        ))}
+      </div>
+    </main>
+
+    <div class="bg-white py-6 mt-auto">
+        <div class="max-w-4xl mx-auto flex justify-center gap-8 md:gap-16 text-black font-bold text-xs uppercase">
+            <span>📷 Instagram</span>
+            <span>📘 Facebook</span>
+            <span>🎵 TikTok</span>
+            <span>▶ Youtube</span>
+        </div>
+    </div>
+
+    <Footer />
+
+    <div id="video-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div id="modal-overlay" class="absolute inset-0 bg-black bg-opacity-90 backdrop-blur-sm cursor-pointer"></div>
+        <div class="relative w-full max-w-5xl bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-700">
+            <button id="close-modal" class="absolute top-4 right-4 z-10 text-white hover:text-red-500 text-4xl font-bold leading-none">&times;</button>
+            <div class="aspect-video w-full">
+                <iframe id="modal-iframe" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('video-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const closeBtn = document.getElementById('close-modal');
+        const iframe = document.getElementById('modal-iframe');
+        const triggers = document.querySelectorAll('.play-trigger');
+
+        triggers.forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const videoId = trigger.getAttribute('data-video');
+                iframe.setAttribute('src', `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`);
+                modal.classList.remove('hidden');
+            });
+        });
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            iframe.setAttribute('src', '');
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+  </body>
+</html>

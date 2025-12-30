@@ -1,0 +1,74 @@
+---
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Tentang Kami - Email Rakyat</title>
+  </head>
+  <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+    
+    <Navbar />
+
+    <header class="relative h-[600px] flex items-center justify-center border-b-4 border-yellow-500 shadow-xl overflow-hidden bg-gray-800">
+        
+        <img 
+            src="/tentang-banner.png" 
+            alt="Tentang Banner" 
+            class="absolute inset-0 w-full h-full object-cover z-0"
+        />
+
+        
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-16">
+      
+      <div class="prose prose-invert prose-lg text-gray-300">
+        <p class="mb-6 text-xl leading-relaxed">
+          <strong class="text-white">Email Rakyat</strong> was founded with a single mission: to provide the citizens of Malaysia with a digital sanctuary that is free from surveillance, tracking, and data harvesting.
+        </p>
+
+        <p class="mb-10">
+          In an era where personal data is the new currency, we believe privacy is not a luxury—it is a fundamental human right.
+        </p>
+
+        <h3 class="text-3xl font-bold text-yellow-500 mt-12 mb-6 border-l-4 border-yellow-500 pl-4">
+            Our Core Values
+        </h3>
+        
+        <ul class="space-y-4 text-gray-300">
+          <li class="flex items-start">
+            <span class="text-yellow-500 mr-2">➤</span> 
+            <span><strong>Independence:</strong> We are not funded by any foreign entity or data broker.</span>
+          </li>
+          <li class="flex items-start">
+            <span class="text-yellow-500 mr-2">➤</span> 
+            <span><strong>Transparency:</strong> Our code is open for security audits.</span>
+          </li>
+          <li class="flex items-start">
+            <span class="text-yellow-500 mr-2">➤</span> 
+            <span><strong>Security First:</strong> We prioritize encryption over convenience.</span>
+          </li>
+        </ul>
+
+        <div class="mt-16 bg-gray-800 p-8 rounded-lg border border-gray-700 shadow-lg relative overflow-hidden">
+          <div class="absolute top-0 right-0 text-gray-700 opacity-20 text-9xl font-serif -mt-8 -mr-4">”</div>
+          <p class="italic text-white text-lg relative z-10 font-light">
+            "We build the walls that protect your digital voice."
+          </p>
+          <p class="text-sm mt-4 text-yellow-500 font-bold tracking-wider uppercase">— The Architecture Team</p>
+        </div>
+
+      </div>
+
+    </main>
+
+    <Footer />
+
+  </body>
+</html>

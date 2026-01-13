@@ -2,10 +2,6 @@
 // Centralized Security Headers Component
 // This component provides security meta tags that should be included in all pages
 
-// Generate a nonce for inline scripts (in production, this should be unique per request)
-// For static sites, we'll use a hash-based approach instead
-const cspNonce = Astro.settings?.nonce || '';
-
 // Content Security Policy
 // Note: For static sites, we use 'unsafe-inline' but with strict other directives
 // In production with a server, use nonces instead

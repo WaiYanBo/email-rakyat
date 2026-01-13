@@ -1,46 +1,44 @@
-# Astro Starter Kit: Basics
+# 🛡️ Email Rakyat - Digital Fortress
 
-```sh
-npm create astro@latest -- --template basics
-```
+**Email Rakyat** is a secure, privacy-focused digital platform designed to assist victims of loan sharks (Ah Long) and scams in Malaysia. The platform serves as a "Digital Fortress," providing end-to-end encrypted communication channels and educational resources.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+![Security Status](https://img.shields.io/badge/Security-A%2B-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-Astro-orange)
 
-## 🚀 Project Structure
+## 🚀 Key Features
+* **Military-Grade Security:** Implements strict Content Security Policy (CSP), X-Frame-Options, and Permissions-Policy.
+* **Privacy First:** No trackers, no ads, and full `noreferrer` policies on external links.
+* **Safe Media:** YouTube embeds are sandboxed using `youtube-nocookie.com` with input validation.
+* **Aesthetic:** "Glassmorphism" UI design with a serious, authoritative tone.
 
-Inside of your Astro project, you'll see the following folders and files:
+## 🛠️ Tech Stack
+* **Framework:** Astro (Static Site Generator)
+* **Styling:** Tailwind CSS
+* **Deployment:** Netlify / Vercel
+* **Security:** Custom `SecurityHeaders.astro` component
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+## 📦 Installation
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/WaiYanBo/email-rakyat.git](https://github.com/WaiYanBo/email-rakyat.git)
+    cd email-rakyat
+    ```
 
-## 🧞 Commands
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
 
-All commands are run from the root of the project, from a terminal:
+3.  **Run development server**
+    ```bash
+    npm run dev
+    ```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 🔒 Security Audit
+This project has undergone a self-audit (Jan 2025).
+* See [SECURITY_AUDIT_REPORT.md](./SECURITY_AUDIT_REPORT.md) for findings.
+* See [SECURITY_IMPROVEMENTS.md](./SECURITY_IMPROVEMENTS.md) for fixes implementation.
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## 📄 License
+All rights reserved. Email Rakyat Team.

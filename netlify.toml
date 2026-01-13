@@ -1,0 +1,28 @@
+# Netlify Configuration File
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# 🛡️ SECURITY HEADERS (The Digital Fortress Shield)
+# These rules tell browsers to block attacks before they happen.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # 1. Block others from embedding your site (Prevents Clickjacking)
+    X-Frame-Options = "DENY"
+
+    # 2. Stop browsers from guessing file types (Prevents MIME attacks)
+    X-Content-Type-Options = "nosniff"
+
+    # 3. Enable built-in browser security filters
+    X-XSS-Protection = "1; mode=block"
+
+    # 4. Force HTTPS (The browser will REFUSE to load non-secure versions)
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+    # 5. Hide where your visitors came from (Privacy)
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # 6. Permissions Policy (Block access to camera, mic, geolocation)
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"

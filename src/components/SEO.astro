@@ -1,0 +1,21 @@
+---
+const { title, description, image = "/social-preview.png", url = Astro.url } = Astro.props;
+
+const siteTitle = "Email Rakyat | Digital Fortress";
+const siteDescription = description || "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.";
+---
+
+<meta name="description" content={siteDescription} />
+<link rel="canonical" href={url} />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content={url} />
+<meta property="og:title" content={title || siteTitle} />
+<meta property="og:description" content={siteDescription} />
+<meta property="og:image" content={image} />
+
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={url} />
+<meta property="twitter:title" content={title || siteTitle} />
+<meta property="twitter:description" content={siteDescription} />
+<meta property="twitter:image" content={image} />

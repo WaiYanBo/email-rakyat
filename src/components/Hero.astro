@@ -1,13 +1,64 @@
 ---
 // src/components/Hero.astro
+const { 
+  line1 = "Hubungi Segera!!", 
+  line2 = "Kami Bantu Anda", 
+  line3 = "Hanya Dengan Cara Yang Sah!",
+  showDetails = true 
+} = Astro.props;
+
+const heightClass = "h-[40vh] md:h-[50vh]"; 
 ---
 
-<header class="relative h-[600px] flex items-center justify-center border-b-4 border-yellow-500 shadow-xl overflow-hidden bg-gray-800">
-    
+<section class={`relative ${heightClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
+  
+  <div class="absolute inset-0 z-0">
     <img 
-        src="/home-page.png" 
-        alt="Email Rakyat Home Banner" 
-        class="absolute inset-0 w-full h-full object-cover"
+      src="/background.png" 
+      alt="Background Pattern" 
+      class="w-full h-full object-cover opacity-100" 
     />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
+  </div>
 
-</header>
+  <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
+    
+    {showDetails ? (
+      /* --- HOME PAGE LAYOUT --- */
+      <div class="flex flex-col items-center justify-center h-full">
+        
+        <div class="mb-4 space-y-1">
+          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
+            {line1}
+          </h2>
+          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
+            {line2}
+          </h2>
+          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
+            {line3}
+          </h2>
+        </div>
+
+        <div class="flex flex-col items-start w-fit mx-auto mt-2">
+          <span class="text-gray-300 tracking-[0.5em] text-xs md:text-sm uppercase font-medium mb-1 drop-shadow-md pl-1">
+            T E A M
+          </span>
+          <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-left leading-none">
+            EMAIL RAKYAT
+          </h1>
+        </div>
+
+      </div>
+    ) : (
+      /* --- SUB-PAGE LAYOUT --- */
+      <div class="flex flex-col items-center justify-center pt-8">
+        <div class="w-12 h-1 bg-yellow-500 mb-6"></div>
+        
+        <h1 class="text-2xl sm:text-3xl md:text-5xl font-black text-white uppercase tracking-widest drop-shadow-2xl">
+          {line1}
+        </h1>
+      </div>
+    )}
+
+  </div>
+</section>

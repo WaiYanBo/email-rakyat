@@ -1,7 +1,11 @@
 ---
 import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
 import Footer from '../components/Footer.astro';
+import SecurityHeaders from '../components/SecurityHeaders.astro';
+import { buildYouTubeEmbedUrl, isValidYouTubeVideoId } from '../utils/security';
 import '../styles/global.css';
+import SEO from '../components/SEO.astro';
 
 const newsSeries = [
   {
@@ -49,7 +53,15 @@ const newsSeries = [
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <SecurityHeaders />
+    <SEO 
+     title="Hubungi Kami - Email Rakyat"
+     description="Saluran rasmi untuk bantuan mangsa Ah Long. Hubungi kami segera."
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width" />
     <title>Berita - Email Rakyat</title>
   </head>
@@ -57,21 +69,17 @@ const newsSeries = [
     
     <Navbar />
 
-    <header class="relative h-[600px] border-b-4 border-yellow-500 shadow-xl overflow-hidden bg-gray-800">
-        
-        <img 
-            src="/berita-banner.png" 
-            alt="Berita Banner" 
-            class="w-full h-full object-cover"
-        />
-
-    </header>
+    <Hero 
+      line1="BERITA" 
+      showDetails={false} 
+    />
 
     <main class="flex-grow max-w-7xl mx-auto px-4 py-16 w-full">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {newsSeries.map((item) => (
-            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 hover:border-yellow-500 transition-all group">
-                <div class="relative h-48 bg-black">
+            <div class="bg-gray-900/60 backdrop-blur-md rounded-lg overflow-hidden shadow-lg border border-gray-700/50 hover:border-yellow-500/50 transition-all group flex flex-col h-full">
+                
+                <div class="relative h-48 bg-black flex-shrink-0">
                     <img src={item.thumbnail} alt={item.title} class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                     <div class="absolute top-4 left-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded uppercase">
                         {item.category}
@@ -82,28 +90,37 @@ const newsSeries = [
                         </div>
                     </button>
                 </div>
-                <div class="p-6">
+
+                <div class="p-6 flex flex-col flex-grow">
                     <div class="text-yellow-500 text-xs font-bold mb-2 uppercase">
                         {item.date}
                     </div>
                     <h3 class="text-white font-bold text-lg leading-tight mb-4 min-h-[3.5rem] line-clamp-2">
                         {item.title}
                     </h3>
-                    <div class="mb-6">
+                    
+                    <div class="mb-6 flex-grow">
                         <span class="text-yellow-500 text-xs font-bold uppercase mb-2 block">Siri Episod:</span>
-                        <div class="space-y-3 bg-gray-900 p-4 rounded-lg">
+                        <div class="space-y-1 bg-gray-900 p-2 rounded-lg">
                             {item.episodes.map(ep => (
-                                <div class="flex justify-between items-center text-gray-300 text-sm">
+                                <button 
+                                  class="w-full flex justify-between items-center text-gray-300 text-sm hover:bg-gray-800 hover:text-white p-2 rounded transition-all cursor-pointer group/item episode-trigger text-left"
+                                  data-video={item.videoId}
+                                  data-time={ep.time}
+                                >
                                     <div class="flex items-center gap-3">
-                                        <div class="w-5 h-5 bg-yellow-600 rounded-full flex items-center justify-center text-black text-[10px] font-bold">▶</div>
-                                        <span>{ep.label}</span>
+                                        <div class="w-5 h-5 bg-gray-700 group-hover/item:bg-yellow-500 rounded-full flex items-center justify-center text-black text-[10px] font-bold transition-colors">
+                                            <span class="text-gray-400 group-hover/item:text-black">▶</span>
+                                        </div>
+                                        <span class="group-hover/item:text-yellow-500 transition-colors">{ep.label}</span>
                                     </div>
-                                    <span class="font-mono text-gray-500 text-xs">{ep.time}</span>
-                                </div>
+                                    <span class="font-mono text-gray-500 text-xs group-hover/item:text-yellow-500">{ep.time}</span>
+                                </button>
                             ))}
                         </div>
                     </div>
-                    <button class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 rounded text-sm uppercase tracking-wide play-trigger" data-video={item.videoId}>
+
+                    <button class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 rounded text-sm uppercase tracking-wide play-trigger mt-auto" data-video={item.videoId}>
                         Tonton Siri Penuh
                     </button>
                 </div>
@@ -111,15 +128,6 @@ const newsSeries = [
         ))}
       </div>
     </main>
-
-    <div class="bg-white py-6 mt-auto">
-        <div class="max-w-4xl mx-auto flex justify-center gap-8 md:gap-16 text-black font-bold text-xs uppercase">
-            <span>📷 Instagram</span>
-            <span>📘 Facebook</span>
-            <span>🎵 TikTok</span>
-            <span>▶ Youtube</span>
-        </div>
-    </div>
 
     <Footer />
 
@@ -134,30 +142,71 @@ const newsSeries = [
     </div>
 
     <script>
-        const modal = document.getElementById('video-modal');
-        const overlay = document.getElementById('modal-overlay');
-        const closeBtn = document.getElementById('close-modal');
-        const iframe = document.getElementById('modal-iframe');
-        const triggers = document.querySelectorAll('.play-trigger');
+        const modal = document.getElementById('video-modal') as HTMLElement | null;
+        const overlay = document.getElementById('modal-overlay') as HTMLElement | null;
+        const closeBtn = document.getElementById('close-modal') as HTMLElement | null;
+        const iframe = document.getElementById('modal-iframe') as HTMLIFrameElement | null;
+        
+        if (!modal || !overlay || !closeBtn || !iframe) {
+            console.error('Required modal elements not found');
+        } else {
+            const timeToSeconds = (timeStr: string): number => {
+                const [minutes, seconds] = timeStr.split(':').map(Number);
+                return (minutes * 60) + seconds;
+            };
 
-        triggers.forEach(trigger => {
-            trigger.addEventListener('click', () => {
-                const videoId = trigger.getAttribute('data-video');
-                iframe.setAttribute('src', `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`);
+            const openModal = (videoId: string | null, startTime: number = 0): void => {
+                if (!videoId) {
+                    console.error('Video ID is required');
+                    return;
+                }
+                
+                // Validate video ID before using it
+                const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/;
+                if (!videoIdPattern.test(videoId)) {
+                    console.error('Invalid video ID:', videoId);
+                    return;
+                }
+                
+                // Ensure startTime is a valid number
+                const safeStartTime = Math.max(0, Math.floor(Number(startTime) || 0));
+                
+                const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&start=${safeStartTime}&rel=0&modestbranding=1`;
+                iframe.setAttribute('src', src);
                 modal.classList.remove('hidden');
+            };
+
+            document.querySelectorAll('.play-trigger').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const videoId = trigger.getAttribute('data-video');
+                    openModal(videoId);
+                });
             });
-        });
 
-        const closeModal = () => {
-            modal.classList.add('hidden');
-            iframe.setAttribute('src', '');
-        };
+            document.querySelectorAll('.episode-trigger').forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const videoId = trigger.getAttribute('data-video');
+                    const timeStr = trigger.getAttribute('data-time');
+                    if (timeStr) {
+                        const seconds = timeToSeconds(timeStr);
+                        openModal(videoId, seconds);
+                    }
+                });
+            });
 
-        closeBtn.addEventListener('click', closeModal);
-        overlay.addEventListener('click', closeModal);
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
+            const closeModal = (): void => {
+                modal.classList.add('hidden');
+                iframe.setAttribute('src', '');
+            };
+
+            closeBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', closeModal);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        }
     </script>
   </body>
 </html>

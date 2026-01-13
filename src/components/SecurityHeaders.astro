@@ -1,0 +1,37 @@
+---
+// Centralized Security Headers Component
+// This component provides security meta tags that should be included in all pages
+
+// Generate a nonce for inline scripts (in production, this should be unique per request)
+// For static sites, we'll use a hash-based approach instead
+const cspNonce = Astro.settings?.nonce || '';
+
+// Content Security Policy
+// Note: For static sites, we use 'unsafe-inline' but with strict other directives
+// In production with a server, use nonces instead
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'", // TODO: Replace with nonces in production
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // TODO: Replace with nonces in production
+  "img-src 'self' data: https://img.youtube.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "frame-src 'self' https://www.youtube-nocookie.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests"
+].join('; ');
+---
+
+<!-- Content Security Policy -->
+<meta http-equiv="Content-Security-Policy" content={csp} />
+
+<!-- Security Headers -->
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" />
+
+<!-- Additional Security -->
+<meta name="format-detection" content="telephone=no" />

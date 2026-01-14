@@ -1,21 +1,62 @@
 ---
-const { title, description, image = "/social-preview.png", url = Astro.url } = Astro.props;
+interface Props {
+	title?: string;
+	description?: string;
+    image?: string;
+    url?: string | URL;
+    noindex?: boolean; // New: Allows hiding specific pages (like 404) from Google
+}
+
+const { 
+    title, 
+    description, 
+    image = "/logo.png", // Fallback to logo if no specific image provided
+    url = Astro.url,
+    noindex = false
+} = Astro.props;
 
 const siteTitle = "Email Rakyat | Digital Fortress";
 const siteDescription = description || "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.";
+
+// Ensure image URL is absolute (Required for LinkedIn/Facebook/WhatsApp previews)
+const socialImageURL = new URL(image, Astro.site || Astro.url).href;
+
+// JSON-LD Schema: Tells Google this is an Organization
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Email Rakyat",
+  "url": import.meta.env.SITE,
+  "logo": new URL("/logo.png", Astro.site || Astro.url).href,
+  "description": siteDescription,
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+60124099956",
+    "contactType": "customer service",
+    "areaServed": "MY",
+    "availableLanguage": ["Malay", "English"]
+  }
+});
 ---
 
 <meta name="description" content={siteDescription} />
 <link rel="canonical" href={url} />
+<meta name="theme-color" content="#111827" /> {noindex ? (
+    <meta name="robots" content="noindex, nofollow" />
+) : (
+    <meta name="robots" content="index, follow" />
+)}
 
+<meta property="og:site_name" content="Email Rakyat" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content={url} />
 <meta property="og:title" content={title || siteTitle} />
 <meta property="og:description" content={siteDescription} />
-<meta property="og:image" content={image} />
+<meta property="og:image" content={socialImageURL} />
 
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={url} />
 <meta property="twitter:title" content={title || siteTitle} />
 <meta property="twitter:description" content={siteDescription} />
-<meta property="twitter:image" content={image} />
+<meta property="twitter:image" content={socialImageURL} />
+
+<script type="application/ld+json" set:html={schema} />

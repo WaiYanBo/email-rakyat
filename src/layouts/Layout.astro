@@ -9,12 +9,14 @@ interface Props {
 	title?: string;
 	description?: string;
     image?: string;
+    noindex?: boolean; // We add this line so Layout knows what 'noindex' is
 }
 
 const { 
     title = "Email Rakyat - Digital Fortress", 
     description = "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.",
-    image 
+    image,
+    noindex = false // Default is false (allow Google to index)
 } = Astro.props;
 ---
 
@@ -23,7 +25,7 @@ const {
 	<head>
 		<meta charset="utf-8" />
 		<SecurityHeaders />
-		<SEO title={title} description={description} />
+        <SEO title={title} description={description} noindex={noindex} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />

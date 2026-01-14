@@ -1,11 +1,6 @@
 ---
-import Navbar from '../components/Navbar.astro';
+import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
-import Footer from '../components/Footer.astro';
-import SecurityHeaders from '../components/SecurityHeaders.astro';
-import { buildYouTubeEmbedUrl, isValidYouTubeVideoId } from '../utils/security';
-import '../styles/global.css';
-import SEO from '../components/SEO.astro';
 
 const newsSeries = [
   {
@@ -50,32 +45,17 @@ const newsSeries = [
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <SecurityHeaders />
-    <SEO 
-     title="Hubungi Kami - Email Rakyat"
-     description="Saluran rasmi untuk bantuan mangsa Ah Long. Hubungi kami segera."
-    />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
-    <meta name="viewport" content="width=device-width" />
-    <title>Berita - Email Rakyat</title>
-  </head>
-  <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-    
-    <Navbar />
-
+<Layout 
+  title="Berita - Email Rakyat"
+  description="Saluran rasmi untuk bantuan mangsa Ah Long. Hubungi kami segera."
+>
     <Hero 
       line1="BERITA" 
       showDetails={false} 
       backgroundImage="/berita.webp"
     />
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 py-16 w-full">
+    <div class="max-w-7xl mx-auto px-4 py-16 w-full">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {newsSeries.map((item) => (
             <div class="bg-gray-900/60 backdrop-blur-md rounded-lg overflow-hidden shadow-lg border border-gray-700/50 hover:border-yellow-500/50 transition-all group flex flex-col h-full">
@@ -128,9 +108,7 @@ const newsSeries = [
             </div>
         ))}
       </div>
-    </main>
-
-    <Footer />
+    </div>
 
     <div id="video-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4">
         <div id="modal-overlay" class="absolute inset-0 bg-black bg-opacity-90 backdrop-blur-sm cursor-pointer"></div>
@@ -171,7 +149,6 @@ const newsSeries = [
                 
                 // Ensure startTime is a valid number
                 const safeStartTime = Math.max(0, Math.floor(Number(startTime) || 0));
-                
                 const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&start=${safeStartTime}&rel=0&modestbranding=1`;
                 iframe.setAttribute('src', src);
                 modal.classList.remove('hidden');
@@ -209,5 +186,4 @@ const newsSeries = [
             });
         }
     </script>
-  </body>
-</html>
+</Layout>

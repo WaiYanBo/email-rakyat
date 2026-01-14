@@ -1,10 +1,6 @@
 ---
-import Navbar from '../components/Navbar.astro';
+import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
-import Footer from '../components/Footer.astro';
-import SecurityHeaders from '../components/SecurityHeaders.astro';
-import '../styles/global.css';
-import SEO from '../components/SEO.astro';
 
 // Leadership Data
 const leadership = [
@@ -13,9 +9,11 @@ const leadership = [
     role: "Pengerusi (Chairman)",
     image: "/chairman.webp",
     description: `
-      <p class="mb-2">Raja Emel merupakan seorang bekas pengamal media arus perdana New Straits Times dan aktivis masyarakat yang berpengalaman lebih kurang 20 tahun. Sepanjang tempoh tersebut, beliau telah menyelesaikan kira-kira 20,000 aduan rakyat Malaysia, dengan pendekatan unik menggunakan medium emel sepenuhnya, sehingga digelar “Raja Emel”.</p>
+      <p class="mb-2">Raja Emel merupakan seorang bekas pengamal media arus perdana New Straits Times dan aktivis masyarakat yang berpengalaman lebih kurang 20 tahun.
+      Sepanjang tempoh tersebut, beliau telah menyelesaikan kira-kira 20,000 aduan rakyat Malaysia, dengan pendekatan unik menggunakan medium emel sepenuhnya, sehingga digelar “Raja Emel”.</p>
       
-      <p class="mb-2">Beliau mempunyai minat mendalam dalam memperjuangkan dan menyelesaikan isu-isu rakyat, berlandaskan ilmu, pengalaman serta kefahaman terhadap sistem dan tatakelola agensi berkaitan. Gabungan pengalaman media, kemahiran komunikasi dan ketekunan dalam tindakan telah membolehkan beliau membantu rakyat mendapatkan keadilan serta penyelesaian yang sewajarnya.</p>
+      <p class="mb-2">Beliau mempunyai minat mendalam dalam memperjuangkan dan menyelesaikan isu-isu rakyat, berlandaskan ilmu, pengalaman serta kefahaman terhadap sistem dan tatakelola agensi berkaitan.
+      Gabungan pengalaman media, kemahiran komunikasi dan ketekunan dalam tindakan telah membolehkan beliau membantu rakyat mendapatkan keadilan serta penyelesaian yang sewajarnya.</p>
       
       <p>Beliau juga dikenali sebagai seorang pejuang rakyat yang kental dan berprinsip, tidak pernah gentar atau takut dalam memperjuangkan isu-isu rakyat, walaupun berdepan tekanan, cabaran atau halangan daripada pihak berkepentingan.</p>
     `
@@ -25,11 +23,16 @@ const leadership = [
     role: "Ketua Pegawai Eksekutif (CEO)",
     image: "/ceo.webp",
     description: `
-      <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran. Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat. Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
+      <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran.
+      Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat.
+      Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
 
-      <p class="mb-2">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh. Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah. Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
+      <p class="mb-2">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh.
+      Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah.
+      Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
 
-      <p>Dikenali dengan integriti, ketelitian, dan pendekatan yang tenang dalam situasi mencabar, Tuan Jazz menggabungkan pengetahuan praktikal perniagaan dengan nilai advokasi yang kukuh. Beliau terus memperkasa kemahiran dan pengalamannya melalui penglibatan langsung dan kerjasama strategik, dengan matlamat menyumbang secara positif kepada pembangunan organisasi, pemerkasaan komuniti, dan impak jangka panjang yang mampan.</p>
+      <p>Dikenali dengan integriti, ketelitian, dan pendekatan yang tenang dalam situasi mencabar, Tuan Jazz menggabungkan pengetahuan praktikal perniagaan dengan nilai advokasi yang kukuh.
+      Beliau terus memperkasa kemahiran dan pengalamannya melalui penglibatan langsung dan kerjasama strategik, dengan matlamat menyumbang secara positif kepada pembangunan organisasi, pemerkasaan komuniti, dan impak jangka panjang yang mampan.</p>
     `
   },
   {
@@ -37,42 +40,32 @@ const leadership = [
     role: "Bendahari (Treasurer)",
     image: "/treasurer.webp",
     description: `
-      <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran. Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat. Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
+      <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran.
+      Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat.
+      Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
 
-      <p class="mb-2">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh. Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah. Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
+      <p class="mb-2">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh.
+      Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah.
+      Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
 
-      <p>Dikenali dengan integriti, ketelitian, dan pendekatan yang tenang dalam situasi mencabar, Tuan Jazz menggabungkan pengetahuan praktikal perniagaan dengan nilai advokasi yang kukuh. Beliau terus memperkasa kemahiran dan pengalamannya melalui penglibatan langsung dan kerjasama strategik, dengan matlamat menyumbang secara positif kepada pembangunan organisasi, pemerkasaan komuniti, dan impak jangka panjang yang mampan.</p>
+      <p>Dikenali dengan integriti, ketelitian, dan pendekatan yang tenang dalam situasi mencabar, Tuan Jazz menggabungkan pengetahuan praktikal perniagaan dengan nilai advokasi yang kukuh.
+      Beliau terus memperkasa kemahiran dan pengalamannya melalui penglibatan langsung dan kerjasama strategik, dengan matlamat menyumbang secara positif kepada pembangunan organisasi, pemerkasaan komuniti, dan impak jangka panjang yang mampan.</p>
     `
   }
 ];
 ---
 
-<html lang="ms">
-  <head>
-    <meta charset="utf-8" />
-    <SecurityHeaders />
-    <SEO 
-     title="Tentang Kami - Email Rakyat"
-     description="Kenali barisan kepimpinan Email Rakyat yang berdedikasi memperjuangkan keadilan pengguna."
-    />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
-    <meta name="viewport" content="width=device-width" />
-    <title>Tentang Kami - Email Rakyat</title>
-  </head>
-  <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-    
-    <Navbar />
-
+<Layout 
+  title="Tentang Kami - Email Rakyat" 
+  description="Kenali barisan kepimpinan Email Rakyat yang berdedikasi memperjuangkan keadilan pengguna."
+>
     <Hero 
       line1="TENTANG KAMI" 
       showDetails={false} 
       backgroundImage="/tentang.webp"
     />
 
-    <main class="flex-grow max-w-6xl mx-auto px-4 py-8 w-full">
+    <div class="max-w-6xl mx-auto px-4 py-8 w-full">
       
       <div class="max-w-4xl mx-auto mb-8 text-center">
         <div class="inline-block px-3 py-1 mb-2 text-[10px] font-semibold tracking-wider text-yellow-500 uppercase bg-yellow-500/10 rounded-full border border-yellow-500/20">
@@ -81,8 +74,10 @@ const leadership = [
         <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3">
             MEMPERKASA HAK, MEMULIHKAN KEHIDUPAN
         </h2>
+  
         <p class="text-base md:text-lg leading-relaxed font-light text-gray-300">
-          <strong class="text-white">Email Rakyat</strong> ditubuhkan sebagai benteng pertahanan pengguna. Misi kami adalah menyediakan khidmat konsultansi yang <span class="text-yellow-500">bebas</span>, <span class="text-yellow-500">tegas</span>, dan <span class="text-yellow-500">berfakta</span> bagi membebaskan masyarakat daripada belenggu penindasan.
+          <strong class="text-white">Email Rakyat</strong> ditubuhkan sebagai benteng pertahanan pengguna.
+          Misi kami adalah menyediakan khidmat konsultansi yang <span class="text-yellow-500">bebas</span>, <span class="text-yellow-500">tegas</span>, dan <span class="text-yellow-500">berfakta</span> bagi membebaskan masyarakat daripada belenggu penindasan.
         </p>
         <div class="h-0.5 w-16 bg-yellow-500 mx-auto rounded-full mt-4"></div>
       </div>
@@ -91,7 +86,7 @@ const leadership = [
         <div class="bg-gray-800/50 p-5 rounded-lg border border-gray-700 hover:border-yellow-500 transition-all duration-300 shadow-md group">
           <div class="w-8 h-8 bg-gray-900 rounded flex items-center justify-center mb-2 text-yellow-500 group-hover:bg-yellow-500 group-hover:text-black transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
           <h3 class="text-white font-bold text-sm mb-1 uppercase tracking-wide">Integriti</h3>
@@ -161,9 +156,5 @@ const leadership = [
         ))}
       </div>
 
-    </main>
-
-    <Footer />
-
-  </body>
-</html>
+    </div>
+</Layout>

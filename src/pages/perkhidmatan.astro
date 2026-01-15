@@ -1,6 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
+import { Image } from 'astro:assets';
+import serviceBg from '../assets/perkhidmatan-banner.webp'; // Import the image
 
 // Updated Service Data based on Client Request
 const services = [
@@ -66,7 +68,7 @@ const steps = [
     <Hero 
       line1="PERKHIDMATAN" 
       showDetails={false}
-      backgroundImage="/perkhidmatan-banner.webp" 
+      backgroundImage={serviceBg} 
     />
 
     <div class="max-w-7xl mx-auto px-4 py-20 w-full">
@@ -137,7 +139,7 @@ const steps = [
 
                       <div class="w-32 h-32 bg-gray-900 rounded-full flex items-center justify-center border-[3px] border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.4)] group-hover:shadow-[0_0_60px_rgba(234,179,8,0.7)] transition-all duration-500 relative bg-gradient-to-br from-gray-800 to-black text-white">
                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg">
-                            <path stroke-linecap="round" stroke-linejoin="round" d={step.path} />
+                             <path stroke-linecap="round" stroke-linejoin="round" d={step.path} />
                          </svg>
                       </div>
                     </div>

@@ -1,5 +1,8 @@
 ---
 // src/components/Navbar.astro
+import { Image } from 'astro:assets';
+import logoImg from '../assets/logo.webp'; // Import the logo
+
 const links = [
   { text: "Tentang Kami", href: "/tentang" },
   { text: "Perkhidmatan", href: "/perkhidmatan" },
@@ -13,10 +16,11 @@ const links = [
     <div class="flex justify-between h-20 items-center">
       
       <a href="/" class="flex-shrink-0 flex items-center gap-3 hover:opacity-80 transition-opacity">
-        <img 
-          src="/logo.webp" 
+        <Image 
+          src={logoImg} 
           alt="Email Rakyat Logo" 
           class="w-10 h-10 object-contain" 
+          loading="eager"
         />
         <span class="text-white font-bold text-xl tracking-wider">EMAIL RAKYAT</span>
       </a>

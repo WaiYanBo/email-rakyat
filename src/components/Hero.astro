@@ -1,11 +1,14 @@
 ---
 // src/components/Hero.astro
+import { Image } from 'astro:assets';
+import defaultBg from '../assets/background.webp'; // We now import it directly
+
 const { 
   line1 = "Hubungi Segera!!", 
   line2 = "Kami Bantu Anda", 
   line3 = "Hanya Dengan Cara Yang Sah!",
   showDetails = true,
-  backgroundImage = "/background.webp" // 👈 New default image (keep your original one as default)
+  backgroundImage = defaultBg
 } = Astro.props;
 
 const heightClass = "h-[40vh] md:h-[50vh]"; 
@@ -14,10 +17,12 @@ const heightClass = "h-[40vh] md:h-[50vh]";
 <section class={`relative ${heightClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
   
   <div class="absolute inset-0 z-0">
-    <img 
+    <Image 
       src={backgroundImage} 
       alt="Background Pattern" 
-      class="w-full h-full object-cover opacity-100" 
+      class="w-full h-full object-cover opacity-100"
+      loading="eager"
+      fetchpriority="high"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
   </div>

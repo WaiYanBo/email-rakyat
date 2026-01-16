@@ -136,12 +136,12 @@ const newsSeries = [
         if (!modal || !overlay || !closeBtn || !iframe) {
             console.error('Required modal elements not found');
         } else {
-            const timeToSeconds = (timeStr) => {
+            const timeToSeconds = (timeStr : string) => {
                 const [minutes, seconds] = timeStr.split(':').map(Number);
                 return (minutes * 60) + seconds;
             };
 
-            const openModal = (videoId, startTime = 0) => {
+            const openModal = (videoId :string | null, startTime: number = 0) => {
                 if (!videoId) {
                     console.error('Video ID is required');
                     return;

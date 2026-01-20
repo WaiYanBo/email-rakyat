@@ -4,26 +4,32 @@
   command = "npm run build"
   publish = "dist"
 
+# ... (Keep the build section as is)
+
 # 🛡️ SECURITY HEADERS (The Digital Fortress Shield)
-# These rules tell browsers to block attacks before they happen.
 [[headers]]
   for = "/*"
   [headers.values]
     # 1. Block others from embedding your site (Prevents Clickjacking)
     X-Frame-Options = "DENY"
 
-    # 2. Stop browsers from guessing file types (Prevents MIME attacks)
+    # 2. Stop browsers from guessing file types
     X-Content-Type-Options = "nosniff"
 
     # 3. Enable built-in browser security filters
     X-XSS-Protection = "1; mode=block"
 
-    # 4. Force HTTPS (The browser will REFUSE to load non-secure versions)
+    # 4. Force HTTPS
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 
-    # 5. Hide where your visitors came from (Privacy)
+    # 5. Privacy
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-    # 6. Permissions Policy (Block access to camera, mic, geolocation)
+    # 6. Permissions Policy
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    Content-Security-Policy = "default-src 'self'; img-src 'self' data: https:; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://www.youtube-nocookie.com;"
+
+    # 7. Content Security Policy (FIXED)
+    # - Added 'unsafe-inline' to script-src and style-src (Required for Astro)
+    # - Added img.youtube.com to img-src (For thumbnails)
+    # - Added www.youtube-nocookie.com to frame-src (For the video player)
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data: https: https://img.youtube.com; script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://www.youtube-nocookie.com; connect-src 'self';"

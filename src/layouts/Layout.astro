@@ -1,7 +1,6 @@
 ---
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import SecurityHeaders from '../components/SecurityHeaders.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
 
@@ -24,7 +23,6 @@ const {
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<SecurityHeaders />
         <SEO title={title} description={description} noindex={noindex} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />

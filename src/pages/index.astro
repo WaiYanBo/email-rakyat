@@ -3,8 +3,13 @@ import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
 import Features from '../components/Features.astro';
 import Footer from '../components/Footer.astro';
-import '../styles/global.css';	
+import '../styles/global.css';
 import SEO from '../components/SEO.astro';
+
+// Import fonts directly
+import '@fontsource/nunito-sans/400.css';
+import '@fontsource/nunito-sans/700.css';
+import '@fontsource/nunito-sans/900.css';
 ---
 
 <html lang="en">
@@ -19,12 +24,7 @@ import SEO from '../components/SEO.astro';
 		<meta name="generator" content={Astro.generator} />
 		<title>Email Rakyat - Digital Fortress</title>
 
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
-		
-        <link rel="preload" as="image" href="/background.webp">
-	</head>
+        </head>
 	
 	<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 		

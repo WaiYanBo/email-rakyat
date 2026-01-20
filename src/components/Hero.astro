@@ -1,7 +1,6 @@
 ---
-// src/components/Hero.astro
 import { Image } from 'astro:assets';
-import defaultBg from '../assets/background.webp'; // We now import it directly
+import defaultBg from '../assets/background.webp';
 
 const { 
   line1 = "Hubungi Segera!!", 
@@ -23,16 +22,16 @@ const heightClass = "h-[40vh] md:h-[50vh]";
       class="w-full h-full object-cover opacity-100"
       loading="eager"
       fetchpriority="high"
+      widths={[640, 768, 1024, 1280, 1536]} 
+      sizes="(max-width: 768px) 100vw, 100vw"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
   </div>
 
   <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
-    
-    {showDetails ? (
-      /* --- HOME PAGE LAYOUT --- */
-      <div class="flex flex-col items-center justify-center h-full">
-        
+     {showDetails ? (
+       <div class="flex flex-col items-center justify-center h-full">
+         ```
         <div class="mb-4 space-y-1">
           <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
             {line1}

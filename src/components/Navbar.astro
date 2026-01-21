@@ -45,7 +45,7 @@ const links = [
     </div>
   </div>
 
-  <div id="mobile-menu" class="hidden md:hidden bg-black/95 backdrop-blur-xl border-b border-gray-800 absolute w-full left-0 top-20 shadow-2xl">
+  <div id="mobile-menu" class="hidden bg-black/95 backdrop-blur-xl border-b border-gray-800 absolute w-full left-0 top-20 shadow-2xl z-50">
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
       {links.map((link) => (
         <a 
@@ -60,21 +60,26 @@ const links = [
 </nav>
 
 <script is:inline>
-  (function() {
+  document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
 
-    // DEBUG: Check if elements are found
-    if (!btn) console.error("Button not found!");
-    if (!menu) console.error("Menu not found!");
-
     if (btn && menu) {
-      btn.addEventListener('click', () => {
-        // DEBUG: Alert when clicked
-        // alert("Button Clicked!"); 
+      btn.addEventListener('click', (e) => {
+        // Prevent default button behavior just in case
+        e.preventDefault();
+        
+        // Log to console to prove it was clicked
+        console.log('Mobile menu clicked!');
+        
+        // Toggle the class
         menu.classList.toggle('hidden');
-        console.log("Menu toggled. Current classes:", menu.className);
+        
+        // DEBUG: Log the current classes to see if 'hidden' is actually gone
+        console.log('Menu classes are now:', menu.className);
       });
+    } else {
+      console.error('Mobile menu elements not found!');
     }
-  })();
+  });
 </script>

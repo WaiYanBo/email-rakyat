@@ -61,13 +61,20 @@ const links = [
 
 <script is:inline>
   (function() {
-  const btn = document.getElementById('mobile-menu-btn');
-  const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('mobile-menu-btn');
+    const menu = document.getElementById('mobile-menu');
 
-  if (btn && menu) {
-    btn.addEventListener('click', () => {
-      menu.classList.toggle('hidden');
-    });
-  }
-})();
+    // DEBUG: Check if elements are found
+    if (!btn) console.error("Button not found!");
+    if (!menu) console.error("Menu not found!");
+
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        // DEBUG: Alert when clicked
+        // alert("Button Clicked!"); 
+        menu.classList.toggle('hidden');
+        console.log("Menu toggled. Current classes:", menu.className);
+      });
+    }
+  })();
 </script>

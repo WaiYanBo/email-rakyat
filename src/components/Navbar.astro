@@ -58,28 +58,3 @@ const links = [
     </div>
   </div>
 </nav>
-
-<script is:inline>
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('mobile-menu-btn');
-    const menu = document.getElementById('mobile-menu');
-
-    if (btn && menu) {
-      btn.addEventListener('click', (e) => {
-        // Prevent default button behavior just in case
-        e.preventDefault();
-        
-        // Log to console to prove it was clicked
-        console.log('Mobile menu clicked!');
-        
-        // Toggle the class
-        menu.classList.toggle('hidden');
-        
-        // DEBUG: Log the current classes to see if 'hidden' is actually gone
-        console.log('Menu classes are now:', menu.className);
-      });
-    } else {
-      console.error('Mobile menu elements not found!');
-    }
-  });
-</script>

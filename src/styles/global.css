@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* This defines Nunito Sans as your default sans font in Tailwind v4 */
-  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  /* [Standardize Font Loading] Ensure the font-sans variable 
+     matches the exact name provided by @fontsource */
+  --font-sans: "Nunito Sans Variable", "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  /* Optional: Define specific weights if needed for Tailwind utilities */
+  --font-weight-black: 900;
+}
+
+/* Base styles to ensure the font is applied globally */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
 }

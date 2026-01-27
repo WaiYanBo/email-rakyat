@@ -4,44 +4,45 @@ import Footer from '../components/Footer.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
 
+// [Standardize Font Loading] Import local fonts from @fontsource
+import '@fontsource/nunito-sans/400.css';
+import '@fontsource/nunito-sans/700.css';
+import '@fontsource/nunito-sans/900.css';
+
 interface Props {
-	title?: string;
-	description?: string;
+    title?: string;
+    description?: string;
     image?: string;
-    noindex?: boolean; // We add this line so Layout knows what 'noindex' is
+    noindex?: boolean;
 }
 
 const { 
     title = "Email Rakyat - Digital Fortress", 
     description = "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.",
     image,
-    noindex = false // Default is false (allow Google to index)
+    noindex = false 
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
+<html lang="ms">
+    <head>
+        <meta charset="utf-8" />
         <SEO title={title} description={description} noindex={noindex} />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
         
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
-	        
         <slot name="head" />
-	</head>
-	
-	<body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-		<Navbar />
+    </head>
+    
+    <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+        <Navbar />
         
         <main class="flex-grow">
-		    <slot />
+            <slot />
         </main>
 
-		<Footer />
-	</body>
+        <Footer />
+    </body>
 </html>

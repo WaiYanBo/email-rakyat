@@ -1,17 +1,11 @@
 // DIGITAL FORTRESS - SECURE CORE SCRIPTS
-// Handles Mobile Menu and Security Modals
+// Handles Security Modals ONLY (Mobile Menu is now handled in Navbar.astro)
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. MOBILE MENU LOGIC ---
-    const btn = document.getElementById('mobile-menu-btn');
-    const menu = document.getElementById('mobile-menu');
-  
-    if (btn && menu) {
-      btn.addEventListener('click', () => {
-        menu.classList.toggle('hidden');
-      });
-    }
+    // --- 1. MOBILE MENU LOGIC REMOVED ---
+    // We removed the code here because it was conflicting with Navbar.astro
+    // resulting in the menu opening and closing instantly.
 
     // --- 2. MODAL LOGIC (Privacy, Terms, Security) ---
     const setupModal = (btnId, modalId) => {
@@ -52,5 +46,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModal('btn-terms', 'modal-terms');
     setupModal('btn-security', 'modal-security');
 
-    console.log("Secure Core System: Online");
+    console.log("Secure Core System: Online (Modals Only)");
 });

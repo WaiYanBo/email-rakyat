@@ -22,17 +22,24 @@ const siteDescription = description || "Portal rasmi aduan dan bantuan mangsa Ah
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
 
 // JSON-LD Schema: Tells Google this is an Organization
+// JSON-LD Schema: Enhanced for Local Service
 const schema = JSON.stringify({
   "@context": "https://schema.org",
-  "@type": "Organization",
+  "@type": "ProfessionalService", // More specific than Organization
   "name": "Email Rakyat",
+  "alternateName": "Pusat Aduan Ah Long",
   "url": import.meta.env.SITE,
   "logo": new URL("/logo.png", Astro.site || Astro.url).href,
   "description": siteDescription,
+  "priceRange": "$", // Required for some service schemas (indicates affordable/free consultation)
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "MY"
+  },
   "contactPoint": {
     "@type": "ContactPoint",
     "telephone": "+60124099956",
-    "contactType": "customer service",
+    "contactType": "emergency", // Tells Google this is urgent help
     "areaServed": "MY",
     "availableLanguage": ["Malay", "English"]
   }

@@ -3,12 +3,10 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
-
 // [Standardize Font Loading] Import local fonts from @fontsource
 import '@fontsource/nunito-sans/400.css';
 import '@fontsource/nunito-sans/700.css';
 import '@fontsource/nunito-sans/900.css';
-
 interface Props {
     title?: string;
     description?: string;
@@ -36,9 +34,18 @@ const {
         <meta name="generator" content={Astro.generator} />
         <meta name="google-site-verification" content="pL6VVDBvT7AFJsF-iNber0pk7W-Sm1ooRfdVehPlAy8" />
         
+        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17941357588"></script>
         <script is:inline>
-          // REPLACE 'AW-XXXXXXXX/YYYYYYYYY' with your actual Google Ads ID
-          const GOOGLE_ADS_ID = 'AW-XXXXXXXX/YYYYYYYYY'; 
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'AW-17941357588');
+
+          // --- CONVERSION TRACKING CODE (PART 2) ---
+          // We don't have the slash part yet (e.g. /AbCdEfG).
+          // We will update this AFTER you pass the "Test Installation".
+          const GOOGLE_ADS_ID = 'AW-17941357588'; 
 
           function gtag_report_conversion(url) {
             var callback = function () {
@@ -46,14 +53,10 @@ const {
                 window.location = url;
               }
             };
-            if (typeof gtag === 'function') {
-                gtag('event', 'conversion', {
-                    'send_to': GOOGLE_ADS_ID,
-                    'event_callback': callback
-                });
-            } else {
-                window.location = url;
-            }
+            gtag('event', 'conversion', {
+                'send_to': GOOGLE_ADS_ID,
+                'event_callback': callback
+            });
             return false;
           }
         </script>

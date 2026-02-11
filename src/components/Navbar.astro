@@ -31,6 +31,8 @@ const links = [
             /* BUTTON STYLE FOR CONTACT ONLY */
             <a 
               href={link.href} 
+              onclick="return gtag_report_conversion('https://wa.me/60124099956');"
+              target="_blank"
               class="bg-yellow-500 text-black px-5 py-2 text-sm font-extrabold rounded-full shadow-lg hover:bg-yellow-400 hover:shadow-yellow-500/20 hover:scale-105 transition-all ml-2 flex items-center"
             >
               {link.text}
@@ -60,9 +62,11 @@ const links = [
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
       {links.map((link) => (
          link.href === '/hubungi' ? (
-            /* BUTTON STYLE FOR CONTACT MOBILE */
+            /* BUTTON STYLE FOR CONTACT MOBILE - FIXED WITH TRACKING */
             <a 
               href={link.href} 
+              onclick="return gtag_report_conversion('https://wa.me/60124099956');"
+              target="_blank"
               class="block w-full text-center bg-yellow-500 text-black font-extrabold px-3 py-4 mt-4 rounded-lg shadow-lg hover:bg-yellow-400 transition-all"
             >
               {link.text}

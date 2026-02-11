@@ -1,7 +1,7 @@
 ---
 // src/components/Navbar.astro
 import { Image } from 'astro:assets';
-import logoImg from '../assets/logo.webp'; // Import the logo
+import logoImg from '../assets/logo.webp';
 
 const links = [
   { text: "Tentang Kami", href: "/tentang" },
@@ -25,14 +25,25 @@ const links = [
         <span class="text-white font-bold text-xl tracking-wider">EMAIL RAKYAT</span>
       </a>
 
-      <div class="hidden md:flex space-x-8">
+      <div class="hidden md:flex items-center space-x-8">
         {links.map((link) => (
-          <a 
-            href={link.href} 
-            class="text-gray-300 hover:text-white hover:border-b-2 hover:border-yellow-500 px-1 py-2 text-sm font-medium transition-all"
-          >
-            {link.text}
-          </a>
+          link.href === '/hubungi' ? (
+            /* BUTTON STYLE FOR CONTACT ONLY */
+            <a 
+              href={link.href} 
+              class="bg-yellow-500 text-black px-5 py-2 text-sm font-extrabold rounded-full shadow-lg hover:bg-yellow-400 hover:shadow-yellow-500/20 hover:scale-105 transition-all ml-2 flex items-center"
+            >
+              {link.text}
+            </a>
+          ) : (
+            /* ORIGINAL CLEAN STYLE FOR OTHER LINKS */
+            <a 
+              href={link.href} 
+              class="text-gray-300 hover:text-white hover:border-b-2 hover:border-yellow-500 px-1 py-2 text-sm font-medium transition-all"
+            >
+              {link.text}
+            </a>
+          )
         ))}
       </div>
 
@@ -48,46 +59,47 @@ const links = [
   <div id="mobile-menu" class="hidden bg-black/95 backdrop-blur-xl border-b border-gray-800 absolute w-full left-0 top-20 shadow-2xl z-50">
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
       {links.map((link) => (
-        <a 
-          href={link.href} 
-          class="text-gray-300 hover:text-white hover:bg-white/10 block px-3 py-4 text-base font-medium border-l-4 border-transparent hover:border-yellow-500 transition-all"
-        >
-          {link.text}
-        </a>
+         link.href === '/hubungi' ? (
+            /* BUTTON STYLE FOR CONTACT MOBILE */
+            <a 
+              href={link.href} 
+              class="block w-full text-center bg-yellow-500 text-black font-extrabold px-3 py-4 mt-4 rounded-lg shadow-lg hover:bg-yellow-400 transition-all"
+            >
+              {link.text}
+            </a>
+         ) : (
+            /* ORIGINAL STYLE FOR OTHER LINKS MOBILE */
+            <a 
+              href={link.href} 
+              class="text-gray-300 hover:text-white hover:bg-white/10 block px-3 py-4 text-base font-medium border-l-4 border-transparent hover:border-yellow-500 transition-all"
+            >
+              {link.text}
+            </a>
+         )
       ))}
     </div>
   </div>
 </nav>
+
 <script is:inline>
-  // Define the function globally so it can be reused
   function initMobileMenu() {
-    console.log("Initializing mobile menu...");
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
 
-    // Safety check
-    if (!btn || !menu) {
-      console.error("Mobile menu elements not found!");
-      return;
-    }
+    if (!btn || !menu) return;
 
-    // 1. Force override the click handler
-    // This removes any previous listeners that might be broken
+    // Toggle menu
     btn.onclick = function(e) {
-      e.stopPropagation(); // Stop the click from passing through
+      e.stopPropagation();
       menu.classList.toggle('hidden');
-      console.log("Menu toggled. Is hidden?", menu.classList.contains('hidden'));
     };
 
-    // 2. Close menu when clicking ANY link inside it
-    const links = menu.querySelectorAll('a');
-    links.forEach(link => {
-      link.addEventListener('click', () => {
-        menu.classList.add('hidden');
-      });
+    // Close when clicking a link
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => menu.classList.add('hidden'));
     });
 
-    // 3. Close menu when clicking outside
+    // Close when clicking outside
     document.onclick = function(e) {
       if (!menu.contains(e.target) && !btn.contains(e.target)) {
         menu.classList.add('hidden');
@@ -95,9 +107,7 @@ const links = [
     };
   }
 
-  // Run immediately when script loads
+  // Initialize immediately and on page navigation (for Astro View Transitions)
   initMobileMenu();
-
-  // Run again if you are using View Transitions (ClientRouter)
   document.addEventListener('astro:page-load', initMobileMenu);
 </script>

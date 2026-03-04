@@ -1,0 +1,261 @@
+---
+// Standalone Landing Page (No Layout.astro)
+import { Image } from 'astro:assets';
+import SEO from '../components/SEO.astro';
+import '../styles/global.css';
+import '@fontsource/nunito-sans/400.css';
+import '@fontsource/nunito-sans/700.css';
+import '@fontsource/nunito-sans/900.css';
+
+// Images
+import logo from '../assets/logo.webp';
+import azizulImg from '../assets/Azizul.png';
+
+const pageTitle = "Bantuan Kecemasan Ah Long - Email Rakyat";
+const pageDesc = "Talian rasmi bantuan mangsa Ah Long. Selesaikan hutang dengan cara sah & selamat.";
+---
+
+<!doctype html>
+<html lang="ms" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <SEO title={pageTitle} description={pageDesc} noindex={true} />
+    <link rel="icon" href="/logo-v2.png" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/logo-v2.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <style>
+      details > summary { list-style: none; }
+      details > summary::-webkit-details-marker { display: none; }
+    </style>
+  </head>
+
+  <body class="bg-black text-white font-sans min-h-screen flex flex-col items-center selection:bg-green-500 selection:text-black">
+    
+    <a
+      href="https://wa.me/+601163623282"
+      target="_blank"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-green-500 rounded-full shadow-[0_0_20px_rgba(34,197,94,0.6)] hover:scale-110 transition-transform duration-300"
+      aria-label="WhatsApp Kami"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 fill-white" viewBox="0 0 24 24">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.304-5.292c0-5.448 4.435-9.88 9.884-9.88 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+      </svg>
+    </a>
+
+    <main class="w-full max-w-md mx-auto pb-32 bg-black min-h-screen relative overflow-hidden">
+      
+      <div class="pointer-events-none absolute inset-0 z-0">
+         <div class="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-green-900/10 rounded-full blur-[100px]"></div>
+         <div class="absolute top-[40%] right-[-100px] w-64 h-64 bg-yellow-600/10 rounded-full blur-[80px]"></div>
+      </div>
+
+      <nav class="relative z-20 flex justify-center items-center pt-28 pb-4 px-6">
+        <div class="flex items-center gap-3 bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 shadow-2xl">
+          <Image src={logo} alt="Email Rakyat" class="w-7 h-7" />
+          <div class="h-4 w-px bg-white/20"></div>
+          <div class="flex flex-col">
+            <span class="font-bold tracking-widest text-[10px] text-white uppercase leading-none">Email Rakyat</span>
+            <span class="text-[8px] text-gray-400 uppercase tracking-wide leading-none mt-0.5">Talian Rasmi</span>
+          </div>
+        </div>
+      </nav>
+
+      <section class="relative z-10 px-6 mt-6 text-center">
+        <div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full mb-6">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+          </span>
+          <span class="text-[9px] font-black uppercase tracking-[0.2em] text-red-400">Kecemasan Ah Long</span>
+        </div>
+
+        <h1 class="text-4xl font-black uppercase leading-[0.9] mb-5 tracking-tight drop-shadow-lg">
+          Ah Long <br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600">Ugut Keluarga?</span>
+        </h1>
+
+        <p class="text-gray-400 text-xs leading-relaxed max-w-[280px] mx-auto mb-8 font-medium">
+          Jangan bayar ikut suka hati mereka. Dapatkan bantuan yang <span class="text-white font-bold">sah & selamat</span>.
+        </p>
+
+        <a
+          href="#solusi"
+          class="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-white/5 border border-white/10 px-6 py-4 transition-all hover:bg-white/10"
+        >
+          <div class="relative flex items-center gap-2 text-white font-bold uppercase tracking-wider text-xs">
+             <span>Lihat Cara Kami Bantu</span>
+             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </a>
+      </section>
+
+      <section class="relative z-10 px-6 mt-10">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white/5 border border-white/5 rounded-2xl p-3 text-center backdrop-blur-sm">
+            <div class="text-xl mb-1">🔒</div>
+            <p class="text-[9px] font-bold text-gray-300 uppercase leading-tight">Rahsia<br>Dijaga</p>
+          </div>
+          <div class="bg-white/5 border border-white/5 rounded-2xl p-3 text-center backdrop-blur-sm">
+            <div class="text-xl mb-1">⚖️</div>
+            <p class="text-[9px] font-bold text-gray-300 uppercase leading-tight">Kaedah<br>Sah</p>
+          </div>
+          <div class="bg-white/5 border border-white/5 rounded-2xl p-3 text-center backdrop-blur-sm">
+            <div class="text-xl mb-1">⚡</div>
+            <p class="text-[9px] font-bold text-gray-300 uppercase leading-tight">Respon<br>Pantas</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="relative z-10 px-6 mt-10">
+        <div class="relative bg-zinc-900/60 border border-white/5 p-5 rounded-3xl backdrop-blur-md shadow-2xl">
+           <div class="flex items-center gap-4 mb-4">
+             <div class="relative">
+                <Image src={azizulImg} alt="Officer" class="w-14 h-14 rounded-full object-cover ring-2 ring-yellow-500/50" />
+                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-zinc-900"></div>
+             </div>
+             <div>
+               <p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest mb-1">Pegawai Bertugas</p>
+               <h3 class="font-bold text-lg text-white">En. Azizul Harith</h3>
+               <p class="text-[10px] text-gray-400">Pakar Runding Bebas</p>
+             </div>
+           </div>
+           <p class="text-xs text-gray-300 italic leading-relaxed border-t border-white/5 pt-3">
+             "Ramai mangsa diam sebab takut malu. Jangan risau, kami ada cara selamat untuk hentikan ugutan ni."
+           </p>
+        </div>
+      </section>
+
+      <section class="relative z-10 px-6 mt-10">
+        <h2 class="text-center font-bold text-gray-500 text-[10px] uppercase tracking-widest mb-5">Situasi Anda Sekarang?</h2>
+        
+        <div class="space-y-3">
+          <div class="flex items-start gap-4 p-4 rounded-2xl bg-zinc-900/40 border border-white/5">
+             <span class="text-xl mt-1">🤬</span>
+             <div>
+               <p class="text-xs font-bold text-white mb-0.5">Dimaki & Diugut Setiap Hari</p>
+               <p class="text-[10px] text-gray-500 leading-tight">Stress sampai tak boleh tidur, takut jawab telefon.</p>
+             </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-2xl bg-zinc-900/40 border border-white/5">
+             <span class="text-xl mt-1">📸</span>
+             <div>
+               <p class="text-xs font-bold text-white mb-0.5">Gambar Mula Disebar (Viral)</p>
+               <p class="text-[10px] text-gray-500 leading-tight">Takut ahli keluarga dan kawan tempat kerja tahu.</p>
+             </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-2xl bg-zinc-900/40 border border-white/5">
+             <span class="text-xl mt-1">💸</span>
+             <div>
+               <p class="text-xs font-bold text-white mb-0.5">Bunga Hutang Tak Masuk Akal</p>
+               <p class="text-[10px] text-gray-500 leading-tight">Bayar banyak kali pun hutang pokok tak gerak.</p>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="solusi" class="relative z-10 px-6 mt-10">
+        <div class="bg-gradient-to-b from-zinc-900/50 to-black border border-white/5 rounded-3xl p-6">
+          <h2 class="text-center font-bold text-green-400 text-[10px] uppercase tracking-widest mb-6">Cara Kami Bantu Anda</h2>
+          
+          <div class="space-y-6">
+            <div class="flex gap-4">
+              <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-black font-black text-[10px] flex items-center justify-center">1</div>
+              <div>
+                <p class="text-xs font-bold text-white mb-1">WhatsApp Pegawai Kami</p>
+                <p class="text-[10px] text-gray-400 leading-relaxed">Tekan butang hijau. Ceritakan ringkas masalah anda (berapa pinjaman, ugutan apa).</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-black font-black text-[10px] flex items-center justify-center">2</div>
+              <div>
+                <p class="text-xs font-bold text-white mb-1">Kami Tunjuk Jalan Selamat</p>
+                <p class="text-[10px] text-gray-400 leading-relaxed">Kami ajar cara lindungi data dan hentikan gangguan tanpa perlu bayar melulu.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-black font-black text-[10px] flex items-center justify-center">3</div>
+              <div>
+                <p class="text-xs font-bold text-white mb-1">Selesai Secara Sah</p>
+                <p class="text-[10px] text-gray-400 leading-relaxed">Susun semula hutang ikut kemampuan anda, bukan ikut nafsu Ah Long.</p>
+              </div>
+            </div>
+          </div>
+
+          <a
+             href="https://wa.me/+601163623282"
+             target="_blank"
+             class="mt-6 block w-full bg-white/10 hover:bg-white/20 border border-white/10 text-center py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors"
+           >
+             Saya Nak Diterangkan Dulu →
+           </a>
+        </div>
+      </section>
+
+      <section class="relative z-10 px-6 mt-10 mb-8">
+        <h2 class="text-center font-bold text-gray-500 text-[10px] uppercase tracking-widest mb-4">Soalan Lazim</h2>
+        
+        <div class="space-y-3">
+          <details class="group bg-zinc-900/40 border border-white/5 rounded-xl overflow-hidden transition-all">
+            <summary class="flex items-center justify-between p-4 cursor-pointer">
+              <span class="text-xs font-bold text-gray-200">Betul ke maklumat saya rahsia?</span>
+              <span class="text-gray-500 text-xs transition-transform group-open:rotate-180">▼</span>
+            </summary>
+            <div class="px-4 pb-4 pt-0">
+              <p class="text-[10px] text-gray-400 leading-relaxed">
+                Ya, 100%. Kami adalah badan bebas. Kami tidak akan dedahkan masalah anda kepada majikan atau keluarga tanpa izin anda.
+              </p>
+            </div>
+          </details>
+
+          <details class="group bg-zinc-900/40 border border-white/5 rounded-xl overflow-hidden transition-all">
+            <summary class="flex items-center justify-between p-4 cursor-pointer">
+              <span class="text-xs font-bold text-gray-200">Kena bayar ke kalau nak tanya?</span>
+              <span class="text-gray-500 text-xs transition-transform group-open:rotate-180">▼</span>
+            </summary>
+            <div class="px-4 pb-4 pt-0">
+              <p class="text-[10px] text-gray-400 leading-relaxed">
+                Tiada caj untuk sesi penerangan awal. Anda boleh tanya dulu, fahamkan proses, baru buat keputusan.
+              </p>
+            </div>
+          </details>
+
+          <details class="group bg-zinc-900/40 border border-white/5 rounded-xl overflow-hidden transition-all">
+            <summary class="flex items-center justify-between p-4 cursor-pointer">
+              <span class="text-xs font-bold text-gray-200">Ah Long dah mula ugut, sempat ke?</span>
+              <span class="text-gray-500 text-xs transition-transform group-open:rotate-180">▼</span>
+            </summary>
+            <div class="px-4 pb-4 pt-0">
+              <p class="text-[10px] text-gray-400 leading-relaxed">
+                Masih sempat. Lagi cepat anda bertindak, lagi senang kami sekat gangguan mereka. Jangan tunggu sampai mereka datang rumah.
+              </p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="relative z-10 px-6 text-center">
+        <div class="bg-gradient-to-t from-red-900/20 to-transparent p-6 rounded-3xl border border-red-500/10">
+          <h3 class="text-red-300 font-black text-xs uppercase tracking-widest mb-2">Jangan Tunggu Lama-Lama</h3>
+          <p class="text-[10px] text-gray-400 mb-6 px-2">
+            Satu mesej WhatsApp boleh selamatkan maruah keluarga anda. Ambil langkah pertama sekarang.
+          </p>
+          
+          <a
+            href="https://wa.me/+601163623282"
+            target="_blank"
+            class="block w-full bg-white text-black font-black uppercase py-4 rounded-xl shadow-lg hover:bg-gray-200 transition-colors"
+          >
+            WhatsApp Bantuan Sekarang
+          </a>
+        </div>
+        
+        <p class="mt-8 text-[9px] text-gray-700 font-mono uppercase tracking-widest">
+          Email Rakyat • Since 2025
+        </p>
+      </section>
+
+    </main>
+  </body>
+</html>

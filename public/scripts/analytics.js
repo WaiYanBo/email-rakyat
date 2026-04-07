@@ -1,8 +1,37 @@
 // public/scripts/analytics.js
 
 (function() {
-    // 1. Determine Device Type
+    // 1. CHECK CONSENT
+    const prefsString = localStorage.getItem("cookie_preferences");
+    
+    // If they haven't clicked Accept or Save yet, stop the script entirely.
+    if (!prefsString) return; 
+
+    const prefs = JSON.parse(prefsString);
+
+    // 2. SESSION GENERATOR
+    const getOrCreateSession = () => {
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000; 
+        let session = JSON.parse(localStorage.getItem("analytics_session"));
+
+        if (!session || (now - session.startTime) > oneHour) {
+            session = {
+                id: 'sess_' + Math.random().toString(36).substr(2, 9),
+                startTime: now
+            };
+            localStorage.setItem("analytics_session", JSON.stringify(session));
+        }
+        return session.id;
+    };
+
+    const sessionId = getOrCreateSession();
+
+    // 3. DEVICE TRACKER (Respects the Optional Toggle)
     const getDeviceType = () => {
+        // If they unchecked the Device box in the modal, we mask the data
+        if (!prefs.device) return "Dihalang (Blocked)";
+
         const ua = navigator.userAgent;
         if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
             return "Tablet";
@@ -13,49 +42,45 @@
         return "Laptop/Desktop";
     };
 
-    // 2. Track Screen Time
+    // 4. TRACK SCREEN TIME
     let startTime = Date.now();
     let totalActiveTime = 0;
     const deviceType = getDeviceType();
     const currentPage = window.location.pathname;
 
-    // Pause timer if user switches tabs
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-            const timeSpent = Math.floor((Date.now() - startTime) / 1000); // Convert to seconds
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000); 
             totalActiveTime += timeSpent;
             sendAnalyticsData(); 
         } else {
-            startTime = Date.now(); // Resume timer when they come back
+            startTime = Date.now(); 
         }
     });
 
-    // Final trigger when user closes the tab or navigates away
     window.addEventListener("beforeunload", () => {
         const timeSpent = Math.floor((Date.now() - startTime) / 1000);
         totalActiveTime += timeSpent;
         sendAnalyticsData();
     });
 
-    // 3. Send Data to Google Sheets
+    // 5. SEND DATA
     const sendAnalyticsData = () => {
-        // Prevent sending empty data (e.g., bouncing immediately)
         if (totalActiveTime < 1) return;
 
         const data = {
             timestamp: new Date().toISOString(),
+            sessionId: sessionId,
             page: currentPage,
             device: deviceType,
             screenTimeSeconds: totalActiveTime
         };
 
-        // Replace this URL with your Google Apps Script Web App URL from Step 2
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzf1dvJs68xCqsOr4WIuKKOUIxhhTgChIUCgI49LXpRw1tq-8Da-DxS5_x4NPGyOhdAdQ/exec"; 
 
-        // keepalive: true ensures the fetch completes even if the tab is closing
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Required for sending data to Google Scripts without CORS errors
+            mode: 'no-cors', 
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -63,7 +88,6 @@
             keepalive: true 
         }).catch(err => console.error("Analytics error:", err));
         
-        // Reset time after sending to avoid duplicate counting if tab remains open in background
         totalActiveTime = 0; 
     };
 })();

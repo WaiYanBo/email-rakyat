@@ -10,8 +10,61 @@ import Features from '../components/Features.astro';
   description="Khidmat nasihat profesional dan advokasi untuk mangsa Ah Long dan hutang. Kami bantu anda selesai masalah dengan cara yang sah."
 >
     <Hero />
-
-
-
     <Features />
+    <section class="py-20 px-6 border-b border-gray-800 bg-gradient-to-b from-[#0b1220] to-[#05070d]">
+      <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    
+        {/* LEFT SIDE — TEXT */}
+        <div class="text-left">
+          <h2 class="text-3xl md:text-4xl font-black text-white mb-6">
+            Kes Sebenar Mangsa Ah Long
+          </h2>
+    
+          <p class="text-gray-400 text-lg mb-6 leading-relaxed">
+            Dengarkan kisah sebenar mangsa yang terjebak dengan hutang Ah Long
+            sehingga mencecah jutaan ringgit. Ketahui bagaimana situasi ini berlaku
+            dan langkah yang boleh diambil untuk keluar dari masalah secara sah.
+          </p>
+    
+          <ul class="space-y-3 text-gray-300">
+            <li>✔ Kisah sebenar mangsa hutang</li>
+            <li>✔ Risiko pinjaman tidak berlesen</li>
+            <li>✔ Cara penyelesaian yang sah</li>
+          </ul>
+        </div>
+    
+        {/* RIGHT SIDE — VIDEO */}
+        <div class="flex justify-center md:justify-end">
+    
+          <div class="bg-black/40 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-gray-700">
+    
+            <blockquote
+              class="tiktok-embed"
+              cite="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
+              data-video-id="7624967321739726101"
+              data-theme="dark"
+              style="max-width: 325px; min-width: 325px;"
+            >
+              <section></section>
+            </blockquote>
+    
+          </div>
+    
+        </div>
+    
+      </div>
+    
+      <script async src="https://www.tiktok.com/embed.js" is:inline></script>
+    </section>
+
 </Layout>
+<style is:global>
+  /* Force the dynamically injected TikTok iframe to be transparent and borderless */
+  .tiktok-embed, 
+  .tiktok-embed iframe {
+      background-color: transparent !important;
+      border: none !important;
+      border-radius: 0.75rem !important; /* Matches your rounded-xl design */
+      box-shadow: none !important;
+  }
+</style>

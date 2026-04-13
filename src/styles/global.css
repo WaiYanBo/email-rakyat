@@ -15,3 +15,33 @@
     font-family: var(--font-sans);
   }
 }
+
+/* =========================================
+   Global Custom Scrollbar Styling
+   ========================================= */
+
+/* For WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px; /* Slimmer vertical scrollbar */
+  height: 10px; /* Slimmer horizontal scrollbar if needed */
+}
+
+::-webkit-scrollbar-track {
+  background: #111827; /* Matches Tailwind bg-gray-900 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563; /* Matches Tailwind bg-gray-600 for a subtle look */
+  border-radius: 8px; /* Rounded pill shape */
+  border: 2px solid #111827; /* Creates a padded inset look against the track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #eab308; /* Matches Tailwind text-yellow-500 on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #111827; /* thumb color | track color */
+}

@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import { Image } from 'astro:assets';
-import beritaBg from '../assets/berita.webp'; // Import the image
+import beritaBg from '../assets/berita.webp';
 
 const newsSeries = [
   {
@@ -12,11 +12,7 @@ const newsSeries = [
     date: "23 NOV 2025",
     title: "Saman Kerajaan Malaysia jika keselamatan rakyat tidak dijaga",
     thumbnail: "https://img.youtube.com/vi/aG9Hck9dloQ/hqdefault.jpg", 
-    duration: "01:55",
-    episodes: [
-      { label: "Part 1: Tindakan Saman", time: "00:53" },
-      { label: "Part 2: Isu Keselamatan", time: "01:02" }
-    ]
+    duration: "01:55"
   },
   {
     id: 2,
@@ -25,11 +21,7 @@ const newsSeries = [
     date: "10 NOV 2025",
     title: "HENTI BAYAR AH LONG!! GUNA KUASA UNDANG-UNDANG",
     thumbnail: "https://img.youtube.com/vi/LabuboNDKNQ/hqdefault.jpg", 
-    duration: "00:43",
-    episodes: [
-      { label: "Part 1: Jangan Bayar", time: "00:20" },
-      { label: "Part 2: Lapor Polis", time: "00:23" }
-    ]
+    duration: "00:43"
   },
   {
     id: 3,
@@ -38,11 +30,7 @@ const newsSeries = [
     date: "09 OCT 2025",
     title: "Siapa cakap kami rakyat Malaysia takut pergi misi bantuan gaza",
     thumbnail: "https://img.youtube.com/vi/WwjMB9csqJA/hqdefault.jpg", 
-    duration: "02:33",
-    episodes: [
-      { label: "Part 1: Misi Bantuan", time: "00:53" },
-      { label: "Part 2: Realiti Gaza", time: "01:40" }
-    ]
+    duration: "02:33"
   }
 ];
 ---
@@ -57,59 +45,43 @@ const newsSeries = [
       backgroundImage={beritaBg}
     />
 
-    <div class="max-w-7xl mx-auto px-4 py-16 w-full">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div class="max-w-7xl mx-auto px-4 py-20 w-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {newsSeries.map((item) => (
-            <div class="bg-gray-900/60 backdrop-blur-md rounded-lg overflow-hidden shadow-lg border border-gray-700/50 hover:border-yellow-500/50 transition-all group flex flex-col h-full">
+            <div class="bg-gray-900/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl border border-gray-700/50 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)] hover:-translate-y-2 hover:scale-[1.02] transition-all duration-500 ease-out group flex flex-col h-full relative z-10 hover:z-20">
                 
-                <div class="relative h-48 bg-black flex-shrink-0">
+                <div class="relative aspect-video bg-black flex-shrink-0 cursor-pointer play-trigger overflow-hidden" data-video={item.videoId}>
                     <img 
                     src={item.thumbnail} 
                     alt={item.title} 
-                    width="480"  height="360" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
+                    width="480" height="360" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-700 ease-in-out" 
                     loading="lazy"
                     />
-                    <div class="absolute top-4 left-4 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded uppercase">
+                    <div class="absolute top-4 left-4 bg-yellow-500 text-black text-xs font-extrabold px-3 py-1 rounded shadow-md uppercase tracking-wide">
                         {item.category}
                     </div>
-                    <button class="absolute inset-0 flex items-center justify-center w-full h-full group-hover:bg-black/20 transition-colors play-trigger" data-video={item.videoId}>
-                        <div class="w-12 h-12 bg-black bg-opacity-60 rounded-full border-2 border-white flex items-center justify-center hover:scale-110 transition-transform">
-                            <span class="ml-1 text-white text-lg">▶</span>
+                    <div class="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded">
+                        {item.duration}
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center w-full h-full bg-black/10 group-hover:bg-black/40 transition-colors duration-500">
+                        <div class="w-16 h-16 bg-black/60 backdrop-blur-md rounded-full border-2 border-white/80 flex items-center justify-center group-hover:scale-125 group-hover:border-yellow-400 transition-all duration-500 ease-out shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.6)]">
+                            <span class="ml-1 text-white group-hover:text-yellow-400 text-2xl transition-colors duration-500">▶</span>
                         </div>
-                    </button>
+                    </div>
                 </div>
 
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="text-yellow-500 text-xs font-bold mb-2 uppercase">
-                        {item.date}
-                    </div>
-                    <h3 class="text-white font-bold text-lg leading-tight mb-4 min-h-[3.5rem] line-clamp-2">
-                       {item.title}
-                    </h3>
-                    
-                    <div class="mb-6 flex-grow">
-                        <span class="text-yellow-500 text-xs font-bold uppercase mb-2 block">Siri Episod:</span>
-                        <div class="space-y-1 bg-gray-900 p-2 rounded-lg">
-                            {item.episodes.map(ep => (
-                                <button 
-                                  class="w-full flex justify-between items-center text-gray-300 text-sm hover:bg-gray-800 hover:text-white p-2 rounded transition-all cursor-pointer group/item episode-trigger text-left"
-                                  data-video={item.videoId}
-                                  data-time={ep.time}
-                                >
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-5 h-5 bg-gray-700 group-hover/item:bg-yellow-500 rounded-full flex items-center justify-center text-black text-[10px] font-bold transition-colors">
-                                            <span class="text-gray-400 group-hover/item:text-black">▶</span>
-                                        </div>
-                                        <span class="group-hover/item:text-yellow-500 transition-colors">{ep.label}</span>
-                                    </div>
-                                    <span class="font-mono text-gray-500 text-xs group-hover/item:text-yellow-500">{ep.time}</span>
-                                </button>
-                            ))}
+                <div class="p-8 flex flex-col flex-grow text-center items-center justify-between bg-gradient-to-b from-transparent to-black/20">
+                    <div class="w-full">
+                        <div class="text-yellow-500 text-sm font-bold mb-3 uppercase tracking-wider group-hover:text-yellow-400 transition-colors duration-300">
+                            {item.date}
                         </div>
+                        <h3 class="text-white font-bold text-xl leading-snug mb-8 line-clamp-3 group-hover:text-yellow-50 transition-colors duration-300">
+                           {item.title}
+                        </h3>
                     </div>
 
-                    <button class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 rounded text-sm uppercase tracking-wide play-trigger mt-auto" data-video={item.videoId}>
-                        Tonton Siri Penuh
+                    <button class="w-full max-w-[240px] bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-3.5 px-6 rounded-full text-sm uppercase tracking-wider shadow-[0_4px_14px_0_rgba(234,179,8,0.39)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.3)] hover:-translate-y-0.5 transition-all duration-300 play-trigger mt-auto" data-video={item.videoId}>
+                        Tonton Video
                     </button>
                 </div>
             </div>
@@ -117,12 +89,21 @@ const newsSeries = [
       </div>
     </div>
 
+    {/* Enhanced Modal with Loading Spinner */}
     <div id="video-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4">
-        <div id="modal-overlay" class="absolute inset-0 bg-black bg-opacity-90 backdrop-blur-sm cursor-pointer"></div>
-        <div class="relative w-full max-w-5xl bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-700">
-            <button id="close-modal" class="absolute top-4 right-4 z-10 text-white hover:text-red-500 text-4xl font-bold leading-none">&times;</button>
-            <div class="aspect-video w-full">
-                <iframe id="modal-iframe" class="w-full h-full" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <div id="modal-overlay" class="absolute inset-0 bg-black bg-opacity-95 backdrop-blur-md cursor-pointer transition-opacity duration-300"></div>
+        <div class="relative w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.8)] border border-gray-700/80">
+            <button id="close-modal" class="absolute top-4 right-4 z-30 text-white/70 hover:text-white bg-black/50 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center text-2xl font-bold transition-all shadow-lg">&times;</button>
+            
+            <div class="relative aspect-video w-full flex items-center justify-center bg-gray-900">
+                {/* Loading State UI */}
+                <div id="loading-spinner" class="absolute z-10 flex flex-col items-center justify-center hidden">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-yellow-500 mb-4 shadow-lg"></div>
+                    <span class="text-yellow-500 text-sm font-bold tracking-widest animate-pulse">MEMUATKAN...</span>
+                </div>
+                
+                {/* Iframe with opacity transition */}
+                <iframe id="modal-iframe" class="absolute inset-0 w-full h-full z-20 opacity-0 transition-opacity duration-500 ease-in-out" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
         </div>
     </div>
@@ -132,15 +113,11 @@ const newsSeries = [
         const overlay = document.getElementById('modal-overlay');
         const closeBtn = document.getElementById('close-modal');
         const iframe = document.getElementById('modal-iframe');
+        const spinner = document.getElementById('loading-spinner');
         
-        if (!modal || !overlay || !closeBtn || !iframe) {
+        if (!modal || !overlay || !closeBtn || !iframe || !spinner) {
             console.error('Required modal elements not found');
         } else {
-            const timeToSeconds = (timeStr : string) => {
-                const [minutes, seconds] = timeStr.split(':').map(Number);
-                return (minutes * 60) + seconds;
-            };
-
             const openModal = (videoId :string | null, startTime: number = 0) => {
                 if (!videoId) {
                     console.error('Video ID is required');
@@ -157,10 +134,25 @@ const newsSeries = [
                 // Ensure startTime is a valid number
                 const safeStartTime = Math.max(0, Math.floor(Number(startTime) || 0));
                 const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&start=${safeStartTime}&rel=0&modestbranding=1`;
+                
+                // Show spinner, hide iframe temporarily
+                spinner.classList.remove('hidden');
+                iframe.classList.add('opacity-0');
+                
                 iframe.setAttribute('src', src);
                 modal.classList.remove('hidden');
             };
 
+            // Handle iframe load event to hide spinner and show video
+            iframe.addEventListener('load', () => {
+                // Check if the src isn't empty (we clear it on close)
+                if (iframe.getAttribute('src')) {
+                    spinner.classList.add('hidden');
+                    iframe.classList.remove('opacity-0');
+                }
+            });
+
+            // Play trigger for thumbnails and buttons
             document.querySelectorAll('.play-trigger').forEach(trigger => {
                 trigger.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -169,21 +161,14 @@ const newsSeries = [
                 });
             });
 
-            document.querySelectorAll('.episode-trigger').forEach(trigger => {
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const videoId = trigger.getAttribute('data-video');
-                    const timeStr = trigger.getAttribute('data-time');
-                    if (timeStr) {
-                        const seconds = timeToSeconds(timeStr);
-                        openModal(videoId, seconds);
-                    }
-                });
-            });
-
             const closeModal = () => {
-                modal.classList.add('hidden');
-                iframe.setAttribute('src', '');
+                // Fade out iframe before hiding modal for a smoother exit
+                iframe.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    iframe.setAttribute('src', '');
+                    spinner.classList.add('hidden'); // Reset spinner state just in case
+                }, 200); // Small delay to let opacity transition start
             };
 
             closeBtn.addEventListener('click', closeModal);

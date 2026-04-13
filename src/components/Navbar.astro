@@ -1,113 +1,108 @@
 ---
-// src/components/Navbar.astro
-import { Image } from 'astro:assets';
-import logoImg from '../assets/logo.webp';
+const pathname = new URL(Astro.request.url).pathname;
 
-const links = [
-  { text: "Tentang Kami", href: "/tentang" },
-  { text: "Perkhidmatan", href: "/perkhidmatan" },
-  { text: "Berita", href: "/berita" },
-  { text: "Hubungi Kami", href: "/hubungi" },
+const navLinks = [
+  { name: 'Utama', path: '/' },
+  { name: 'Tentang', path: '/tentang' },
+  { name: 'Perkhidmatan', path: '/perkhidmatan' },
+  { name: 'Berita', path: '/berita' },
+  { name: 'Hubungi', path: '/hubungi' }
 ];
 ---
 
-<nav class="bg-black/80 border-b border-gray-800 sticky top-0 z-50 backdrop-blur-md">
+<header id="main-navbar" class="fixed w-full top-0 z-50 transition-all duration-300 ease-in-out bg-transparent py-5">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-20 items-center">
+    <div class="flex justify-between items-center">
       
-      <a href="/" class="flex-shrink-0 flex items-center gap-3 hover:opacity-80 transition-opacity">
-        <Image 
-          src={logoImg} 
-          alt="Email Rakyat Logo" 
-          class="w-10 h-10 object-contain" 
-          loading="eager"
-        />
-        <span class="text-white font-bold text-xl tracking-wider">EMAIL RAKYAT</span>
+      <a href="/" class="flex-shrink-0 flex items-center gap-3 group">
+        <img src="/Logo.webp" alt="Email Rakyat Logo" class="h-10 w-auto group-hover:scale-105 transition-transform duration-300" />
+        <span class="text-white font-extrabold text-xl uppercase tracking-widest hidden sm:block group-hover:text-yellow-500 transition-colors">
+          Email Rakyat
+        </span>
       </a>
 
-      <div class="hidden md:flex items-center space-x-8">
-        {links.map((link) => (
-          link.href === '/hubungi' ? (
-            /* BUTTON STYLE FOR CONTACT PAGE (Internal Link) */
-            <a 
-              href={link.href} 
-              class="bg-yellow-500 text-black px-5 py-2 text-sm font-extrabold rounded-full shadow-lg hover:bg-yellow-400 hover:shadow-yellow-500/20 hover:scale-105 transition-all ml-2 flex items-center"
-            >
-              {link.text}
-            </a>
-          ) : (
-            /* ORIGINAL CLEAN STYLE FOR OTHER LINKS */
-            <a 
-              href={link.href} 
-              class="text-gray-300 hover:text-white hover:border-b-2 hover:border-yellow-500 px-1 py-2 text-sm font-medium transition-all"
-            >
-              {link.text}
-            </a>
-          )
+      <nav class="hidden md:flex space-x-8 items-center">
+        {navLinks.map((link) => (
+          <a 
+            href={link.path} 
+            class={`text-sm font-bold uppercase tracking-wider transition-colors duration-300 hover:text-yellow-400 ${
+              pathname === link.path || (pathname === '/' + link.path.replace('/', '')) 
+                ? 'text-yellow-500' 
+                : 'text-gray-200'
+            }`}
+          >
+            {link.name}
+          </a>
         ))}
-      </div>
+      </nav>
 
       <div class="md:hidden flex items-center">
-        <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none p-2">
-          <span class="text-2xl">☰</span>
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="text-gray-200 hover:text-yellow-500 focus:outline-none transition-colors">
+          <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
       </div>
-
     </div>
   </div>
 
-  <div id="mobile-menu" class="hidden bg-black/95 backdrop-blur-xl border-b border-gray-800 absolute w-full left-0 top-20 shadow-2xl z-50">
-    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-      {links.map((link) => (
-         link.href === '/hubungi' ? (
-            /* BUTTON STYLE FOR CONTACT MOBILE (Internal Link) */
-            <a 
-              href={link.href} 
-              class="block w-full text-center bg-yellow-500 text-black font-extrabold px-3 py-4 mt-4 rounded-lg shadow-lg hover:bg-yellow-400 transition-all"
-            >
-              {link.text}
-            </a>
-         ) : (
-            /* ORIGINAL STYLE FOR OTHER LINKS MOBILE */
-            <a 
-              href={link.href} 
-              class="text-gray-300 hover:text-white hover:bg-white/10 block px-3 py-4 text-base font-medium border-l-4 border-transparent hover:border-yellow-500 transition-all"
-            >
-              {link.text}
-            </a>
-         )
+  <div id="mobile-menu" class="hidden md:hidden absolute w-full bg-black/95 backdrop-blur-xl border-t border-gray-800 shadow-2xl">
+    <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
+      {navLinks.map((link) => (
+        <a 
+          href={link.path} 
+          class={`block px-3 py-3 rounded-lg text-base font-bold uppercase tracking-wide transition-colors ${
+            pathname === link.path || (pathname === '/' + link.path.replace('/', '')) 
+              ? 'bg-yellow-500/10 text-yellow-500' 
+              : 'text-gray-300 hover:bg-gray-800 hover:text-yellow-400'
+          }`}
+        >
+          {link.name}
+        </a>
       ))}
     </div>
   </div>
-</nav>
+</header>
 
-<script is:inline>
-  function initMobileMenu() {
-    const btn = document.getElementById('mobile-menu-btn');
-    const menu = document.getElementById('mobile-menu');
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const navbar = document.getElementById('main-navbar');
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-    if (!btn || !menu) return;
+    if (!navbar || !mobileBtn || !mobileMenu) return;
 
-    // Toggle menu
-    btn.onclick = function(e) {
-      e.stopPropagation();
-      menu.classList.toggle('hidden');
-    };
-
-    // Close when clicking a link
-    menu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => menu.classList.add('hidden'));
-    });
-
-    // Close when clicking outside
-    document.onclick = function(e) {
-      if (!menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.add('hidden');
+    // Scroll Responsive Logic
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        // Scrolled state: frosted glass, shadow, smaller padding
+        navbar.classList.remove('bg-transparent', 'py-5');
+        navbar.classList.add('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
+      } else {
+        // Top state: transparent, larger padding
+        navbar.classList.add('bg-transparent', 'py-5');
+        navbar.classList.remove('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
       }
     };
-  }
 
-  // Initialize immediately and on page navigation (for Astro View Transitions)
-  initMobileMenu();
-  document.addEventListener('astro:page-load', initMobileMenu);
+    // Run on load to check initial scroll position
+    handleScroll();
+
+    // Listen for scroll events
+    window.addEventListener('scroll', handleScroll);
+
+    // Mobile Menu Toggle Logic
+    mobileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      if (!navbar.contains(target) && !mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.add('hidden');
+      }
+    });
+  });
 </script>

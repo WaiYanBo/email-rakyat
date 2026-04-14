@@ -34,16 +34,16 @@ import Features from '../components/Features.astro';
         </div>
     
         {/* RIGHT SIDE — VIDEO */}
-        <div class="flex justify-center md:justify-end">
+        <div class="flex justify-center md:justify-end w-full min-w-0">
     
-          <div class="bg-black/40 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-gray-700">
+          <div class="bg-black/40 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-gray-700 w-full max-w-[325px] min-w-0">
     
             <blockquote
-              class="tiktok-embed"
+              class="tiktok-embed w-full max-w-full"
               cite="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
               data-video-id="7624967321739726101"
               data-theme="dark"
-              style="max-width: 325px; min-width: 325px;"
+              style="max-width: 100%; min-width: 0;"
             >
               <section></section>
             </blockquote>
@@ -66,5 +66,6 @@ import Features from '../components/Features.astro';
       border: none !important;
       border-radius: 0.75rem !important; /* Matches your rounded-xl design */
       box-shadow: none !important;
+      max-width: 100% !important;
   }
 </style>

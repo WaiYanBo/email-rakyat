@@ -3,9 +3,7 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
-import '@fontsource/nunito-sans/400.css';
-import '@fontsource/nunito-sans/700.css';
-import '@fontsource/nunito-sans/900.css';
+import '@fontsource-variable/nunito-sans';
 
 interface Props {
     title?: string;
@@ -32,21 +30,35 @@ const {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="generator" content={Astro.generator} />
         <meta name="google-site-verification" content="pL6VVDBvT7AFJsF-iNber0pk7W-Sm1ooRfdVehPlAy8" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         
-        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17941357588"></script>
         <script is:inline>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-
         gtag('config', 'AW-17941357588');
-
         function gtag_report_conversion() {
             gtag('event', 'conversion', {
                 'send_to': 'AW-17941357588/PFRMCLyU0_YbEJTIjetC'
             });
-            return true; 
+            return true;
         }
+        (function () {
+            function loadGtag() {
+                if (document.querySelector('script[data-gtag-loader]')) return;
+                var s = document.createElement('script');
+                s.async = true;
+                s.dataset.gtagLoader = '1';
+                s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17941357588';
+                document.head.appendChild(s);
+            }
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(loadGtag, { timeout: 4000 });
+            } else {
+                window.addEventListener('load', function () { setTimeout(loadGtag, 1); });
+            }
+        })();
         </script>
 
         <slot name="head" />

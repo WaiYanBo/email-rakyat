@@ -11,9 +11,11 @@ const {
 } = Astro.props;
 
 const heightClass = "h-[40vh] md:h-[50vh]"; 
+// Navbar is fixed; add top padding so hero content doesn't sit under it.
+const safeTopPadClass = showDetails ? "pt-20 md:pt-24" : "pt-10 md:pt-12";
 ---
 
-<section class={`relative ${heightClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
+<section class={`relative ${heightClass} ${safeTopPadClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
   
   <div class="absolute inset-0 z-0">
     <Image 
@@ -30,29 +32,45 @@ const heightClass = "h-[40vh] md:h-[50vh]";
 
   <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
      {showDetails ? (
-       <div class="flex flex-col items-center justify-center h-full">
-        <div class="mb-4 space-y-1">
-          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
-            {line1}
-          </h2>
-          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
-            {line2}
-          </h2>
-          <h2 class="text-base md:text-xl font-bold text-white uppercase tracking-wider drop-shadow-lg">
-            {line3}
-          </h2>
-        </div>
-
-        <div class="flex flex-col items-center w-full mt-2">
+       <div class="flex flex-col items-center justify-center h-full pb-6">
+        <div class="flex flex-col items-center w-full mt-4 md:mt-6">
           <span class="text-gray-300 tracking-[0.5em] text-xs md:text-sm uppercase font-medium mb-1 drop-shadow-md pl-1">
             T E A M
           </span>
           <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-center leading-none">
             EMAIL RAKYAT
           </h1>
-          
-          {/* BUTTON REMOVED */}
-          
+
+          <div class="mt-4 space-y-1.5">
+            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
+              {line1}
+            </p>
+            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
+              {line2}
+            </p>
+            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
+              {line3}
+            </p>
+          </div>
+
+          <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+            <a
+              href="/hubungi"
+              class="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-yellow-500 px-6 py-3 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_22px_rgba(234,179,8,0.18)] transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
+            >
+              Dapatkan Bantuan
+            </a>
+            <a
+              href="/perkhidmatan"
+              class="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-gray-500 bg-black/35 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-300 hover:border-yellow-500 hover:text-yellow-400"
+            >
+              Lihat Perkhidmatan
+            </a>
+          </div>
+
+          <p class="mt-4 text-xs md:text-sm uppercase tracking-[0.25em] text-gray-300">
+            Sulit. Profesional. Berlandaskan undang-undang.
+          </p>
         </div>
 
       </div>

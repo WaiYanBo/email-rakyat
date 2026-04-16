@@ -157,7 +157,15 @@ const {
                 const btnSavePrefs = document.getElementById("btn-save-prefs");
                 
                 // Inputs
-                const toggleDevice = document.getElementById("toggle-device");
+                const toggleDevice = document.getElementById("toggle-device") as HTMLInputElement | null;
+
+                if (
+                    !overlay || !step1 || !step2 ||
+                    !btnAcceptAll || !btnDecline || !btnManage || !btnBack || !btnSavePrefs ||
+                    !toggleDevice
+                ) {
+                    return;
+                }
         
                 // 1. Check if preferences exist
                 const savedPrefs = localStorage.getItem("cookie_preferences");
@@ -203,7 +211,7 @@ const {
 
                 // Helper function
                 function closeAndReload() {
-                    overlay.classList.add("hidden");
+                    overlay?.classList.add("hidden");
                     document.body.style.overflow = "auto"; 
                     window.location.reload(); 
                 }
@@ -228,7 +236,7 @@ const {
 
                 // Dynamically target major elements inside the main content area
                 const elementsToReveal = document.querySelectorAll(
-                    'main h1, main h2, main h3, main p, main img, main .grid > div, main section, main button'
+                    'main section, main article, main .grid > div, main .card, main .reveal-item'
                 );
                 
                 elementsToReveal.forEach((el) => {

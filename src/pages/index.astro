@@ -54,37 +54,7 @@ import Features from '../components/Features.astro';
     
       </div>
     
-      <script is:inline>
-        (function () {
-          var section = document.getElementById('section-tiktok-embed');
-          if (!section) return;
-          var loaded = false;
-          function loadTikTok() {
-            if (loaded) return;
-            loaded = true;
-            var s = document.createElement('script');
-            s.src = 'https://www.tiktok.com/embed.js';
-            s.async = true;
-            document.body.appendChild(s);
-          }
-          if ('IntersectionObserver' in window) {
-            var io = new IntersectionObserver(
-              function (entries) {
-                entries.forEach(function (e) {
-                  if (e.isIntersecting) {
-                    loadTikTok();
-                    io.disconnect();
-                  }
-                });
-              },
-              { rootMargin: '240px 0px', threshold: 0.01 }
-            );
-            io.observe(section);
-          } else {
-            loadTikTok();
-          }
-        })();
-      </script>
+      <script async src="https://www.tiktok.com/embed.js"></script>
     </section>
 
 </Layout>

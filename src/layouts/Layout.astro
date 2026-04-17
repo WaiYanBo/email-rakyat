@@ -36,28 +36,29 @@ const {
         <script is:inline>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'AW-17941357588');
         function gtag_report_conversion() {
             gtag('event', 'conversion', {
                 'send_to': 'AW-17941357588/PFRMCLyU0_YbEJTIjetC'
             });
             return true;
         }
+        function loadGtag() {
+            if (document.querySelector('script[data-gtag-loader]')) return;
+            var s = document.createElement('script');
+            s.async = true;
+            s.dataset.gtagLoader = '1';
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17941357588';
+            document.head.appendChild(s);
+            gtag('js', new Date());
+            gtag('config', 'AW-17941357588');
+        }
         (function () {
-            function loadGtag() {
-                if (document.querySelector('script[data-gtag-loader]')) return;
-                var s = document.createElement('script');
-                s.async = true;
-                s.dataset.gtagLoader = '1';
-                s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17941357588';
-                document.head.appendChild(s);
-            }
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(loadGtag, { timeout: 4000 });
-            } else {
-                window.addEventListener('load', function () { setTimeout(loadGtag, 1); });
-            }
+            try {
+                var prefs = JSON.parse(localStorage.getItem('cookie_preferences') || 'null');
+                if (prefs && prefs.essential) {
+                    loadGtag();
+                }
+            } catch (e) {}
         })();
         </script>
 
@@ -195,6 +196,7 @@ const {
                 // 3. Action Buttons (Accept, Decline, Save)
                 btnAcceptAll.addEventListener("click", () => {
                     localStorage.setItem("cookie_preferences", JSON.stringify({ essential: true, device: true }));
+                    if (typeof (window as any).loadGtag === 'function') (window as any).loadGtag();
                     closeAndReload();
                 });
 

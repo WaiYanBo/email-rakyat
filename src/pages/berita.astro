@@ -47,8 +47,6 @@ const newsSeries = [
       backgroundImage={beritaBg}
     />
 
-    
-    </div>
     <div class="max-w-7xl mx-auto px-4 py-20 w-full">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {newsSeries.map((item) => (
@@ -112,14 +110,16 @@ const newsSeries = [
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 pt-16 -mb-8 w-full relative z-10">
+    <div class="max-w-7xl mx-auto px-4 pt-16 mt-8 pb-20 w-full relative z-10">
         <div class="bg-red-950/40 backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 border border-red-600/50 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
             <div class="w-full md:w-1/3 flex justify-center">
-                <Image 
-                    src={icWarningImg} 
-                    alt="Contoh Cara Palang Kad Pengenalan (IC)" 
-                    class="w-full max-w-[350px] h-auto rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.6)] border-2 border-red-500/60"
-                />
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg">
+                    <Image 
+                        src={icWarningImg} 
+                        alt="Contoh Cara Palang Kad Pengenalan (IC)" 
+                        class="w-full max-w-[350px] h-auto rounded-md object-contain"
+                    />
+                </div>
             </div>
             <div class="w-full md:w-2/3">
                 <div class="flex items-center gap-3 mb-4">
@@ -137,75 +137,5 @@ const newsSeries = [
             </div>
         </div>
 
-    <script>
-        const modal = document.getElementById('video-modal');
-        const overlay = document.getElementById('modal-overlay');
-        const closeBtn = document.getElementById('close-modal');
-        const iframe = document.getElementById('modal-iframe');
-        const spinner = document.getElementById('loading-spinner');
-        
-        if (!modal || !overlay || !closeBtn || !iframe || !spinner) {
-            console.error('Required modal elements not found');
-        } else {
-            const openModal = (videoId :string | null, startTime: number = 0) => {
-                if (!videoId) {
-                    console.error('Video ID is required');
-                    return;
-                }
-                
-                // Validate video ID before using it
-                const videoIdPattern = /^[a-zA-Z0-9_-]{11}$/;
-                if (!videoIdPattern.test(videoId)) {
-                    console.error('Invalid video ID:', videoId);
-                    return;
-                }
-                
-                // Ensure startTime is a valid number
-                const safeStartTime = Math.max(0, Math.floor(Number(startTime) || 0));
-                const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&start=${safeStartTime}&rel=0&modestbranding=1`;
-                
-                // Show spinner, hide iframe temporarily
-                spinner.classList.remove('hidden');
-                iframe.classList.add('opacity-0');
-                
-                iframe.setAttribute('src', src);
-                modal.classList.remove('hidden');
-            };
-
-            // Handle iframe load event to hide spinner and show video
-            iframe.addEventListener('load', () => {
-                // Check if the src isn't empty (we clear it on close)
-                if (iframe.getAttribute('src')) {
-                    spinner.classList.add('hidden');
-                    iframe.classList.remove('opacity-0');
-                }
-            });
-
-            // Play trigger for thumbnails and buttons
-            document.querySelectorAll('.play-trigger').forEach(trigger => {
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const videoId = trigger.getAttribute('data-video');
-                    openModal(videoId);
-                });
-            });
-
-            const closeModal = () => {
-                // Fade out iframe before hiding modal for a smoother exit
-                iframe.classList.add('opacity-0');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    iframe.setAttribute('src', '');
-                    spinner.classList.add('hidden'); // Reset spinner state just in case
-                }, 200);
-                // Small delay to let opacity transition start
-            };
-
-            closeBtn.addEventListener('click', closeModal);
-            overlay.addEventListener('click', closeModal);
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModal();
-            });
-        }
-    </script>
+    <script src="/scripts/berita-modal.js" defer></script>
 </Layout>

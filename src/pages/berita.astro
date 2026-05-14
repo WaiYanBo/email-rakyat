@@ -3,6 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import { Image } from 'astro:assets';
 import beritaBg from '../assets/berita.webp';
+// Import the warning image (Ensure the file is placed in src/assets/)
+import icWarningImg from '../assets/FOR RISEMALAYSIA PURPOSE.jpg';
 
 const newsSeries = [
   {
@@ -45,11 +47,12 @@ const newsSeries = [
       backgroundImage={beritaBg}
     />
 
+    
+    </div>
     <div class="max-w-7xl mx-auto px-4 py-20 w-full">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {newsSeries.map((item) => (
             <div class="bg-gray-900/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl border border-gray-700/50 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)] hover:-translate-y-2 hover:scale-[1.02] transition-all duration-500 ease-out group flex flex-col h-full relative z-10 hover:z-20">
-                
                 <div class="relative aspect-video bg-black flex-shrink-0 cursor-pointer play-trigger overflow-hidden" data-video={item.videoId}>
                     <img 
                     src={item.thumbnail} 
@@ -88,6 +91,7 @@ const newsSeries = [
         ))}
       </div>
     </div>
+    
 
     {/* Enhanced Modal with Loading Spinner */}
     <div id="video-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4">
@@ -107,6 +111,31 @@ const newsSeries = [
             </div>
         </div>
     </div>
+
+    <div class="max-w-7xl mx-auto px-4 pt-16 -mb-8 w-full relative z-10">
+        <div class="bg-red-950/40 backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 border border-red-600/50 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
+            <div class="w-full md:w-1/3 flex justify-center">
+                <Image 
+                    src={icWarningImg} 
+                    alt="Contoh Cara Palang Kad Pengenalan (IC)" 
+                    class="w-full max-w-[350px] h-auto rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.6)] border-2 border-red-500/60"
+                />
+            </div>
+            <div class="w-full md:w-2/3">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-3xl md:text-4xl">⚠️</span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-red-500 uppercase tracking-wider">AMARAN KESELAMATAN IC</h2>
+                </div>
+                <p class="text-gray-200 text-lg leading-relaxed mb-5">
+                    Apabila anda perlu memberikan salinan Kad Pengenalan (IC) secara atas talian untuk sebarang urusan, <strong>JANGAN</strong> berikan salinan kosong.
+                </p>
+                <div class="bg-black/50 p-5 rounded-lg border-l-4 border-yellow-500">
+                    <p class="text-yellow-400 text-[17px] font-semibold leading-relaxed">
+                        Sila pastikan anda meletakkan palang/watermark dan nyatakan tujuan serahan (seperti yang ditunjukkan di dalam gambar) pada bucu penjuru IC anda. Langkah ini amat penting bagi mengelakkan maklumat peribadi anda disalahgunakan oleh pihak ketiga, sindiket penipuan, atau Ah Long.
+                    </p>
+                </div>
+            </div>
+        </div>
 
     <script>
         const modal = document.getElementById('video-modal');
@@ -168,7 +197,8 @@ const newsSeries = [
                     modal.classList.add('hidden');
                     iframe.setAttribute('src', '');
                     spinner.classList.add('hidden'); // Reset spinner state just in case
-                }, 200); // Small delay to let opacity transition start
+                }, 200);
+                // Small delay to let opacity transition start
             };
 
             closeBtn.addEventListener('click', closeModal);

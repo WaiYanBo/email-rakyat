@@ -18,6 +18,8 @@ const {
     image,
     noindex = false 
 } = Astro.props;
+const currentPath = Astro.url.pathname;
+const isPortal = currentPath.startsWith('/portal');
 ---
 
 <!doctype html>
@@ -281,7 +283,7 @@ const {
 
         <div class="fixed bottom-6 right-6 z-50 group animate-bounce-slow">
             <div class="absolute inset-0 bg-green-500 rounded-full animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite] opacity-60 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-            
+           {!isPortal && ( 
             <a 
                 href="https://WaiYanTeamEmailRakyat.wasap.my" 
                 target="_blank"
@@ -297,6 +299,7 @@ const {
                     <span class="text-sm font-black leading-none">WHATSAPP KAMI</span>
                 </div>
             </a>
+            )}
         </div>
     </body>
 </html>

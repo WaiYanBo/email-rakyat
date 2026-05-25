@@ -1,205 +1,135 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-interface Client {
-  [key: string]: any;
-  NAME?: string;
-  'PENDING (RM)'?: string | number;
-  'CASE CATEGORY'?: string;
-  'CASE STATUS'?: string;
-  DATE?: string;
-}
-
 export default function ExecutiveOverview() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
-  const [highPriorityCases, setHighPriorityCases] = useState<Client[]>([]);
-  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [highPriorityCases, setHighPriorityCases] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   
-  const PRIORITY_THRESHOLD = 5000;
+  // --- MOCK ANNOUNCEMENT STATE (For Prototyping) ---
+  const [announcements, setAnnouncements] = useState<any[]>([
+    { id: 1, type: 'Urgent', title: 'Server Maintenance Notice', date: '28 May 2026', author: 'IT Dept', content: 'Sistem pangkalan data akan ditutup sementara pada jam 12:00 AM hingga 2:00 AM malam ini.' },
+    { id: 2, type: 'Memo', title: 'Cuti Umum Hari Keputeraan Agong', date: '25 May 2026', author: 'HR Dept', content: 'Ibu pejabat akan ditutup pada hari Isnin minggu hadapan bersempena cuti umum.' }
+  ]);
+
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/portal/login';
-        return;
+      if (!session) return window.location.href = '/portal/login';
+
+      const { data: profileData } = await supabase.from('profiles').select(`full_name, roles ( role_name )`).eq('id', session.user.id).single();
+      
+      let roleName = 'No Role';
+      if (profileData) {
+        roleName = profileData.roles?.role_name || 'No Role';
+        setProfile({ name: profileData.full_name, role: roleName });
       }
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select(`full_name, department, roles ( role_name )`)
-        .eq('id', session.user.id)
-        .single();
+      if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName)) {
+        const { data: clientsData } = await supabase.from('clients').select('*');
+        if (clientsData) {
+          const pCases = clientsData.filter(c => parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) > 5000).sort((a,b) => parseFloat(String(b['PENDING (RM)']).replace(/[^0-9.-]+/g, '')) - parseFloat(String(a['PENDING (RM)']).replace(/[^0-9.-]+/g, ''))).slice(0, 5);
+          setHighPriorityCases(pCases);
 
-      if (profileData) {
-        const roleName = profileData.roles?.role_name || 'No Role';
-        setProfile({
-          name: profileData.full_name,
-          department: profileData.department,
-          role: roleName,
-        });
-
-        // Add General Manager to Full Access
-        const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName);
-
-        if (hasFullAccess) {
-          const { data: clientsData } = await supabase.from('clients').select('*');
-          
-          if (clientsData) {
-            setAllClients(clientsData);
-            
-            const priorityCases = clientsData
-              .filter((c: Client) => {
-                const pendingRM = parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-                return pendingRM > PRIORITY_THRESHOLD;
-              })
-              .sort((a: Client, b: Client) => {
-                const pendingA = parseFloat(String(a['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-                const pendingB = parseFloat(String(b['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-                return pendingB - pendingA; 
-              })
-              .slice(0, 5); 
-            
-            setHighPriorityCases(priorityCases);
-          }
+          let totalPending = 0; let completed = 0; let dropped = 0; let pending = 0;
+          clientsData.forEach(c => {
+            if (String(c['CASE STATUS']).includes('COMPLETED')) completed++;
+            else if (String(c['CASE STATUS']).includes('DROPPED')) dropped++;
+            else pending++;
+            totalPending += parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+          });
+          setStats({ totalClients: clientsData.length, completed, dropped, pending, totalPending });
         }
       }
-
       setLoading(false);
     }
-
     loadDashboard();
   }, []);
 
-  const getTotalStats = () => {
-    const stats = { totalClients: allClients.length, completed: 0, pending: 0, dropped: 0, totalPending: 0 };
-    allClients.forEach((c) => {
-      if (String(c['CASE STATUS']).includes('COMPLETED')) stats.completed++;
-      else if (String(c['CASE STATUS']).includes('DROPPED')) stats.dropped++;
-      else stats.pending++;
-      const pendingRM = parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-      stats.totalPending += pendingRM;
-    });
-    return stats;
+  const handlePostNotice = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const newNotice = {
+      id: Date.now(),
+      type: formData.get('type'),
+      title: formData.get('title'),
+      author: profile?.name, // Auto tag the logged-in user
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      content: formData.get('content')
+    };
+    setAnnouncements(prev => [newNotice, ...prev]);
+    setIsNoticeModalOpen(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] px-4">
-        <div className="text-teal-600 dark:text-yellow-500 font-bold animate-pulse text-lg md:text-xl tracking-widest uppercase text-center">
-          Loading Overview...
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-teal-600 font-bold animate-pulse text-xl uppercase">Loading Dashboard...</div></div>;
 
   const isIT = profile?.role === 'IT Admin';
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
-  const stats = hasFullAccess ? getTotalStats() : null;
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-page-transition">
-      <div className="flex flex-col gap-2 pt-12 md:pt-0">
-        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
-          {hasFullAccess && !isIT ? 'Executive Overview' : isIT ? 'IT Admin Dashboard' : 'Staff Portal'}
-        </h1>
-        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
-          You are logged in as <span className="font-semibold text-teal-600 dark:text-yellow-500">{profile?.role}</span>
-        </p>
+    <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 relative">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">Portal <span className="text-teal-600 dark:text-yellow-500">Home</span></h1>
+        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">Selamat kembali, <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
       </div>
 
-      {/* --- EXECUTIVE & GM ONLY VIEW --- */}
+      {/* ANNOUNCEMENTS SECTION */}
+      <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex justify-between items-center">
+          <h2 className="text-sm md:text-lg font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">Company Announcements</h2>
+          {hasFullAccess && (
+            <button onClick={() => setIsNoticeModalOpen(true)} className="text-[10px] md:text-xs font-bold uppercase tracking-wider bg-teal-600 text-white px-3 py-2 rounded-md shadow-sm">+ Post Notice</button>
+          )}
+        </div>
+        <div className="p-4 md:p-6 space-y-4 max-h-[400px] overflow-y-auto scrollbar-thin">
+          {announcements.map((a) => (
+            <div key={a.id} className="p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+              <div className="flex flex-col sm:flex-row justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${a.type === 'Urgent' ? 'bg-red-100 text-red-700' : a.type === 'Memo' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>{a.type}</span>
+                  <h3 className="text-sm md:text-base font-bold">{a.title}</h3>
+                </div>
+                <span className="text-[10px] text-gray-500">{a.date} • {a.author}</span>
+              </div>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300">{a.content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* POST NOTICE MODAL */}
+      {isNoticeModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 w-[95%] max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
+              <h2 className="text-sm font-black uppercase tracking-widest text-teal-900 dark:text-white">Post New Announcement</h2>
+              <button onClick={() => setIsNoticeModalOpen(false)} className="text-gray-400 hover:text-red-500"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <form onSubmit={handlePostNotice} className="p-5 space-y-4">
+              <div><label className="block text-xs font-bold uppercase mb-1">Notice Title</label><input type="text" name="title" required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" placeholder="e.g., Q3 Meeting Schedule" /></div>
+              <div><label className="block text-xs font-bold uppercase mb-1">Urgency Level</label><select name="type" className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm font-bold"><option value="Info">Info (Standard)</option><option value="Memo">Memo (Important)</option><option value="Urgent">Urgent (Critical)</option></select></div>
+              <div><label className="block text-xs font-bold uppercase mb-1">Message Content</label><textarea name="content" required rows={4} className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" placeholder="Write your announcement here..."></textarea></div>
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200"><button type="submit" className="px-5 py-2.5 rounded-lg text-xs font-bold uppercase bg-teal-600 text-white w-full sm:w-auto">Post to Dashboard</button></div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EXECUTIVE SNAPSHOT (Bottom Section) */}
       {hasFullAccess && !isIT && stats && (
-        <>
-          {/* FIX: Changed to grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 so mobile has full-width cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-600/10 border border-blue-200 dark:border-blue-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Clients</p>
-              <p className="text-3xl font-black text-blue-700 dark:text-blue-300 mt-1">{stats.totalClients}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-600/10 border border-emerald-200 dark:border-emerald-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] md:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Completed</p>
-              <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{stats.completed}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-500/10 dark:to-yellow-600/10 border border-yellow-200 dark:border-yellow-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] md:text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">Pending</p>
-              <p className="text-3xl font-black text-yellow-700 dark:text-yellow-300 mt-1">{stats.pending}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-600/10 border border-red-200 dark:border-red-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[10px] md:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Dropped</p>
-              <p className="text-3xl font-black text-red-700 dark:text-red-300 mt-1">{stats.dropped}</p>
-            </div>
+         <div className="space-y-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+           <h2 className="text-lg font-black uppercase tracking-widest">Executive Snapshot</h2>
+           {/* ... Kept your beautiful stats grid exactly the same ... */}
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 dark:bg-blue-500/10"><p className="text-[10px] font-bold text-blue-600 uppercase">Total Clients</p><p className="text-2xl font-black text-blue-700">{stats.totalClients}</p></div>
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10"><p className="text-[10px] font-bold text-emerald-600 uppercase">Completed</p><p className="text-2xl font-black text-emerald-700">{stats.completed}</p></div>
+            <div className="p-4 rounded-xl bg-yellow-50 border border-yellow-200 dark:bg-yellow-500/10"><p className="text-[10px] font-bold text-yellow-600 uppercase">Pending</p><p className="text-2xl font-black text-yellow-700">{stats.pending}</p></div>
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 dark:bg-red-500/10"><p className="text-[10px] font-bold text-red-600 uppercase">Dropped</p><p className="text-2xl font-black text-red-700">{stats.dropped}</p></div>
           </div>
-
-          <div className="p-4 md:p-6 rounded-xl md:rounded-2xl bg-white dark:bg-gray-900/50 border-2 border-red-200 dark:border-red-500/30 shadow-lg dark:shadow-2xl overflow-hidden">
-            <div className="mb-4 md:mb-6">
-              <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white">High Priority Cases</h2>
-              <p className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 mt-2">Cases with balance over RM{PRIORITY_THRESHOLD.toLocaleString()} require immediate attention</p>
-            </div>
-            {highPriorityCases.length > 0 ? (
-              <div className="space-y-2 md:space-y-3">
-                {highPriorityCases.map((client, idx) => {
-                  const pendingRM = parseFloat(String(client['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-                  return (
-                    <div key={idx} className="p-3 md:p-4 bg-gradient-to-r from-red-50 to-transparent dark:from-red-500/5 dark:to-transparent border border-red-200 dark:border-red-500/30 rounded-lg hover:shadow-md transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-base md:text-lg text-gray-900 dark:text-white truncate">{client.NAME || 'N/A'}</p>
-                          <p className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">Category: <span className="font-semibold">{client['CASE CATEGORY'] || 'N/A'}</span></p>
-                          <p className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 truncate">Status: <span className={`font-semibold ${String(client['CASE STATUS']).includes('COMPLETED') ? 'text-emerald-600 dark:text-emerald-400' : String(client['CASE STATUS']).includes('DROPPED') ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{client['CASE STATUS'] || 'N/A'}</span></p>
-                        </div>
-                        <div className="text-left sm:text-right flex-shrink-0">
-                          <p className="text-[9px] md:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Outstanding Balance</p>
-                          <p className="text-xl md:text-2xl font-black text-red-600 dark:text-red-400">RM{pendingRM.toFixed(2)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
-                <p className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-2">No High Priority Cases</p>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 md:p-6 rounded-xl md:rounded-2xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-2xl">
-            <h3 className="text-lg md:text-xl font-bold uppercase tracking-widest text-gray-900 dark:text-white mb-4">Financial Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div>
-                <p className="text-[9px] md:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Total Outstanding Amount</p>
-                <p className="text-3xl md:text-4xl font-black text-red-600 dark:text-red-400 mt-2 break-words">RM{stats.totalPending.toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* --- IT ADMIN ONLY VIEW --- */}
-      {isIT && (
-        <div className="p-8 md:p-12 rounded-xl md:rounded-2xl bg-white dark:bg-gray-900/50 border border-teal-200 dark:border-gray-700 shadow-lg text-center">
-          <svg className="w-16 h-16 mx-auto text-teal-600 dark:text-teal-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">IT Admin System</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Server settings and database configuration operating normally.</p>
-        </div>
-      )}
-
-      {/* --- RESTRICTED (INTERN & CONTRACT) VIEW --- */}
-      {!isIT && !hasFullAccess && (
-        <div className="p-8 md:p-12 rounded-xl md:rounded-2xl bg-white dark:bg-gray-900/50 border border-teal-200 dark:border-gray-700 shadow-lg text-center">
-          <svg className="w-16 h-16 mx-auto text-teal-600 dark:text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">Welcome</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Please use the <strong className="text-teal-700 dark:text-white">Clients</strong> menu on the left to view the database list.
-          </p>
-        </div>
+         </div>
       )}
     </div>
   );

@@ -10,15 +10,13 @@ const { title } = Astro.props;
 ---
 
 <Layout title={title}>
-  <div class="flex min-h-screen">
-    <!-- Sidebar - Full Height Navigation -->
-    <PortalSidebar client:only="react" />
-    
-    <!-- Main Content - Responsive margin on desktop -->
-    <main class="flex-1 md:ml-64 pb-12 px-4 md:px-12 py-8 md:py-8 animate-fade-in w-full">
-      <slot />
-    </main>
-  </div>
+  <!-- Sidebar component is fixed positioned -->
+  <PortalSidebar client:only="react" />
+  
+  <!-- Main Content - Shifted right on desktop to account for fixed sidebar -->
+  <main class="min-h-screen md:ml-64 pb-12 px-4 md:px-8 py-8 md:py-8 animate-fade-in transition-all duration-300">
+    <slot />
+  </main>
 </Layout>
 
 <style>

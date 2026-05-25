@@ -1,0 +1,8 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import ClientDataView from '../../components/ClientDataView';
+---
+
+<DashboardLayout title="Pangkalan Data Klien - Portal Pekerja">
+  <ClientDataView client:only="react" />
+</DashboardLayout>

@@ -1,15 +1,56 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* [Standardize Font Loading] Ensure the font-sans variable 
-     matches the exact name provided by @fontsource */
   --font-sans: "Nunito Sans Variable", "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
-  
-  /* Optional: Define specific weights if needed for Tailwind utilities */
   --font-weight-black: 900;
+  
+  --animation-slide-in: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --animation-fade-in: fade-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animation-page-transition: page-transition 0.5s ease-out;
 }
 
-/* Base styles to ensure the font is applied globally */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+  
+  /* Portal Animations */
+  @keyframes slide-in {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes page-transition {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 @layer base {
   html {
     font-family: var(--font-sans);
@@ -17,31 +58,42 @@
 }
 
 /* =========================================
-   Global Custom Scrollbar Styling
+   Adaptive Enterprise Scrollbar
    ========================================= */
+:root {
+  /* DEFAULT: Stays Dark for the Public Website */
+  --sb-track: #111827; 
+  --sb-thumb: #4b5563; 
+  --sb-border: #111827;
+}
 
-/* For WebKit browsers (Chrome, Safari, Edge) */
+/* OVERRIDE: Swaps to Light ONLY in the Portal when dark mode is off */
+html:not(.dark) body.bg-gray-50 {
+  --sb-track: #f9fafb; 
+  --sb-thumb: #d1d5db;
+  --sb-border: #f9fafb;
+}
+
 ::-webkit-scrollbar {
-  width: 10px; /* Slimmer vertical scrollbar */
-  height: 10px; /* Slimmer horizontal scrollbar if needed */
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827; /* Matches Tailwind bg-gray-900 */
+  background: var(--sb-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4b5563; /* Matches Tailwind bg-gray-600 for a subtle look */
-  border-radius: 8px; /* Rounded pill shape */
-  border: 2px solid #111827; /* Creates a padded inset look against the track */
+  background: var(--sb-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--sb-border);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #eab308; /* Matches Tailwind text-yellow-500 on hover */
+  background: #eab308;
 }
 
-/* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4b5563 #111827; /* thumb color | track color */
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
 }

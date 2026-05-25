@@ -1,0 +1,41 @@
+---
+import PortalSidebar from '../components/PortalSidebar';
+import Layout from './Layout.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<Layout title={title}>
+  <div class="flex min-h-screen">
+    <!-- Sidebar - Full Height Navigation -->
+    <PortalSidebar client:only="react" />
+    
+    <!-- Main Content - Responsive margin on desktop -->
+    <main class="flex-1 md:ml-64 pb-12 px-4 md:px-12 py-8 md:py-8 animate-fade-in w-full">
+      <slot />
+    </main>
+  </div>
+</Layout>
+
+<style>
+  :global(.scrollbar-thin::-webkit-scrollbar) {
+    width: 6px;
+  }
+  
+  :global(.scrollbar-thin::-webkit-scrollbar-track) {
+    background: transparent;
+  }
+  
+  :global(.scrollbar-thin::-webkit-scrollbar-thumb) {
+    background: rgb(107, 114, 128);
+    border-radius: 3px;
+  }
+  
+  :global(.dark .scrollbar-thin::-webkit-scrollbar-thumb) {
+    background: rgb(55, 65, 81);
+  }
+</style>

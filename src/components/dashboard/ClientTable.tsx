@@ -27,12 +27,12 @@ const getSortValue = (obj: any, key: string) => {
 
 const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
   <th 
-    className="p-4 font-semibold cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none group whitespace-nowrap text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/80 sticky top-0 z-10" 
+    className="p-2 md:p-4 font-semibold cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none group whitespace-nowrap text-xs md:text-sm text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/80 sticky top-0 z-10" 
     onClick={() => onClick(sortKey)}
   >
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 md:gap-2">
       {label}
-      <span className={`text-[10px] ${currentSort.key === sortKey ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+      <span className={`text-[8px] md:text-[10px] ${currentSort.key === sortKey ? 'text-yellow-600 dark:text-yellow-500' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
         {currentSort.key === sortKey ? (currentSort.direction === 'asc' ? '▲' : '▼') : '↕'}
       </span>
     </div>
@@ -101,94 +101,97 @@ export default function ClientTable({ clients, canEdit }: { clients: any[], canE
   }, [search, dateFilter, sort, clients]);
 
   return (
-    <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-2xl transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg md:rounded-2xl overflow-hidden shadow-sm dark:shadow-2xl transition-colors duration-300">
       
       {/* Table Header & Controls */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">Pangkalan Data Klien</h3>
+      <div className="p-3 md:p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4 mb-4 md:mb-6">
+          <h3 className="text-sm md:text-lg font-bold text-gray-900 dark:text-white uppercase tracking-widest">Client Database</h3>
           {canEdit && (
-            <button className="text-xs font-bold uppercase tracking-wider bg-yellow-500 hover:bg-yellow-600 text-white dark:text-black px-5 py-2.5 rounded-lg transition-colors shadow-sm">
-              + Tambah Klien
+            <button className="text-xs font-bold uppercase tracking-wider bg-yellow-500 hover:bg-yellow-600 text-white dark:text-black px-3 md:px-5 py-2 md:py-2.5 rounded-lg transition-colors shadow-sm min-h-[40px]">
+              + Add Client
             </button>
           )}
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
           <div className="relative flex-1">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <svg className="w-4 md:w-5 h-4 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </span>
             <input 
               type="text" 
-              placeholder="Cari Nama, IC, Telefon, atau Kategori..." 
+              placeholder="Search Name, ID, Phone..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all placeholder-gray-400 dark:placeholder-gray-600"
+              className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs md:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all placeholder-gray-400 dark:placeholder-gray-600"
             />
           </div>
           <select 
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 cursor-pointer transition-all"
+            className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs md:text-sm rounded-lg py-2 md:py-2.5 px-3 md:px-4 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 cursor-pointer transition-all min-h-[40px]"
           >
-            <option value="all">Semua Tarikh</option>
-            <option value="year">Daftar Tahun Ini</option>
-            <option value="month">Daftar Bulan Ini</option>
+            <option value="all">All Dates</option>
+            <option value="year">Registered This Year</option>
+            <option value="month">Registered This Month</option>
           </select>
         </div>
       </div>
 
-      {/* The Table */}
+      {/* The Table - Responsive with horizontal scroll on mobile */}
       <div className="overflow-x-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
-        <table className="w-full text-left border-collapse relative">
+        <table className="w-full text-left border-collapse relative min-w-min md:min-w-full">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider">
-              <SortHeader label="Tarikh" sortKey="DATE" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Nama" sortKey="NAME" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Telefon" sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="IC Number" sortKey="IC NUMBER" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Kategori" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Dibayar (RM)" sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Baki (RM)" sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
-              <SortHeader label="Pakej (RM)" sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
+            <tr className="text-[10px] md:text-[11px] uppercase tracking-wider">
+              <SortHeader label="Date" sortKey="DATE" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Name" sortKey="NAME" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Phone" sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="ID" sortKey="IC NUMBER" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Category" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Paid" sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Outstanding" sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
+              <SortHeader label="Package" sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
               <SortHeader label="Status" sortKey="CASE STATUS" currentSort={sort} onClick={handleSort} />
-              {canEdit && <SortHeader label="Tindakan" sortKey="actions" currentSort={{key: ''}} onClick={() => {}} />}
+              {canEdit && <SortHeader label="Actions" sortKey="actions" currentSort={{key: ''}} onClick={() => {}} />}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800/50">
-  {filteredClients.map((client) => {
-    // This creates a permanent ID from the client data itself. 
-    // It will NEVER stick because it doesn't rely on the order (index).
-    const rowId = client.NAME + client["PHONE NUMBER"] + client.DATE;
-    
-    return (
-      <tr key={rowId} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
-        <td className="p-4 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap">{client.DATE}</td>
-        <td className="p-4 text-xs font-semibold text-gray-900 dark:text-white">{client.NAME}</td>
-        <td className="p-4 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{client["PHONE NUMBER"]}</td>
-        <td className="p-4 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{client["IC NUMBER"]}</td>
-        <td className="p-4 text-xs text-gray-600 dark:text-gray-300">{client["CASE CATEGORY"]}</td>
-        <td className="p-4 text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">{client["TOTAL PAID (RM)"] || '0'}</td>
-        <td className="p-4 text-xs font-mono font-medium text-red-600 dark:text-red-400">{client["PENDING (RM)"] || '0'}</td>
-        <td className="p-4 text-xs font-mono font-medium text-blue-600 dark:text-blue-400">{client["PACKAGE (RM)"] || '0'}</td>
-        <td className="p-4">
-          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider whitespace-nowrap
-            ${String(client["CASE STATUS"]).includes('COMPLETED') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500' 
-            : String(client["CASE STATUS"]).includes('DROPPED') ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-500' 
-            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-500'}`}>
-            {client["CASE STATUS"]}
-          </span>
-        </td>
-        {canEdit && (
-          <td className="p-4 text-right whitespace-nowrap">
-            <button className="text-[11px] text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 dark:hover:text-yellow-400 font-bold uppercase transition-colors">Ubah</button>
-          </td>
-        )}
-      </tr>
-    );
-  })}
-</tbody>
+            {filteredClients.length > 0 ? filteredClients.map((client) => {
+              const rowId = client.NAME + client["PHONE NUMBER"] + client.DATE;
+              return (
+                <tr key={rowId} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap">{client.DATE}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap truncate">{client.NAME}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{client["PHONE NUMBER"]}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{client["IC NUMBER"]}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">{client["CASE CATEGORY"]}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{client["TOTAL PAID (RM)"] || '0'}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs font-mono font-medium text-red-600 dark:text-red-400 whitespace-nowrap">{client["PENDING (RM)"] || '0'}</td>
+                  <td className="p-2 md:p-4 text-[9px] md:text-xs font-mono font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">{client["PACKAGE (RM)"] || '0'}</td>
+                  <td className="p-2 md:p-4">
+                    <span className={`text-[8px] md:text-[10px] font-bold px-2 md:px-2.5 py-1 rounded-md uppercase tracking-wider whitespace-nowrap block
+                      ${String(client["CASE STATUS"]).includes('COMPLETED') ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500' 
+                      : String(client["CASE STATUS"]).includes('DROPPED') ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-500' 
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-500'}`}>
+                      {client["CASE STATUS"]}
+                    </span>
+                  </td>
+                  {canEdit && (
+                    <td className="p-2 md:p-4 text-right whitespace-nowrap">
+                      <button className="text-[8px] md:text-[11px] text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 dark:hover:text-yellow-400 font-bold uppercase transition-colors min-h-[32px] px-2">Edit</button>
+                    </td>
+                  )}
+                </tr>
+              );
+            }) : (
+              <tr>
+                <td colSpan={canEdit ? 10 : 9} className="p-6 md:p-12 text-center text-xs md:text-sm text-gray-500 dark:text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-transparent">
+                  No clients found matching your search.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
     </div>

@@ -8,39 +8,27 @@ export default function DashboardView() {
   const [dbClients, setDbClients] = useState<any[]>([]);
   
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [themeLoaded, setThemeLoaded] = useState(false);
 
   useEffect(() => {
-    // Load theme from localStorage after component mounts
     try {
       const savedTheme = localStorage.getItem('portal-theme') as 'light' | 'dark' | null;
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         setTheme(savedTheme);
       }
-    } catch (error) {
-      // localStorage might not be available
-    }
-    setThemeLoaded(true);
+    } catch (error) {}
   }, []);
 
-  // Save theme to localStorage and apply to document whenever it changes
   useEffect(() => {
-    if (themeLoaded) {
-      try {
-        localStorage.setItem('portal-theme', theme);
-      } catch (error) {
-        // localStorage might not be available
-      }
-      
-      // Apply dark class to html element for Tailwind dark mode
+    try {
+      localStorage.setItem('portal-theme', theme);
       const htmlElement = document.documentElement;
       if (theme === 'dark') {
         htmlElement.classList.add('dark');
       } else {
         htmlElement.classList.remove('dark');
       }
-    }
-  }, [theme, themeLoaded]);
+    } catch (error) {}
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -102,49 +90,24 @@ export default function DashboardView() {
   const canEdit = ['COO', 'CFO'].includes(profile?.role);
 
   return (
-    <div 
-      style={{
-        backgroundColor: theme === 'dark' ? '#0f172a' : '#f3f4f6',
-        color: theme === 'dark' ? '#f3f4f6' : '#111827',
-        padding: '2rem',
-        borderRadius: '1rem',
-        border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e5e7eb',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        transition: 'background-color 0.3s, color 0.3s, border-color 0.3s',
-        minHeight: '80vh'
-      }}
-    >
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl transition-colors duration-300 min-h-[80vh] p-8 text-gray-900 dark:text-gray-100">
         
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e5e7eb', paddingBottom: '1.5rem', gap: '1rem' }}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-gray-200 dark:border-gray-700 pb-6 gap-4">
         <div>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.125em', color: theme === 'dark' ? '#ffffff' : '#111827' }}>
+          <h2 className="text-3xl font-black uppercase tracking-widest text-gray-900 dark:text-white">
             {profile?.role} Dashboard
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <span style={{ fontWeight: 'bold', letterSpacing: '0.075em', textTransform: 'uppercase', fontSize: '0.75rem', backgroundColor: theme === 'dark' ? '#fef3c7' : '#fef3c7', color: theme === 'dark' ? '#92400e' : '#92400e', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: theme === 'dark' ? '1px solid #fde68a' : '1px solid #fde68a' }}>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="font-bold uppercase tracking-wider text-xs px-3 py-1.5 rounded-md bg-yellow-100 text-yellow-900 dark:bg-yellow-500/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/30">
               {profile?.name} • {profile?.department} Dept
             </span>
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="flex items-center gap-4">
           <button 
             onClick={toggleTheme}
-            style={{
-              padding: '0.625rem',
-              borderRadius: '0.5rem',
-              backgroundColor: theme === 'dark' ? '#1f2937' : '#e5e7eb',
-              border: theme === 'dark' ? '1px solid #374151' : '1px solid #d1d5db',
-              color: theme === 'dark' ? '#d1d5db' : '#374151',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#111827' : '#d1d5db';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#1f2937' : '#e5e7eb';
-            }}
+            className="p-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 transition-all cursor-pointer shadow-sm"
             title="Tukar Tema"
           >
             {theme === 'light' ? (
@@ -156,49 +119,31 @@ export default function DashboardView() {
 
           <button 
             onClick={handleLogout}
-            style={{
-              padding: '0.625rem 1.5rem',
-              backgroundColor: theme === 'dark' ? '#7f1d1d' : '#fee2e2',
-              border: theme === 'dark' ? '1px solid #dc2626' : '1px solid #fca5a5',
-              color: theme === 'dark' ? '#fca5a5' : '#dc2626',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              letterSpacing: '0.075em',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#991b1b' : '#fecaca';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = theme === 'dark' ? '#7f1d1d' : '#fee2e2';
-            }}
+            className="px-6 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-all cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:text-red-400 dark:border-red-500/50 shadow-sm"
           >
             Log Keluar
           </button>
         </div>
       </div>
 
-      <div style={{ paddingTop: '2rem' }}>
+      <div className="pt-8">
         {isIT && (
-          <div style={{ padding: '1.5rem', backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff', border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb', borderRadius: '1rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-             <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kawalan IT Admin</h3>
-             <p style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280', fontSize: '0.875rem' }}>System management tools will be placed here.</p>
+          <div className="p-6 rounded-2xl shadow-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700">
+             <h3 className="text-xl font-bold mb-2 uppercase tracking-wide">Kawalan IT Admin</h3>
+             <p className="text-gray-500 dark:text-gray-400 text-sm">System management tools will be placed here.</p>
           </div>
         )}
 
         {isExec && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="flex flex-col gap-8">
             <ClientTable clients={dbClients} canEdit={canEdit} />
           </div>
         )}
 
         {!isIT && !isExec && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff', border: theme === 'dark' ? '1px solid #374151' : '1px solid #e5e7eb', borderRadius: '1rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Akses Terhad</h3>
-            <p style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280', fontSize: '0.875rem' }}>Anda tidak mempunyai kebenaran untuk melihat data ini.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl shadow-sm bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-bold mb-2 uppercase tracking-wide">Akses Terhad</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Anda tidak mempunyai kebenaran untuk melihat data ini.</p>
           </div>
         )}
       </div>

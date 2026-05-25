@@ -1,4 +1,4 @@
- import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function PortalSidebar() {
@@ -6,14 +6,12 @@ export default function PortalSidebar() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState('');
-  const [isOpen, setIsOpen] = useState(false); // Mobile menu state - starts closed
+  const [isOpen, setIsOpen] = useState(false);
 
-  // Get current path
   useEffect(() => {
     setCurrentPath(window.location.pathname);
   }, []);
 
-  // Load theme
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('portal-theme') as 'light' | 'dark' | null;
@@ -23,7 +21,6 @@ export default function PortalSidebar() {
     } catch (error) {}
   }, []);
 
-  // Apply theme
   useEffect(() => {
     try {
       localStorage.setItem('portal-theme', theme);
@@ -36,7 +33,6 @@ export default function PortalSidebar() {
     } catch (error) {}
   }, [theme]);
 
-  // Load profile
   useEffect(() => {
     async function loadProfile() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -63,7 +59,6 @@ export default function PortalSidebar() {
     loadProfile();
   }, []);
 
-  // Close menu on navigation
   useEffect(() => {
     setIsOpen(false);
   }, [currentPath]);
@@ -84,12 +79,33 @@ export default function PortalSidebar() {
     return currentPath.startsWith(path);
   };
 
-  const navItems = [
-    { label: 'Overview', path: '/portal' },
-    { label: 'Clients', path: '/portal/klien' },
-    { label: 'Reports', path: '/portal/laporan' },
-    { label: 'Settings', path: '/portal/tetapan' },
-  ];
+  // ROLE-BASED NAVIGATION LOGIC
+  const getNavItems = () => {
+    if (!profile) return [];
+    
+    // Define the role groups
+    const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile.role);
+    const hasViewAccess = ['Intern', 'Contract'].includes(profile.role);
+    const canViewClients = hasFullAccess || hasViewAccess;
+    
+    const items = [{ label: 'Overview', path: '/portal' }];
+    
+    // Both Full Access and View Access can see the Clients menu
+    if (canViewClients) {
+      items.push({ label: 'Clients', path: '/portal/klien' });
+    }
+    
+    // ONLY Full Access can see Reports
+    if (hasFullAccess) {
+      items.push({ label: 'Reports', path: '/portal/laporan' });
+    }
+    
+    items.push({ label: 'Settings', path: '/portal/tetapan' });
+    
+    return items;
+  };
+
+  const navItems = getNavItems();
 
   if (loading) {
     return (
@@ -101,7 +117,6 @@ export default function PortalSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button - Only visible on small screens */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-4 left-4 md:hidden z-50 p-2 rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-lg hover:shadow-xl transition-shadow min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -116,17 +131,11 @@ export default function PortalSidebar() {
         </svg>
       </button>
 
-      {/* Mobile Overlay - Closes menu when clicking outside */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 md:hidden z-30"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 md:hidden z-30" onClick={() => setIsOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-teal-50 dark:bg-black border-r border-teal-200 dark:border-gray-900 flex flex-col shadow-2xl z-40 overflow-y-auto animate-slide-in transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        {/* Top Section - Branding & Back Button */}
+      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-teal-50 dark:bg-black border-r border-teal-200 dark:border-gray-900 flex flex-col shadow-2xl z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-4 border-b border-teal-200 dark:border-gray-800 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2 min-w-0">
@@ -138,7 +147,6 @@ export default function PortalSidebar() {
             <button
               onClick={() => setIsOpen(false)}
               className="md:hidden p-1 text-teal-600 dark:text-gray-400 flex-shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center"
-              aria-label="Close Menu"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -146,11 +154,7 @@ export default function PortalSidebar() {
             </button>
           </div>
           
-          {/* Back to Main Website */}
-          <a 
-            href="/" 
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white transition-all border border-teal-200 dark:border-gray-700 hover:border-teal-300 dark:hover:border-gray-600 min-h-[40px]"
-          >
+          <a href="/" className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white transition-all border border-teal-200 dark:border-gray-700 min-h-[40px]">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -158,8 +162,7 @@ export default function PortalSidebar() {
           </a>
         </div>
 
-        {/* Profile Section */}
-        <div className="p-4 mx-2 mt-4 bg-teal-100 dark:bg-gray-900/50 border border-teal-200 dark:border-gray-800/50 rounded-lg flex-shrink-0 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className="p-4 mx-2 mt-4 bg-teal-100 dark:bg-gray-900/50 border border-teal-200 dark:border-gray-800/50 rounded-lg flex-shrink-0">
           <p className="text-xs font-bold text-teal-600 dark:text-gray-400 uppercase tracking-wider mb-1">User</p>
           <p className="text-xs md:text-sm font-semibold text-teal-900 dark:text-white truncate">{profile?.name || 'User'}</p>
           <div className="flex gap-2 mt-2 flex-wrap">
@@ -172,18 +175,17 @@ export default function PortalSidebar() {
           </div>
         </div>
 
-        {/* Navigation Menu */}
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
           <p className="text-xs font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest px-3 mb-3">Main Menu</p>
           <ul className="space-y-2">
-            {navItems.map((item, idx) => (
-              <li key={item.path} style={{ animationDelay: `${0.15 + idx * 0.05}s` }} className="animate-fade-in">
+            {navItems.map((item) => (
+              <li key={item.path}>
                 <a
                   href={item.path}
-                  className={`px-4 py-3 rounded-lg text-xs md:text-sm font-semibold uppercase tracking-wider transition-all block touch-manipulation min-h-[44px] flex items-center ${
+                  className={`px-4 py-3 rounded-lg text-xs md:text-sm font-semibold uppercase tracking-wider transition-all block min-h-[44px] flex items-center ${
                     isActive(item.path)
                       ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-lg scale-105'
-                      : 'text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white hover:translate-x-1 active:bg-teal-200 dark:active:bg-gray-700'
+                      : 'text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white hover:translate-x-1'
                   }`}
                 >
                   {item.label}
@@ -193,21 +195,16 @@ export default function PortalSidebar() {
           </ul>
         </nav>
 
-        {/* Footer Actions */}
-        <div className="border-t border-teal-200 dark:border-gray-800 p-4 space-y-2 flex-shrink-0 animate-fade-in bg-teal-50/50 dark:bg-gray-950/50" style={{ animationDelay: '0.35s' }}>
-          {/* Theme Toggle */}
+        <div className="border-t border-teal-200 dark:border-gray-800 p-4 space-y-2 flex-shrink-0 bg-teal-50/50 dark:bg-gray-950/50">
           <button
             onClick={toggleTheme}
-            className="w-full px-4 py-2.5 rounded-lg bg-teal-100 dark:bg-gray-800/50 hover:bg-teal-200 dark:hover:bg-gray-700/50 text-teal-700 dark:text-gray-300 hover:text-teal-900 dark:hover:text-white text-xs font-semibold uppercase tracking-wider transition-all border border-teal-200 dark:border-gray-700 touch-manipulation active:bg-teal-300 dark:active:bg-gray-600 min-h-[44px]"
-            title="Toggle Theme"
+            className="w-full px-4 py-2.5 rounded-lg bg-teal-100 dark:bg-gray-800/50 hover:bg-teal-200 dark:hover:bg-gray-700/50 text-teal-700 dark:text-gray-300 hover:text-teal-900 dark:hover:text-white text-xs font-semibold uppercase tracking-wider transition-all border border-teal-200 dark:border-gray-700 min-h-[44px]"
           >
             {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
           </button>
-
-          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-2.5 rounded-lg bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs font-semibold uppercase tracking-wider transition-all border border-red-200 dark:border-red-500/30 touch-manipulation active:bg-red-300 dark:active:bg-red-500/30 min-h-[44px]"
+            className="w-full px-4 py-2.5 rounded-lg bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:text-red-700 text-xs font-semibold uppercase tracking-wider transition-all border border-red-200 dark:border-red-500/30 min-h-[44px]"
           >
             Logout
           </button>

@@ -15,7 +15,6 @@ export default function ClientDataView() {
         return;
       }
 
-      // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select(`full_name, department, roles ( role_name )`)
@@ -23,22 +22,28 @@ export default function ClientDataView() {
         .single();
 
       if (profileData) {
+        const roleName = profileData.roles?.role_name || 'No Role';
         setProfile({
           name: profileData.full_name,
           department: profileData.department,
-          role: profileData.roles?.role_name || 'No Role',
+          role: roleName,
         });
-      }
 
-      // Load clients
-      const { data: clientsData } = await supabase.from('clients').select('*');
+        // Determine who can fetch the data
+        const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName);
+        const hasViewAccess = ['Intern', 'Contract'].includes(roleName);
         
-      if (clientsData) {
-        const safeData = clientsData.map((c, idx) => ({
-          ...c,
-          _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
-        }));
-        setDbClients(safeData);
+        if (hasFullAccess || hasViewAccess) {
+          const { data: clientsData } = await supabase.from('clients').select('*');
+            
+          if (clientsData) {
+            const safeData = clientsData.map((c, idx) => ({
+              ...c,
+              _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
+            }));
+            setDbClients(safeData);
+          }
+        }
       }
       setLoading(false);
     }
@@ -55,7 +60,25 @@ export default function ClientDataView() {
     );
   }
 
-  const canEdit = ['COO', 'CFO'].includes(profile?.role);
+  // Define exact permissions
+  const canEdit = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
+  const canView = canEdit || ['Intern', 'Contract'].includes(profile?.role);
+
+  // Failsafe: If somehow a totally unregistered role gets here, block them
+  if (!canView) {
+    return (
+      <div className="space-y-4 md:space-y-6 animate-page-transition pt-12 md:pt-0">
+        <div className="p-8 md:p-12 rounded-xl bg-white dark:bg-gray-900/50 border border-red-200 dark:border-red-900/50 shadow-lg text-center mt-12">
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">
+            Akses Ditolak
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+            Akaun anda ({profile?.role}) tidak mempunyai kebenaran untuk mengakses Pangkalan Data Klien.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 animate-page-transition pt-12 md:pt-0 overflow-x-auto">
@@ -64,11 +87,14 @@ export default function ClientDataView() {
           Client Database
         </h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
-          Manage and view all client information
+          {canEdit 
+            ? "Urus dan edit maklumat pangkalan data klien." 
+            : "Papar maklumat pangkalan data klien (Akses Edit Ditolak)."}
         </p>
       </div>
 
       <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+        {/* We pass `canEdit` down. The ClientTable will naturally hide edit/add buttons if false! */}
         <ClientTable clients={dbClients} canEdit={canEdit} />
       </div>
     </div>

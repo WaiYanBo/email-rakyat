@@ -18,58 +18,55 @@ export default function LoginAuth() {
     });
 
     if (error) {
-      setError('Login failed. Please check your email and password.');
+      setError('Log masuk gagal. Sila semak e-mel dan kata laluan anda.');
     } else {
-      window.location.href = '/portal/dashboard'; 
+      window.location.href = '/portal'; 
     }
     
     setLoading(false);
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl transition-colors duration-300 animate-fade-in">
-      <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-        <h2 className="text-2xl font-black text-teal-800 dark:text-white uppercase tracking-wider mb-2 transition-colors">
+    // FIX: Changed w-full to w-[90%] on mobile, adjusted padding (p-6 md:p-8)
+    <div className="w-[90%] md:w-full max-w-md mx-auto p-6 md:p-8 bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl transition-colors duration-300">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-black text-teal-800 dark:text-white uppercase tracking-wider mb-2 transition-colors">
           Staff Portal
         </h2>
-        <p className="text-sm text-teal-600/80 dark:text-gray-400 transition-colors">
+        <p className="text-xs md:text-sm text-teal-600/80 dark:text-gray-400 transition-colors">
           Please log in to continue
         </p>
       </div>
 
-      <form onSubmit={handleLogin} className="space-y-6">
-        <div className="animate-fade-in" style={{ animationDelay: '0.15s' }}>
-          <label className="block text-sm font-bold text-teal-900 dark:text-gray-300 mb-2 uppercase tracking-wide transition-colors">
+      <form onSubmit={handleLogin} className="space-y-5 md:space-y-6">
+        <div>
+          <label className="block text-xs md:text-sm font-bold text-teal-900 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
             Email
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
-            autoComplete="email"
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
+            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
             required
           />
         </div>
 
-        <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          <label className="block text-sm font-bold text-teal-900 dark:text-gray-300 mb-2 uppercase tracking-wide transition-colors">
+        <div>
+          <label className="block text-xs md:text-sm font-bold text-teal-900 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
             Password
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-            className="w-full px-4 py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
+            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
             required
           />
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/50 rounded-lg text-red-600 dark:text-red-400 text-sm font-medium text-center transition-colors animate-fade-in">
+          <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/50 rounded-lg text-red-600 dark:text-red-400 text-xs md:text-sm font-medium text-center transition-colors">
             {error}
           </div>
         )}
@@ -77,10 +74,9 @@ export default function LoginAuth() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-500 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-black font-black uppercase tracking-widest rounded-lg transition-all duration-300 shadow-[0_0_20px_rgba(13,148,136,0.2)] hover:shadow-[0_0_30px_rgba(13,148,136,0.4)] dark:shadow-[0_0_20px_rgba(234,179,8,0.15)] dark:hover:shadow-[0_0_30px_rgba(234,179,8,0.3)] disabled:opacity-50 disabled:cursor-not-allowed animate-fade-in"
-          style={{ animationDelay: '0.25s' }}
+          className="w-full py-2.5 md:py-3 px-4 bg-teal-600 hover:bg-teal-500 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-black font-black text-sm md:text-base uppercase tracking-widest rounded-lg transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-2"
         >
-          {loading ? 'Processing...' : 'Login'}
+          {loading ? 'Processing...' : 'Log In'}
         </button>
       </form>
     </div>

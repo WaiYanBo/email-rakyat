@@ -112,22 +112,23 @@ export default function ExecutiveOverview() {
       {/* --- EXECUTIVE & GM ONLY VIEW --- */}
       {hasFullAccess && !isIT && stats && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-600/10 border border-blue-200 dark:border-blue-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[9px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Clients</p>
-              <p className="text-2xl md:text-3xl font-black text-blue-700 dark:text-blue-300 mt-1">{stats.totalClients}</p>
+          {/* FIX: Changed to grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 so mobile has full-width cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-600/10 border border-blue-200 dark:border-blue-500/30 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Total Clients</p>
+              <p className="text-3xl font-black text-blue-700 dark:text-blue-300 mt-1">{stats.totalClients}</p>
             </div>
-            <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-600/10 border border-emerald-200 dark:border-emerald-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[9px] md:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Completed</p>
-              <p className="text-2xl md:text-3xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{stats.completed}</p>
+            <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-600/10 border border-emerald-200 dark:border-emerald-500/30 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-[10px] md:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Completed</p>
+              <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{stats.completed}</p>
             </div>
-            <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-500/10 dark:to-yellow-600/10 border border-yellow-200 dark:border-yellow-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[9px] md:text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">Pending</p>
-              <p className="text-2xl md:text-3xl font-black text-yellow-700 dark:text-yellow-300 mt-1">{stats.pending}</p>
+            <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-500/10 dark:to-yellow-600/10 border border-yellow-200 dark:border-yellow-500/30 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-[10px] md:text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">Pending</p>
+              <p className="text-3xl font-black text-yellow-700 dark:text-yellow-300 mt-1">{stats.pending}</p>
             </div>
-            <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-600/10 border border-red-200 dark:border-red-500/30 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-[9px] md:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Dropped</p>
-              <p className="text-2xl md:text-3xl font-black text-red-700 dark:text-red-300 mt-1">{stats.dropped}</p>
+            <div className="p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-600/10 border border-red-200 dark:border-red-500/30 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-[10px] md:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Dropped</p>
+              <p className="text-3xl font-black text-red-700 dark:text-red-300 mt-1">{stats.dropped}</p>
             </div>
           </div>
 

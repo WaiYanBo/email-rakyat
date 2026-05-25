@@ -171,13 +171,14 @@ export default function ReportsView() {
         if (profileError) {
           throw new Error(`Profile creation failed: ${profileError.message}`);
         }
+        
 
         console.log('✓ New staff onboarded successfully!');
         alert('✓ New staff account created! Email: ' + data.email + '\nChanges will sync automatically.');
         setIsStaffModalOpen(false);
         // Real-time listener will automatically refresh the table
       }
-      
+      window.location.reload();
     } catch (err: any) {
       console.error('Error saving staff record:', err);
       alert("❌ Error: " + err.message);

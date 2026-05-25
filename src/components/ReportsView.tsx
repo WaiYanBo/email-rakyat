@@ -16,6 +16,27 @@ export default function ReportsView() {
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
 
+  // FETCH STAFF RECORDS FUNCTION
+  const fetchStaffRecords = async () => {
+    try {
+      const { data: staffData, error } = await supabase
+        .from('profiles')
+        .select(`id, full_name, department, salary, status, roles ( role_name )`);
+      
+      if (error) {
+        console.error('Error fetching staff records:', error);
+        return;
+      }
+      
+      if (staffData) {
+        setStaffRecords(staffData);
+        console.log('Staff records updated:', staffData.length, 'records');
+      }
+    } catch (err) {
+      console.error('Exception fetching staff records:', err);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -30,21 +51,43 @@ export default function ReportsView() {
         setProfile({ name: profileData.full_name, role: profileData.roles?.role_name || 'No Role' });
       }
 
-      // 2. Fetch REAL Staff Data from Supabase Profiles
-      const { data: staffData } = await supabase
-        .from('profiles')
-        .select(`id, full_name, department, salary, status, roles ( role_name )`);
-      
-      if (staffData) {
-        setStaffRecords(staffData);
-      }
+      // 2. Initial Load of Staff Data
+      await fetchStaffRecords();
       
       setLoading(false);
     }
+    
     loadData();
+
+    // 3. Setup Realtime Listener for instant updates
+    console.log('Setting up realtime listener...');
+    const subscription = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'profiles'
+        },
+        async (payload) => {
+          console.log('Real-time change detected:', payload.eventType, payload);
+          // Re-fetch all staff records when changes occur
+          await fetchStaffRecords();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
+
+    // Cleanup: Remove listener on component unmount
+    return () => {
+      console.log('Unsubscribing from realtime listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // --- AUTOMATED HR ONBOARDING HANDLER ---
+  // --- AUTOMATED HR ONBOARDING HANDLER (WITH REAL-TIME SYNC) ---
   const saveStaffRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -60,20 +103,32 @@ export default function ReportsView() {
         .eq('role_name', data.role)
         .single();
         
-      if (roleError) throw new Error("Peranan (Role) tidak dijumpai dalam pangkalan data.");
+      if (roleError) {
+        throw new Error("Role not found in database. Please ensure the role exists in the roles table.");
+      }
 
       if (editingStaff) {
-        // UPDATE EXISTING STAFF
-        const { error: updateError } = await supabase.from('profiles').update({
-          full_name: data.name,
-          department: data.dept,
-          role_id: roleObj.id,
-          salary: data.salary,
-          status: data.status
-        }).eq('id', editingStaff.id);
+        // UPDATE EXISTING STAFF using upsert
+        console.log('Updating staff ID:', editingStaff.id);
+        const { error: upsertError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: editingStaff.id,
+            full_name: data.name,
+            department: data.dept,
+            role_id: roleObj.id,
+            salary: parseFloat(data.salary as string) || 0,
+            status: data.status
+          });
         
-        if (updateError) throw updateError;
-        alert("Staff record updated successfully!");
+        if (upsertError) {
+          throw new Error(`Update failed: ${upsertError.message}`);
+        }
+        
+        console.log('✓ Staff record updated successfully!');
+        alert('✓ Staff record updated! Changes will sync automatically.');
+        setIsStaffModalOpen(false);
+        // Real-time listener will automatically refresh the table
 
       } else {
         // INSERT NEW STAFF (Total Automation)
@@ -82,46 +137,59 @@ export default function ReportsView() {
         const onboardingClient = createClient(
           import.meta.env.PUBLIC_SUPABASE_URL,
           import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-          { auth: { persistSession: false } } // THIS IS THE MAGIC KEY
+          { auth: { persistSession: false } }
         );
 
         // B. Create the Auth Login Credentials
+        console.log('Creating auth account for:', data.email);
         const { data: authData, error: authError } = await onboardingClient.auth.signUp({
           email: data.email as string,
           password: data.password as string,
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          throw new Error(`Auth creation failed: ${authError.message}`);
+        }
 
-        // C. Push all HR data straight into the profiles table linking to the new Auth ID
-        if (authData.user) {
-          const { error: profileError } = await supabase.from('profiles').upsert({
+        if (!authData.user) {
+          throw new Error('Failed to create user account.');
+        }
+
+        // C. Push all HR data to profiles table using upsert
+        console.log('Creating profile for user ID:', authData.user.id);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
             id: authData.user.id,
             full_name: data.name,
             department: data.dept,
             role_id: roleObj.id,
-            salary: data.salary,
+            salary: parseFloat(data.salary as string) || 0,
             status: data.status
           });
-          
-          if (profileError) throw profileError;
+        
+        if (profileError) {
+          throw new Error(`Profile creation failed: ${profileError.message}`);
         }
-        alert("New staff login created and profile injected into database!");
+
+        console.log('✓ New staff onboarded successfully!');
+        alert('✓ New staff account created! Email: ' + data.email + '\nChanges will sync automatically.');
+        setIsStaffModalOpen(false);
+        // Real-time listener will automatically refresh the table
       }
       
-      window.location.reload(); // Refresh to show new data
     } catch (err: any) {
-      alert("System Error: " + err.message);
+      console.error('Error saving staff record:', err);
+      alert("❌ Error: " + err.message);
     } finally {
       setIsProcessing(false);
-      setIsStaffModalOpen(false);
     }
   };
 
   if (loading) return <div className="flex justify-center pt-20"><div className="animate-pulse text-teal-600 font-bold uppercase tracking-widest">Loading Reports...</div></div>;
 
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
-  if (!hasFullAccess) return <div className="p-12 text-center text-red-600 font-bold text-xl uppercase tracking-widest mt-12 bg-white rounded-xl shadow-lg border border-red-200">Akses Ditolak</div>;
+  if (!hasFullAccess) return <div className="p-12 text-center text-red-600 font-bold text-xl uppercase tracking-widest mt-12 bg-white rounded-xl shadow-lg border border-red-200">Access Denied</div>;
 
   // HR Calculations
   const activeStaffCount = staffRecords.filter(s => s.status === 'Active' || !s.status).length;

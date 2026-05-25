@@ -134,7 +134,7 @@ export default function ClientDataView() {
   if (!canView) {
     return (
       <div className="p-8 md:p-12 rounded-xl bg-white dark:bg-gray-900/50 border border-red-200 dark:border-red-900/50 shadow-lg text-center mt-12">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">Akses Ditolak</h2>
+        <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">Access Denied</h2>
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function ClientDataView() {
           Client Database
         </h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
-          {canEdit ? "Urus dan edit maklumat pangkalan data klien." : "Papar maklumat pangkalan data klien (Akses Edit Ditolak)."}
+          {canEdit ? "Manage and edit client database information." : "View client database information (Edit Access Denied)."}
         </p>
       </div>
 

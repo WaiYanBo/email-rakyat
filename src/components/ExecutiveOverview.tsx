@@ -102,10 +102,10 @@ export default function ExecutiveOverview() {
     <div className="space-y-6 md:space-y-8 animate-page-transition">
       <div className="flex flex-col gap-2 pt-12 md:pt-0">
         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
-          {hasFullAccess && !isIT ? 'Executive Overview' : isIT ? 'Kawalan IT Admin' : 'Portal Kakitangan'}
+          {hasFullAccess && !isIT ? 'Executive Overview' : isIT ? 'IT Admin Dashboard' : 'Staff Portal'}
         </h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
-          Anda log masuk sebagai <span className="font-semibold text-teal-600 dark:text-yellow-500">{profile?.role}</span>
+          You are logged in as <span className="font-semibold text-teal-600 dark:text-yellow-500">{profile?.role}</span>
         </p>
       </div>
 
@@ -183,8 +183,8 @@ export default function ExecutiveOverview() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">Sistem Pentadbir IT</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Tetapan pelayan dan konfigurasi pangkalan data beroperasi dengan normal.</p>
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">IT Admin System</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">Server settings and database configuration operating normally.</p>
         </div>
       )}
 
@@ -194,9 +194,9 @@ export default function ExecutiveOverview() {
           <svg className="w-16 h-16 mx-auto text-teal-600 dark:text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">Selamat Datang</h2>
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-gray-900 dark:text-white mb-2">Welcome</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Sila gunakan menu <strong className="text-teal-700 dark:text-white">Klien</strong> di sebelah kiri untuk melihat senarai pangkalan data.
+            Please use the <strong className="text-teal-700 dark:text-white">Clients</strong> menu on the left to view the database list.
           </p>
         </div>
       )}

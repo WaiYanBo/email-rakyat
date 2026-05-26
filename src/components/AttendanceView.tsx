@@ -86,18 +86,18 @@ export default function AttendanceView() {
       </div>
 
       {/* Content */}
-      <div className="p-8">
+      <div className="p-10">
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16">
             <div className="inline-block">
               <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
               <div className="text-purple-600 font-bold text-sm">Loading attendance records...</div>
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Date Filter */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
               <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">📅 Filter by Date</label>
               <input
                 type="date"
@@ -123,7 +123,7 @@ export default function AttendanceView() {
                   <tbody>
                     {filteredRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center">
+                        <td colSpan={5} className="px-6 py-16 text-center">
                           <div className="text-4xl mb-2">📭</div>
                           <p className="text-gray-500 dark:text-gray-400 font-semibold">No records found for {selectedDate}</p>
                         </td>
@@ -194,32 +194,32 @@ export default function AttendanceView() {
 
             {/* Statistics */}
             {filteredRecords.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
                 {/* Total Checked In */}
-                <div className="relative p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 overflow-hidden">
+                <div className="relative p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">👥</div>
                   <p className="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 relative z-10">Total Checked In</p>
-                  <p className="text-4xl font-black text-blue-900 dark:text-blue-100 mt-2 relative z-10">
+                  <p className="text-4xl font-black text-blue-900 dark:text-blue-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_time).length}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 relative z-10">of {filteredRecords.length} employees</p>
                 </div>
 
                 {/* In Zone */}
-                <div className="relative p-6 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 overflow-hidden">
+                <div className="relative p-8 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">✓</div>
                   <p className="text-xs font-black uppercase tracking-widest text-green-700 dark:text-green-300 relative z-10">In Zone</p>
-                  <p className="text-4xl font-black text-green-900 dark:text-green-100 mt-2 relative z-10">
+                  <p className="text-4xl font-black text-green-900 dark:text-green-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_within_zone).length}
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1 relative z-10">on-site attendance</p>
                 </div>
 
                 {/* Outside Zone */}
-                <div className="relative p-6 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20 overflow-hidden">
+                <div className="relative p-8 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">⚠️</div>
                   <p className="text-xs font-black uppercase tracking-widest text-red-700 dark:text-red-300 relative z-10">Outside Zone</p>
-                  <p className="text-4xl font-black text-red-900 dark:text-red-100 mt-2 relative z-10">
+                  <p className="text-4xl font-black text-red-900 dark:text-red-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_time && !r.check_in_within_zone).length}
                   </p>
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1 relative z-10">flagged records</p>

@@ -203,25 +203,25 @@ export default function CheckInCheckOut() {
       </div>
 
       {/* Content */}
-      <div className="p-8">
+      <div className="p-10">
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16">
             <div className="inline-block">
               <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
               <div className="text-blue-600 font-bold text-sm">Loading attendance data...</div>
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Today's Status Card */}
             {todayRecord && (
-              <div className="p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/80 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/10 backdrop-blur-sm">
+              <div className="p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/80 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/10 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-xl">📋</span>
                   <p className="text-sm font-black uppercase tracking-widest text-blue-700 dark:text-blue-300">Today's Status</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
                   {/* Check In Card */}
                   <div className="p-5 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-blue-100 dark:border-blue-800/50 backdrop-blur">
                     <div className="flex items-center justify-between mb-3">
@@ -284,7 +284,7 @@ export default function CheckInCheckOut() {
             )}
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
               <button
                 onClick={() => getLocationAndCheckIn('check_in')}
                 disabled={isProcessing || (todayRecord?.check_in_time && !todayRecord?.check_out_time)}
@@ -330,7 +330,7 @@ export default function CheckInCheckOut() {
 
             {/* Location Status */}
             {locationStatus && (
-              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur mt-2">
                 <p className="text-sm text-center font-semibold text-blue-700 dark:text-blue-300">
                   <span className="inline-block mr-2">📍</span>{locationStatus}
                 </p>

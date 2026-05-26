@@ -160,15 +160,15 @@ export default function ExecutiveOverview() {
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 relative">
-      <div className="flex flex-col gap-2">
+    <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative">
+      <div className="flex flex-col gap-3">
         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">Portal <span className="text-teal-600 dark:text-yellow-500">Home</span></h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">Selamat kembali, <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
-      <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
+      <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
+        <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
           <div>
             <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">📢 Company Announcements</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{announcements.length} announcement{announcements.length !== 1 ? 's' : ''}</p>
@@ -177,7 +177,7 @@ export default function ExecutiveOverview() {
             <button onClick={() => setIsNoticeModalOpen(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">+ Post Notice</button>
           )}
         </div>
-        <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin">
+        <div className="p-8 space-y-5 max-h-[500px] overflow-y-auto scrollbar-thin">
           {announcements.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-3">📭</div>
@@ -186,7 +186,7 @@ export default function ExecutiveOverview() {
             </div>
           ) : (
             announcements.map((a) => (
-              <div key={a.id} className="p-5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-md transition-all">
+              <div key={a.id} className="p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-md transition-all">
                 <div className="flex flex-col sm:flex-row justify-between gap-3 mb-3">
                   <div className="flex items-start gap-3">
                     <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap ${
@@ -221,9 +221,9 @@ export default function ExecutiveOverview() {
       {/* POST NOTICE MODAL */}
       {isNoticeModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
+            <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-center">
+            <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-black uppercase tracking-widest text-teal-900 dark:text-white">Post New Announcement</h2>
                 <p className="text-xs text-teal-700 dark:text-teal-300 mt-1">Share important updates with your team</p>
@@ -234,7 +234,7 @@ export default function ExecutiveOverview() {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handlePostNotice} className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
+            <form onSubmit={handlePostNotice} className="p-8 space-y-6 overflow-y-auto max-h-[70vh]">
               {/* Title Input */}
               <div>
                 <label className="block text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">📌 Announcement Title</label>
@@ -296,7 +296,7 @@ export default function ExecutiveOverview() {
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-800">
                 <button 
                   type="button"
                   onClick={() => setIsNoticeModalOpen(false)}
@@ -327,14 +327,14 @@ export default function ExecutiveOverview() {
 
       {/* EXECUTIVE SNAPSHOT (Bottom Section) */}
       {hasFullAccess && !isIT && stats && (
-         <div className="space-y-6 pt-4 border-t border-gray-200 dark:border-gray-800">
+         <div className="space-y-8 pt-8 border-t border-gray-200 dark:border-gray-800">
            <h2 className="text-lg font-black uppercase tracking-widest">Executive Snapshot</h2>
            {/* ... Kept your beautiful stats grid exactly the same ... */}
-           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 dark:bg-blue-500/10"><p className="text-[10px] font-bold text-blue-600 uppercase">Total Clients</p><p className="text-2xl font-black text-blue-700">{stats.totalClients}</p></div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10"><p className="text-[10px] font-bold text-emerald-600 uppercase">Completed</p><p className="text-2xl font-black text-emerald-700">{stats.completed}</p></div>
-            <div className="p-4 rounded-xl bg-yellow-50 border border-yellow-200 dark:bg-yellow-500/10"><p className="text-[10px] font-bold text-yellow-600 uppercase">Pending</p><p className="text-2xl font-black text-yellow-700">{stats.pending}</p></div>
-            <div className="p-4 rounded-xl bg-red-50 border border-red-200 dark:bg-red-500/10"><p className="text-[10px] font-bold text-red-600 uppercase">Dropped</p><p className="text-2xl font-black text-red-700">{stats.dropped}</p></div>
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 rounded-2xl bg-blue-50 border border-blue-200 dark:bg-blue-500/10"><p className="text-[10px] font-bold text-blue-600 uppercase">Total Clients</p><p className="text-3xl font-black text-blue-700 mt-3">{stats.totalClients}</p></div>
+            <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10"><p className="text-[10px] font-bold text-emerald-600 uppercase">Completed</p><p className="text-3xl font-black text-emerald-700 mt-3">{stats.completed}</p></div>
+            <div className="p-6 rounded-2xl bg-yellow-50 border border-yellow-200 dark:bg-yellow-500/10"><p className="text-[10px] font-bold text-yellow-600 uppercase">Pending</p><p className="text-3xl font-black text-yellow-700 mt-3">{stats.pending}</p></div>
+            <div className="p-6 rounded-2xl bg-red-50 border border-red-200 dark:bg-red-500/10"><p className="text-[10px] font-bold text-red-600 uppercase">Dropped</p><p className="text-3xl font-black text-red-700 mt-3">{stats.dropped}</p></div>
           </div>
          </div>
       )}

@@ -2,12 +2,20 @@
   command = "npm run build"
   publish = "dist"
 
-# Add this section for caching and compression
+# SECURITY HEADERS - Applied to all routes
 [[headers]]
   for = "/*"
   [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.supabase.co https://ap-southeast-1.supabase.co; frame-ancestors 'none'; object-src 'none'"
     Cache-Control = "public, max-age=0, must-revalidate"
 
+# CACHING - Immutable assets
 [[headers]]
   for = "/*.js"
   [headers.values]
@@ -22,3 +30,29 @@
   for = "/*.webp"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# BLOCK SUSPICIOUS PATHS
+[[redirects]]
+  from = "/*.env*"
+  to = "/404"
+  status = 404
+
+[[redirects]]
+  from = "/wp-admin*"
+  to = "/404"
+  status = 404
+
+[[redirects]]
+  from = "/wp-login*"
+  to = "/404"
+  status = 404
+
+[[redirects]]
+  from = "/.git*"
+  to = "/404"
+  status = 404
+
+[[redirects]]
+  from = "/config*"
+  to = "/404"
+  status = 404

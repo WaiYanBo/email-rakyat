@@ -6,7 +6,9 @@ import AttendanceView from '../../components/AttendanceView';
 ---
 
 <DashboardLayout title="Overview - Staff Portal">
-  <ExecutiveOverview client:only="react" />
-  <CheckInCheckOut client:only="react" />
-  <AttendanceView client:only="react" />
+  <div class="space-y-12">
+    <ExecutiveOverview client:only="react" />
+    <CheckInCheckOut client:only="react" />
+    <AttendanceView client:only="react" />
+  </div>
 </DashboardLayout>

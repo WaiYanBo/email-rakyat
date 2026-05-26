@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import * as XLSX from 'xlsx';
 
 export default function AttendanceView() {
   const [profile, setProfile] = useState<any>(null);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [searchName, setSearchName] = useState<string>('');
+  const [filterMode, setFilterMode] = useState<'date' | 'month'>('date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
+  const [uniqueEmployees, setUniqueEmployees] = useState<string[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -48,21 +53,84 @@ export default function AttendanceView() {
 
       if (records) {
         setAttendanceRecords(records);
-        filterRecordsByDate(records, selectedDate);
+        // Extract unique employee names for dropdown
+        const employees = [...new Set(records.map(r => r.user_name))].sort();
+        setUniqueEmployees(employees);
+        applyFilters(records, selectedDate, selectedMonth, searchName, filterMode);
       }
     } catch (err) {
       console.error('Exception fetching attendance:', err);
     }
   };
 
-  const filterRecordsByDate = (records: any[], date: string) => {
-    const filtered = records.filter((r) => r.date === date);
+  const applyFilters = (records: any[], date: string, month: string, name: string, mode: 'date' | 'month') => {
+    let filtered = records;
+
+    // Filter by employee name
+    if (name) {
+      filtered = filtered.filter(r => r.user_name?.toLowerCase().includes(name.toLowerCase()));
+    }
+
+    // Filter by date or month
+    if (mode === 'date') {
+      filtered = filtered.filter(r => r.date === date);
+    } else if (mode === 'month') {
+      filtered = filtered.filter(r => r.date?.startsWith(month));
+    }
+
     setFilteredRecords(filtered);
+  };
+
+  const handleFilterModeChange = (mode: 'date' | 'month') => {
+    setFilterMode(mode);
+    applyFilters(attendanceRecords, selectedDate, selectedMonth, searchName, mode);
   };
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
-    filterRecordsByDate(attendanceRecords, date);
+    applyFilters(attendanceRecords, date, selectedMonth, searchName, filterMode);
+  };
+
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    applyFilters(attendanceRecords, selectedDate, month, searchName, filterMode);
+  };
+
+  const handleNameChange = (name: string) => {
+    setSearchName(name);
+    applyFilters(attendanceRecords, selectedDate, selectedMonth, name, filterMode);
+  };
+
+  const exportToExcel = () => {
+    if (filteredRecords.length === 0) {
+      alert('No records to export');
+      return;
+    }
+
+    // Prepare data for export
+    const exportData = filteredRecords.map(record => ({
+      'Employee Name': record.user_name || '-',
+      'Date': record.date || '-',
+      'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
+      'Check In Location': record.check_in_distance ? `${record.check_in_distance}m` : '-',
+      'Check In Status': record.check_in_within_zone ? 'In Zone' : 'Outside Zone',
+      'Check Out Time': record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '-',
+      'Check Out Location': record.check_out_distance ? `${record.check_out_distance}m` : '-',
+      'Check Out Status': record.check_out_within_zone ? 'In Zone' : 'Outside Zone'
+    }));
+
+    // Create workbook and worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Records');
+
+    // Add column widths for better readability
+    const colWidths = [20, 12, 15, 15, 15, 15, 15, 15];
+    ws['!cols'] = colWidths.map(width => ({ wch: width }));
+
+    // Generate filename with date/month info
+    const filename = `Attendance_${filterMode === 'date' ? selectedDate : selectedMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
   };
 
   // Only HR and CFO can view
@@ -96,15 +164,70 @@ export default function AttendanceView() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Date Filter */}
-            <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-              <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">📅 Filter by Date</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-              />
+            {/* Filter Controls */}
+            <div className="space-y-6">
+              {/* Employee Name Search */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
+                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">🔍 Search by Employee Name</label>
+                <input
+                  type="text"
+                  placeholder="Type employee name..."
+                  value={searchName}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-400"
+                />
+              </div>
+
+              {/* Filter Mode Toggle & Date/Month Selector */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Filter Mode */}
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
+                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-3">📋 Filter By</label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleFilterModeChange('date')}
+                      className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                        filterMode === 'date'
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      📅 By Date
+                    </button>
+                    <button
+                      onClick={() => handleFilterModeChange('month')}
+                      className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                        filterMode === 'month'
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      📆 By Month
+                    </button>
+                  </div>
+                </div>
+
+                {/* Date/Month Input */}
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
+                  <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">
+                    {filterMode === 'date' ? '📅 Select Date' : '📆 Select Month'}
+                  </label>
+                  <input
+                    type={filterMode === 'date' ? 'date' : 'month'}
+                    value={filterMode === 'date' ? selectedDate : selectedMonth}
+                    onChange={(e) => filterMode === 'date' ? handleDateChange(e.target.value) : handleMonthChange(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Export Button */}
+              <button
+                onClick={exportToExcel}
+                className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black uppercase tracking-wider text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              >
+                <span>📊</span> Export to Excel ({filteredRecords.length} records)
+              </button>
             </div>
 
             {/* Records Table */}

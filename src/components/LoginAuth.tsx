@@ -18,8 +18,22 @@ export default function LoginAuth() {
     });
 
     if (error) {
-      setError('Log masuk gagal. Sila semak e-mel dan kata laluan anda.');
-    } else {
+      console.error('Supabase Auth Error:', error);
+      
+      // Provide specific error messages
+      if (error.message.includes('Invalid login credentials')) {
+        setError('❌ Email atau kata laluan tidak betul. Sila periksa semula.');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('⚠️ Sila sahkan e-mel anda terlebih dahulu.');
+      } else if (error.message.includes('User already exists')) {
+        setError('❌ Pengguna sudah wujud. Sila log masuk.');
+      } else if (error.message.includes('Unable to validate email')) {
+        setError('❌ Format e-mel tidak sah.');
+      } else {
+        setError(`⚠️ Ralat: ${error.message}`);
+      }
+    } else if (data?.user) {
+      console.log('Login successful:', data.user.email);
       window.location.href = '/portal'; 
     }
     

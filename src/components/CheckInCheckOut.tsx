@@ -8,11 +8,15 @@ export default function CheckInCheckOut() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string>('');
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [allRecords, setAllRecords] = useState<any[]>([]);
+  const [forgotCheckoutRecords, setForgotCheckoutRecords] = useState<any[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Office coordinates
   const OFFICE_LAT = 3.0750624396122763;
   const OFFICE_LNG = 101.61250689446412;
   const ZONE_RADIUS_METERS = 200;
+  const MINIMUM_WORK_HOURS = 9;
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -24,6 +28,54 @@ export default function CheckInCheckOut() {
       Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+  };
+
+  // Calculate working hours between check in and check out
+  const calculateWorkingHours = (checkInTime: string, checkOutTime: string | null): { hours: number; minutes: number } | null => {
+    if (!checkInTime || !checkOutTime) return null;
+    
+    const checkIn = new Date(checkInTime);
+    const checkOut = new Date(checkOutTime);
+    const diffMs = checkOut.getTime() - checkIn.getTime();
+    
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return { hours, minutes };
+  };
+
+  // Fetch all attendance records and identify forgot checkouts (excluding today)
+  const fetchForgotCheckoutRecords = async () => {
+    try {
+      const { data: records, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching attendance records:', error);
+        return;
+      }
+
+      if (records) {
+        setAllRecords(records);
+        
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Filter records where:
+        // 1. check_in_time exists but check_out_time is null (forgot checkout)
+        // 2. Date is NOT today (don't flag incomplete days that are still in progress)
+        const forgot = records.filter(r => 
+          r.check_in_time && 
+          !r.check_out_time && 
+          r.date !== today
+        );
+        setForgotCheckoutRecords(forgot);
+      }
+    } catch (err) {
+      console.error('Exception fetching records:', err);
+    }
   };
 
   const checkLocationPermission = async () => {
@@ -176,6 +228,7 @@ export default function CheckInCheckOut() {
       }
 
       await fetchTodayRecord();
+      await fetchForgotCheckoutRecords();
       setLoading(false);
     };
 
@@ -336,6 +389,132 @@ export default function CheckInCheckOut() {
                 </p>
               </div>
             )}
+
+            {/* Forgot Checkout & Working Hours Section */}
+            <div className="space-y-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+              {/* Details Toggle Button */}
+              {forgotCheckoutRecords.length > 0 && (
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="w-full px-6 py-4 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-2 border-purple-300 dark:border-purple-700 hover:shadow-lg transition-all font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center justify-between group"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-2xl">{showDetails ? '📊' : '👁️'}</span>
+                    {showDetails ? 'Hide Details' : `Show Details (${forgotCheckoutRecords.length} Issues)`}
+                  </span>
+                  <span className={`text-xl transition-transform ${showDetails ? 'rotate-180' : ''}`}>▼</span>
+                </button>
+              )}
+
+              {/* Forgot Checkout Alert - Only shown when details are expanded */}
+              {showDetails && forgotCheckoutRecords.length > 0 && (
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-800 backdrop-blur">
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl">🚨</span>
+                    <div className="flex-1">
+                      <h3 className="font-black uppercase tracking-wider text-red-900 dark:text-red-300 mb-3">Forgot to Check Out</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-red-200 dark:border-red-700">
+                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Employee</th>
+                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Date</th>
+                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Check In</th>
+                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {forgotCheckoutRecords.map((record) => (
+                              <tr key={record.id} className="border-b border-red-100 dark:border-red-800 hover:bg-red-100/30 dark:hover:bg-red-900/20">
+                                <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{record.user_name}</td>
+                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{record.date}</td>
+                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                  {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                                    ⚠️ No Checkout
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Working Hours Summary - Only shown when details are expanded */}
+              {showDetails && (
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 backdrop-blur">
+                  <h3 className="font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 mb-4 flex items-center gap-2">
+                    <span className="text-2xl">⏱️</span> Working Hours Summary
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/50 dark:to-yellow-900/50 border-b-2 border-amber-200 dark:border-amber-700">
+                          <th className="px-4 py-3 text-left font-black text-amber-900 dark:text-amber-300">Employee</th>
+                          <th className="px-4 py-3 text-left font-black text-amber-900 dark:text-amber-300">Date</th>
+                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Check In</th>
+                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Check Out</th>
+                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Hours</th>
+                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Flag</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allRecords.slice(0, 20).map((record) => {
+                          const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
+                          const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
+                          const isForgotCheckout = record.check_in_time && !record.check_out_time;
+                          
+                          return (
+                            <tr 
+                              key={record.id} 
+                              className={`border-b border-amber-100 dark:border-amber-800 transition-all ${
+                                isForgotCheckout ? 'bg-red-50/50 dark:bg-red-900/10' : isShortDay ? 'bg-orange-50/50 dark:bg-orange-900/10' : 'bg-white dark:bg-gray-800/30 hover:bg-amber-50/30 dark:hover:bg-amber-900/10'
+                              }`}
+                            >
+                              <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{record.user_name}</td>
+                              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{record.date}</td>
+                              <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
+                                {record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
+                                {record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-center font-bold text-gray-900 dark:text-white">
+                                {workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {isForgotCheckout ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                                    🚨 No Checkout
+                                  </span>
+                                ) : isShortDay ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                                    ⚠️ &lt;9h
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                    ✓ Full
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-3 font-semibold">
+                    📊 Showing last 20 records | 🚨 Red = Forgot checkout | ⚠️ Orange = Less than 9 hours | ✓ Green = Full work day
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

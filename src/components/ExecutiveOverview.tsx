@@ -11,6 +11,9 @@ export default function ExecutiveOverview() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [isPostingNotice, setIsPostingNotice] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyFilterType, setHistoryFilterType] = useState<string>('All');
+  const [historyFilterDate, setHistoryFilterDate] = useState<string>('');
 
   // FETCH ANNOUNCEMENTS FROM DATABASE
   const fetchAnnouncements = async () => {
@@ -54,7 +57,7 @@ export default function ExecutiveOverview() {
       
       let roleName = 'No Role';
       if (profileData) {
-        roleName = profileData.roles?.role_name || 'No Role';
+        roleName = (profileData.roles as any)?.[0]?.role_name || 'No Role';
         setProfile({ name: profileData.full_name, role: roleName });
       }
 
@@ -156,8 +159,57 @@ export default function ExecutiveOverview() {
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-teal-600 font-bold animate-pulse text-xl uppercase">Loading Dashboard...</div></div>;
 
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
+  // Separate announcements into today and past
+  const getTodayAnnouncements = () => {
+    const todayStr = getTodayDateString();
+    return announcements.filter(a => a.scheduled_at.split('T')[0] === todayStr);
+  };
+
+  const getPastAnnouncements = () => {
+    const todayStr = getTodayDateString();
+    return announcements.filter(a => a.scheduled_at.split('T')[0] < todayStr);
+  };
+
+  // Get announcements to display on main page
+  const getDisplayedAnnouncements = () => {
+    const todayAnnouncements = getTodayAnnouncements();
+    const pastAnnouncements = getPastAnnouncements();
+    
+    // Always show all today's announcements
+    let displayed = [...todayAnnouncements];
+    
+    // Fill up to 3 items minimum with latest past announcements
+    const neededCount = 3 - displayed.length;
+    if (neededCount > 0) {
+      displayed = [...displayed, ...pastAnnouncements.slice(0, neededCount)];
+    }
+    
+    return displayed;
+  };
+
+  // Get past announcements for history with optional filters
+  const getHistoryAnnouncements = () => {
+    let filtered = getPastAnnouncements();
+    
+    if (historyFilterType !== 'All') {
+      filtered = filtered.filter(a => a.type === historyFilterType);
+    }
+    
+    if (historyFilterDate) {
+      filtered = filtered.filter(a => a.scheduled_at.split('T')[0] === historyFilterDate);
+    }
+    
+    return filtered;
+  };
+
   const isIT = profile?.role === 'IT Admin';
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
+  const todayCount = getTodayAnnouncements().length;
+  const pastCount = getPastAnnouncements().length;
+  const displayedAnnouncements = getDisplayedAnnouncements();
 
   return (
     <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative">
@@ -167,26 +219,38 @@ export default function ExecutiveOverview() {
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
-      <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
-        <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
-          <div>
-            <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">📢 Company Announcements</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{announcements.length} announcement{announcements.length !== 1 ? 's' : ''}</p>
-          </div>
-          {hasFullAccess && (
-            <button onClick={() => setIsNoticeModalOpen(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">+ Post Notice</button>
-          )}
-        </div>
-        <div className="p-8 space-y-5 max-h-[500px] overflow-y-auto scrollbar-thin">
-          {announcements.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-3">📭</div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">No announcements yet.</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Check back soon for updates!</p>
+      {!showHistory ? (
+        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
+          <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
+            <div>
+              <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">📢 Company Announcements</h2>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-0.5">
+                <p>🔴 Today: <span className="font-bold text-teal-600 dark:text-teal-400">{todayCount}</span> | 📜 Archive: <span className="font-bold text-orange-600 dark:text-orange-400">{pastCount}</span></p>
+              </div>
             </div>
-          ) : (
-            announcements.map((a) => (
-              <div key={a.id} className="p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-md transition-all">
+            <div className="flex gap-2 flex-col sm:flex-row">
+              {pastCount > 0 && (
+                <button onClick={() => setShowHistory(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all">📜 View History</button>
+              )}
+              {hasFullAccess && (
+                <button onClick={() => setIsNoticeModalOpen(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">+ Post Notice</button>
+              )}
+            </div>
+          </div>
+          <div className="p-8 space-y-5 max-h-[500px] overflow-y-auto scrollbar-thin">
+            {displayedAnnouncements.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">📭</div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No announcements yet.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Check back soon for updates!</p>
+              </div>
+            ) : (
+              displayedAnnouncements.map((a) => (
+              <div key={a.id} className={`p-6 rounded-2xl border transition-all ${
+                getTodayAnnouncements().some(t => t.id === a.id)
+                  ? 'border-teal-200 dark:border-teal-800/50 bg-gradient-to-br from-teal-50/40 to-teal-50/20 dark:from-teal-900/20 dark:to-teal-800/10'
+                  : 'border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 opacity-75 hover:opacity-100'
+              } hover:shadow-md`}>
                 <div className="flex flex-col sm:flex-row justify-between gap-3 mb-3">
                   <div className="flex items-start gap-3">
                     <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap ${
@@ -204,6 +268,7 @@ export default function ExecutiveOverview() {
                     <h3 className="text-sm md:text-base font-bold text-gray-900 dark:text-white">{a.title}</h3>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {getTodayAnnouncements().some(t => t.id === a.id) && <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded font-bold">🔔 TODAY</span>}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <span>{a.date}</span>
                   </div>
@@ -215,8 +280,103 @@ export default function ExecutiveOverview() {
               </div>
             ))
           )}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* HISTORY VIEW */
+        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
+          <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/20 flex justify-between items-center">
+            <div>
+              <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-orange-900 dark:text-white flex items-center gap-2">📜 Announcement History</h2>
+              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">Past announcements from previous days</p>
+            </div>
+            <button onClick={() => setShowHistory(false)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">← Back to Today</button>
+          </div>
+          
+          {/* Filter Section */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Type Filter */}
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">🏷️ Filter by Type</label>
+                <select 
+                  value={historyFilterType}
+                  onChange={(e) => setHistoryFilterType(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                >
+                  <option value="All">All Types</option>
+                  <option value="Info">ℹ️ Info</option>
+                  <option value="Memo">📝 Memo</option>
+                  <option value="Urgent">🔴 Urgent</option>
+                </select>
+              </div>
+              
+              {/* Date Filter */}
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">📅 Filter by Date</label>
+                <input 
+                  type="date" 
+                  value={historyFilterDate}
+                  onChange={(e) => setHistoryFilterDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                />
+              </div>
+            </div>
+            {(historyFilterType !== 'All' || historyFilterDate) && (
+              <button 
+                onClick={() => {
+                  setHistoryFilterType('All');
+                  setHistoryFilterDate('');
+                }}
+                className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+              >
+                ✕ Clear Filters
+              </button>
+            )}
+          </div>
+          
+          {/* History Content */}
+          <div className="p-8 space-y-5 max-h-[600px] overflow-y-auto scrollbar-thin">
+            {getHistoryAnnouncements().length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🗂️</div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No announcements found.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Try adjusting your filters.</p>
+              </div>
+            ) : (
+              getHistoryAnnouncements().map((a) => (
+                <div key={a.id} className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-md transition-all">
+                  <div className="flex flex-col sm:flex-row justify-between gap-3 mb-3">
+                    <div className="flex items-start gap-3">
+                      <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap ${
+                        a.type === 'Urgent' 
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
+                          : a.type === 'Memo' 
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      }`}>
+                        {a.type === 'Urgent' && '🔴 '}
+                        {a.type === 'Memo' && '📝 '}
+                        {a.type === 'Info' && 'ℹ️ '}
+                        {a.type}
+                      </span>
+                      <h3 className="text-sm md:text-base font-bold text-gray-900 dark:text-white">{a.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      <span>{a.date}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{a.content}</p>
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">✏️ <span className="font-semibold">{a.author}</span></p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* POST NOTICE MODAL */}
       {isNoticeModalOpen && (

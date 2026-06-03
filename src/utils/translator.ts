@@ -69,12 +69,12 @@ export async function translateText(
 
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang === 'bm' ? 'ms' : 'en'}&dt=t&q=${encodeURIComponent(cleanText)}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) throw new Error("Translation API request failed");
-    
+
     const data = await response.json();
-    
+
     // Google Translate returns nested array structure: [[["translated_part", "source_part", ...]]]
     if (data && data[0]) {
       const translatedParts = data[0].map((part: any) => part[0] || "");
@@ -83,14 +83,14 @@ export async function translateText(
     throw new Error("Invalid response format");
   } catch (error) {
     console.warn("Google Translate API failed, using dictionary fallback:", error);
-    
+
     // Simple local dictionary fallback for key phrases/words
     let translated = cleanText;
     const dictionary = targetLang === 'en' ? BM_TO_EN_DICTIONARY : EN_TO_BM_DICTIONARY;
-    
+
     // Sort keys by length descending to match longer phrases first
     const sortedKeys = Object.keys(dictionary).sort((a, b) => b.length - a.length);
-    
+
     for (const key of sortedKeys) {
       const regex = new RegExp(`\\b${key}\\b`, 'gi');
       translated = translated.replace(regex, (match) => {
@@ -101,7 +101,7 @@ export async function translateText(
         return replacement;
       });
     }
-    
+
     return translated + ` (Fallback translation)`;
   }
 }

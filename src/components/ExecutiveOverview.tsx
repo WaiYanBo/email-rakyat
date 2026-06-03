@@ -50,16 +50,29 @@ export default function ExecutiveOverview() {
 
   useEffect(() => {
     async function loadDashboard() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return window.location.href = '/portal/login';
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.warn('No session found, redirecting to login');
+          return window.location.href = '/portal/login';
+        }
 
-      const { data: profileData } = await supabase.from('profiles').select(`full_name, roles ( role_name )`).eq('id', session.user.id).single();
-      
-      let roleName = 'No Role';
-      if (profileData) {
-        roleName = (profileData.roles as any)?.[0]?.role_name || 'No Role';
-        setProfile({ name: profileData.full_name, role: roleName });
-      }
+        console.log('Session user:', session.user.email);
+
+        const { data: profileData, error: profileError } = await supabase.from('profiles').select(`full_name, roles ( role_name )`).eq('id', session.user.id).single();
+        
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+        }
+
+        let roleName = 'No Role';
+        if (profileData) {
+          console.log('Profile data:', profileData);
+          // roles is an array, get first role
+          roleName = profileData.roles?.[0]?.role_name || 'No Role';
+          setProfile({ name: profileData.full_name, role: roleName });
+          console.log('Set profile:', { name: profileData.full_name, role: roleName });
+        }
 
       if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName)) {
         const { data: clientsData } = await supabase.from('clients').select('*');
@@ -82,6 +95,10 @@ export default function ExecutiveOverview() {
       await fetchAnnouncements();
 
       setLoading(false);
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        setLoading(false);
+      }
     }
     loadDashboard();
 

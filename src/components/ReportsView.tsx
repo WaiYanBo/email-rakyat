@@ -265,16 +265,16 @@ export default function ReportsView() {
                     <th className="px-4 py-4 text-left font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
                     <th className="px-4 py-4 text-right font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
                     <th className="px-4 py-4 text-center font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colStatus', lang)}</th>
-                    <th className="px-4 py-4 text-center font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colActions', lang)}</th>
+                    <th className="px-4 py-4 text-right font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colActions', lang)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
                   {staffRecords.map(staff => (
                     <tr key={staff.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-3 font-bold text-gray-900 dark:text-white">{staff.full_name} <span className="block text-[10px] font-normal text-gray-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span></td>
-                      <td className="px-4 py-3">{staff.department}</td>
-                      <td className="px-4 py-3 font-mono text-gray-500">{staff.salary || '0'}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 font-bold text-gray-900 dark:text-white text-left">{staff.full_name} <span className="block text-[10px] font-normal text-gray-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span></td>
+                      <td className="px-4 py-3 text-left hidden md:table-cell">{staff.department}</td>
+                      <td className="px-4 py-3 text-right hidden lg:table-cell font-mono text-gray-500">{staff.salary || '0'}</td>
+                      <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${staff.status === 'Active' || !staff.status ? 'bg-emerald-100 text-emerald-700' : staff.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                           {staff.status || 'Active'}
                         </span>

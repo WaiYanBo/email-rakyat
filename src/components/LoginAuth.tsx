@@ -22,15 +22,15 @@ export default function LoginAuth() {
       
       // Provide specific error messages
       if (error.message.includes('Invalid login credentials')) {
-        setError('❌ Email atau kata laluan tidak betul. Sila periksa semula.');
+        setError('❌ Invalid email or password. Please check again.');
       } else if (error.message.includes('Email not confirmed')) {
-        setError('⚠️ Sila sahkan e-mel anda terlebih dahulu.');
+        setError('⚠️ Please verify your email first.');
       } else if (error.message.includes('User already exists')) {
-        setError('❌ Pengguna sudah wujud. Sila log masuk.');
+        setError('❌ User already exists. Please log in.');
       } else if (error.message.includes('Unable to validate email')) {
-        setError('❌ Format e-mel tidak sah.');
+        setError('❌ Invalid email format.');
       } else {
-        setError(`⚠️ Ralat: ${error.message}`);
+        setError(`⚠️ Error: ${error.message}`);
       }
     } else if (data?.user) {
       console.log('Login successful:', data.user.email);

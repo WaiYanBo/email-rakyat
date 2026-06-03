@@ -35,7 +35,7 @@ CREATE POLICY "Allow authenticated users to read announcements"
   FOR SELECT
   USING (auth.role() = 'authenticated');
 
--- Policy: Allow only admins/executives to insert
+-- Policy: Allow admins/executives and department heads to insert
 CREATE POLICY "Allow admins to create announcements"
   ON public.announcements
   FOR INSERT
@@ -43,9 +43,15 @@ CREATE POLICY "Allow admins to create announcements"
     SELECT id FROM profiles 
     WHERE role_id IN (
       SELECT id FROM roles 
-      WHERE role_name IN ('Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin')
+      WHERE role_name IN ('Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager')
     )
   ));
+
+-- If the role-based approach fails, use this simpler policy to allow authenticated users to insert
+-- CREATE POLICY "Allow authenticated users to create announcements"
+--   ON public.announcements
+--   FOR INSERT
+--   USING (auth.role() = 'authenticated');
 
 -- Policy: Allow admins to update/delete their own announcements
 CREATE POLICY "Allow admins to manage announcements"
@@ -79,8 +85,8 @@ ON public.announcements(scheduled_at DESC);
 -- Insert sample announcements for testing
 INSERT INTO public.announcements (title, content, type, author_name)
 VALUES
-  ('Server Maintenance Notice', 'Sistem pangkalan data akan ditutup sementara pada jam 12:00 AM hingga 2:00 AM malam ini.', 'Urgent', 'IT Dept'),
-  ('Cuti Umum Hari Keputeraan Agong', 'Ibu pejabat akan ditutup pada hari Isnin minggu hadapan bersempena cuti umum.', 'Memo', 'HR Dept');
+  ('Server Maintenance Notice', 'The database system will be temporarily shut down from 12:00 AM to 2:00 AM tonight for maintenance.', 'Urgent', 'IT Dept'),
+  ('Public Holiday Notice', 'The office will be closed on Monday next week for the King''s Birthday public holiday.', 'Memo', 'HR Dept');
 ```
 
 ## Step 3: Enable Real-Time (if not already enabled)
@@ -97,6 +103,53 @@ The updated `ExecutiveOverview.tsx` now:
 - ✅ Posts new announcements directly to the database
 - ✅ Automatically syncs across all connected users
 - ✅ Shows loading states while posting
+
+## Step 5: Troubleshooting - If Announcements Can't Be Posted
+
+If users still can't post announcements, follow these steps in your Supabase SQL Editor:
+
+### A. Check if RLS Policy Exists
+```sql
+-- List all policies on announcements table
+SELECT * FROM pg_policies WHERE tablename = 'announcements';
+```
+
+### B. If policies are missing, recreate them
+```sql
+-- Drop old policies if they exist
+DROP POLICY IF EXISTS "Allow authenticated users to read announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow admins to create announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow admins to manage announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow admins to delete announcements" ON public.announcements;
+
+-- Recreate with simpler, working policies
+CREATE POLICY "Allow authenticated read"
+  ON public.announcements FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated insert"
+  ON public.announcements FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow user delete own"
+  ON public.announcements FOR DELETE USING (auth.uid() = author_id);
+
+CREATE POLICY "Allow user update own"
+  ON public.announcements FOR UPDATE USING (auth.uid() = author_id);
+```
+
+### C. Verify RLS is Enabled
+```sql
+-- Check if RLS is enabled
+SELECT * FROM pg_tables WHERE tablename = 'announcements';
+
+-- Enable RLS if not enabled
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+```
+
+### D. Test Access
+After fixing, users with these roles can now post:
+- Chairman, CEO, COO, CFO, General Manager, IT Admin
+- Department Head, Manager
+- Any authenticated user (if using simplified policies)
 
 ## Features Implemented
 

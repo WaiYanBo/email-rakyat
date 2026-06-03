@@ -154,7 +154,7 @@ export default function AttendanceView() {
       </div>
 
       {/* Content */}
-      <div className="p-10">
+      <div className="p-4 md:p-6 lg:p-10">
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block">
@@ -165,28 +165,28 @@ export default function AttendanceView() {
         ) : (
           <div className="space-y-8">
             {/* Filter Controls */}
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Employee Name Search */}
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">🔍 Search by Employee Name</label>
+              <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
+                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">🔍 Search by Employee Name</label>
                 <input
                   type="text"
                   placeholder="Type employee name..."
                   value={searchName}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-400"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-xs md:text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-400 min-h-[40px]"
                 />
               </div>
 
               {/* Filter Mode Toggle & Date/Month Selector */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
                 {/* Filter Mode */}
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
-                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-3">📋 Filter By</label>
-                  <div className="flex gap-3">
+                <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
+                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-2 md:mb-3">📋 Filter By</label>
+                  <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => handleFilterModeChange('date')}
-                      className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                      className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wider transition-all min-h-[40px] ${
                         filterMode === 'date'
                           ? 'bg-blue-600 text-white shadow-lg'
                           : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
@@ -196,7 +196,7 @@ export default function AttendanceView() {
                     </button>
                     <button
                       onClick={() => handleFilterModeChange('month')}
-                      className={`flex-1 px-4 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                      className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wider transition-all min-h-[40px] ${
                         filterMode === 'month'
                           ? 'bg-blue-600 text-white shadow-lg'
                           : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
@@ -208,15 +208,15 @@ export default function AttendanceView() {
                 </div>
 
                 {/* Date/Month Input */}
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-                  <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-3">
+                <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
+                  <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">
                     {filterMode === 'date' ? '📅 Select Date' : '📆 Select Month'}
                   </label>
                   <input
                     type={filterMode === 'date' ? 'date' : 'month'}
                     value={filterMode === 'date' ? selectedDate : selectedMonth}
                     onChange={(e) => filterMode === 'date' ? handleDateChange(e.target.value) : handleMonthChange(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-xs md:text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all min-h-[40px]"
                   />
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function AttendanceView() {
               {/* Export Button */}
               <button
                 onClick={exportToExcel}
-                className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black uppercase tracking-wider text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                className="w-full px-4 md:px-6 py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black uppercase tracking-wider text-xs md:text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <span>📊</span> Export to Excel ({filteredRecords.length} records)
               </button>

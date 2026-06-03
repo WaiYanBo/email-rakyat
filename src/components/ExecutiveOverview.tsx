@@ -223,7 +223,7 @@ export default function ExecutiveOverview() {
   };
 
   const isIT = profile?.role === 'IT Admin';
-  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
+  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager'].includes(profile?.role);
   const todayCount = getTodayAnnouncements().length;
   const pastCount = getPastAnnouncements().length;
   const displayedAnnouncements = getDisplayedAnnouncements();
@@ -232,12 +232,12 @@ export default function ExecutiveOverview() {
     <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative">
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">Portal <span className="text-teal-600 dark:text-yellow-500">Home</span></h1>
-        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">Selamat kembali, <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
+        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">Welcome back, <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
       {!showHistory ? (
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden mt-12 mb-12">
           <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
             <div>
               <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">📢 Company Announcements</h2>
@@ -301,7 +301,7 @@ export default function ExecutiveOverview() {
         </div>
       ) : (
         /* HISTORY VIEW */
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden mt-12 mb-12">
           <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/20 flex justify-between items-center">
             <div>
               <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-orange-900 dark:text-white flex items-center gap-2">📜 Announcement History</h2>

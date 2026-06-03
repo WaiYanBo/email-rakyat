@@ -243,20 +243,20 @@ export default function CheckInCheckOut() {
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
       {/* Header */}
-      <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 dark:from-blue-900 dark:via-blue-800 dark:to-cyan-900">
+      <div className="p-4 md:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 dark:from-blue-900 dark:via-blue-800 dark:to-cyan-900">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-widest text-white flex items-center gap-3">
-              <span className="text-4xl">⏰</span> Time Tracking
+            <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest text-white flex items-center gap-2 md:gap-3">
+              <span className="text-2xl md:text-4xl">⏰</span> Time Tracking
             </h2>
-            <p className="text-sm text-blue-100 mt-2 font-medium">Check in and out with GPS location verification</p>
+            <p className="text-xs md:text-sm text-blue-100 mt-1 md:mt-2 font-medium">Check in and out with GPS location verification</p>
           </div>
           <div className="text-5xl opacity-20">📍</div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-10">
+      <div className="p-4 md:p-6 lg:p-10">
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block">
@@ -268,22 +268,22 @@ export default function CheckInCheckOut() {
           <div className="space-y-8">
             {/* Today's Status Card */}
             {todayRecord && (
-              <div className="p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/80 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/10 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xl">📋</span>
-                  <p className="text-sm font-black uppercase tracking-widest text-blue-700 dark:text-blue-300">Today's Status</p>
+              <div className="p-4 md:p-6 lg:p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/80 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/10 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-3 md:mb-4">
+                  <span className="text-lg md:text-xl">📋</span>
+                  <p className="text-xs md:text-sm font-black uppercase tracking-widest text-blue-700 dark:text-blue-300">Today's Status</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-7">
                   {/* Check In Card */}
-                  <div className="p-5 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-blue-100 dark:border-blue-800/50 backdrop-blur">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">✓ Check In</p>
+                  <div className="p-3 md:p-4 lg:p-5 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-blue-100 dark:border-blue-800/50 backdrop-blur">
+                    <div className="flex items-center justify-between mb-2 md:mb-3">
+                      <p className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">✓ Check In</p>
                       {todayRecord.check_in_time && <span className="text-2xl">🟢</span>}
                     </div>
                     {todayRecord.check_in_time ? (
-                      <div className="space-y-3">
-                        <p className="text-2xl font-black text-gray-900 dark:text-white">
+                      <div className="space-y-2 md:space-y-3">
+                        <p className="text-lg md:text-2xl font-black text-gray-900 dark:text-white">
                           {new Date(todayRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -337,11 +337,11 @@ export default function CheckInCheckOut() {
             )}
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6 pt-6 md:pt-8">
               <button
                 onClick={() => getLocationAndCheckIn('check_in')}
                 disabled={isProcessing || (todayRecord?.check_in_time && !todayRecord?.check_out_time)}
-                className="group relative px-6 py-4 rounded-xl text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
+                className="group relative px-4 md:px-6 py-3 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden min-h-[44px] md:min-h-[48px]"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 group-hover:shadow-lg group-disabled:opacity-50"></div>
                 <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -362,7 +362,7 @@ export default function CheckInCheckOut() {
               <button
                 onClick={() => getLocationAndCheckIn('check_out')}
                 disabled={isProcessing || !todayRecord?.check_in_time || todayRecord?.check_out_time}
-                className="group relative px-6 py-4 rounded-xl text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
+                className="group relative px-4 md:px-6 py-3 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden min-h-[44px] md:min-h-[48px]"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 group-hover:shadow-lg group-disabled:opacity-50"></div>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>

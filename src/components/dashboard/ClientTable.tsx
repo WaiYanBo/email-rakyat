@@ -249,7 +249,7 @@ export default function ClientTable({
                 placeholder="Search Database..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-md text-[11px] md:text-xs text-gray-900 dark:text-white focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 transition-all"
+                className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-md text-[10px] md:text-xs text-gray-900 dark:text-white focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 transition-all min-h-[40px]"
               />
             </div>
             <select 
@@ -330,14 +330,14 @@ export default function ClientTable({
                       <div className="flex items-center justify-end gap-1.5">
                         <button 
                           onClick={() => onViewClick(client)}
-                          className="text-[10px] bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/30 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded font-bold uppercase transition-colors border border-blue-200 dark:border-blue-500/30 shadow-sm"
+                          className="text-[9px] bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/30 text-blue-700 dark:text-blue-400 px-2 md:px-3 py-1 md:py-1.5 rounded font-bold uppercase transition-colors border border-blue-200 dark:border-blue-500/30 shadow-sm min-h-[36px] md:min-h-[40px]"
                         >
                           View
                         </button>
                         {canEdit && (
                           <button 
                             onClick={() => onEditClick(client)}
-                            className="text-[10px] bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded font-bold uppercase transition-colors border border-gray-200 dark:border-gray-700 shadow-sm"
+                            className="text-[9px] bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 md:px-3 py-1 md:py-1.5 rounded font-bold uppercase transition-colors border border-gray-200 dark:border-gray-700 shadow-sm min-h-[36px] md:min-h-[40px]"
                           >
                             Edit
                           </button>

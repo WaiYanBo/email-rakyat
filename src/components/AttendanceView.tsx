@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
+import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import { t } from '../lib/portalI18n';
 
 export default function AttendanceView() {
   const [profile, setProfile] = useState<any>(null);
@@ -12,6 +14,7 @@ export default function AttendanceView() {
   const [filterMode, setFilterMode] = useState<'date' | 'month'>('date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [uniqueEmployees, setUniqueEmployees] = useState<string[]>([]);
+  const { lang } = usePortalLanguage();
 
   useEffect(() => {
     const loadData = async () => {
@@ -145,9 +148,9 @@ export default function AttendanceView() {
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-black uppercase tracking-widest text-white flex items-center gap-3">
-              <span className="text-4xl">👥</span> Attendance Records
+              <span className="text-4xl">👥</span> {t('attendanceAdmin', 'title', lang)}
             </h2>
-            <p className="text-sm text-purple-100 mt-2 font-medium">View employee check-in/check-out with location verification</p>
+            <p className="text-sm text-purple-100 mt-2 font-medium">{t('attendanceAdmin', 'subtitle', lang)}</p>
           </div>
           <div className="text-5xl opacity-20">📊</div>
         </div>
@@ -159,7 +162,7 @@ export default function AttendanceView() {
           <div className="text-center py-16">
             <div className="inline-block">
               <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
-              <div className="text-purple-600 font-bold text-sm">Loading attendance records...</div>
+              <div className="text-purple-600 font-bold text-sm">{t('attendanceAdmin', 'loading', lang)}</div>
             </div>
           </div>
         ) : (
@@ -168,10 +171,10 @@ export default function AttendanceView() {
             <div className="space-y-4 md:space-y-6">
               {/* Employee Name Search */}
               <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">🔍 Search by Employee Name</label>
+                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">{t('attendanceAdmin', 'searchByName', lang)}</label>
                 <input
                   type="text"
-                  placeholder="Type employee name..."
+                  placeholder={t('attendanceAdmin', 'typeName', lang)}
                   value={searchName}
                   onChange={(e) => handleNameChange(e.target.value)}
                   className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-xs md:text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-400 min-h-[40px]"
@@ -182,7 +185,7 @@ export default function AttendanceView() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
                 {/* Filter Mode */}
                 <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
-                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-2 md:mb-3">📋 Filter By</label>
+                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-2 md:mb-3">{t('attendanceAdmin', 'filterBy', lang)}</label>
                   <div className="flex gap-2 md:gap-3">
                     <button
                       onClick={() => handleFilterModeChange('date')}
@@ -192,7 +195,7 @@ export default function AttendanceView() {
                           : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
                       }`}
                     >
-                      📅 By Date
+                      📅 {t('attendanceAdmin', 'byDate', lang)}
                     </button>
                     <button
                       onClick={() => handleFilterModeChange('month')}
@@ -202,7 +205,7 @@ export default function AttendanceView() {
                           : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
                       }`}
                     >
-                      📆 By Month
+                      📆 {t('attendanceAdmin', 'byMonth', lang)}
                     </button>
                   </div>
                 </div>
@@ -210,7 +213,7 @@ export default function AttendanceView() {
                 {/* Date/Month Input */}
                 <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
                   <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">
-                    {filterMode === 'date' ? '📅 Select Date' : '📆 Select Month'}
+                    {filterMode === 'date' ? t('attendanceAdmin', 'selectDate', lang) : t('attendanceAdmin', 'selectMonth', lang)}
                   </label>
                   <input
                     type={filterMode === 'date' ? 'date' : 'month'}
@@ -226,7 +229,7 @@ export default function AttendanceView() {
                 onClick={exportToExcel}
                 className="w-full px-4 md:px-6 py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black uppercase tracking-wider text-xs md:text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 min-h-[44px]"
               >
-                <span>📊</span> Export to Excel ({filteredRecords.length} records)
+                <span>📊</span> {t('attendanceAdmin', 'exportExcel', lang)} ({filteredRecords.length} {t('attendanceAdmin', 'records', lang)})
               </button>
             </div>
 
@@ -236,11 +239,11 @@ export default function AttendanceView() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700/50 border-b-2 border-gray-200 dark:border-gray-700">
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">👤 Employee</th>
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">🟢 Check In</th>
-                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">Status</th>
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">🔴 Check Out</th>
-                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">Status</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colEmployee', lang)}</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
+                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colCheckOut', lang)}</th>
+                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -248,7 +251,7 @@ export default function AttendanceView() {
                       <tr>
                         <td colSpan={5} className="px-6 py-16 text-center">
                           <div className="text-4xl mb-2">📭</div>
-                          <p className="text-gray-500 dark:text-gray-400 font-semibold">No records found for {selectedDate}</p>
+                          <p className="text-gray-500 dark:text-gray-400 font-semibold">{t('attendanceAdmin', 'noRecords', lang)} {selectedDate}</p>
                         </td>
                       </tr>
                     ) : (
@@ -278,7 +281,7 @@ export default function AttendanceView() {
                                   ? 'bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                                   : 'bg-red-100/80 text-red-700 dark:bg-red-900/40 dark:text-red-300'
                               }`}>
-                                {record.check_in_within_zone ? '✓ In Zone' : '⚠️ OUTSIDE'}
+                                {record.check_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
                             )}
                           </td>
@@ -293,7 +296,7 @@ export default function AttendanceView() {
                                 </p>
                               </div>
                             ) : (
-                              <span className="text-yellow-600 dark:text-yellow-400 font-bold text-sm">⏳ Pending</span>
+                              <span className="text-yellow-600 dark:text-yellow-400 font-bold text-sm">{t('attendanceAdmin', 'pending', lang)}</span>
                             )}
                           </td>
                           <td className="px-6 py-4 text-center">
@@ -303,7 +306,7 @@ export default function AttendanceView() {
                                   ? 'bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300'
                                   : 'bg-red-100/80 text-red-700 dark:bg-red-900/40 dark:text-red-300'
                               }`}>
-                                {record.check_out_within_zone ? '✓ In Zone' : '⚠️ OUTSIDE'}
+                                {record.check_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
                             )}
                           </td>
@@ -321,31 +324,31 @@ export default function AttendanceView() {
                 {/* Total Checked In */}
                 <div className="relative p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">👥</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 relative z-10">Total Checked In</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 relative z-10">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
                   <p className="text-4xl font-black text-blue-900 dark:text-blue-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_time).length}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 relative z-10">of {filteredRecords.length} employees</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 relative z-10">{t('common', 'of', lang)} {filteredRecords.length} {t('attendanceAdmin', 'statEmployees', lang)}</p>
                 </div>
 
                 {/* In Zone */}
                 <div className="relative p-8 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">✓</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-green-700 dark:text-green-300 relative z-10">In Zone</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-green-700 dark:text-green-300 relative z-10">{t('attendanceAdmin', 'statInZone', lang)}</p>
                   <p className="text-4xl font-black text-green-900 dark:text-green-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_within_zone).length}
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 relative z-10">on-site attendance</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 relative z-10">{t('attendanceAdmin', 'statOnSite', lang)}</p>
                 </div>
 
                 {/* Outside Zone */}
                 <div className="relative p-8 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20 overflow-hidden">
                   <div className="absolute top-0 right-0 text-6xl opacity-10">⚠️</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-red-700 dark:text-red-300 relative z-10">Outside Zone</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-red-700 dark:text-red-300 relative z-10">{t('attendanceAdmin', 'statOutside', lang)}</p>
                   <p className="text-4xl font-black text-red-900 dark:text-red-100 mt-3 relative z-10">
                     {filteredRecords.filter((r) => r.check_in_time && !r.check_in_within_zone).length}
                   </p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1 relative z-10">flagged records</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1 relative z-10">{t('attendanceAdmin', 'statFlagged', lang)}</p>
                 </div>
               </div>
             )}

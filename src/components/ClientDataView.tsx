@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import ClientTable from './dashboard/ClientTable';
+import { sanitizeInput, parseSafeAmount } from '../utils/security';
+import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import { t } from '../lib/portalI18n';
 
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [dbClients, setDbClients] = useState<any[]>([]);
+  const { lang } = usePortalLanguage();
   
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,17 +77,29 @@ export default function ClientDataView() {
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
 
+    // ── Sanitize every field before touching the database ────────────────────
+    const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
+    const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
+
     const clientPayload = {
-      NAME: data.NAME,
-      'IC NUMBER': data['IC NUMBER'],
-      'PHONE NUMBER': data['PHONE NUMBER'],
-      DATE: data.DATE,
-      'CASE CATEGORY': data['CASE CATEGORY'],
-      'CASE STATUS': data['CASE STATUS'],
-      'TOTAL PAID (RM)': data['TOTAL PAID (RM)'],
-      'PENDING (RM)': data['PENDING (RM)'],
-      'PACKAGE (RM)': data['PACKAGE (RM)'],
+      NAME: sanitizeInput((data.NAME as string) || '', 100),
+      'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
+      'PHONE NUMBER': sanitizeInput((data['PHONE NUMBER'] as string) || '', 20),
+      DATE: sanitizeInput((data.DATE as string) || '', 20),
+      'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
+      // Whitelist-based: only accept known status values
+      'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
+      'TOTAL PAID (RM)': parseSafeAmount(data['TOTAL PAID (RM)']),
+      'PENDING (RM)': parseSafeAmount(data['PENDING (RM)']),
+      'PACKAGE (RM)': parseSafeAmount(data['PACKAGE (RM)']),
     };
+
+    // Basic validation
+    if (!clientPayload.NAME) {
+      alert('Client name is required.');
+      setLoading(false);
+      return;
+    }
 
     try {
       if (editingClient) {
@@ -94,9 +110,8 @@ export default function ClientDataView() {
         if (error) throw error;
       }
       window.location.reload(); 
-    } catch (err) {
-      console.error("Error saving:", err);
-      alert("Failed to save to Supabase. Check your connection.");
+    } catch (_err) {
+      alert('Failed to save. Please check your connection and try again.');
     } finally {
       setLoading(false);
       handleCloseModal();
@@ -107,7 +122,7 @@ export default function ClientDataView() {
     return (
       <div className="flex items-center justify-center min-h-[60vh] px-4">
         <div className="text-teal-600 dark:text-yellow-500 font-bold animate-pulse text-lg md:text-xl tracking-widest uppercase text-center">
-          Loading Client Database...
+          {t('common', 'loading', lang)}
         </div>
       </div>
     );
@@ -119,7 +134,7 @@ export default function ClientDataView() {
   if (!canView) {
     return (
       <div className="p-8 md:p-12 rounded-xl bg-white dark:bg-gray-900/50 border border-red-200 dark:border-red-900/50 shadow-lg text-center mt-12">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">Access Denied</h2>
+        <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">{t('common', 'accessDenied', lang)}</h2>
       </div>
     );
   }
@@ -128,10 +143,10 @@ export default function ClientDataView() {
     <div className="space-y-4 md:space-y-6 animate-page-transition pt-12 md:pt-0 relative">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
-          Client Database
+          {t('clients', 'pageTitle', lang)}
         </h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
-          {canEdit ? "Manage and edit client records." : "View client database records (Read-Only)."}
+          {canEdit ? t('clients', 'manageSubtitle', lang) : t('clients', 'viewSubtitle', lang)}
         </p>
       </div>
 

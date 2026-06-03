@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import { t } from '../lib/portalI18n';
 
 export default function PortalSidebar() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -7,6 +9,8 @@ export default function PortalSidebar() {
   const [loading, setLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+
+  const { lang, setLang } = usePortalLanguage();
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
@@ -83,24 +87,21 @@ export default function PortalSidebar() {
   const getNavItems = () => {
     if (!profile) return [];
     
-    // Define the role groups
     const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile.role);
     const hasViewAccess = ['Intern', 'Contract'].includes(profile.role);
     const canViewClients = hasFullAccess || hasViewAccess;
     
-    const items = [{ label: 'Overview', path: '/portal' }];
+    const items = [{ label: t('sidebar', 'navOverview', lang), path: '/portal' }];
     
-    // Both Full Access and View Access can see the Clients menu
     if (canViewClients) {
-      items.push({ label: 'Clients', path: '/portal/klien' });
+      items.push({ label: t('sidebar', 'navClients', lang), path: '/portal/klien' });
     }
     
-    // ONLY Full Access can see Reports
     if (hasFullAccess) {
-      items.push({ label: 'Reports', path: '/portal/laporan' });
+      items.push({ label: t('sidebar', 'navReports', lang), path: '/portal/laporan' });
     }
     
-    items.push({ label: 'Settings', path: '/portal/tetapan' });
+    items.push({ label: t('sidebar', 'navSettings', lang), path: '/portal/tetapan' });
     
     return items;
   };
@@ -110,7 +111,9 @@ export default function PortalSidebar() {
   if (loading) {
     return (
       <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-teal-50 dark:bg-black border-r border-teal-200 dark:border-gray-900 flex items-center justify-center z-40">
-        <div className="text-teal-600 dark:text-yellow-500 text-sm font-semibold">Loading...</div>
+        <div className="text-teal-600 dark:text-yellow-500 text-sm font-semibold">
+          {t('common', 'loading', lang)}
+        </div>
       </div>
     );
   }
@@ -158,12 +161,14 @@ export default function PortalSidebar() {
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
-            <span className="truncate">Main Website</span>
+            <span className="truncate">{t('sidebar', 'mainWebsite', lang)}</span>
           </a>
         </div>
 
         <div className="p-4 mx-2 mt-4 bg-teal-100 dark:bg-gray-900/50 border border-teal-200 dark:border-gray-800/50 rounded-lg flex-shrink-0">
-          <p className="text-xs font-bold text-teal-600 dark:text-gray-400 uppercase tracking-wider mb-1">User</p>
+          <p className="text-xs font-bold text-teal-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+            {t('sidebar', 'userLabel', lang)}
+          </p>
           <p className="text-xs md:text-sm font-semibold text-teal-900 dark:text-white truncate">{profile?.name || 'User'}</p>
           <div className="flex gap-2 mt-2 flex-wrap">
             <span className="text-[9px] md:text-[10px] px-2 py-1 bg-teal-200 dark:bg-yellow-500/10 text-teal-700 dark:text-yellow-400 rounded border border-teal-300 dark:border-yellow-500/30 font-semibold uppercase tracking-wider truncate">
@@ -176,7 +181,9 @@ export default function PortalSidebar() {
         </div>
 
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
-          <p className="text-xs font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest px-3 mb-3">Main Menu</p>
+          <p className="text-xs font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest px-3 mb-3">
+            {t('sidebar', 'mainMenu', lang)}
+          </p>
           <ul className="space-y-2">
             {navItems.map((item) => (
               <li key={item.path}>
@@ -196,17 +203,49 @@ export default function PortalSidebar() {
         </nav>
 
         <div className="border-t border-teal-200 dark:border-gray-800 p-4 space-y-2 flex-shrink-0 bg-teal-50/50 dark:bg-gray-950/50">
+          
+          {/* ── Language Toggle ─────────────────────────────────────── */}
+          <div className="flex items-center justify-between px-1 mb-1">
+            <span className="text-[10px] font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest">
+              {t('sidebar', 'language', lang)}
+            </span>
+            <div className="flex items-center rounded-lg overflow-hidden border border-teal-200 dark:border-gray-700 bg-teal-100 dark:bg-gray-800/50">
+              <button
+                onClick={() => setLang('en')}
+                aria-label="Switch to English"
+                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  lang === 'en'
+                    ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black'
+                    : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang('bm')}
+                aria-label="Tukar ke Bahasa Malaysia"
+                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  lang === 'bm'
+                    ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black'
+                    : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                BM
+              </button>
+            </div>
+          </div>
+
           <button
             onClick={toggleTheme}
             className="w-full px-4 py-2.5 rounded-lg bg-teal-100 dark:bg-gray-800/50 hover:bg-teal-200 dark:hover:bg-gray-700/50 text-teal-700 dark:text-gray-300 hover:text-teal-900 dark:hover:text-white text-xs font-semibold uppercase tracking-wider transition-all border border-teal-200 dark:border-gray-700 min-h-[44px]"
           >
-            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            {theme === 'light' ? t('sidebar', 'darkMode', lang) : t('sidebar', 'lightMode', lang)}
           </button>
           <button
             onClick={handleLogout}
             className="w-full px-4 py-2.5 rounded-lg bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:text-red-700 text-xs font-semibold uppercase tracking-wider transition-all border border-red-200 dark:border-red-500/30 min-h-[44px]"
           >
-            Logout
+            {t('sidebar', 'logout', lang)}
           </button>
         </div>
       </div>

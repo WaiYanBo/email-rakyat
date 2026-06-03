@@ -26,13 +26,39 @@ const isPortal = currentPath.startsWith('/portal');
 <html lang="ms">
     <head>
         <meta charset="utf-8" />
-        <SEO title={title} description={description} noindex={noindex} />
+        <SEO title={title} description={description} noindex={noindex || isPortal} />
         <link rel="icon" href="/logo-v2.png" sizes="any" />
         <link rel="icon" type="image/svg+xml" href="/logo-v2.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="generator" content={Astro.generator} />
+        {/* Removed generator tag — avoids leaking framework version to attackers */}
         <meta name="google-site-verification" content="pL6VVDBvT7AFJsF-iNber0pk7W-Sm1ooRfdVehPlAy8" />
-      
+
+        {/* ── Security meta headers ─────────────────────────────────────── */}
+        <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+        <meta http-equiv="X-Frame-Options" content="DENY" />
+        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+        <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), payment=()" />
+        {isPortal && (
+            <>
+              {/* Portal-only CSP: tighten to only needed sources */}
+              <meta
+                http-equiv="Content-Security-Policy"
+                content={[
+                  "default-src 'self'",
+                  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+                  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                  "font-src 'self' https://fonts.gstatic.com",
+                  "img-src 'self' data: https:",
+                  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com",
+                  "frame-src 'none'",
+                  "object-src 'none'",
+                  "base-uri 'self'",
+                  "form-action 'self'",
+                ].join('; ')}
+              />
+            </>
+        )}
+
         {isPortal && (
             <script is:inline>
                 try {

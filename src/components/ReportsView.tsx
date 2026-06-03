@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeInput, isValidEmail, isStrongPassword } from '../utils/security';
+import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import { t } from '../lib/portalI18n';
 
 export default function ReportsView() {
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'finance' | 'hr'>('hr'); // Defaulted to HR for you
+  const [activeTab, setActiveTab] = useState<'hr' | 'finance'>('hr');
+  const { lang } = usePortalLanguage();
 
   // REAL DATABASE STATE
   const [staffRecords, setStaffRecords] = useState<any[]>([]);
@@ -95,45 +99,71 @@ export default function ReportsView() {
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
 
+    // ── Sanitize all inputs ───────────────────────────────────────────────────
+    const cleanName = sanitizeInput((data.name as string) || '', 100);
+    const cleanDept = sanitizeInput((data.dept as string) || '', 100);
+    const rawEmail = ((data.email as string) || '').trim().toLowerCase();
+    const rawPassword = (data.password as string) || '';
+    const salaryValue = parseFloat(data.salary as string);
+    const cleanSalary = isFinite(salaryValue) && salaryValue >= 0 ? salaryValue : 0;
+
+    // Whitelist role values from the select
+    const allowedRoles = ['Intern', 'Contract', 'General Manager', 'COO', 'CFO'];
+    const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern';
+    const allowedStatuses = ['Active', 'On Leave', 'Resigned'];
+    const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
+
+    if (!cleanName) {
+      alert('Staff name is required.');
+      setIsProcessing(false);
+      return;
+    }
+
     try {
       // 1. Get the exact role_id from the database for the selected role
       const { data: roleObj, error: roleError } = await supabase
         .from('roles')
         .select('id')
-        .eq('role_name', data.role)
+        .eq('role_name', cleanRole)
         .single();
         
       if (roleError) {
-        throw new Error("Role not found in database. Please ensure the role exists in the roles table.");
+        throw new Error('Role not found in database. Please ensure the role exists in the roles table.');
       }
 
       if (editingStaff) {
-        // UPDATE EXISTING STAFF using upsert
-        console.log('Updating staff ID:', editingStaff.id);
+        // UPDATE EXISTING STAFF
         const { error: upsertError } = await supabase
           .from('profiles')
           .upsert({
             id: editingStaff.id,
-            full_name: data.name,
-            department: data.dept,
+            full_name: cleanName,
+            department: cleanDept,
             role_id: roleObj.id,
-            salary: parseFloat(data.salary as string) || 0,
-            status: data.status
+            salary: cleanSalary,
+            status: cleanStatus
           });
         
-        if (upsertError) {
-          throw new Error(`Update failed: ${upsertError.message}`);
-        }
+        if (upsertError) throw new Error(`Update failed: ${upsertError.message}`);
         
-        console.log('✓ Staff record updated successfully!');
         alert('✓ Staff record updated! Changes will sync automatically.');
         setIsStaffModalOpen(false);
-        // Real-time listener will automatically refresh the table
 
       } else {
-        // INSERT NEW STAFF (Total Automation)
-        
-        // A. Create an isolated client so the CFO doesn't get logged out
+        // INSERT NEW STAFF — validate email and password strength first
+        if (!isValidEmail(rawEmail)) {
+          alert('Please enter a valid email address.');
+          setIsProcessing(false);
+          return;
+        }
+        const pwCheck = isStrongPassword(rawPassword);
+        if (!pwCheck.valid) {
+          alert(`Temp password is too weak: ${pwCheck.message}`);
+          setIsProcessing(false);
+          return;
+        }
+
+        // A. Create an isolated client so the current user isn’t logged out
         const onboardingClient = createClient(
           import.meta.env.PUBLIC_SUPABASE_URL,
           import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
@@ -141,56 +171,43 @@ export default function ReportsView() {
         );
 
         // B. Create the Auth Login Credentials
-        console.log('Creating auth account for:', data.email);
         const { data: authData, error: authError } = await onboardingClient.auth.signUp({
-          email: data.email as string,
-          password: data.password as string,
+          email: rawEmail,
+          password: rawPassword,
         });
 
-        if (authError) {
-          throw new Error(`Auth creation failed: ${authError.message}`);
-        }
+        if (authError) throw new Error(`Auth creation failed: ${authError.message}`);
+        if (!authData.user) throw new Error('Failed to create user account.');
 
-        if (!authData.user) {
-          throw new Error('Failed to create user account.');
-        }
-
-        // C. Push all HR data to profiles table using upsert
-        console.log('Creating profile for user ID:', authData.user.id);
+        // C. Push HR data to profiles
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: authData.user.id,
-            full_name: data.name,
-            department: data.dept,
+            full_name: cleanName,
+            department: cleanDept,
             role_id: roleObj.id,
-            salary: parseFloat(data.salary as string) || 0,
-            status: data.status
+            salary: cleanSalary,
+            status: cleanStatus
           });
         
-        if (profileError) {
-          throw new Error(`Profile creation failed: ${profileError.message}`);
-        }
+        if (profileError) throw new Error(`Profile creation failed: ${profileError.message}`);
         
-
-        console.log('✓ New staff onboarded successfully!');
-        alert('✓ New staff account created! Email: ' + data.email + '\nChanges will sync automatically.');
+        alert('✓ New staff account created! Email: ' + rawEmail + '\nChanges will sync automatically.');
         setIsStaffModalOpen(false);
-        // Real-time listener will automatically refresh the table
       }
       window.location.reload();
     } catch (err: any) {
-      console.error('Error saving staff record:', err);
-      alert("❌ Error: " + err.message);
+      alert('❌ Error: ' + err.message);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (loading) return <div className="flex justify-center pt-20"><div className="animate-pulse text-teal-600 font-bold uppercase tracking-widest">Loading Reports...</div></div>;
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-teal-600 font-bold animate-pulse text-xl uppercase">{t('reports', 'loading', lang)}</div></div>;
 
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
-  if (!hasFullAccess) return <div className="p-12 text-center text-red-600 font-bold text-xl uppercase tracking-widest mt-12 bg-white rounded-xl shadow-lg border border-red-200">Access Denied</div>;
+  if (!hasFullAccess) return <div className="p-12 rounded-xl bg-white dark:bg-gray-900/50 border border-red-200 dark:border-red-900/50 shadow-lg text-center mt-12"><h2 className="text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">{t('common', 'accessDenied', lang)}</h2></div>;
 
   // HR Calculations
   const activeStaffCount = staffRecords.filter(s => s.status === 'Active' || !s.status).length;
@@ -198,14 +215,32 @@ export default function ReportsView() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 relative">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-teal-900 dark:text-white">Executive Reports</h1>
-        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">Finance, Accounting, and Human Resources Management</p>
+      <div className="flex flex-col gap-3 mb-10">
+        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('reports', 'pageTitle', lang)}</h1>
+        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
       <div className="flex flex-row border-b border-gray-200 dark:border-gray-800">
-        <button onClick={() => setActiveTab('hr')} className={`py-3 px-6 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'hr' ? 'border-teal-600 text-teal-700 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>HR & Staff</button>
-        <button onClick={() => setActiveTab('finance')} className={`py-3 px-6 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === 'finance' ? 'border-teal-600 text-teal-700 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Finance & Ledger</button>
+          <button
+            onClick={() => setActiveTab('hr')}
+            className={`flex-1 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
+              activeTab === 'hr'
+                ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
+                : 'text-teal-700 dark:text-gray-400 hover:bg-teal-100 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            👥 {t('reports', 'tabHR', lang)}
+          </button>
+          <button
+            onClick={() => setActiveTab('finance')}
+            className={`flex-1 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
+              activeTab === 'finance'
+                ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
+                : 'text-teal-700 dark:text-gray-400 hover:bg-teal-100 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            💰 {t('reports', 'tabFinance', lang)}
+          </button>
       </div>
 
       {/* ======================= HR TAB ======================= */}
@@ -220,12 +255,18 @@ export default function ReportsView() {
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
             <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
               <h3 className="text-xs md:text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Staff Directory</h3>
-              <button onClick={() => { setEditingStaff(null); setIsStaffModalOpen(true); }} className="text-[10px] md:text-xs font-bold uppercase tracking-wider bg-teal-600 hover:bg-teal-700 text-white dark:bg-yellow-500 dark:text-black px-3 py-2 rounded-md shadow-sm">+ Onboard Staff</button>
+              <button onClick={() => { setEditingStaff(null); setIsStaffModalOpen(true); }} className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 transition-all shadow-md hover:shadow-lg min-h-[40px]">{t('reports', 'onboardStaff', lang)}</button>
             </div>
             <div className="flex-1 overflow-auto scrollbar-thin">
               <table className="w-full text-left whitespace-nowrap">
                 <thead className="sticky top-0 bg-gray-100 dark:bg-gray-800 z-10 text-[10px] md:text-xs uppercase text-gray-600 dark:text-gray-300">
-                  <tr><th className="px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-700">Name & Role</th><th className="px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-700">Dept</th><th className="px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-700">Salary (RM)</th><th className="px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-700">Status</th><th className="px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-700 text-right">Actions</th></tr>
+                  <tr>
+                    <th className="px-4 py-4 text-left font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colNameRole', lang)}</th>
+                    <th className="px-4 py-4 text-left font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
+                    <th className="px-4 py-4 text-right font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
+                    <th className="px-4 py-4 text-center font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colStatus', lang)}</th>
+                    <th className="px-4 py-4 text-center font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colActions', lang)}</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
                   {staffRecords.map(staff => (
@@ -261,6 +302,7 @@ export default function ReportsView() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-gray-900 w-[95%] max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
+              <p className="text-[10px] font-black uppercase tracking-widest text-teal-600 dark:text-yellow-500">{t('reports', 'activeStaff', lang)}</p>
               <h2 className="text-sm font-black uppercase tracking-widest text-teal-900 dark:text-white">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
               <button onClick={() => setIsStaffModalOpen(false)} className="text-gray-400 hover:text-red-500"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>

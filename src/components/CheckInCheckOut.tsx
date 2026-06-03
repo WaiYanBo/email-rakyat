@@ -241,7 +241,7 @@ export default function CheckInCheckOut() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
+    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow mb-8 md:mb-10">
       {/* Header */}
       <div className="p-4 md:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 dark:from-blue-900 dark:via-blue-800 dark:to-cyan-900">
         <div className="flex items-start justify-between">

@@ -142,7 +142,7 @@ export default function AttendanceView() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow">
+    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow mb-8 md:mb-10">
       {/* Header */}
       <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 dark:from-purple-900 dark:via-purple-800 dark:to-pink-900">
         <div className="flex items-start justify-between">

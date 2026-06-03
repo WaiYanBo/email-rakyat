@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { sanitizeInput, sanitizeLongText } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { translateText } from '../utils/translator';
+import { createPortal } from 'react-dom';
 
 export default function ExecutiveOverview() {
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,44 @@ export default function ExecutiveOverview() {
   const [showHistory, setShowHistory] = useState(false);
   const [historyFilterType, setHistoryFilterType] = useState<string>('All');
   const [historyFilterDate, setHistoryFilterDate] = useState<string>('');
+
+  // --- ANNOUNCEMENT TRANSLATION STATE ---
+  const [translatedAnnouncements, setTranslatedAnnouncements] = useState<Record<string, { title: string; content: string; lang: 'en' | 'bm' }>>({});
+  const [translatingIds, setTranslatingIds] = useState<Record<string, boolean>>({});
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleTranslate = async (id: string, currentTitle: string, currentContent: string) => {
+    if (translatedAnnouncements[id]) {
+      const updated = { ...translatedAnnouncements };
+      delete updated[id];
+      setTranslatedAnnouncements(updated);
+      return;
+    }
+
+    const containsMalay = /\b(dan|yang|untuk|dengan|adalah|ialah|syarikat|kakitangan|notis|kepada|kami|saya|akan|telah|oleh|keputusan|sumber|manusia|hari|ini)\b/i.test(currentContent + " " + currentTitle);
+    const targetLang: 'en' | 'bm' = containsMalay ? 'en' : 'bm';
+
+    setTranslatingIds(prev => ({ ...prev, [id]: true }));
+    try {
+      const [translatedTitle, translatedContent] = await Promise.all([
+        translateText(currentTitle, targetLang),
+        translateText(currentContent, targetLang)
+      ]);
+      setTranslatedAnnouncements(prev => ({
+        ...prev,
+        [id]: { title: translatedTitle, content: translatedContent, lang: targetLang }
+      }));
+    } catch (err) {
+      console.error('Translation failed:', err);
+    } finally {
+      setTranslatingIds(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   // FETCH ANNOUNCEMENTS FROM DATABASE
   const fetchAnnouncements = async () => {
@@ -291,7 +331,7 @@ export default function ExecutiveOverview() {
   });
 
   return (
-    <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative">
+    <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative mb-8 md:mb-10">
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('overview', 'pageTitle', lang)} <span className="text-teal-600 dark:text-yellow-500">{t('overview', 'pageHighlight', lang)}</span></h1>
         <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">{t('overview', 'welcomeBack', lang)} <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
@@ -320,49 +360,73 @@ export default function ExecutiveOverview() {
               )}
             </div>
           </div>
-          <div className="p-8 space-y-5 max-h-[500px] overflow-y-auto scrollbar-thin">
+          <div className="p-8 flex flex-col gap-6 max-h-[600px] overflow-y-auto scrollbar-thin">
             {displayedAnnouncements.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 w-full">
                 <div className="text-4xl mb-3">📭</div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('overview', 'noAnnouncements', lang)}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('overview', 'checkBack', lang)}</p>
               </div>
             ) : (
-              displayedAnnouncements.map((a) => (
-              <div key={a.id} className={`p-6 rounded-2xl border transition-all ${
-                getTodayAnnouncements().some(t => t.id === a.id)
-                  ? 'border-teal-200 dark:border-teal-800/50 bg-gradient-to-br from-teal-50/40 to-teal-50/20 dark:from-teal-900/20 dark:to-teal-800/10'
-                  : 'border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 opacity-75 hover:opacity-100'
-              } hover:shadow-md`}>
-                <div className="flex flex-col sm:flex-row justify-between gap-3 mb-3">
-                  <div className="flex items-start gap-3">
-                    <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap ${
-                      a.type === 'Urgent' 
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
-                        : a.type === 'Memo' 
-                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                    }`}>
-                      {a.type === 'Urgent' && '🔴 '}
-                      {a.type === 'Memo' && '📝 '}
-                      {a.type === 'Info' && 'ℹ️ '}
-                      {a.type}
-                    </span>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900 dark:text-white">{a.title}</h3>
+              displayedAnnouncements.map((a) => {
+                const isTranslated = !!translatedAnnouncements[a.id];
+                const displayTitle = isTranslated ? translatedAnnouncements[a.id].title : a.title;
+                const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
+
+                return (
+                  <div key={a.id} className={`p-5 rounded-2xl border transition-all flex flex-col justify-between h-48 ${
+                    getTodayAnnouncements().some(t => t.id === a.id)
+                      ? 'border-teal-200 dark:border-teal-800/50 bg-gradient-to-br from-teal-50/40 to-teal-50/20 dark:from-teal-900/20 dark:to-teal-800/10'
+                      : 'border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 opacity-95 hover:opacity-100'
+                  } hover:shadow-lg`}>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest whitespace-nowrap ${
+                          a.type === 'Urgent' 
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
+                            : a.type === 'Memo' 
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                        }`}>
+                          {a.type === 'Urgent' && '🔴 '}
+                          {a.type === 'Memo' && '📝 '}
+                          {a.type === 'Info' && 'ℹ️ '}
+                          {a.type}
+                        </span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{a.date}</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1" title={displayTitle}>{displayTitle}</h3>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">{displayContent}</p>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 flex-shrink-0" title={a.author}>
+                        <span className="flex-shrink-0">✏️</span>
+                        <span className="font-semibold truncate max-w-[100px] md:max-w-[140px]">{a.author}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleTranslate(a.id, a.title, a.content)}
+                          disabled={translatingIds[a.id]}
+                          type="button"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-gray-800/30 hover:bg-teal-100 dark:hover:bg-gray-800/60 text-teal-600 dark:text-yellow-500 border border-teal-100 dark:border-gray-700 transition-all text-xs flex-shrink-0"
+                          title="Translate / Terjemah"
+                        >
+                          {translatingIds[a.id] ? '...' : '🌐'}
+                        </button>
+                        <button
+                          onClick={() => setSelectedAnnouncement(a)}
+                          type="button"
+                          className="h-8 px-4 flex items-center justify-center rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 text-[10px] font-black uppercase tracking-wider transition-all shadow-sm hover:shadow flex-shrink-0"
+                        >
+                          {lang === 'bm' ? 'Baca' : 'Read'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    {getTodayAnnouncements().some(t2 => t2.id === a.id) && <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 rounded font-bold">{t('overview', 'todayBadge', lang)}</span>}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <span>{a.date}</span>
-                  </div>
-                </div>
-                <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{a.content}</p>
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">✏️ <span className="font-semibold">{a.author}</span></p>
-                </div>
-              </div>
-            ))
-          )}
+                );
+              })
+            )}
           </div>
         </div>
       ) : (
@@ -419,57 +483,82 @@ export default function ExecutiveOverview() {
           </div>
           
           {/* History Content */}
-          <div className="p-8 space-y-5 max-h-[600px] overflow-y-auto scrollbar-thin">
+          <div className="p-8 flex flex-col gap-6 max-h-[600px] overflow-y-auto scrollbar-thin">
             {getHistoryAnnouncements().length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 w-full">
                 <div className="text-4xl mb-3">🗂️</div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('overview', 'noFound', lang)}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('overview', 'adjustFilters', lang)}</p>
               </div>
             ) : (
-              getHistoryAnnouncements().map((a) => (
-                <div key={a.id} className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-md transition-all">
-                  <div className="flex flex-col sm:flex-row justify-between gap-3 mb-3">
-                    <div className="flex items-start gap-3">
-                      <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-widest whitespace-nowrap ${
-                        a.type === 'Urgent' 
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
-                          : a.type === 'Memo' 
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                      }`}>
-                        {a.type === 'Urgent' && '🔴 '}
-                        {a.type === 'Memo' && '📝 '}
-                        {a.type === 'Info' && 'ℹ️ '}
-                        {a.type}
-                      </span>
-                      <h3 className="text-sm md:text-base font-bold text-gray-900 dark:text-white">{a.title}</h3>
+              getHistoryAnnouncements().map((a) => {
+                const isTranslated = !!translatedAnnouncements[a.id];
+                const displayTitle = isTranslated ? translatedAnnouncements[a.id].title : a.title;
+                const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
+
+                return (
+                  <div key={a.id} className="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-lg transition-all flex flex-col justify-between h-48">
+                    <div className="space-y-2">
+                      <div className="flex flex-row justify-between items-start gap-2">
+                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest whitespace-nowrap ${
+                          a.type === 'Urgent' 
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
+                            : a.type === 'Memo' 
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                        }`}>
+                          {a.type === 'Urgent' && '🔴 '}
+                          {a.type === 'Memo' && '📝 '}
+                          {a.type === 'Info' && 'ℹ️ '}
+                          {a.type}
+                        </span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{a.date}</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1" title={displayTitle}>{displayTitle}</h3>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">{displayContent}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                      <span>{a.date}</span>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 flex-shrink-0" title={a.author}>
+                        <span className="flex-shrink-0">✏️</span>
+                        <span className="font-semibold truncate max-w-[100px] md:max-w-[140px]">{a.author}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleTranslate(a.id, a.title, a.content)}
+                          disabled={translatingIds[a.id]}
+                          type="button"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-gray-800/30 hover:bg-teal-100 dark:hover:bg-gray-800/60 text-teal-600 dark:text-yellow-500 border border-teal-100 dark:border-gray-700 transition-all text-xs flex-shrink-0"
+                          title="Translate / Terjemah"
+                        >
+                          {translatingIds[a.id] ? '...' : '🌐'}
+                        </button>
+                        <button
+                          onClick={() => setSelectedAnnouncement(a)}
+                          type="button"
+                          className="h-8 px-4 flex items-center justify-center rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 text-[10px] font-black uppercase tracking-wider transition-all shadow-sm hover:shadow flex-shrink-0"
+                        >
+                          {lang === 'bm' ? 'Baca' : 'Read'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{a.content}</p>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">✏️ <span className="font-semibold">{a.author}</span></p>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
       )}
 
       {/* POST NOTICE MODAL */}
-      {isNoticeModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      {mounted && isNoticeModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
             <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-center">
+            <div className="p-6 md:p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('overview', 'postNewAnnouncement', lang)}</h2>
-                <p className="text-xs text-teal-700 dark:text-teal-300 mt-1">{t('overview', 'postSubtitle', lang)}</p>
+                <h2 className="text-sm md:text-lg font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('overview', 'postNewAnnouncement', lang)}</h2>
+                <p className="text-[10px] md:text-xs text-teal-700 dark:text-teal-300 mt-1">{t('overview', 'postSubtitle', lang)}</p>
               </div>
               <button onClick={() => setIsNoticeModalOpen(false)} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -477,10 +566,10 @@ export default function ExecutiveOverview() {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handlePostNotice} className="p-8 space-y-6 overflow-y-auto max-h-[70vh]">
+            <form onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[70vh]">
               {/* Title Input */}
               <div>
-                <label className="block text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementTitle', lang)}</label>
+                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementTitle', lang)}</label>
                 <input 
                   type="text" 
                   name="title" 
@@ -493,7 +582,7 @@ export default function ExecutiveOverview() {
 
               {/* Urgency Level */}
               <div>
-                <label className="block text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'urgencyLevel', lang)}</label>
+                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'urgencyLevel', lang)}</label>
                 <select 
                   name="type" 
                   className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 text-sm font-bold focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all" 
@@ -507,7 +596,7 @@ export default function ExecutiveOverview() {
 
               {/* Date Picker */}
               <div>
-                <label className="block text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementDate', lang)}</label>
+                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementDate', lang)}</label>
                 <input 
                   type="date" 
                   name="scheduled_date" 
@@ -516,7 +605,7 @@ export default function ExecutiveOverview() {
                   disabled={isPostingNotice} 
                 />
                 <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                  <p className="text-[10px] md:text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
                     <span className="font-bold block mb-1">How it works:</span>
                      <span className="text-blue-600 dark:text-blue-400">Past dates</span> = Historical records<br/>
                      <span className="text-blue-600 dark:text-blue-400">Today</span> = Publish immediately<br/>
@@ -527,7 +616,7 @@ export default function ExecutiveOverview() {
 
               {/* Content Area */}
               <div>
-                <label className="block text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'messageContent', lang)}</label>
+                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'messageContent', lang)}</label>
                 <textarea 
                   name="content" 
                   required 
@@ -543,7 +632,7 @@ export default function ExecutiveOverview() {
                 <button 
                   type="button"
                   onClick={() => setIsNoticeModalOpen(false)}
-                  className="px-6 py-3 rounded-lg text-sm font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                  className="px-5 py-2.5 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                   disabled={isPostingNotice}
                 >
                   {t('overview', 'cancel', lang)}
@@ -551,7 +640,7 @@ export default function ExecutiveOverview() {
                 <button 
                   type="submit" 
                   disabled={isPostingNotice} 
-                  className="px-8 py-3 rounded-lg text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                  className="px-6 py-2.5 md:px-8 md:py-3 rounded-lg text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                 >
                   {isPostingNotice ? (
                     <span className="flex items-center gap-2">
@@ -565,7 +654,74 @@ export default function ExecutiveOverview() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+     {/* DETAILED ANNOUNCEMENT VIEW MODAL */}
+      {mounted && selectedAnnouncement && createPortal(
+        (() => {
+          const isTranslated = !!translatedAnnouncements[selectedAnnouncement.id];
+          const modalTitle = isTranslated ? translatedAnnouncements[selectedAnnouncement.id].title : selectedAnnouncement.title;
+          const modalContent = isTranslated ? translatedAnnouncements[selectedAnnouncement.id].content : selectedAnnouncement.content;
+          
+          return (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+              <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-fade-in">
+                {/* Modal Header */}
+                <div className="p-6 md:p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-start gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest ${
+                        selectedAnnouncement.type === 'Urgent' 
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' 
+                          : selectedAnnouncement.type === 'Memo' 
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' 
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                      }`}>
+                        {selectedAnnouncement.type}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold">{selectedAnnouncement.date}</span>
+                    </div>
+                    <h2 className="text-sm md:text-lg font-black text-gray-900 dark:text-white leading-snug">{modalTitle}</h2>
+                  </div>
+                  <button onClick={() => setSelectedAnnouncement(null)} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex-shrink-0">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {modalContent}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-5 md:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex justify-between items-center">
+                  <span className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">✏️ Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleTranslate(selectedAnnouncement.id, selectedAnnouncement.title, selectedAnnouncement.content)}
+                      disabled={translatingIds[selectedAnnouncement.id]}
+                      type="button"
+                      className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-yellow-500 hover:text-teal-800 dark:hover:text-yellow-400 transition-colors flex items-center gap-1 bg-teal-100/50 dark:bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-teal-200 dark:border-gray-700"
+                    >
+                      <span>🌐</span>
+                      {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? (lang === 'bm' ? 'Tunjuk Asal' : 'Show Original') : (lang === 'bm' ? 'Terjemah' : 'Translate')}
+                    </button>
+                    <button 
+                      onClick={() => setSelectedAnnouncement(null)}
+                      type="button"
+                      className="px-4 py-1.5 md:px-5 md:py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
+                    >
+                      {lang === 'bm' ? 'Tutup' : 'Close'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })(),
+        document.body
       )}
 
       {/* EXECUTIVE SNAPSHOT (Bottom Section) */}

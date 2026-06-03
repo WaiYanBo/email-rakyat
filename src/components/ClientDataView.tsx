@@ -4,6 +4,7 @@ import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,72 @@ export default function ClientDataView() {
   // New Handlers for the View Detail Box
   const handleOpenViewModal = (client: any) => { setViewingClient(client); setIsViewModalOpen(true); };
   const handleCloseViewModal = () => { setIsViewModalOpen(false); setViewingClient(null); };
+
+  const writeAuditLog = async (action: 'INSERT' | 'UPDATE' | 'DELETE', recordId: string, changes: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const recordUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(recordId))
+        ? recordId
+        : null;
+
+      const payload = {
+        user_id: session.user.id,
+        user_name: profile?.name || 'Unknown',
+        user_role: profile?.role || 'No Role',
+        table_name: 'clients',
+        action: action,
+        record_id: recordUuid,
+        changes: {
+          ...changes,
+          original_record_id: recordId
+        },
+        created_at: new Date().toISOString()
+      };
+
+      await supabase.from('audit_logs').insert([payload]);
+    } catch (err) {
+      console.error('Failed to write audit log:', err);
+    }
+  };
+
+  const handleDeleteClient = async () => {
+    if (!editingClient) return;
+
+    if (!window.confirm(lang === 'bm' 
+      ? `Adakah anda pasti mahu memadamkan klien "${editingClient.NAME}"?` 
+      : `Are you sure you want to delete client "${editingClient.NAME}"?`
+    )) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', editingClient.id);
+
+      if (error) {
+        alert('Failed to delete client. Please try again.');
+      } else {
+        await writeAuditLog('DELETE', editingClient.id, {
+          NAME: editingClient.NAME,
+          'IC NUMBER': editingClient['IC NUMBER'],
+          'PHONE NUMBER': editingClient['PHONE NUMBER'],
+          'CASE STATUS': editingClient['CASE STATUS']
+        });
+        handleCloseModal();
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Error deleting client:', err);
+      alert('Error deleting client. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +207,8 @@ export default function ClientDataView() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-page-transition pt-12 md:pt-0 relative">
+    <ErrorBoundary>
+      <div className="space-y-4 md:space-y-6 animate-page-transition pt-12 md:pt-0 relative">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
           {t('clients', 'pageTitle', lang)}
@@ -277,18 +345,32 @@ export default function ClientDataView() {
                 </div>
               </div>
 
-              <div className="mt-4 md:mt-6 flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-gray-800">
-                <button type="button" onClick={handleCloseModal} className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full sm:w-auto min-h-[40px]">
-                  Cancel
-                </button>
-                <button type="submit" disabled={loading} className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider bg-teal-600 hover:bg-teal-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-black transition-colors shadow-md w-full sm:w-auto min-h-[40px] disabled:opacity-50">
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
+              <div className="mt-4 md:mt-6 flex flex-col sm:flex-row justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-800 gap-3">
+                <div className="w-full sm:w-auto">
+                  {editingClient && ['CEO', 'CFO', 'IT Admin'].includes(profile?.role) && (
+                    <button 
+                      type="button" 
+                      onClick={handleDeleteClient} 
+                      className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white transition-colors shadow-md w-full sm:w-auto min-h-[40px]"
+                    >
+                      Delete Client
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto justify-end">
+                  <button type="button" onClick={handleCloseModal} className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full sm:w-auto min-h-[40px]">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={loading} className="px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider bg-teal-600 hover:bg-teal-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-black transition-colors shadow-md w-full sm:w-auto min-h-[40px] disabled:opacity-50">
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

@@ -59,7 +59,12 @@ export default function ExecutiveOverview() {
 
         console.log('Session user:', session.user.email);
 
-        const { data: profileData, error: profileError } = await supabase.from('profiles').select(`full_name, roles ( role_name )`).eq('id', session.user.id).single();
+        // Query profile with explicit relationship
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select(`full_name, role_id, roles(role_name)`)
+          .eq('id', session.user.id)
+          .single();
         
         if (profileError) {
           console.error('Profile fetch error:', profileError);
@@ -68,13 +73,37 @@ export default function ExecutiveOverview() {
         let roleName = 'No Role';
         if (profileData) {
           console.log('Profile data:', profileData);
-          // roles is an array, get first role
-          roleName = profileData.roles?.[0]?.role_name || 'No Role';
+          console.log('Roles field:', profileData.roles);
+          console.log('Role ID:', profileData.role_id);
+          
+          // Check if roles relationship loaded (might be object or array)
+          if (profileData.roles) {
+            if (Array.isArray(profileData.roles)) {
+              roleName = profileData.roles[0]?.role_name || 'No Role';
+              console.log('Loaded role from array:', roleName);
+            } else {
+              roleName = profileData.roles?.role_name || 'No Role';
+              console.log('Loaded role from object:', roleName);
+            }
+          } else if (profileData.role_id) {
+            // Fallback: fetch role directly if relationship didn't load
+            console.log('Relationship didn\'t load, querying roles table with role_id:', profileData.role_id);
+            const { data: roleData, error: roleError } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
+            if (roleError) {
+              console.error('Error fetching role:', roleError);
+            } else {
+              roleName = roleData?.role_name || 'No Role';
+              console.log('Loaded role from fallback query:', roleName);
+            }
+          } else {
+            console.warn('No roles relationship and no role_id found - user has no role assigned!');
+          }
           setProfile({ name: profileData.full_name, role: roleName });
-          console.log('Set profile:', { name: profileData.full_name, role: roleName });
+          console.log('Set profile:', { name: profileData.full_name, role: roleName, roleId: profileData.role_id });
+          console.log('✅ Final roleName for access check:', roleName);
         }
 
-      if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName)) {
+      if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager'].includes(roleName)) {
         const { data: clientsData } = await supabase.from('clients').select('*');
         if (clientsData) {
           const pCases = clientsData.filter(c => parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) > 5000).sort((a,b) => parseFloat(String(b['PENDING (RM)']).replace(/[^0-9.-]+/g, '')) - parseFloat(String(a['PENDING (RM)']).replace(/[^0-9.-]+/g, ''))).slice(0, 5);
@@ -222,11 +251,21 @@ export default function ExecutiveOverview() {
     return filtered;
   };
 
-  const isIT = profile?.role === 'IT Admin';
-  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager'].includes(profile?.role);
+  const isIT = profile?.role?.toLowerCase() === 'it admin';
+  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager']
+    .some(role => profile?.role?.toLowerCase() === role.toLowerCase());
   const todayCount = getTodayAnnouncements().length;
   const pastCount = getPastAnnouncements().length;
   const displayedAnnouncements = getDisplayedAnnouncements();
+
+  // Debug logging for access control
+  console.log('🔍 Announcement Access Debug:', {
+    userRole: profile?.role,
+    isIT,
+    hasFullAccess,
+    canPostAnnouncements: hasFullAccess,
+    allowedRoles: ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager']
+  });
 
   return (
     <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative">

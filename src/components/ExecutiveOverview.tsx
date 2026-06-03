@@ -19,7 +19,7 @@ export default function ExecutiveOverview() {
   const [isPostingNotice, setIsPostingNotice] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyFilterType, setHistoryFilterType] = useState<string>('All');
-  const [historyFilterDate, setHistoryFilterDate] = useState<string>('');
+  const [historyFilterMonth, setHistoryFilterMonth] = useState<string>('All');
 
   // --- ANNOUNCEMENT TRANSLATION STATE ---
   const [translatedAnnouncements, setTranslatedAnnouncements] = useState<Record<string, { title: string; content: string; lang: 'en' | 'bm' }>>({});
@@ -299,6 +299,23 @@ export default function ExecutiveOverview() {
     return displayed;
   };
 
+  // Get all unique Year-Month combinations from past announcements for the month filter dropdown
+  const getUniqueMonths = () => {
+    const past = getPastAnnouncements();
+    const months = past.map(a => a.scheduled_at.substring(0, 7)); // 'YYYY-MM'
+    return Array.from(new Set(months)).sort((a, b) => b.localeCompare(a));
+  };
+
+  const getMonthLabel = (yearMonth: string, currentLang: 'en' | 'bm') => {
+    try {
+      const [year, month] = yearMonth.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+      return date.toLocaleDateString(currentLang === 'bm' ? 'ms-MY' : 'en-US', { month: 'long', year: 'numeric' });
+    } catch (e) {
+      return yearMonth;
+    }
+  };
+
   // Get past announcements for history with optional filters
   const getHistoryAnnouncements = () => {
     let filtered = getPastAnnouncements();
@@ -307,8 +324,8 @@ export default function ExecutiveOverview() {
       filtered = filtered.filter(a => a.type === historyFilterType);
     }
     
-    if (historyFilterDate) {
-      filtered = filtered.filter(a => a.scheduled_at.split('T')[0] === historyFilterDate);
+    if (historyFilterMonth !== 'All') {
+      filtered = filtered.filter(a => a.scheduled_at.substring(0, 7) === historyFilterMonth);
     }
     
     return filtered;
@@ -458,22 +475,30 @@ export default function ExecutiveOverview() {
                 </select>
               </div>
               
-              {/* Date Filter */}
+              {/* Month Filter */}
               <div>
-                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">{t('overview', 'filterByDate', lang)}</label>
-                <input 
-                  type="date" 
-                  value={historyFilterDate}
-                  onChange={(e) => setHistoryFilterDate(e.target.value)}
+                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">
+                  {lang === 'bm' ? 'TAPIS MENGIKUT BULAN' : 'FILTER BY MONTH'}
+                </label>
+                <select 
+                  value={historyFilterMonth}
+                  onChange={(e) => setHistoryFilterMonth(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                />
+                >
+                  <option value="All">{lang === 'bm' ? 'Semua Bulan' : 'All Months'}</option>
+                  {getUniqueMonths().map(ym => (
+                    <option key={ym} value={ym}>
+                      {getMonthLabel(ym, lang)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-            {(historyFilterType !== 'All' || historyFilterDate) && (
+            {(historyFilterType !== 'All' || historyFilterMonth !== 'All') && (
               <button 
                 onClick={() => {
                   setHistoryFilterType('All');
-                  setHistoryFilterDate('');
+                  setHistoryFilterMonth('All');
                 }}
                 className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
               >

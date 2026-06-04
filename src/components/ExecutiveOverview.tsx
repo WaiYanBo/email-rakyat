@@ -795,8 +795,8 @@ export default function ExecutiveOverview() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center gap-4">
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-zinc-400 truncate" title={a.author}>
-                        <span className="font-semibold">{a.author}</span>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-zinc-400 truncate min-w-0" title={a.author}>
+                        <span className="font-semibold truncate">{a.author}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button

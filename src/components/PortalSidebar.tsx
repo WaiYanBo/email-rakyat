@@ -83,7 +83,7 @@ export default function PortalSidebar() {
     return currentPath.startsWith(path);
   };
 
-  // ROLE-BASED NAVIGATION LOGIC
+  // Renders navigation item details with clean icons
   const getNavItems = () => {
     if (!profile) return [];
     
@@ -91,17 +91,52 @@ export default function PortalSidebar() {
     const hasViewAccess = ['Intern', 'Contract'].includes(profile.role);
     const canViewClients = hasFullAccess || hasViewAccess;
     
-    const items = [{ label: t('sidebar', 'navOverview', lang), path: '/portal' }];
+    const items = [
+      { 
+        label: t('sidebar', 'navOverview', lang), 
+        path: '/portal',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        )
+      }
+    ];
     
     if (canViewClients) {
-      items.push({ label: t('sidebar', 'navClients', lang), path: '/portal/klien' });
+      items.push({ 
+        label: t('sidebar', 'navClients', lang), 
+        path: '/portal/klien',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        )
+      });
     }
     
     if (hasFullAccess) {
-      items.push({ label: t('sidebar', 'navReports', lang), path: '/portal/laporan' });
+      items.push({ 
+        label: t('sidebar', 'navReports', lang), 
+        path: '/portal/laporan',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        )
+      });
     }
     
-    items.push({ label: t('sidebar', 'navSettings', lang), path: '/portal/tetapan' });
+    items.push({ 
+      label: t('sidebar', 'navSettings', lang), 
+      path: '/portal/tetapan',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      )
+    });
     
     return items;
   };
@@ -110,8 +145,8 @@ export default function PortalSidebar() {
 
   if (loading) {
     return (
-      <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-teal-50 dark:bg-black border-r border-teal-200 dark:border-gray-900 flex items-center justify-center z-40">
-        <div className="text-teal-600 dark:text-yellow-500 text-sm font-semibold">
+      <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex items-center justify-center z-40">
+        <div className="text-slate-600 dark:text-zinc-400 text-sm font-semibold tracking-wide animate-pulse">
           {t('common', 'loading', lang)}
         </div>
       </div>
@@ -122,101 +157,102 @@ export default function PortalSidebar() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 md:hidden z-50 p-2 rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-lg hover:shadow-xl transition-shadow min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="fixed top-4 left-4 md:hidden z-50 p-2 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md hover:shadow-lg transition-all min-h-[48px] min-w-[48px] flex items-center justify-center"
         aria-label="Toggle Menu"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
           ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
           )}
         </svg>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 md:hidden z-30" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden z-30" onClick={() => setIsOpen(false)} />
       )}
 
-      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-teal-50 dark:bg-black border-r border-teal-200 dark:border-gray-900 flex flex-col shadow-2xl z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-4 border-b border-teal-200 dark:border-gray-800 flex-shrink-0">
+      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-900/60 flex flex-col z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-5 border-b border-slate-200 dark:border-zinc-900/60 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2 min-w-0">
               <img src="/logo-v2.svg" alt="Logo" className="h-6 w-6 flex-shrink-0" />
-              <h1 className="text-sm md:text-lg font-black text-teal-900 dark:text-white uppercase tracking-widest truncate">
-                Portal <span className="text-yellow-500">Admin</span>
+              <h1 className="text-base font-bold text-indigo-900 dark:text-indigo-400 tracking-wide truncate">
+                Staff <span className="text-slate-500 dark:text-slate-400 font-medium">Portal</span>
               </h1>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="md:hidden p-1 text-teal-600 dark:text-gray-400 flex-shrink-0 min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="md:hidden p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex-shrink-0 min-h-[48px] min-w-[48px] flex items-center justify-center"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
           
-          <a href="/" className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white transition-all border border-teal-200 dark:border-gray-700 min-h-[40px]">
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          <a href="/" className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-zinc-300 dark:hover:text-white bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 transition-all border border-slate-200 dark:border-zinc-800/80 shadow-sm min-h-[48px]">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
             <span className="truncate">{t('sidebar', 'mainWebsite', lang)}</span>
           </a>
         </div>
 
-        <div className="p-4 mx-2 mt-4 bg-teal-100 dark:bg-gray-900/50 border border-teal-200 dark:border-gray-800/50 rounded-lg flex-shrink-0">
-          <p className="text-xs font-bold text-teal-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+        <div className="p-4 mx-3 mt-4 bg-slate-100/50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-xl flex-shrink-0">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1 block">
             {t('sidebar', 'userLabel', lang)}
           </p>
-          <p className="text-xs md:text-sm font-semibold text-teal-900 dark:text-white truncate">{profile?.name || 'User'}</p>
-          <div className="flex gap-2 mt-2 flex-wrap">
-            <span className="text-[9px] md:text-[10px] px-2 py-1 bg-teal-200 dark:bg-yellow-500/10 text-teal-700 dark:text-yellow-400 rounded border border-teal-300 dark:border-yellow-500/30 font-semibold uppercase tracking-wider truncate">
+          <p className="text-sm font-bold text-slate-800 dark:text-zinc-150 truncate">{profile?.name || 'User'}</p>
+          <div className="flex gap-1.5 mt-2 flex-wrap">
+            <span className="text-[10px] px-2.5 py-0.5 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-950/40 font-semibold tracking-wide truncate">
               {profile?.role}
             </span>
-            <span className="text-[9px] md:text-[10px] px-2 py-1 bg-teal-200 dark:bg-yellow-500/10 text-teal-700 dark:text-yellow-400 rounded border border-teal-300 dark:border-yellow-500/30 font-semibold uppercase tracking-wider truncate">
+            <span className="text-[10px] px-2.5 py-0.5 bg-slate-200/60 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-300 rounded-md border border-slate-200 dark:border-zinc-700/60 font-semibold tracking-wide truncate">
               {profile?.department}
             </span>
           </div>
         </div>
 
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
-          <p className="text-xs font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest px-3 mb-3">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest px-3 mb-2.5">
             {t('sidebar', 'mainMenu', lang)}
           </p>
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>
                 <a
                   href={item.path}
-                  className={`px-4 py-3 rounded-lg text-xs md:text-sm font-semibold uppercase tracking-wider transition-all block min-h-[44px] flex items-center ${
+                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all block min-h-[48px] flex items-center gap-3 border-l-4 ${
                     isActive(item.path)
-                      ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-lg scale-105'
-                      : 'text-teal-700 dark:text-gray-300 hover:bg-teal-100 dark:hover:bg-gray-800/50 hover:text-teal-900 dark:hover:text-white hover:translate-x-1'
+                      ? 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-500 font-semibold shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-900/65 hover:text-slate-900 dark:hover:text-zinc-200 border-transparent'
                   }`}
                 >
-                  {item.label}
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  <span className="truncate">{item.label}</span>
                 </a>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="border-t border-teal-200 dark:border-gray-800 p-4 space-y-2 flex-shrink-0 bg-teal-50/50 dark:bg-gray-950/50">
+        <div className="border-t border-slate-200 dark:border-zinc-900/60 p-4 space-y-3 flex-shrink-0 bg-slate-50/40 dark:bg-zinc-900/40">
           
-          {/* ── Language Toggle ─────────────────────────────────────── */}
-          <div className="flex items-center justify-between px-1 mb-1">
-            <span className="text-[10px] font-bold text-teal-600 dark:text-gray-500 uppercase tracking-widest">
+          {/* Language Selector */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
               {t('sidebar', 'language', lang)}
             </span>
-            <div className="flex items-center rounded-lg overflow-hidden border border-teal-200 dark:border-gray-700 bg-teal-100 dark:bg-gray-800/50">
+            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 p-0.5">
               <button
                 onClick={() => setLang('en')}
                 aria-label="Switch to English"
-                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
                   lang === 'en'
-                    ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black'
-                    : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-700'
+                    ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                    : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
                 }`}
               >
                 EN
@@ -224,10 +260,10 @@ export default function PortalSidebar() {
               <button
                 onClick={() => setLang('bm')}
                 aria-label="Tukar ke Bahasa Malaysia"
-                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
                   lang === 'bm'
-                    ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black'
-                    : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-700'
+                    ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                    : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
                 }`}
               >
                 BM
@@ -237,15 +273,33 @@ export default function PortalSidebar() {
 
           <button
             onClick={toggleTheme}
-            className="w-full px-4 py-2.5 rounded-lg bg-teal-100 dark:bg-gray-800/50 hover:bg-teal-200 dark:hover:bg-gray-700/50 text-teal-700 dark:text-gray-300 hover:text-teal-900 dark:hover:text-white text-xs font-semibold uppercase tracking-wider transition-all border border-teal-200 dark:border-gray-700 min-h-[44px]"
+            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-850/80 text-slate-600 hover:text-slate-900 dark:text-zinc-350 dark:hover:text-white text-xs font-semibold transition-all border border-slate-200 dark:border-zinc-800 shadow-sm min-h-[48px] flex items-center justify-center gap-2"
           >
-            {theme === 'light' ? t('sidebar', 'darkMode', lang) : t('sidebar', 'lightMode', lang)}
+            {theme === 'light' ? (
+              <>
+                <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <span>{t('sidebar', 'darkMode', lang)}</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z"/>
+                </svg>
+                <span>{t('sidebar', 'lightMode', lang)}</span>
+              </>
+            )}
           </button>
+          
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-2.5 rounded-lg bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:text-red-700 text-xs font-semibold uppercase tracking-wider transition-all border border-red-200 dark:border-red-500/30 min-h-[44px]"
+            className="w-full px-4 py-2.5 rounded-xl bg-rose-50/50 hover:bg-rose-50 dark:bg-rose-950/10 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-950/30 text-xs font-semibold transition-all min-h-[48px] flex items-center justify-center gap-2"
           >
-            {t('sidebar', 'logout', lang)}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>{t('sidebar', 'logout', lang)}</span>
           </button>
         </div>
       </div>

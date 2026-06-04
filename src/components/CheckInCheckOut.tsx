@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import * as XLSX from 'xlsx';
 
 export default function CheckInCheckOut() {
   const [profile, setProfile] = useState<any>(null);
@@ -11,6 +12,15 @@ export default function CheckInCheckOut() {
   const [allRecords, setAllRecords] = useState<any[]>([]);
   const [forgotCheckoutRecords, setForgotCheckoutRecords] = useState<any[]>([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLateCheckoutModalOpen, setIsLateCheckoutModalOpen] = useState(false);
+  const [lateCheckoutRecord, setLateCheckoutRecord] = useState<any>(null);
+  const [lateCheckoutTime, setLateCheckoutTime] = useState('');
+  const [isSubmittingLateCheckout, setIsSubmittingLateCheckout] = useState(false);
+  const [detailFilterEmployee, setDetailFilterEmployee] = useState('');
+  const [detailFilterMode, setDetailFilterMode] = useState<'all' | 'day' | 'month'>('all');
+  const [detailFilterDay, setDetailFilterDay] = useState('');
+  const [detailFilterMonth, setDetailFilterMonth] = useState('');
 
   // Office coordinates
   const OFFICE_LAT = 3.0750624396122763;
@@ -78,13 +88,107 @@ export default function CheckInCheckOut() {
     }
   };
 
+  // Memoized filtered forgot checkout records
+  const filteredForgotRecords = useMemo(() => {
+    let result = [...forgotCheckoutRecords];
+
+    if (detailFilterEmployee) {
+      result = result.filter(r => r.user_name?.toLowerCase().includes(detailFilterEmployee.toLowerCase()));
+    }
+
+    if (detailFilterMode === 'day' && detailFilterDay) {
+      result = result.filter(r => r.date === detailFilterDay);
+    } else if (detailFilterMode === 'month' && detailFilterMonth) {
+      result = result.filter(r => r.date?.startsWith(detailFilterMonth));
+    }
+
+    return result;
+  }, [forgotCheckoutRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
+
+  // Memoized filtered all records
+  const filteredAllRecords = useMemo(() => {
+    let result = [...allRecords];
+
+    if (detailFilterEmployee) {
+      result = result.filter(r => r.user_name?.toLowerCase().includes(detailFilterEmployee.toLowerCase()));
+    }
+
+    if (detailFilterMode === 'day' && detailFilterDay) {
+      result = result.filter(r => r.date === detailFilterDay);
+    } else if (detailFilterMode === 'month' && detailFilterMonth) {
+      result = result.filter(r => r.date?.startsWith(detailFilterMonth));
+    }
+
+    return result;
+  }, [allRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
+
+  const exportForgotCheckoutsToExcel = () => {
+    if (filteredForgotRecords.length === 0) {
+      alert('No records to export');
+      return;
+    }
+
+    const exportData = filteredForgotRecords.map(record => ({
+      'Employee Name': record.user_name || '-',
+      'Date': record.date || '-',
+      'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
+      'Status': 'Forgot Checkout (No Checkout)'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Forgot Checkouts');
+
+    const colWidths = [20, 15, 15, 25];
+    ws['!cols'] = colWidths.map(width => ({ wch: width }));
+
+    const filename = `Forgot_Checkouts_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  };
+
+  const exportWorkingHoursToExcel = () => {
+    if (filteredAllRecords.length === 0) {
+      alert('No records to export');
+      return;
+    }
+
+    const exportData = filteredAllRecords.map(record => {
+      const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
+      const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
+      const isForgot = record.check_in_time && !record.check_out_time;
+
+      let flagStatus = 'Full';
+      if (isForgot) flagStatus = 'No Checkout';
+      else if (record.is_late_checkout) flagStatus = 'Late Checkout (Flagged)';
+      else if (isShortDay) flagStatus = 'Short Day (<9h)';
+
+      return {
+        'Employee Name': record.user_name || '-',
+        'Date': record.date || '-',
+        'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
+        'Check Out Time': record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '-',
+        'Hours Worked': workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-',
+        'Status Flag': flagStatus
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Working Hours Summary');
+
+    const colWidths = [20, 15, 15, 15, 15, 25];
+    ws['!cols'] = colWidths.map(width => ({ wch: width }));
+
+    const filename = `Working_Hours_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  };
+
   const checkLocationPermission = async () => {
     if (!navigator.geolocation) {
       setLocationStatus('Geolocation not supported');
       return false;
     }
     
-    // For browsers, permission is checked when we try to get location
     setLocationStatus('Requesting location...');
     
     return new Promise((resolve) => {
@@ -188,6 +292,123 @@ export default function CheckInCheckOut() {
     }
   };
 
+  const handleOpenLateCheckoutModal = (record: any) => {
+    setLateCheckoutRecord(record);
+    setLateCheckoutTime('18:00');
+    setIsLateCheckoutModalOpen(true);
+  };
+
+  const handleLateCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lateCheckoutRecord || !lateCheckoutTime) return;
+
+    setIsSubmittingLateCheckout(true);
+
+    try {
+      // Get location coordinates if possible (non-blocking)
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+      let distance: number | null = null;
+      let withinZone = false;
+      let accuracy: number | null = null;
+
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0
+            });
+          });
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          accuracy = Math.round(position.coords.accuracy);
+          distance = Math.round(calculateDistance(OFFICE_LAT, OFFICE_LNG, latitude, longitude));
+          withinZone = distance <= ZONE_RADIUS_METERS;
+        } catch (err) {
+          console.warn('Geolocation failed or timed out for late checkout submission:', err);
+        }
+      }
+
+      // Construct checkout timestamp from the record date and input time
+      const [year, month, day] = lateCheckoutRecord.date.split('-').map(Number);
+      const [hours, minutes] = lateCheckoutTime.split(':').map(Number);
+      const actualCheckoutDate = new Date(year, month - 1, day, hours, minutes);
+      const checkoutTimeISO = actualCheckoutDate.toISOString();
+
+      // Check if checkout time is after checkin time
+      const checkInTime = new Date(lateCheckoutRecord.check_in_time);
+      if (actualCheckoutDate <= checkInTime) {
+        alert(`Actual check-out time must be after check-in time (${checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}).`);
+        setIsSubmittingLateCheckout(false);
+        return;
+      }
+
+      // Update attendance record
+      const updateData = {
+        check_out_time: checkoutTimeISO,
+        check_out_latitude: latitude,
+        check_out_longitude: longitude,
+        check_out_distance: distance,
+        check_out_within_zone: withinZone,
+        check_out_accuracy: accuracy,
+        is_late_checkout: true,
+        late_checkout_flagged: true,
+        late_checkout_reported_at: new Date().toISOString()
+      };
+
+      const { error: updateError } = await supabase
+        .from('attendance')
+        .update(updateData)
+        .eq('id', lateCheckoutRecord.id);
+
+      if (updateError) {
+        console.error('Error updating late checkout:', updateError);
+        alert('Failed to submit late checkout record.');
+        setIsSubmittingLateCheckout(false);
+        return;
+      }
+
+      // Write audit log entry
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const auditPayload = {
+          user_id: session.user.id,
+          user_name: profile?.name || 'Unknown',
+          user_role: profile?.role || 'No Role',
+          table_name: 'attendance',
+          action: 'UPDATE',
+          record_id: lateCheckoutRecord.id,
+          changes: {
+            note: `Late checkout resolved for date ${lateCheckoutRecord.date}. Stated actual checkout time: ${lateCheckoutTime}`,
+            check_out_time: checkoutTimeISO,
+            is_late_checkout: true,
+            late_checkout_reported_at: new Date().toISOString(),
+            submission_distance: distance !== null ? `${distance}m` : 'Unknown'
+          },
+          created_at: new Date().toISOString()
+        };
+
+        await supabase.from('audit_logs').insert([auditPayload]);
+      }
+
+      alert('Late checkout has been submitted successfully and flagged to CFO, HR, IT.');
+      setIsLateCheckoutModalOpen(false);
+      setLateCheckoutRecord(null);
+      setLateCheckoutTime('');
+      
+      // Refresh lists
+      await fetchTodayRecord();
+      await fetchForgotCheckoutRecords();
+    } catch (err) {
+      console.error('Exception during late checkout submit:', err);
+      alert('An error occurred during submission.');
+    } finally {
+      setIsSubmittingLateCheckout(false);
+    }
+  };
+
   const fetchTodayRecord = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -217,6 +438,8 @@ export default function CheckInCheckOut() {
         return;
       }
 
+      setCurrentUserId(session.user.id);
+
       const { data: profileData } = await supabase
         .from('profiles')
         .select(`full_name, roles ( role_name )`)
@@ -239,122 +462,135 @@ export default function CheckInCheckOut() {
   if (profile?.role && ['Chairman', 'CEO'].includes(profile.role)) {
     return null;
   }
+  const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin'].includes(profile.role);
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow mb-8 md:mb-10">
+    <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mb-8">
       {/* Header */}
-      <div className="p-4 md:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 dark:from-blue-900 dark:via-blue-800 dark:to-cyan-900">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-lg md:text-2xl font-black uppercase tracking-widest text-white flex items-center gap-2 md:gap-3">
-              <span className="text-2xl md:text-4xl">⏰</span> Time Tracking
-            </h2>
-            <p className="text-xs md:text-sm text-blue-100 mt-1 md:mt-2 font-medium">Check in and out with GPS location verification</p>
-          </div>
-          <div className="text-5xl opacity-20">📍</div>
+      <div className="p-6 md:p-8 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+            Time Tracking
+          </h2>
+          <p className="text-xs md:text-sm text-indigo-100 mt-1.5 font-medium">
+            Check in and check out with GPS location verification
+          </p>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 lg:p-10">
+      <div className="p-6 md:p-8">
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block">
-              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3"></div>
-              <div className="text-blue-600 font-bold text-sm">Loading attendance data...</div>
+              <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3"></div>
+              <div className="text-indigo-600 font-semibold text-sm">Loading attendance data...</div>
             </div>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Today's Status Card */}
             {todayRecord && (
-              <div className="p-4 md:p-6 lg:p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/80 to-cyan-50/50 dark:from-blue-900/20 dark:to-cyan-900/10 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-3 md:mb-4">
-                  <span className="text-lg md:text-xl">📋</span>
-                  <p className="text-xs md:text-sm font-black uppercase tracking-widest text-blue-700 dark:text-blue-300">Today's Status</p>
+              <div className="p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550">Today's Status</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Check In Card */}
-                  <div className="p-3 md:p-4 lg:p-5 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-blue-100 dark:border-blue-800/50 backdrop-blur">
-                    <div className="flex items-center justify-between mb-2 md:mb-3">
-                      <p className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">✓ Check In</p>
-                      {todayRecord.check_in_time && <span className="text-2xl">🟢</span>}
-                    </div>
-                    {todayRecord.check_in_time ? (
-                      <div className="space-y-2 md:space-y-3">
-                        <p className="text-lg md:text-2xl font-black text-gray-900 dark:text-white">
-                          {new Date(todayRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur ${
-                            todayRecord.check_in_within_zone
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                          }`}>
-                            {todayRecord.check_in_within_zone ? '✓ In Zone' : '⚠️ OUTSIDE ZONE'}
+                  <div className="p-5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check In</p>
+                        {todayRecord.check_in_time && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                            </svg>
+                            <span>Checked In</span>
                           </span>
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full">
-                            {todayRecord.check_in_distance}m away
-                          </span>
-                        </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-lg text-gray-400 font-semibold">Not checked in yet</p>
-                    )}
+                      {todayRecord.check_in_time ? (
+                        <div className="space-y-3">
+                          <p className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                            {new Date(todayRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
+                              todayRecord.check_in_within_zone
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/50'
+                                : 'bg-rose-50 text-rose-800 border-rose-205 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                            }`}>
+                              {todayRecord.check_in_within_zone ? 'In Zone' : 'Outside Zone'}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-md border border-slate-200 dark:border-zinc-700">
+                              {todayRecord.check_in_distance}m away
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-lg text-slate-400 dark:text-zinc-550 font-medium py-2">Not checked in yet</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Check Out Card */}
-                  <div className="p-5 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-red-100 dark:border-red-800/50 backdrop-blur">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">✗ Check Out</p>
-                      {todayRecord.check_out_time && <span className="text-2xl">🔴</span>}
-                    </div>
-                    {todayRecord.check_out_time ? (
-                      <div className="space-y-3">
-                        <p className="text-2xl font-black text-gray-900 dark:text-white">
-                          {new Date(todayRecord.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur ${
-                            todayRecord.check_out_within_zone
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                          }`}>
-                            {todayRecord.check_out_within_zone ? '✓ In Zone' : '⚠️ OUTSIDE ZONE'}
+                  <div className="p-5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check Out</p>
+                        {todayRecord.check_out_time && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/30">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                            </svg>
+                            <span>Checked Out</span>
                           </span>
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full">
-                            {todayRecord.check_out_distance}m away
-                          </span>
-                        </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-lg text-gray-400 font-semibold">Not checked out yet</p>
-                    )}
+                      {todayRecord.check_out_time ? (
+                        <div className="space-y-3">
+                          <p className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                            {new Date(todayRecord.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
+                              todayRecord.check_out_within_zone
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/50'
+                                : 'bg-rose-50 text-rose-800 border-rose-205 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                            }`}>
+                              {todayRecord.check_out_within_zone ? 'In Zone' : 'Outside Zone'}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-md border border-slate-200 dark:border-zinc-700">
+                              {todayRecord.check_out_distance}m away
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-lg text-slate-400 dark:text-zinc-550 font-medium py-2">Not checked out yet</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6 pt-6 md:pt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               <button
                 onClick={() => getLocationAndCheckIn('check_in')}
                 disabled={isProcessing || (todayRecord?.check_in_time && !todayRecord?.check_out_time)}
-                className="group relative px-4 md:px-6 py-3 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden min-h-[44px] md:min-h-[48px]"
+                className="px-5 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 group-hover:shadow-lg group-disabled:opacity-50"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   {isProcessing ? (
                     <>
-                      <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                      Processing...
+                      <svg className="w-4 h-4 animate-spin text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                      <span>Processing...</span>
                     </>
                   ) : (
-                    <>
-                      <span>✓</span> Check In
-                    </>
+                    <span>Check In</span>
                   )}
                 </div>
               </button>
@@ -362,20 +598,16 @@ export default function CheckInCheckOut() {
               <button
                 onClick={() => getLocationAndCheckIn('check_out')}
                 disabled={isProcessing || !todayRecord?.check_in_time || todayRecord?.check_out_time}
-                className="group relative px-4 md:px-6 py-3 md:py-4 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden min-h-[44px] md:min-h-[48px]"
+                className="px-5 py-3 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 group-hover:shadow-lg group-disabled:opacity-50"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   {isProcessing ? (
                     <>
-                      <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                      Processing...
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                      <span>Processing...</span>
                     </>
                   ) : (
-                    <>
-                      <span>✗</span> Check Out
-                    </>
+                    <span>Check Out</span>
                   )}
                 </div>
               </button>
@@ -383,61 +615,194 @@ export default function CheckInCheckOut() {
 
             {/* Location Status */}
             {locationStatus && (
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur mt-2">
-                <p className="text-sm text-center font-semibold text-blue-700 dark:text-blue-300">
-                  <span className="inline-block mr-2">📍</span>{locationStatus}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 mt-2">
+                <p className="text-xs text-center font-medium text-slate-505 dark:text-zinc-400">
+                  {locationStatus}
                 </p>
               </div>
             )}
 
             {/* Forgot Checkout & Working Hours Section */}
-            <div className="space-y-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-zinc-800">
               {/* Details Toggle Button */}
-              {forgotCheckoutRecords.length > 0 && (
+              {(forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className="w-full px-6 py-4 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-2 border-purple-300 dark:border-purple-700 hover:shadow-lg transition-all font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center justify-between group"
+                  className="w-full px-5 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 transition-all font-semibold text-slate-700 dark:text-zinc-200 flex items-center justify-between min-h-[48px]"
                 >
-                  <span className="flex items-center gap-3">
-                    <span className="text-2xl">{showDetails ? '📊' : '👁️'}</span>
-                    {showDetails ? 'Hide Details' : `Show Details (${forgotCheckoutRecords.length} Issues)`}
+                  <span className="text-sm">
+                    {showDetails ? 'Hide Detailed Overview' : `Show Detailed Overview (${forgotCheckoutRecords.length} unresolved checkouts)`}
                   </span>
-                  <span className={`text-xl transition-transform ${showDetails ? 'rotate-180' : ''}`}>▼</span>
+                  <span className="text-xs transition-transform duration-200">{showDetails ? '▲' : '▼'}</span>
                 </button>
               )}
 
+              {/* Filters Card for Privileged Roles (HR, CFO, IT) */}
+              {showDetails && isPrivilegedRole && (
+                <div className="p-5 rounded-2xl bg-slate-55/30 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/80 space-y-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                    Filter Attendance Logs
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Employee Filter */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Employee Name</label>
+                      <input
+                        type="text"
+                        placeholder="Search employee..."
+                        value={detailFilterEmployee}
+                        onChange={(e) => setDetailFilterEmployee(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px] placeholder-slate-400 dark:placeholder-zinc-500"
+                      />
+                    </div>
+
+                    {/* Filter Mode */}
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Time Range</label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setDetailFilterMode('all')}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDetailFilterMode('day')}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'day' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                        >
+                          Day
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDetailFilterMode('month')}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'month' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                        >
+                          Month
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Date Selector */}
+                    <div className="space-y-1">
+                      {detailFilterMode === 'day' && (
+                        <>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Select Date</label>
+                          <input
+                            type="date"
+                            value={detailFilterDay}
+                            onChange={(e) => setDetailFilterDay(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                          />
+                        </>
+                      )}
+                      {detailFilterMode === 'month' && (
+                        <>
+                          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Select Month</label>
+                          <input
+                            type="month"
+                            value={detailFilterMonth}
+                            onChange={(e) => setDetailFilterMonth(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                          />
+                        </>
+                      )}
+                      {detailFilterMode === 'all' && (
+                        <div className="h-full flex items-center justify-center text-xs text-gray-400 italic">
+                          Showing all records
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Clear Button */}
+                  {(detailFilterEmployee || detailFilterDay || detailFilterMonth) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDetailFilterEmployee('');
+                        setDetailFilterDay('');
+                        setDetailFilterMonth('');
+                        setDetailFilterMode('all');
+                      }}
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-700 uppercase tracking-wider block"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Forgot Checkout Alert - Only shown when details are expanded */}
-              {showDetails && forgotCheckoutRecords.length > 0 && (
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-2 border-red-300 dark:border-red-800 backdrop-blur">
-                  <div className="flex items-start gap-3">
-                    <span className="text-3xl">🚨</span>
-                    <div className="flex-1">
-                      <h3 className="font-black uppercase tracking-wider text-red-900 dark:text-red-300 mb-3">Forgot to Check Out</h3>
+              {showDetails && (forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
+                <div className="p-5 rounded-2xl bg-rose-50/20 dark:bg-rose-955/5 border border-rose-100 dark:border-rose-950/20">
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <h3 className="font-semibold text-rose-800 dark:text-rose-400 text-base">Forgot to Check Out</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Please resolve your incomplete checkout logs.</p>
+                      </div>
+                      {isPrivilegedRole && filteredForgotRecords.length > 0 && (
+                        <button
+                          onClick={exportForgotCheckoutsToExcel}
+                          className="px-4 py-2 bg-white hover:bg-rose-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                          </svg>
+                          <span>Export Excel</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-rose-100 dark:border-rose-950/30">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-left border-collapse text-xs md:text-sm">
                           <thead>
-                            <tr className="border-b border-red-200 dark:border-red-700">
-                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Employee</th>
-                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Date</th>
-                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Check In</th>
-                              <th className="px-4 py-2 text-left font-bold text-red-700 dark:text-red-300">Status</th>
+                            <tr className="bg-rose-50/30 dark:bg-rose-955/10 border-b border-rose-100 dark:border-rose-900/30">
+                              <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-350">Employee</th>
+                              <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-350">Date</th>
+                              <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-350">Check In</th>
+                              <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-350">Status</th>
+                              <th className="px-4 py-3 text-right font-semibold text-rose-800 dark:text-rose-350">Action</th>
                             </tr>
                           </thead>
-                          <tbody>
-                            {forgotCheckoutRecords.map((record) => (
-                              <tr key={record.id} className="border-b border-red-100 dark:border-red-800 hover:bg-red-100/30 dark:hover:bg-red-900/20">
-                                <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{record.user_name}</td>
-                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{record.date}</td>
-                                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                  {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300">
-                                    ⚠️ No Checkout
-                                  </span>
+                          <tbody className="divide-y divide-rose-100/40 dark:divide-rose-900/20 text-slate-700 dark:text-zinc-300">
+                            {filteredForgotRecords.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-6 text-center text-rose-700 dark:text-rose-400 font-medium italic bg-white dark:bg-zinc-950">
+                                  No forgot checkout records found matching filters
                                 </td>
                               </tr>
-                            ))}
+                            ) : (
+                              filteredForgotRecords.map((record) => (
+                                <tr key={record.id} className="hover:bg-rose-50/10 dark:hover:bg-rose-955/5 bg-white dark:bg-zinc-950">
+                                  <td className="px-4 py-3.5 font-semibold text-slate-905 dark:text-white">{record.user_name}</td>
+                                  <td className="px-4 py-3.5 font-mono">{record.date}</td>
+                                  <td className="px-4 py-3.5">
+                                    {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </td>
+                                  <td className="px-4 py-3.5">
+                                    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50/50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400">
+                                      No Checkout
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3.5 text-right">
+                                    {record.user_id === currentUserId ? (
+                                      <button
+                                        onClick={() => handleOpenLateCheckoutModal(record)}
+                                        className="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white text-xs font-semibold rounded-lg shadow transition-all h-9 flex items-center justify-center inline-flex"
+                                      >
+                                        Check Out
+                                      </button>
+                                    ) : (
+                                      <span className="text-xs text-slate-400 italic">Not Self</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -448,73 +813,184 @@ export default function CheckInCheckOut() {
 
               {/* Working Hours Summary - Only shown when details are expanded */}
               {showDetails && (
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 backdrop-blur">
-                  <h3 className="font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 mb-4 flex items-center gap-2">
-                    <span className="text-2xl">⏱️</span> Working Hours Summary
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/50 dark:to-yellow-900/50 border-b-2 border-amber-200 dark:border-amber-700">
-                          <th className="px-4 py-3 text-left font-black text-amber-900 dark:text-amber-300">Employee</th>
-                          <th className="px-4 py-3 text-left font-black text-amber-900 dark:text-amber-300">Date</th>
-                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Check In</th>
-                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Check Out</th>
-                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Hours</th>
-                          <th className="px-4 py-3 text-center font-black text-amber-900 dark:text-amber-300">Flag</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allRecords.slice(0, 20).map((record) => {
-                          const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
-                          const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
-                          const isForgotCheckout = record.check_in_time && !record.check_out_time;
-                          
-                          return (
-                            <tr 
-                              key={record.id} 
-                              className={`border-b border-amber-100 dark:border-amber-800 transition-all ${
-                                isForgotCheckout ? 'bg-red-50/50 dark:bg-red-900/10' : isShortDay ? 'bg-orange-50/50 dark:bg-orange-900/10' : 'bg-white dark:bg-gray-800/30 hover:bg-amber-50/30 dark:hover:bg-amber-900/10'
-                              }`}
-                            >
-                              <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{record.user_name}</td>
-                              <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{record.date}</td>
-                              <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
-                                {record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
-                                {record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-center font-bold text-gray-900 dark:text-white">
-                                {workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-'}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                {isForgotCheckout ? (
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300">
-                                    🚨 No Checkout
-                                  </span>
-                                ) : isShortDay ? (
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-orange-200 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                                    ⚠️ &lt;9h
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                    ✓ Full
-                                  </span>
-                                )}
-                              </td>
+                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-205 dark:border-zinc-800">
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <h3 className="font-semibold text-slate-800 dark:text-white text-base">
+                          Working Hours Summary
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Logs of recent working hours and compliance flags.</p>
+                      </div>
+                      {isPrivilegedRole && filteredAllRecords.length > 0 && (
+                        <button
+                          onClick={exportWorkingHoursToExcel}
+                          className="px-4 py-2 bg-white hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                          </svg>
+                          <span>Export Excel</span>
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs md:text-sm">
+                          <thead>
+                            <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                              <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Employee</th>
+                              <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Date</th>
+                              <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Check In</th>
+                              <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Check Out</th>
+                              <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Hours</th>
+                              <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Flag</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-150 dark:divide-zinc-800 text-slate-700 dark:text-zinc-300">
+                            {filteredAllRecords.length === 0 ? (
+                               <tr>
+                                 <td colSpan={6} className="px-4 py-6 text-center text-slate-500 font-medium italic">
+                                   No attendance records found matching filters
+                                 </td>
+                               </tr>
+                            ) : (
+                               (isPrivilegedRole ? filteredAllRecords : filteredAllRecords.slice(0, 20)).map((record) => {
+                                 const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
+                                 const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
+                                 const isForgotCheckout = record.check_in_time && !record.check_out_time;
+                                 
+                                 return (
+                                   <tr 
+                                     key={record.id} 
+                                     className={`hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 ${
+                                       isForgotCheckout ? 'bg-rose-50/20 dark:bg-rose-955/5' : isShortDay ? 'bg-amber-50/20 dark:bg-amber-955/5' : ''
+                                     }`}
+                                   >
+                                     <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
+                                     <td className="px-4 py-3.5 font-mono">{record.date}</td>
+                                     <td className="px-4 py-3.5 text-center">
+                                       {record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                     </td>
+                                     <td className="px-4 py-3.5 text-center">
+                                       {record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                     </td>
+                                     <td className="px-4 py-3.5 text-center font-semibold text-slate-900 dark:text-white">
+                                       {workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-'}
+                                     </td>
+                                     <td className="px-4 py-3.5 text-center">
+                                       {isForgotCheckout ? (
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-805 dark:bg-rose-955/20 dark:text-rose-400">
+                                           No Checkout
+                                         </span>
+                                       ) : record.is_late_checkout ? (
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-805 dark:bg-rose-955/20 dark:text-rose-400" title="Flagged warning to CFO, HR, IT">
+                                           Late Checkout
+                                         </span>
+                                       ) : isShortDay ? (
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-805 dark:bg-amber-955/20 dark:text-amber-400">
+                                           &lt; 9 Hours
+                                         </span>
+                                       ) : (
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-805 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                           Full Day
+                                         </span>
+                                       )}
+                                     </td>
+                                   </tr>
+                                 );
+                               })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 flex-wrap text-xs text-slate-500 border-t border-slate-100 dark:border-zinc-800 pt-3">
+                      <span>Records shown: {isPrivilegedRole ? filteredAllRecords.length : Math.min(20, filteredAllRecords.length)}</span>
+                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-rose-500/20 border border-rose-350 rounded"></span> Red = Forgot/Late Checkout</span>
+                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-500/20 border border-amber-350 rounded"></span> Yellow = Short Day (&lt;9 hours)</span>
+                      <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-white border border-slate-200 rounded"></span> White = Compliant Full Day</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-3 font-semibold">
-                    📊 Showing last 20 records | 🚨 Red = Forgot checkout | ⚠️ Orange = Less than 9 hours | ✓ Green = Full work day
-                  </p>
                 </div>
               )}
             </div>
+
+            {/* Late Checkout Modal */}
+            {isLateCheckoutModalOpen && lateCheckoutRecord && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                  {/* Header */}
+                  <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900">
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
+                      Resolve Checkout
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Stating actual checkout time for past date</p>
+                  </div>
+
+                  {/* Body */}
+                  <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Date</p>
+                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-205 dark:border-zinc-800">{lateCheckoutRecord.date}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Check In Time</p>
+                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-205 dark:border-zinc-800">
+                        {new Date(lateCheckoutRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="lateCheckoutTime" className="block text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">
+                        Stated Actual Checkout Time
+                      </label>
+                      <input
+                        type="time"
+                        id="lateCheckoutTime"
+                        value={lateCheckoutTime}
+                        onChange={(e) => setLateCheckoutTime(e.target.value)}
+                        required
+                        className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                      />
+                      <p className="text-[11px] text-rose-600 dark:text-rose-455 font-medium leading-relaxed">
+                        ⚠️ Submitting this will flag a late check-out warning to the CFO, HR, and IT Admin.
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLateCheckoutModalOpen(false);
+                          setLateCheckoutRecord(null);
+                        }}
+                        disabled={isSubmittingLateCheckout}
+                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold rounded-xl transition-all min-h-[48px] shadow-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingLateCheckout}
+                        className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow transition-all min-h-[48px] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isSubmittingLateCheckout ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <span>Submit</span>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

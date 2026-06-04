@@ -56,7 +56,6 @@ export default function AttendanceView() {
 
       if (records) {
         setAttendanceRecords(records);
-        // Extract unique employee names for dropdown
         const employees = [...new Set(records.map(r => r.user_name))].sort();
         setUniqueEmployees(employees);
         applyFilters(records, selectedDate, selectedMonth, searchName, filterMode);
@@ -69,12 +68,10 @@ export default function AttendanceView() {
   const applyFilters = (records: any[], date: string, month: string, name: string, mode: 'date' | 'month') => {
     let filtered = records;
 
-    // Filter by employee name
     if (name) {
       filtered = filtered.filter(r => r.user_name?.toLowerCase().includes(name.toLowerCase()));
     }
 
-    // Filter by date or month
     if (mode === 'date') {
       filtered = filtered.filter(r => r.date === date);
     } else if (mode === 'month') {
@@ -110,116 +107,115 @@ export default function AttendanceView() {
       return;
     }
 
-    // Prepare data for export
     const exportData = filteredRecords.map(record => ({
       'Employee Name': record.user_name || '-',
       'Date': record.date || '-',
       'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
-      'Check In Location': record.check_in_distance ? `${record.check_in_distance}m` : '-',
+      'Check In Location': record.check_in_distance !== null ? `${record.check_in_distance}m` : '-',
       'Check In Status': record.check_in_within_zone ? 'In Zone' : 'Outside Zone',
       'Check Out Time': record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '-',
-      'Check Out Location': record.check_out_distance ? `${record.check_out_distance}m` : '-',
-      'Check Out Status': record.check_out_within_zone ? 'In Zone' : 'Outside Zone'
+      'Check Out Location': record.check_out_distance !== null ? `${record.check_out_distance}m` : '-',
+      'Check Out Status': record.check_out_within_zone ? 'In Zone' : 'Outside Zone',
+      'Late Checkout': record.is_late_checkout ? 'Yes (Flagged to CFO, HR, IT)' : 'No'
     }));
 
-    // Create workbook and worksheet
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Attendance Records');
 
-    // Add column widths for better readability
     const colWidths = [20, 12, 15, 15, 15, 15, 15, 15];
     ws['!cols'] = colWidths.map(width => ({ wch: width }));
 
-    // Generate filename with date/month info
     const filename = `Attendance_${filterMode === 'date' ? selectedDate : selectedMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
-  // Only HR and CFO can view
-  if (profile?.role && !['HR', 'CFO'].includes(profile.role)) {
+  if (profile?.role && !['HR', 'CFO', 'IT Admin'].includes(profile.role)) {
     return null;
   }
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900/80 dark:to-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow mb-8 md:mb-10">
+    <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
       {/* Header */}
-      <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 dark:from-purple-900 dark:via-purple-800 dark:to-pink-900">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-black uppercase tracking-widest text-white flex items-center gap-3">
-              <span className="text-4xl">👥</span> {t('attendanceAdmin', 'title', lang)}
-            </h2>
-            <p className="text-sm text-purple-100 mt-2 font-medium">{t('attendanceAdmin', 'subtitle', lang)}</p>
-          </div>
-          <div className="text-5xl opacity-20">📊</div>
+      <div className="p-6 md:p-8 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+            {t('attendanceAdmin', 'title', lang)}
+          </h2>
+          <p className="text-xs md:text-sm text-indigo-100 mt-1.5 font-medium">
+            {t('attendanceAdmin', 'subtitle', lang)}
+          </p>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 md:p-6 lg:p-10">
+      <div className="p-6 md:p-8">
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block">
-              <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
-              <div className="text-purple-600 font-bold text-sm">{t('attendanceAdmin', 'loading', lang)}</div>
+              <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3"></div>
+              <div className="text-indigo-600 font-semibold text-sm">{t('attendanceAdmin', 'loading', lang)}</div>
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Filter Controls */}
-            <div className="space-y-4 md:space-y-6">
+            <div className="space-y-4">
               {/* Employee Name Search */}
-              <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-                <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">{t('attendanceAdmin', 'searchByName', lang)}</label>
+              <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
+                  {t('attendanceAdmin', 'searchByName', lang)}
+                </label>
                 <input
                   type="text"
                   placeholder={t('attendanceAdmin', 'typeName', lang)}
                   value={searchName}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-xs md:text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder-gray-400 min-h-[40px]"
+                  className="w-full px-4 py-3 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-slate-400 min-h-[48px]"
                 />
               </div>
 
               {/* Filter Mode Toggle & Date/Month Selector */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Filter Mode */}
-                <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur">
-                  <label className="block text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 mb-2 md:mb-3">{t('attendanceAdmin', 'filterBy', lang)}</label>
-                  <div className="flex gap-2 md:gap-3">
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
+                    {t('attendanceAdmin', 'filterBy', lang)}
+                  </label>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleFilterModeChange('date')}
-                      className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wider transition-all min-h-[40px] ${
+                      className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all min-h-[48px] border ${
                         filterMode === 'date'
-                          ? 'bg-blue-600 text-white shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
+                          ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
+                          : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
                       }`}
                     >
-                      📅 {t('attendanceAdmin', 'byDate', lang)}
+                      {t('attendanceAdmin', 'byDate', lang)}
                     </button>
                     <button
                       onClick={() => handleFilterModeChange('month')}
-                      className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wider transition-all min-h-[40px] ${
+                      className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all min-h-[48px] border ${
                         filterMode === 'month'
-                          ? 'bg-blue-600 text-white shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-gray-700'
+                          ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
+                          : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
                       }`}
                     >
-                      📆 {t('attendanceAdmin', 'byMonth', lang)}
+                      {t('attendanceAdmin', 'byMonth', lang)}
                     </button>
                   </div>
                 </div>
 
                 {/* Date/Month Input */}
-                <div className="p-4 md:p-5 lg:p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 backdrop-blur">
-                  <label className="block text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2 md:mb-3">
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                     {filterMode === 'date' ? t('attendanceAdmin', 'selectDate', lang) : t('attendanceAdmin', 'selectMonth', lang)}
                   </label>
                   <input
                     type={filterMode === 'date' ? 'date' : 'month'}
                     value={filterMode === 'date' ? selectedDate : selectedMonth}
                     onChange={(e) => filterMode === 'date' ? handleDateChange(e.target.value) : handleMonthChange(e.target.value)}
-                    className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-purple-200 dark:border-purple-700 rounded-xl bg-white dark:bg-gray-800/50 text-xs md:text-sm font-semibold text-gray-900 dark:text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all min-h-[40px]"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 transition-all min-h-[48px]"
                   />
                 </div>
               </div>
@@ -227,84 +223,93 @@ export default function AttendanceView() {
               {/* Export Button */}
               <button
                 onClick={exportToExcel}
-                className="w-full px-4 md:px-6 py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-black uppercase tracking-wider text-xs md:text-sm shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 min-h-[44px]"
+                className="w-full px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs md:text-sm font-semibold tracking-wide transition-all flex items-center justify-center gap-2 min-h-[48px] shadow-sm border border-indigo-600"
               >
-                <span>📊</span> {t('attendanceAdmin', 'exportExcel', lang)} ({filteredRecords.length} {t('attendanceAdmin', 'records', lang)})
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span>{t('attendanceAdmin', 'exportExcel', lang)} ({filteredRecords.length} {t('attendanceAdmin', 'records', lang)})</span>
               </button>
             </div>
 
             {/* Records Table */}
-            <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700">
+            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm mt-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-left border-collapse text-xs md:text-sm">
                   <thead>
-                    <tr className="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700/50 border-b-2 border-gray-200 dark:border-gray-700">
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colEmployee', lang)}</th>
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
-                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
-                      <th className="px-6 py-4 text-left font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colCheckOut', lang)}</th>
-                      <th className="px-6 py-4 text-center font-black text-gray-900 dark:text-white uppercase tracking-wider text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
+                    <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                      <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colEmployee', lang)}</th>
+                      <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
+                      <th className="px-5 py-3.5 text-center font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
+                      <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colCheckOut', lang)}</th>
+                      <th className="px-5 py-3.5 text-center font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-150 dark:divide-zinc-805">
                     {filteredRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-16 text-center">
-                          <div className="text-4xl mb-2">📭</div>
-                          <p className="text-gray-500 dark:text-gray-400 font-semibold">{t('attendanceAdmin', 'noRecords', lang)} {selectedDate}</p>
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-450 dark:text-zinc-500 font-medium italic">
+                          {t('attendanceAdmin', 'noRecords', lang)} {selectedDate}
                         </td>
                       </tr>
                     ) : (
                       filteredRecords.map((record, idx) => (
-                        <tr key={record.id} className={`border-b border-gray-200 dark:border-gray-700 transition-all hover:bg-purple-50/50 dark:hover:bg-purple-900/10 ${idx % 2 === 0 ? 'bg-white dark:bg-gray-800/30' : 'bg-gray-50/50 dark:bg-gray-800/50'}`}>
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-gray-900 dark:text-white">{record.user_name}</p>
+                        <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-slate-900 dark:text-white">{record.user_name}</p>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-5 py-4">
                             {record.check_in_time ? (
                               <div>
-                                <p className="font-bold text-gray-900 dark:text-white text-base">
+                                <p className="font-semibold text-slate-805 dark:text-zinc-150 text-sm">
                                   {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  📍 {record.check_in_distance}m away
+                                <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                  {record.check_in_distance}m away
                                 </p>
                               </div>
                             ) : (
-                              <span className="text-gray-400 font-semibold">-</span>
+                              <span className="text-slate-400 font-medium">-</span>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-5 py-4 text-center">
                             {record.check_in_time && (
-                              <span className={`inline-flex items-center gap-1 text-xs font-black px-3 py-2 rounded-lg backdrop-blur ${
+                              <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                 record.check_in_within_zone
-                                  ? 'bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                  : 'bg-red-100/80 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
+                                  : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
                                 {record.check_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-5 py-4">
                             {record.check_out_time ? (
                               <div>
-                                <p className="font-bold text-gray-900 dark:text-white text-base">
+                                <p className="font-semibold text-slate-805 dark:text-zinc-155 text-sm">
                                   {new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  📍 {record.check_out_distance}m away
+                                <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                  {record.check_out_distance !== null ? `${record.check_out_distance}m away` : 'No location data'}
                                 </p>
+                                {record.is_late_checkout && (
+                                  <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
+                                    Flagged Late
+                                  </span>
+                                )}
                               </div>
                             ) : (
-                              <span className="text-yellow-600 dark:text-yellow-400 font-bold text-sm">{t('attendanceAdmin', 'pending', lang)}</span>
+                              <span className="text-amber-705 dark:text-amber-400 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-105 dark:border-amber-900/30">
+                                {t('attendanceAdmin', 'pending', lang)}
+                              </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-5 py-4 text-center">
                             {record.check_out_time && (
-                              <span className={`inline-flex items-center gap-1 text-xs font-black px-3 py-2 rounded-lg backdrop-blur ${
+                              <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                 record.check_out_within_zone
-                                  ? 'bg-green-100/80 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                  : 'bg-red-100/80 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
+                                  : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
                                 {record.check_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
@@ -318,37 +323,34 @@ export default function AttendanceView() {
               </div>
             </div>
 
-            {/* Statistics */}
+            {/* Statistics Section */}
             {filteredRecords.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-6 border-t border-slate-200 dark:border-zinc-800">
                 {/* Total Checked In */}
-                <div className="relative p-8 rounded-2xl border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 overflow-hidden">
-                  <div className="absolute top-0 right-0 text-6xl opacity-10">👥</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-300 relative z-10">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
-                  <p className="text-4xl font-black text-blue-900 dark:text-blue-100 mt-3 relative z-10">
+                <div className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/20 dark:bg-zinc-900/40 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
+                  <p className="text-3xl font-bold text-slate-805 dark:text-white mt-2">
                     {filteredRecords.filter((r) => r.check_in_time).length}
                   </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 relative z-10">{t('common', 'of', lang)} {filteredRecords.length} {t('attendanceAdmin', 'statEmployees', lang)}</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">{t('common', 'of', lang)} {filteredRecords.length} {t('attendanceAdmin', 'statEmployees', lang)}</p>
                 </div>
 
                 {/* In Zone */}
-                <div className="relative p-8 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 overflow-hidden">
-                  <div className="absolute top-0 right-0 text-6xl opacity-10">✓</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-green-700 dark:text-green-300 relative z-10">{t('attendanceAdmin', 'statInZone', lang)}</p>
-                  <p className="text-4xl font-black text-green-900 dark:text-green-100 mt-3 relative z-10">
+                <div className="p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t('attendanceAdmin', 'statInZone', lang)}</p>
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-300 mt-2">
                     {filteredRecords.filter((r) => r.check_in_within_zone).length}
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 relative z-10">{t('attendanceAdmin', 'statOnSite', lang)}</p>
+                  <p className="text-xs text-emerald-500 dark:text-emerald-500/80 mt-1">{t('attendanceAdmin', 'statOnSite', lang)}</p>
                 </div>
 
                 {/* Outside Zone */}
-                <div className="relative p-8 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20 overflow-hidden">
-                  <div className="absolute top-0 right-0 text-6xl opacity-10">⚠️</div>
-                  <p className="text-xs font-black uppercase tracking-widest text-red-700 dark:text-red-300 relative z-10">{t('attendanceAdmin', 'statOutside', lang)}</p>
-                  <p className="text-4xl font-black text-red-900 dark:text-red-100 mt-3 relative z-10">
+                <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-955/10 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-455">{t('attendanceAdmin', 'statOutside', lang)}</p>
+                  <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">
                     {filteredRecords.filter((r) => r.check_in_time && !r.check_in_within_zone).length}
                   </p>
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1 relative z-10">{t('attendanceAdmin', 'statFlagged', lang)}</p>
+                  <p className="text-xs text-rose-500 dark:text-rose-500/80 mt-1">{t('attendanceAdmin', 'statFlagged', lang)}</p>
                 </div>
               </div>
             )}

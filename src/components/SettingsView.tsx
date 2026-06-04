@@ -109,7 +109,6 @@ export default function SettingsView() {
         window.location.reload();
       }, 1500);
     } catch (err: any) {
-      // Avoid leaking raw error details to the UI
       setProfileMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
       setIsSavingProfile(false);
     }
@@ -119,13 +118,11 @@ export default function SettingsView() {
     e.preventDefault();
     setPasswordMessage(null);
 
-    // ── Input length guards ──────────────────────────────────────────────
     if (!oldPassword || oldPassword.length < 1) {
       setPasswordMessage({ type: 'error', text: 'Please enter your current password.' });
       return;
     }
 
-    // ── Enforce strong password policy ───────────────────────────────────
     const strength = isStrongPassword(newPassword);
     if (!strength.valid) {
       setPasswordMessage({ type: 'error', text: strength.message });
@@ -145,20 +142,17 @@ export default function SettingsView() {
     setIsUpdatingPassword(true);
 
     try {
-      // 1. Verify current (old) password by attempting re-authentication
       const { error: verifyError } = await supabase.auth.signInWithPassword({
         email: sessionUser.email!,
         password: oldPassword,
       });
 
       if (verifyError) {
-        // Generic message — don't reveal whether account exists
         setPasswordMessage({ type: 'error', text: 'Current password is incorrect.' });
         setIsUpdatingPassword(false);
         return;
       }
 
-      // 2. Update to new password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       
       if (error) throw error;
@@ -177,7 +171,7 @@ export default function SettingsView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-teal-600 dark:text-yellow-500 font-bold animate-pulse text-lg md:text-xl tracking-widest uppercase">
+        <div className="text-indigo-600 font-semibold animate-pulse text-lg tracking-wide">
           {t('settings', 'loadingSettings', lang)}
         </div>
       </div>
@@ -189,43 +183,41 @@ export default function SettingsView() {
       
       {/* LEFT COLUMN: Profile Overview Card */}
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-white dark:bg-gray-900/50 border border-teal-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden backdrop-blur-sm">
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
           {/* Header Graphic */}
-          <div className="h-32 bg-gradient-to-r from-teal-600 via-teal-500 to-yellow-500 dark:from-teal-900 dark:via-teal-800 dark:to-yellow-600/50 flex items-end justify-center pb-4 relative">
-            <div className="absolute top-4 right-4 bg-teal-100/20 dark:bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                {profile?.status || 'Active'}
-              </span>
+          <div className="h-32 bg-gradient-to-r from-indigo-900 to-indigo-950 flex items-end justify-center pb-4 relative">
+            <div className="absolute top-4 right-4 bg-indigo-550/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 text-[10px] font-semibold uppercase tracking-wider shadow-sm">
+              {profile?.status || 'Active'}
             </div>
-            {/* Avatar Placeholder */}
-            <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-950 flex items-center justify-center text-3xl shadow-lg transform translate-y-8">
-              👤
+            {/* Avatar */}
+            <div className="w-20 h-20 bg-slate-50 dark:bg-zinc-800 rounded-full border-4 border-white dark:border-zinc-900 flex items-center justify-center text-lg font-bold text-indigo-600 dark:text-indigo-400 shadow-md transform translate-y-8 uppercase">
+              {profile?.full_name?.slice(0, 2) || 'ST'}
             </div>
           </div>
           
           {/* Summary Info */}
           <div className="pt-12 pb-8 px-6 text-center space-y-4">
             <div>
-              <h2 className="text-xl font-black text-teal-900 dark:text-white truncate">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white truncate">
                 {profile?.full_name || 'Staff Member'}
               </h2>
-              <p className="text-[10px] font-bold text-teal-500 dark:text-gray-500 uppercase tracking-widest">{t('settings', 'userLabel', lang)}</p>
+              <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{t('settings', 'userLabel', lang)}</p>
             </div>
             
-            <div className="border-t border-gray-100 dark:border-gray-800/80 pt-4 space-y-3 text-left text-xs">
+            <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-4 space-y-3 text-left text-xs font-medium">
               <div className="flex justify-between items-center py-1">
-                <span className="text-gray-500 dark:text-gray-400 font-semibold">Email</span>
-                <span className="text-teal-950 dark:text-white font-bold truncate max-w-[180px]" title={sessionUser?.email}>
+                <span className="text-slate-450 dark:text-zinc-400">Email</span>
+                <span className="text-slate-800 dark:text-zinc-200 font-semibold truncate max-w-[180px]" title={sessionUser?.email}>
                   {sessionUser?.email || '-'}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1">
-                <span className="text-gray-500 dark:text-gray-400 font-semibold">Department</span>
-                <span className="text-teal-950 dark:text-white font-bold">{profile?.department || '-'}</span>
+                <span className="text-slate-450 dark:text-zinc-400">Department</span>
+                <span className="text-slate-800 dark:text-zinc-200 font-semibold">{profile?.department || '-'}</span>
               </div>
               <div className="flex justify-between items-center py-1">
-                <span className="text-gray-500 dark:text-gray-400 font-semibold">Base Salary</span>
-                <span className="text-teal-950 dark:text-white font-mono font-bold">
+                <span className="text-slate-455 dark:text-zinc-400">Base Salary</span>
+                <span className="text-slate-800 dark:text-zinc-200 font-mono font-semibold">
                   {profile?.salary ? `RM ${parseFloat(profile.salary).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : 'RM 0.00'}
                 </span>
               </div>
@@ -233,49 +225,49 @@ export default function SettingsView() {
           </div>
         </div>
 
-        {/* Informative Notice Box */}
-        <div className="p-5 rounded-2xl bg-teal-50/50 dark:bg-gray-900/30 border border-teal-100/80 dark:border-gray-800/60 backdrop-blur-sm">
-          <h4 className="text-xs font-black text-teal-800 dark:text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-            <span>ℹ️</span> Employee Notice
+        {/* Notice Box */}
+        <div className="p-5 rounded-2xl bg-indigo-50/15 dark:bg-indigo-950/5 border border-indigo-100/50 dark:border-indigo-950/20 shadow-sm">
+          <h4 className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            Employee Notice
           </h4>
-          <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 leading-relaxed">
+          <p className="text-xs font-medium text-slate-650 dark:text-zinc-400 leading-relaxed">
             {lang === 'bm'
-              ? <>Maklumat sensitif seperti jabatan, jawatan, gaji, dan status pekerjaan hanya boleh diubah oleh jabatan <strong>Sumber Manusia</strong> atau <strong>Pengurusan Eksekutif</strong>. Sila hubungi HR jika terdapat maklumat yang tidak tepat.</>
-              : <>Sensitive information such as department, designation role, salary, and employment status can only be modified by the <strong>Human Resources</strong> or <strong>Executive management</strong> department. Please contact HR if any details are incorrect.</>
+              ? <>Maklumat sensitif seperti jabatan, jawatan, gaji, dan status pekerjaan hanya boleh diubah oleh jabatan Sumber Manusia atau Pengurusan Eksekutif. Sila hubungi HR jika terdapat maklumat yang tidak tepat.</>
+              : <>Sensitive information such as department, designation role, salary, and employment status can only be modified by the Human Resources or Executive management department. Please contact HR if any details are incorrect.</>
             }
           </p>
         </div>
 
         {/* Language Preference Card */}
-        <div className="bg-white dark:bg-gray-900/50 border border-teal-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden backdrop-blur-sm p-6 space-y-4">
-          <h3 className="text-xs font-black text-teal-800 dark:text-yellow-500 uppercase tracking-widest flex items-center gap-1.5">
-            <span>🌐</span> {lang === 'bm' ? 'Pilihan Bahasa' : 'Language Preference'}
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl p-6 space-y-4 shadow-sm">
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            {lang === 'bm' ? 'Pilihan Bahasa' : 'Language Preference'}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
             {lang === 'bm' ? 'Pilih bahasa paparan kegemaran anda untuk Portal Kakitangan.' : 'Select your preferred display language for the Staff Portal.'}
           </p>
-          <div className="flex items-center rounded-xl overflow-hidden border border-teal-200 dark:border-gray-700 bg-teal-100 dark:bg-gray-800/50">
+          <div className="flex items-center rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-950 p-0.5">
             <button
               onClick={() => setLang('en')}
               type="button"
-              className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`flex-1 py-2.5 text-xs font-semibold tracking-wider transition-all rounded-lg min-h-[44px] ${
                 lang === 'en'
-                  ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
-                  : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-850'
+                  ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
               }`}
             >
-              English (EN)
+              English
             </button>
             <button
               onClick={() => setLang('bm')}
               type="button"
-              className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`flex-1 py-2.5 text-xs font-semibold tracking-wider transition-all rounded-lg min-h-[44px] ${
                 lang === 'bm'
-                  ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
-                  : 'text-teal-700 dark:text-gray-400 hover:bg-teal-200 dark:hover:bg-gray-850'
+                  ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                  : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
               }`}
             >
-              Bahasa Malaysia (BM)
+              BM
             </button>
           </div>
         </div>
@@ -285,25 +277,25 @@ export default function SettingsView() {
       <div className="lg:col-span-2 space-y-6 md:space-y-8">
         
         {/* Card 1: Personal Details */}
-        <div className="bg-white dark:bg-gray-900/50 border border-teal-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden backdrop-blur-sm">
-          <div className="p-6 border-b border-gray-100 dark:border-gray-800/80 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
-            <h3 className="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">{t('settings', 'editProfile', lang)}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('settings', 'editProfileSub', lang)}</p>
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+            <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
+            <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
           </div>
           
-          <form onSubmit={handleUpdateProfile} className="p-6 space-y-4">
+          <form onSubmit={handleUpdateProfile} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
             {profileMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 profileMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300' 
-                  : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300'
+                  ? 'bg-emerald-50 dark:bg-emerald-955/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-800 dark:text-emerald-350' 
+                  : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-800 dark:text-rose-350'
               }`}>
                 {profileMessage.text}
               </div>
             )}
             
             <div className="space-y-1">
-              <label htmlFor="settings-full-name" className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('settings', 'fullName', lang)}</label>
+              <label htmlFor="settings-full-name" className="block text-xs font-semibold text-slate-450 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'fullName', lang)}</label>
               <input
                 id="settings-full-name"
                 type="text"
@@ -314,7 +306,7 @@ export default function SettingsView() {
                 maxLength={100}
                 autoComplete="name"
                 aria-label="Full name"
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl text-xs md:text-sm text-gray-950 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 dark:focus:border-yellow-500 transition-all disabled:opacity-50 min-h-[44px]"
+                className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                 placeholder={t('settings', 'enterFullName', lang)}
               />
             </div>
@@ -323,7 +315,7 @@ export default function SettingsView() {
               <button 
                 type="submit" 
                 disabled={isSavingProfile}
-                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2 min-h-[40px]"
+                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >
                 {isSavingProfile ? t('settings', 'saving', lang) : t('settings', 'updateProfile', lang)}
               </button>
@@ -332,18 +324,18 @@ export default function SettingsView() {
         </div>
 
         {/* Card 2: Account Security */}
-        <div className="bg-white dark:bg-gray-900/50 border border-teal-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden backdrop-blur-sm">
-          <div className="p-6 border-b border-gray-100 dark:border-gray-800/80 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
-            <h3 className="text-base font-black uppercase tracking-wider text-gray-900 dark:text-white">{t('settings', 'accountSecurity', lang)}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('settings', 'accountSecuritySub', lang)}</p>
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+            <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
+            <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
           </div>
           
-          <form onSubmit={handleUpdatePassword} className="p-6 space-y-4">
+          <form onSubmit={handleUpdatePassword} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
             {passwordMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 passwordMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300' 
-                  : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300'
+                  ? 'bg-emerald-50 dark:bg-emerald-955/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-850 dark:text-emerald-350' 
+                  : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-850 dark:text-rose-350'
               }`}>
                 {passwordMessage.text}
               </div>
@@ -351,7 +343,7 @@ export default function SettingsView() {
             
             <div className="space-y-4">
               <div className="space-y-1">
-                <label htmlFor="settings-old-pw" className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('settings', 'currentPassword', lang)}</label>
+                <label htmlFor="settings-old-pw" className="block text-xs font-semibold text-slate-455 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'currentPassword', lang)}</label>
                 <input
                   id="settings-old-pw"
                   type="password"
@@ -362,20 +354,20 @@ export default function SettingsView() {
                   maxLength={128}
                   autoComplete="current-password"
                   aria-label="Current password"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl text-xs md:text-sm text-gray-950 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 dark:focus:border-yellow-500 transition-all disabled:opacity-50 min-h-[44px]"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                   placeholder={t('settings', 'enterCurrentPw', lang)}
                 />
               </div>
 
               {/* Password policy hint */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-blue-700 dark:text-blue-300">
-                <span className="font-bold block mb-1">{t('settings', 'pwRequirements', lang)}</span>
+              <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-xl text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
+                <span className="font-semibold text-slate-700 dark:text-zinc-200 uppercase tracking-wide block mb-0.5">{t('settings', 'pwRequirements', lang)}</span>
                 {t('settings', 'pwRequirementsDetail', lang)}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label htmlFor="settings-new-pw" className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('settings', 'newPassword', lang)}</label>
+                  <label htmlFor="settings-new-pw" className="block text-xs font-semibold text-slate-455 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'newPassword', lang)}</label>
                   <input
                     id="settings-new-pw"
                     type="password"
@@ -386,12 +378,12 @@ export default function SettingsView() {
                     maxLength={128}
                     autoComplete="new-password"
                     aria-label="New password"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl text-xs md:text-sm text-gray-950 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 dark:focus:border-yellow-500 transition-all disabled:opacity-50 min-h-[44px]"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                     placeholder={t('settings', 'min8Chars', lang)}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="settings-confirm-pw" className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">{t('settings', 'confirmPassword', lang)}</label>
+                  <label htmlFor="settings-confirm-pw" className="block text-xs font-semibold text-slate-455 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'confirmPassword', lang)}</label>
                   <input
                     id="settings-confirm-pw"
                     type="password"
@@ -402,7 +394,7 @@ export default function SettingsView() {
                     maxLength={128}
                     autoComplete="new-password"
                     aria-label="Confirm new password"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl text-xs md:text-sm text-gray-950 dark:text-white font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 dark:focus:border-yellow-500 transition-all disabled:opacity-50 min-h-[44px]"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                     placeholder={t('settings', 'confirmNewPw', lang)}
                   />
                 </div>
@@ -413,7 +405,7 @@ export default function SettingsView() {
               <button 
                 type="submit" 
                 disabled={isUpdatingPassword}
-                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 disabled:opacity-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2 min-h-[40px]"
+                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >
                 {isUpdatingPassword ? t('settings', 'updating', lang) : t('settings', 'changePassword', lang)}
               </button>

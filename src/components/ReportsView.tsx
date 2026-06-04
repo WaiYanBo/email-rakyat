@@ -91,7 +91,6 @@ export default function ReportsView() {
     };
   }, []);
 
-  // --- AUTOMATED HR ONBOARDING HANDLER (WITH REAL-TIME SYNC) ---
   const saveStaffRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -120,7 +119,6 @@ export default function ReportsView() {
     }
 
     try {
-      // 1. Get the exact role_id from the database for the selected role
       const { data: roleObj, error: roleError } = await supabase
         .from('roles')
         .select('id')
@@ -150,7 +148,7 @@ export default function ReportsView() {
         setIsStaffModalOpen(false);
 
       } else {
-        // INSERT NEW STAFF — validate email and password strength first
+        // INSERT NEW STAFF
         if (!isValidEmail(rawEmail)) {
           alert('Please enter a valid email address.');
           setIsProcessing(false);
@@ -163,14 +161,12 @@ export default function ReportsView() {
           return;
         }
 
-        // A. Create an isolated client so the current user isn’t logged out
         const onboardingClient = createClient(
           import.meta.env.PUBLIC_SUPABASE_URL,
           import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
           { auth: { persistSession: false } }
         );
 
-        // B. Create the Auth Login Credentials
         const { data: authData, error: authError } = await onboardingClient.auth.signUp({
           email: rawEmail,
           password: rawPassword,
@@ -179,7 +175,6 @@ export default function ReportsView() {
         if (authError) throw new Error(`Auth creation failed: ${authError.message}`);
         if (!authData.user) throw new Error('Failed to create user account.');
 
-        // C. Push HR data to profiles
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
@@ -204,82 +199,132 @@ export default function ReportsView() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-teal-600 font-bold animate-pulse text-xl uppercase">{t('reports', 'loading', lang)}</div></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-indigo-600 font-semibold animate-pulse text-lg tracking-wide">
+          {t('reports', 'loading', lang)}
+        </div>
+      </div>
+    );
+  }
 
   const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
-  if (!hasFullAccess) return <div className="p-12 rounded-xl bg-white dark:bg-gray-900/50 border border-red-200 dark:border-red-900/50 shadow-lg text-center mt-12"><h2 className="text-2xl font-black uppercase tracking-widest text-red-600 dark:text-red-500 mb-2">{t('common', 'accessDenied', lang)}</h2></div>;
+  if (!hasFullAccess) {
+    return (
+      <div className="p-12 rounded-2xl bg-white dark:bg-zinc-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
+        <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">
+          {t('common', 'accessDenied', lang)}
+        </h2>
+      </div>
+    );
+  }
 
   // HR Calculations
   const activeStaffCount = staffRecords.filter(s => s.status === 'Active' || !s.status).length;
   const totalPayroll = staffRecords.filter(s => s.status !== 'Resigned').reduce((sum, s) => sum + parseFloat(s.salary || 0), 0);
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 relative">
-      <div className="flex flex-col gap-3 mb-10">
-        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('reports', 'pageTitle', lang)}</h1>
-        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">{t('reports', 'pageSubtitle', lang)}</p>
+    <div className="space-y-6 animate-page-transition pt-12 md:pt-0 relative mb-8">
+      <div className="flex flex-col gap-1.5 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-805 dark:text-white tracking-tight">{t('reports', 'pageTitle', lang)}</h1>
+        <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
-      <div className="flex flex-row border-b border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => setActiveTab('hr')}
-            className={`flex-1 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'hr'
-                ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
-                : 'text-teal-700 dark:text-gray-400 hover:bg-teal-100 dark:hover:bg-gray-700/50'
-            }`}
-          >
-            👥 {t('reports', 'tabHR', lang)}
-          </button>
-          <button
-            onClick={() => setActiveTab('finance')}
-            className={`flex-1 px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'finance'
-                ? 'bg-teal-600 dark:bg-yellow-500 text-white dark:text-black shadow-md'
-                : 'text-teal-700 dark:text-gray-400 hover:bg-teal-100 dark:hover:bg-gray-700/50'
-            }`}
-          >
-            💰 {t('reports', 'tabFinance', lang)}
-          </button>
+      {/* Modern Tabs pills */}
+      <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 max-w-sm shadow-sm">
+        <button
+          onClick={() => setActiveTab('hr')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
+            activeTab === 'hr'
+              ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold'
+              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+          }`}
+        >
+          {t('reports', 'tabHR', lang)}
+        </button>
+        <button
+          onClick={() => setActiveTab('finance')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
+            activeTab === 'finance'
+              ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold'
+              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+          }`}
+        >
+          {t('reports', 'tabFinance', lang)}
+        </button>
       </div>
 
       {/* ======================= HR TAB ======================= */}
       {activeTab === 'hr' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 shadow-sm"><p className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">Active Staff</p><p className="text-2xl font-black text-teal-700 dark:text-white mt-1">{activeStaffCount}</p></div>
-            <div className="p-4 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 shadow-sm"><p className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">Total Headcount</p><p className="text-2xl font-black text-blue-600 mt-1">{staffRecords.length}</p></div>
-            <div className="p-4 rounded-xl bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 shadow-sm"><p className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">Est. Monthly Payroll</p><p className="text-2xl font-black text-red-600 mt-1">RM {totalPayroll.toLocaleString()}</p></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Active Staff</p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{activeStaffCount}</p>
+            </div>
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Total Headcount</p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{staffRecords.length}</p>
+            </div>
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Est. Monthly Payroll</p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
-              <h3 className="text-xs md:text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Staff Directory</h3>
-              <button onClick={() => { setEditingStaff(null); setIsStaffModalOpen(true); }} className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 transition-all shadow-md hover:shadow-lg min-h-[40px]">{t('reports', 'onboardStaff', lang)}</button>
+          <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
+            <div className="p-5 border-b border-indigo-700 dark:border-indigo-800 flex justify-between items-center bg-indigo-600 dark:bg-indigo-900">
+              <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
+              <button 
+                onClick={() => { setEditingStaff(null); setIsStaffModalOpen(true); }} 
+                className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-indigo-100 dark:border-indigo-700"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>{t('reports', 'onboardStaff', lang)}</span>
+              </button>
             </div>
             <div className="flex-1 overflow-auto scrollbar-thin">
-              <table className="w-full text-left whitespace-nowrap">
-                <thead className="sticky top-0 bg-gray-100 dark:bg-gray-800 z-10 text-[10px] md:text-xs uppercase text-gray-600 dark:text-gray-300">
-                  <tr>
-                    <th className="px-4 py-4 text-left font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colNameRole', lang)}</th>
-                    <th className="px-4 py-4 text-left font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
-                    <th className="px-4 py-4 text-right font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px] hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
-                    <th className="px-4 py-4 text-center font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colStatus', lang)}</th>
-                    <th className="px-4 py-4 text-right font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider text-[10px]">{t('reports', 'colActions', lang)}</th>
+              <table className="w-full text-left border-collapse text-xs md:text-sm">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('reports', 'colNameRole', lang)}</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-center">{t('reports', 'colStatus', lang)}</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-xs text-gray-700 dark:text-gray-300">
+                <tbody className="divide-y divide-slate-150 dark:divide-zinc-850 text-slate-700 dark:text-zinc-300">
                   {staffRecords.map(staff => (
-                    <tr key={staff.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-3 font-bold text-gray-900 dark:text-white text-left">{staff.full_name} <span className="block text-[10px] font-normal text-gray-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span></td>
-                      <td className="px-4 py-3 text-left hidden md:table-cell">{staff.department}</td>
-                      <td className="px-4 py-3 text-right hidden lg:table-cell font-mono text-gray-500">{staff.salary || '0'}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${staff.status === 'Active' || !staff.status ? 'bg-emerald-100 text-emerald-700' : staff.status === 'On Leave' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                    <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
+                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white text-left">
+                        {staff.full_name} 
+                        <span className="block text-[10px] font-semibold text-slate-450 dark:text-zinc-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-left hidden md:table-cell">{staff.department}</td>
+                      <td className="px-4 py-3.5 text-right hidden lg:table-cell font-mono text-slate-800 dark:text-zinc-200">{staff.salary || '0'}</td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${
+                          staff.status === 'Active' || !staff.status 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' 
+                            : staff.status === 'On Leave' 
+                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900/30' 
+                            : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-455 dark:border-rose-900/30'
+                        }`}>
                           {staff.status || 'Active'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right"><button onClick={() => { setEditingStaff(staff); setIsStaffModalOpen(true); }} className="text-[10px] bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 px-3 py-1 rounded font-bold uppercase">Edit</button></td>
+                      <td className="px-4 py-3.5 text-right">
+                        <button 
+                          onClick={() => { setEditingStaff(staff); setIsStaffModalOpen(true); }} 
+                          className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm inline-flex"
+                        >
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -289,47 +334,62 @@ export default function ReportsView() {
         </div>
       )}
 
-      {/* ======================= FINANCE TAB (Awaiting DB Setup) ======================= */}
+      {/* ======================= FINANCE TAB ======================= */}
       {activeTab === 'finance' && (
-        <div className="p-12 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
-          <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Finance Ledger Database Not Yet Created</p>
-          <p className="text-sm mt-2">IT Admin must create a `finance_ledger` table in Supabase before automating this section.</p>
+        <div className="p-8 border border-amber-200 dark:border-amber-900/40 bg-amber-50/15 dark:bg-amber-955/5 rounded-2xl text-center shadow-sm">
+          <p className="text-amber-800 dark:text-amber-450 font-semibold tracking-wide text-sm">Finance Ledger Database Not Yet Created</p>
+          <p className="text-xs mt-2 font-medium text-slate-500 dark:text-zinc-400">IT Admin must create a `finance_ledger` table in Supabase before automating this section.</p>
         </div>
       )}
 
       {/* ======================= AUTOMATED HR MODAL ======================= */}
       {isStaffModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 w-[95%] max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
-              <p className="text-[10px] font-black uppercase tracking-widest text-teal-600 dark:text-yellow-500">{t('reports', 'activeStaff', lang)}</p>
-              <h2 className="text-sm font-black uppercase tracking-widest text-teal-900 dark:text-white">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
-              <button onClick={() => setIsStaffModalOpen(false)} className="text-gray-400 hover:text-red-500"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900">
+              <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
+              <button 
+                onClick={() => setIsStaffModalOpen(false)} 
+                className="text-slate-400 hover:text-rose-500 p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
             </div>
             
-            <form onSubmit={saveStaffRecord} className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
+            <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-zinc-950">
               {!editingStaff && (
-                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 rounded-lg mb-4">
-                  <p className="text-[10px] text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wider">System Automation Active</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Filling this out will automatically create their login credentials and push their data to the database.</p>
+                <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl">
+                  <p className="text-xs text-indigo-700 dark:text-indigo-400 font-semibold uppercase tracking-wider block mb-0.5">System Automation Active</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Filling this out will automatically generate credentials and initialize a matching database profile record.</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2"><label className="block text-xs font-bold uppercase mb-1">Full Name</label><input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" /></div>
+                <div className="col-span-2 space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Full Name</label>
+                  <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
                 
-                {/* LOGIN CREDENTIALS (ONLY VISIBLE WHEN ADDING NEW STAFF) */}
                 {!editingStaff && (
                   <>
-                    <div className="col-span-2"><label className="block text-xs font-bold uppercase mb-1 text-teal-600">Login Email</label><input type="email" name="email" required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" /></div>
-                    <div className="col-span-2"><label className="block text-xs font-bold uppercase mb-1 text-teal-600">Temp Password</label><input type="text" name="password" required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" /></div>
+                    <div className="col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Login Email</label>
+                      <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-455 dark:text-zinc-355">Temp Password</label>
+                      <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
                   </>
                 )}
 
-                <div><label className="block text-xs font-bold uppercase mb-1">Department</label><input type="text" name="dept" defaultValue={editingStaff?.department} required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" /></div>
-                <div>
-                  <label className="block text-xs font-bold uppercase mb-1">Job Role</label>
-                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Intern'} className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm font-bold">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Department</label>
+                  <input type="text" name="dept" defaultValue={editingStaff?.department} required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
+                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Intern'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
                     <option value="Intern">Intern</option>
                     <option value="Contract">Contract</option>
                     <option value="General Manager">General Manager</option>
@@ -338,10 +398,13 @@ export default function ReportsView() {
                   </select>
                 </div>
                 
-                <div><label className="block text-xs font-bold uppercase mb-1">Base Salary (RM)</label><input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm" /></div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold uppercase mb-1 text-red-600">Employment Status</label>
-                  <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full p-2.5 border rounded bg-gray-50 dark:bg-black/50 text-sm font-bold">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
+                  <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>
+                  <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
                     <option value="Active">Active</option>
                     <option value="On Leave">On Leave</option>
                     <option value="Resigned">Resigned / Terminated</option>
@@ -349,8 +412,12 @@ export default function ReportsView() {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-                <button type="submit" disabled={isProcessing} className="px-5 py-2.5 rounded-lg text-xs font-bold uppercase bg-teal-600 text-white w-full sm:w-auto disabled:opacity-50">
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+                <button 
+                  type="submit" 
+                  disabled={isProcessing} 
+                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                >
                   {isProcessing ? 'Automating...' : 'Save & Automate'}
                 </button>
               </div>

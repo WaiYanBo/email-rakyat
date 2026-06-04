@@ -390,7 +390,15 @@ export default function ExecutiveOverview() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><div className="text-teal-600 font-bold animate-pulse text-xl uppercase">{t('common', 'loadingDashboard', lang)}</div></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-indigo-600 font-semibold animate-pulse text-lg tracking-wide">
+          {t('common', 'loadingDashboard', lang)}
+        </div>
+      </div>
+    );
+  }
 
   // Helper function to get today's date in YYYY-MM-DD format
   const getTodayDateString = () => new Date().toISOString().split('T')[0];
@@ -462,144 +470,170 @@ export default function ExecutiveOverview() {
   const pastCount = getPastAnnouncements().length;
   const displayedAnnouncements = getDisplayedAnnouncements();
 
-  // Debug logging for access control
-  console.log('🔍 Announcement Access Debug:', {
-    userRole: profile?.role,
-    isIT,
-    hasFullAccess,
-    canPostAnnouncements: hasFullAccess,
-    allowedRoles: ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager']
-  });
-
   return (
-    <div className="space-y-10 md:space-y-12 animate-page-transition pt-12 md:pt-0 relative mb-8 md:mb-10">
-      <div className="flex flex-col gap-3">
-        <h1 className="text-2xl md:text-4xl font-black uppercase tracking-widest text-teal-900 dark:text-white">{t('overview', 'pageTitle', lang)} <span className="text-teal-600 dark:text-yellow-500">{t('overview', 'pageHighlight', lang)}</span></h1>
-        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">{t('overview', 'welcomeBack', lang)} <span className="font-bold text-teal-800 dark:text-gray-200">{profile?.name}</span> ({profile?.role})</p>
+    <div className="space-y-8 animate-page-transition pt-12 md:pt-0 relative mb-8">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-indigo-400 tracking-tight">
+          {t('overview', 'pageTitle', lang)}{' '}
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
+            {t('overview', 'pageHighlight', lang)}
+          </span>
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
+          {t('overview', 'welcomeBack', lang)}{' '}
+          <span className="font-semibold text-slate-800 dark:text-zinc-200">{profile?.name}</span>{' '}
+          ({profile?.role})
+        </p>
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
       {!showHistory ? (
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden mt-12 mb-12">
-          <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 flex justify-between items-center">
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mt-6">
+          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-teal-900 dark:text-white flex items-center gap-2">📢 {t('overview', 'announcements', lang)}</h2>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-0.5">
-                <p>🔴 {t('overview', 'today', lang)}: <span className="font-bold text-teal-600 dark:text-teal-400">{todayCount}</span> | 📜 {t('overview', 'archive', lang)}: <span className="font-bold text-orange-600 dark:text-orange-400">{pastCount}</span></p>
+              <h2 className="text-lg font-bold text-white tracking-tight">
+                {t('overview', 'announcements', lang)}
+              </h2>
+              <div className="text-xs text-indigo-100 mt-1 font-medium col-span-2">
+                <span className="text-indigo-100">{t('overview', 'today', lang)}: <span className="font-bold text-white">{todayCount}</span></span>
+                <span className="mx-2 text-indigo-300">|</span>
+                <span className="text-indigo-100">{t('overview', 'archive', lang)}: <span className="font-bold text-white">{pastCount}</span></span>
               </div>
             </div>
-            <div className="flex gap-2 flex-col sm:flex-row">
+            <div className="flex gap-2.5 w-full sm:w-auto">
               {pastCount > 0 && (
-                <button onClick={() => setShowHistory(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all">
-                  📜 {t('overview', 'viewHistory', lang)}
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-indigo-700 hover:bg-indigo-800 text-white dark:bg-indigo-800 dark:hover:bg-indigo-700 px-4 py-2.5 rounded-xl border border-indigo-500 dark:border-indigo-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  {t('overview', 'viewHistory', lang)}
                 </button>
               )}
               {hasFullAccess && (
-                <button onClick={() => setIsNoticeModalOpen(true)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">
+                <button
+                  onClick={() => setIsNoticeModalOpen(true)}
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white px-4 py-2.5 rounded-xl transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                >
                   {t('overview', 'postNotice', lang)}
                 </button>
               )}
             </div>
           </div>
-          <div className="p-8 flex flex-col gap-6 max-h-[600px] overflow-y-auto scrollbar-thin">
+
+          <div className="p-6 flex flex-col gap-4 max-h-[600px] overflow-y-auto scrollbar-thin">
             {displayedAnnouncements.length === 0 ? (
               <div className="text-center py-12 w-full">
-                <div className="text-4xl mb-3">📭</div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('overview', 'noAnnouncements', lang)}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('overview', 'checkBack', lang)}</p>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">{t('overview', 'noAnnouncements', lang)}</p>
+                <p className="text-xs text-slate-400 dark:text-zinc-550 mt-1">{t('overview', 'checkBack', lang)}</p>
               </div>
             ) : (
               displayedAnnouncements.map((a) => {
                 const isTranslated = !!translatedAnnouncements[a.id];
                 const displayTitle = isTranslated ? translatedAnnouncements[a.id].title : a.title;
                 const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
+                const isToday = getTodayAnnouncements().some(t => t.id === a.id);
 
                 return (
-                  <div key={a.id} className={`p-6 rounded-2xl border transition-all flex flex-col justify-between h-56 ${getTodayAnnouncements().some(t => t.id === a.id)
-                    ? 'border-teal-200 dark:border-teal-800/50 bg-gradient-to-br from-teal-50/40 to-teal-50/20 dark:from-teal-900/20 dark:to-teal-800/10'
-                    : 'border-gray-100 dark:border-gray-800 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 opacity-95 hover:opacity-100'
-                    } hover:shadow-lg`}>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest whitespace-nowrap ${a.type === 'Urgent'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                            : a.type === 'Memo'
-                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                            }`}>
-                            {a.type === 'Urgent' && '🔴 '}
-                            {a.type === 'Memo' && '📝 '}
-                            {a.type === 'Info' && 'ℹ️ '}
-                            {a.type}
-                          </span>
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">{a.date}</span>
-                        </div>
-                        {hasFullAccess && (
-                          <div className="relative flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === a.id ? null : a.id);
-                              }}
-                              className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                              title="Actions"
-                              type="button"
-                            >
-                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                            </button>
-                            {activeMenuId === a.id && (
-                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden py-1 animate-fade-in">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenEditModal(a);
-                                    setActiveMenuId(null);
-                                  }}
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                                >
-                                  <span>✏️</span> {lang === 'bm' ? 'Kemaskini' : 'Edit'}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteNotice(a.id, a.title, a.content, a.type, a.scheduled_at);
-                                    setActiveMenuId(null);
-                                  }}
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                                >
-                                  <span>🗑️</span> {lang === 'bm' ? 'Padam' : 'Delete'}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                  <div
+                    key={a.id}
+                    className={`p-5 rounded-xl border transition-all ${isToday
+                      ? 'border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/10 dark:bg-indigo-950/5'
+                      : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40'
+                      } hover:border-indigo-300 dark:hover:border-zinc-700 hover:shadow-sm`}
+                  >
+                    {/* Top row: type badge + date + actions menu */}
+                    <div className="flex justify-between items-start gap-2 mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
+                          ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
+                          : a.type === 'Memo'
+                            ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
+                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-350 dark:border-zinc-700'
+                          }`}>
+                          {a.type}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-500">{a.date}</span>
                       </div>
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1" title={displayTitle}>{displayTitle}</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">{displayContent}</p>
+                      {hasFullAccess && (
+                        <div className="relative flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(activeMenuId === a.id ? null : a.id);
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                            title="Actions"
+                            type="button"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </button>
+                          {activeMenuId === a.id && (
+                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenEditModal(a);
+                                  setActiveMenuId(null);
+                                }}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
+                              >
+                                {lang === 'bm' ? 'Kemaskini' : 'Edit'}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNotice(a.id, a.title, a.content, a.type, a.scheduled_at);
+                                  setActiveMenuId(null);
+                                }}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
+                              >
+                                {lang === 'bm' ? 'Padam' : 'Delete'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                      <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 flex-shrink-0" title={a.author}>
-                        <span className="flex-shrink-0">✏️</span>
-                        <span className="font-semibold truncate max-w-[100px] md:max-w-[140px]">{a.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
+                    {/* Title & content */}
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1" title={displayTitle}>
+                      {displayTitle}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap mb-4">
+                      {displayContent}
+                    </p>
+
+                    {/* Footer: author + action buttons — always inside the card */}
+                    <div className="pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold truncate min-w-0" title={a.author}>
+                        {a.author}
+                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleTranslate(a.id, a.title, a.content)}
                           disabled={translatingIds[a.id]}
                           type="button"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-gray-800/30 hover:bg-teal-100 dark:hover:bg-gray-800/60 text-teal-600 dark:text-yellow-500 border border-teal-100 dark:border-gray-700 transition-all text-xs flex-shrink-0"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 transition-all flex-shrink-0"
                           title="Translate / Terjemah"
                         >
-                          {translatingIds[a.id] ? '...' : '🌐'}
+                          {translatingIds[a.id] ? (
+                            <svg className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2a2.5 2.5 0 002.5-2.5V10a2 2 0 00-2-2h-1a2 2 0 01-2-2V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v.935M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
                         </button>
                         <button
                           onClick={() => setSelectedAnnouncement(a)}
                           type="button"
-                          className="h-8 px-4 flex items-center justify-center rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 text-[10px] font-black uppercase tracking-wider transition-all shadow-sm hover:shadow flex-shrink-0"
+                          className="h-8 px-4 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm flex-shrink-0"
                         >
                           {lang === 'bm' ? 'Baca' : 'Read'}
                         </button>
@@ -613,42 +647,49 @@ export default function ExecutiveOverview() {
         </div>
       ) : (
         /* HISTORY VIEW */
-        <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-3xl shadow-lg overflow-hidden mt-12 mb-12">
-          <div className="p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/20 flex justify-between items-center">
+        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mt-6">
+          <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-lg md:text-xl font-black uppercase tracking-widest text-orange-900 dark:text-white flex items-center gap-2">📜 {t('overview', 'announcementHistory', lang)}</h2>
-              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">{t('overview', 'historySubtitle', lang)}</p>
+              <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">
+                {t('overview', 'announcementHistory', lang)}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-medium">{t('overview', 'historySubtitle', lang)}</p>
             </div>
-            <button onClick={() => setShowHistory(false)} className="text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 py-3 rounded-lg shadow-md hover:shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all">{t('overview', 'backToToday', lang)}</button>
+            <button
+              onClick={() => setShowHistory(false)}
+              className="text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              {t('overview', 'backToToday', lang)}
+            </button>
           </div>
 
           {/* Filter Section */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 space-y-4">
+          <div className="p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Type Filter */}
-              <div>
-                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">{t('overview', 'filterByType', lang)}</label>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block">{t('overview', 'filterByType', lang)}</label>
                 <select
                   value={historyFilterType}
                   onChange={(e) => setHistoryFilterType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
                   <option value="All">{t('overview', 'allTypes', lang)}</option>
-                  <option value="Info">ℹ️ {t('overview', 'infoBadge', lang)}</option>
-                  <option value="Memo">📝 {t('overview', 'memoBadge', lang)}</option>
-                  <option value="Urgent">🔴 {t('overview', 'urgentBadge', lang)}</option>
+                  <option value="Info">{t('overview', 'infoBadge', lang)}</option>
+                  <option value="Memo">{t('overview', 'memoBadge', lang)}</option>
+                  <option value="Urgent">{t('overview', 'urgentBadge', lang)}</option>
                 </select>
               </div>
 
               {/* Month Filter */}
-              <div>
-                <label className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-2 block">
-                  {lang === 'bm' ? 'TAPIS MENGIKUT BULAN' : 'FILTER BY MONTH'}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block">
+                  {lang === 'bm' ? 'Tapis Mengikut Bulan' : 'Filter By Month'}
                 </label>
                 <select
                   value={historyFilterMonth}
                   onChange={(e) => setHistoryFilterMonth(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
                   <option value="All">{lang === 'bm' ? 'Semua Bulan' : 'All Months'}</option>
                   {getUniqueMonths().map(ym => (
@@ -665,7 +706,7 @@ export default function ExecutiveOverview() {
                   setHistoryFilterType('All');
                   setHistoryFilterMonth('All');
                 }}
-                className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300"
+                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider block"
               >
                 {t('overview', 'clearFilters', lang)}
               </button>
@@ -673,12 +714,11 @@ export default function ExecutiveOverview() {
           </div>
 
           {/* History Content */}
-          <div className="p-8 flex flex-col gap-6 max-h-[600px] overflow-y-auto scrollbar-thin">
+          <div className="p-6 flex flex-col gap-4 max-h-[600px] overflow-y-auto scrollbar-thin">
             {getHistoryAnnouncements().length === 0 ? (
               <div className="text-center py-12 w-full">
-                <div className="text-4xl mb-3">🗂️</div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('overview', 'noFound', lang)}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('overview', 'adjustFilters', lang)}</p>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">{t('overview', 'noFound', lang)}</p>
+                <p className="text-xs text-slate-400 dark:text-zinc-550 mt-1">{t('overview', 'adjustFilters', lang)}</p>
               </div>
             ) : (
               getHistoryAnnouncements().map((a) => {
@@ -687,22 +727,19 @@ export default function ExecutiveOverview() {
                 const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
 
                 return (
-                  <div key={a.id} className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-800/30 dark:to-gray-900/30 hover:shadow-lg transition-all flex flex-col justify-between h-56">
+                  <div key={a.id} className="p-5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:border-slate-350 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between min-h-[160px]">
                     <div className="space-y-2">
                       <div className="flex flex-row justify-between items-start gap-2">
                         <div className="flex items-center gap-2">
-                          <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest whitespace-nowrap ${a.type === 'Urgent'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
+                            ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                             : a.type === 'Memo'
-                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
+                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
                             }`}>
-                            {a.type === 'Urgent' && '🔴 '}
-                            {a.type === 'Memo' && '📝 '}
-                            {a.type === 'Info' && 'ℹ️ '}
                             {a.type}
                           </span>
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{a.date}</span>
+                          <span className="text-[11px] text-slate-450 dark:text-zinc-500">{a.date}</span>
                         </div>
                         {hasFullAccess && (
                           <div className="relative flex-shrink-0">
@@ -711,14 +748,16 @@ export default function ExecutiveOverview() {
                                 e.stopPropagation();
                                 setActiveMenuId(activeMenuId === a.id ? null : a.id);
                               }}
-                              className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-105 dark:hover:bg-zinc-800 transition-colors"
                               title="Actions"
                               type="button"
                             >
-                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
                             </button>
                             {activeMenuId === a.id && (
-                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden py-1 animate-fade-in">
+                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -726,9 +765,9 @@ export default function ExecutiveOverview() {
                                     setActiveMenuId(null);
                                   }}
                                   type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-705 dark:text-zinc-305 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
                                 >
-                                  <span>✏️</span> {lang === 'bm' ? 'Kemaskini' : 'Edit'}
+                                  {lang === 'bm' ? 'Kemaskini' : 'Edit'}
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -737,38 +776,49 @@ export default function ExecutiveOverview() {
                                     setActiveMenuId(null);
                                   }}
                                   type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                                  className="w-full px-4 py-2 text-left text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-55/10 dark:hover:bg-rose-950/20 transition-colors"
                                 >
-                                  <span>🗑️</span> {lang === 'bm' ? 'Padam' : 'Delete'}
+                                  {lang === 'bm' ? 'Padam' : 'Delete'}
                                 </button>
                               </div>
                             )}
                           </div>
                         )}
                       </div>
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-1" title={displayTitle}>{displayTitle}</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">{displayContent}</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1" title={displayTitle}>
+                        {displayTitle}
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">
+                        {displayContent}
+                      </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                      <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 flex-shrink-0" title={a.author}>
-                        <span className="flex-shrink-0">✏️</span>
-                        <span className="font-semibold truncate max-w-[100px] md:max-w-[140px]">{a.author}</span>
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center gap-4">
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-zinc-400 truncate" title={a.author}>
+                        <span className="font-semibold">{a.author}</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleTranslate(a.id, a.title, a.content)}
                           disabled={translatingIds[a.id]}
                           type="button"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-teal-50 dark:bg-gray-800/30 hover:bg-teal-100 dark:hover:bg-gray-800/60 text-teal-600 dark:text-yellow-500 border border-teal-100 dark:border-gray-700 transition-all text-xs flex-shrink-0"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-202 dark:border-zinc-700 transition-all text-xs"
                           title="Translate / Terjemah"
                         >
-                          {translatingIds[a.id] ? '...' : '🌐'}
+                          {translatingIds[a.id] ? (
+                            <svg className="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2a2.5 2.5 0 002.5-2.5V10a2 2 0 00-2-2h-1a2 2 0 01-2-2V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v.935M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
                         </button>
                         <button
                           onClick={() => setSelectedAnnouncement(a)}
                           type="button"
-                          className="h-8 px-4 flex items-center justify-center rounded-lg bg-teal-600 dark:bg-yellow-500 text-white dark:text-black hover:bg-teal-700 dark:hover:bg-yellow-600 text-[10px] font-black uppercase tracking-wider transition-all shadow-sm hover:shadow flex-shrink-0"
+                          className="h-8 px-3 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm"
                         >
                           {lang === 'bm' ? 'Baca' : 'Read'}
                         </button>
@@ -784,100 +834,103 @@ export default function ExecutiveOverview() {
 
       {/* POST/EDIT NOTICE MODAL */}
       {mounted && isNoticeModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-950 w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-zinc-800">
             {/* Modal Header */}
-            <div className="p-6 md:p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-center">
+            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900 flex justify-between items-center">
               <div>
-                <h2 className="text-sm md:text-lg font-black uppercase tracking-widest text-teal-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">
                   {editingNotice
-                    ? (lang === 'bm' ? 'Edit Pengumuman' : 'Edit Announcement')
+                    ? (lang === 'bm' ? 'Kemaskini Pengumuman' : 'Edit Announcement')
                     : t('overview', 'postNewAnnouncement', lang)
                   }
                 </h2>
-                <p className="text-[10px] md:text-xs text-teal-700 dark:text-teal-300 mt-1">
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-medium">
                   {editingNotice
                     ? (lang === 'bm' ? 'Kemaskini maklumat pengumuman di bawah' : 'Update the announcement details below')
                     : t('overview', 'postSubtitle', lang)
                   }
                 </p>
               </div>
-              <button onClick={handleCloseNoticeModal} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <button
+                onClick={handleCloseNoticeModal}
+                className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-55/10 rounded-xl"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
               </button>
             </div>
 
             {/* Modal Body */}
-            <form key={editingNotice ? editingNotice.id : 'new-notice'} onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[70vh]">
+            <form key={editingNotice ? editingNotice.id : 'new-notice'} onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-5 overflow-y-auto max-h-[70vh] bg-white dark:bg-zinc-950">
               {/* Title Input */}
-              <div>
-                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementTitle', lang)}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{t('overview', 'announcementTitle', lang)}</label>
                 <input
                   type="text"
                   name="title"
                   required
                   defaultValue={editingNotice ? editingNotice.title : ''}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all"
-                  placeholder="e.g., Q3 Quarterly Meeting"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
+                  placeholder="e.g. Q3 Quarterly Meeting"
                   disabled={isPostingNotice}
                 />
               </div>
 
               {/* Urgency Level */}
-              <div>
-                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'urgencyLevel', lang)}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'urgencyLevel', lang)}</label>
                 <select
                   name="type"
                   defaultValue={editingNotice ? editingNotice.type : 'Info'}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 text-sm font-bold focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 >
                   <option value="Info">ℹ️ Info (Standard)</option>
                   <option value="Memo">📝 Memo (Important)</option>
-                  <option value="Urgent">🔴 Urgent (Critical)</option>
+                  <option value="Urgent">⚠️ Urgent (Critical)</option>
                 </select>
               </div>
 
               {/* Date Picker */}
-              <div>
-                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'announcementDate', lang)}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'announcementDate', lang)}</label>
                 <input
                   type="date"
                   name="scheduled_date"
                   defaultValue={editingNotice ? editingNotice.scheduled_at.split('T')[0] : new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 />
-                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-[10px] md:text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    <span className="font-bold block mb-1">How it works:</span>
-                    <span className="text-blue-600 dark:text-blue-400">Past dates</span> = Historical records<br />
-                    <span className="text-blue-600 dark:text-blue-400">Today</span> = Publish immediately<br />
-                    <span className="text-blue-600 dark:text-blue-400">Future dates</span> = Schedule for later
+                <div className="mt-2 p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-xl">
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    <span className="font-semibold block mb-0.5">Publish Settings:</span>
+                    Past dates will be placed in history. Future dates will schedule this post for later.
                   </p>
                 </div>
               </div>
 
               {/* Content Area */}
-              <div>
-                <label className="block text-xs md:text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 mb-2">{t('overview', 'messageContent', lang)}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'messageContent', lang)}</label>
                 <textarea
                   name="content"
                   required
                   rows={5}
                   defaultValue={editingNotice ? editingNotice.content : ''}
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all resize-none"
-                  placeholder="Write your announcement here... Be clear and concise."
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none disabled:opacity-50"
+                  placeholder="Write your announcement message here..."
                   disabled={isPostingNotice}
                 />
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
                 <button
                   type="button"
                   onClick={handleCloseNoticeModal}
-                  className="px-5 py-2.5 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all min-h-[48px]"
                   disabled={isPostingNotice}
                 >
                   {t('overview', 'cancel', lang)}
@@ -885,7 +938,7 @@ export default function ExecutiveOverview() {
                 <button
                   type="submit"
                   disabled={isPostingNotice}
-                  className="px-6 py-2.5 md:px-8 md:py-3 rounded-lg text-xs md:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[48px]"
                 >
                   {isPostingNotice ? (
                     <span className="flex items-center gap-2">
@@ -893,7 +946,7 @@ export default function ExecutiveOverview() {
                       {editingNotice ? (lang === 'bm' ? 'Menyimpan...' : 'Saving...') : t('overview', 'posting', lang)}
                     </span>
                   ) : (
-                    editingNotice ? (lang === 'bm' ? 'Simpan Perubahan' : 'Save Changes') : t('overview', 'postToDashboard', lang)
+                    editingNotice ? (lang === 'bm' ? 'Simpan' : 'Save Changes') : t('overview', 'postToDashboard', lang)
                   )}
                 </button>
               </div>
@@ -911,51 +964,50 @@ export default function ExecutiveOverview() {
           const modalContent = isTranslated ? translatedAnnouncements[selectedAnnouncement.id].content : selectedAnnouncement.content;
 
           return (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-              <div className="bg-white dark:bg-gray-900 w-[95%] max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-fade-in">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+              <div className="bg-white dark:bg-zinc-950 w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-zinc-800">
                 {/* Modal Header */}
-                <div className="p-6 md:p-8 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/20 flex justify-between items-start gap-4">
+                <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex justify-between items-start gap-4">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest ${selectedAnnouncement.type === 'Urgent'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide uppercase ${selectedAnnouncement.type === 'Urgent'
+                        ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                         : selectedAnnouncement.type === 'Memo'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                          ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
+                          : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-350 dark:border-zinc-700'
                         }`}>
                         {selectedAnnouncement.type}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold">{selectedAnnouncement.date}</span>
+                      <span className="text-xs text-slate-500 dark:text-zinc-400 font-semibold">{selectedAnnouncement.date}</span>
                     </div>
-                    <h2 className="text-sm md:text-lg font-black text-gray-900 dark:text-white leading-snug">{modalTitle}</h2>
+                    <h2 className="text-base font-bold text-gray-900 dark:text-white leading-snug tracking-tight">{modalTitle}</h2>
                   </div>
-                  <button onClick={() => setSelectedAnnouncement(null)} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex-shrink-0">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  <button onClick={() => setSelectedAnnouncement(null)} className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-55/10 rounded-xl flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                   </button>
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-xs md:text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-sm text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap bg-white dark:bg-zinc-950">
                   {modalContent}
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-5 md:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex justify-between items-center">
-                  <span className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">✏️ Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
+                <div className="p-6 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/50 flex justify-between items-center gap-4">
+                  <span className="text-xs text-slate-500 dark:text-zinc-450">Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleTranslate(selectedAnnouncement.id, selectedAnnouncement.title, selectedAnnouncement.content)}
                       disabled={translatingIds[selectedAnnouncement.id]}
                       type="button"
-                      className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-yellow-500 hover:text-teal-800 dark:hover:text-yellow-400 transition-colors flex items-center gap-1 bg-teal-100/50 dark:bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-teal-200 dark:border-gray-700"
+                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 transition-all min-h-[48px] flex items-center gap-1.5 shadow-sm"
                     >
-                      <span>🌐</span>
-                      {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? (lang === 'bm' ? 'Tunjuk Asal' : 'Show Original') : (lang === 'bm' ? 'Terjemah' : 'Translate')}
+                      {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? (lang === 'bm' ? 'Asal' : 'Original') : (lang === 'bm' ? 'Terjemah' : 'Translate')}
                     </button>
                     <button
                       onClick={() => setSelectedAnnouncement(null)}
                       type="button"
-                      className="px-4 py-1.5 md:px-5 md:py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all"
+                      className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-all min-h-[48px]"
                     >
                       {lang === 'bm' ? 'Tutup' : 'Close'}
                     </button>
@@ -970,13 +1022,13 @@ export default function ExecutiveOverview() {
 
       {/* EXECUTIVE SNAPSHOT (Bottom Section) */}
       {hasFullAccess && !isIT && stats && (
-        <div className="space-y-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <h2 className="text-lg font-black uppercase tracking-widest">{t('overview', 'executiveSnapshot', lang)}</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 rounded-2xl bg-blue-50 border border-blue-200 dark:bg-blue-500/10"><p className="text-[10px] font-bold text-blue-600 uppercase">{t('overview', 'totalClients', lang)}</p><p className="text-3xl font-black text-blue-700 mt-3">{stats.totalClients}</p></div>
-            <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10"><p className="text-[10px] font-bold text-emerald-600 uppercase">{t('overview', 'completed', lang)}</p><p className="text-3xl font-black text-emerald-700 mt-3">{stats.completed}</p></div>
-            <div className="p-6 rounded-2xl bg-yellow-50 border border-yellow-200 dark:bg-yellow-500/10"><p className="text-[10px] font-bold text-yellow-600 uppercase">{t('overview', 'pending', lang)}</p><p className="text-3xl font-black text-yellow-700 mt-3">{stats.pending}</p></div>
-            <div className="p-6 rounded-2xl bg-red-50 border border-red-200 dark:bg-red-500/10"><p className="text-[10px] font-bold text-red-600 uppercase">{t('overview', 'dropped', lang)}</p><p className="text-3xl font-black text-red-700 mt-3">{stats.dropped}</p></div>
+        <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-zinc-800/80">
+          <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">{t('overview', 'executiveSnapshot', lang)}</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-202 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm"><p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('overview', 'totalClients', lang)}</p><p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{stats.totalClients}</p></div>
+            <div className="p-5 rounded-2xl bg-emerald-50/30 border border-emerald-100 dark:bg-emerald-950/10 dark:border-emerald-900/30 shadow-sm"><p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">{t('overview', 'completed', lang)}</p><p className="text-3xl font-bold text-emerald-600 dark:text-emerald-405 mt-2">{stats.completed}</p></div>
+            <div className="p-5 rounded-2xl bg-amber-50/30 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30 shadow-sm"><p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">{t('overview', 'pending', lang)}</p><p className="text-3xl font-bold text-amber-600 dark:text-amber-405 mt-2">{stats.pending}</p></div>
+            <div className="p-5 rounded-2xl bg-rose-50/30 border border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/30 shadow-sm"><p className="text-[11px] font-semibold text-rose-650 dark:text-rose-455 uppercase tracking-wide">{t('overview', 'dropped', lang)}</p><p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">{stats.dropped}</p></div>
           </div>
         </div>
       )}

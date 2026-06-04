@@ -465,7 +465,7 @@ export default function CheckInCheckOut() {
   const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin'].includes(profile.role);
 
   return (
-    <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mb-8">
+    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8">
       {/* Header */}
       <div className="p-6 md:p-8 border-b border-blue-700 dark:border-blue-800 bg-blue-600 dark:bg-blue-900">
         <div>
@@ -491,14 +491,14 @@ export default function CheckInCheckOut() {
           <div className="space-y-8">
             {/* Today's Status Card */}
             {todayRecord && (
-              <div className="p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
+              <div className="p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/30 dark:bg-gray-900/20">
                 <div className="flex items-center gap-2 mb-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550">Today's Status</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {/* Check In Card */}
-                  <div className="p-5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="p-5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check In</p>
@@ -524,7 +524,7 @@ export default function CheckInCheckOut() {
                             }`}>
                               {todayRecord.check_in_within_zone ? 'In Zone' : 'Outside Zone'}
                             </span>
-                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-md border border-slate-200 dark:border-zinc-700">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-gray-800 px-3 py-1 rounded-md border border-slate-200 dark:border-gray-700">
                               {todayRecord.check_in_distance}m away
                             </span>
                           </div>
@@ -536,7 +536,7 @@ export default function CheckInCheckOut() {
                   </div>
 
                   {/* Check Out Card */}
-                  <div className="p-5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+                  <div className="p-5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check Out</p>
@@ -562,7 +562,7 @@ export default function CheckInCheckOut() {
                             }`}>
                               {todayRecord.check_out_within_zone ? 'In Zone' : 'Outside Zone'}
                             </span>
-                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-md border border-slate-200 dark:border-zinc-700">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-gray-800 px-3 py-1 rounded-md border border-slate-200 dark:border-gray-700">
                               {todayRecord.check_out_distance}m away
                             </span>
                           </div>
@@ -615,7 +615,7 @@ export default function CheckInCheckOut() {
 
             {/* Location Status */}
             {locationStatus && (
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 mt-2">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 mt-2">
                 <p className="text-xs text-center font-medium text-slate-505 dark:text-zinc-400">
                   {locationStatus}
                 </p>
@@ -623,12 +623,12 @@ export default function CheckInCheckOut() {
             )}
 
             {/* Forgot Checkout & Working Hours Section */}
-            <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-zinc-800">
+            <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-gray-800">
               {/* Details Toggle Button */}
               {(forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className="w-full px-5 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 transition-all font-semibold text-slate-700 dark:text-zinc-200 flex items-center justify-between min-h-[48px]"
+                  className="w-full px-5 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-gray-900/40 dark:hover:bg-zinc-900/80 border border-slate-200 dark:border-gray-800 transition-all font-semibold text-slate-700 dark:text-zinc-200 flex items-center justify-between min-h-[48px]"
                 >
                   <span className="text-sm">
                     {showDetails ? 'Hide Detailed Overview' : `Show Detailed Overview (${forgotCheckoutRecords.length} unresolved checkouts)`}
@@ -639,7 +639,7 @@ export default function CheckInCheckOut() {
 
               {/* Filters Card for Privileged Roles (HR, CFO, IT) */}
               {showDetails && isPrivilegedRole && (
-                <div className="p-5 rounded-2xl bg-slate-55/30 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/80 space-y-4">
+                <div className="p-5 rounded-2xl bg-slate-55/30 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800/80 space-y-4">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                     Filter Attendance Logs
                   </h4>
@@ -653,7 +653,7 @@ export default function CheckInCheckOut() {
                         placeholder="Search employee..."
                         value={detailFilterEmployee}
                         onChange={(e) => setDetailFilterEmployee(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px] placeholder-slate-400 dark:placeholder-zinc-500"
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px] placeholder-slate-400 dark:placeholder-zinc-500"
                       />
                     </div>
 
@@ -664,21 +664,21 @@ export default function CheckInCheckOut() {
                         <button
                           type="button"
                           onClick={() => setDetailFilterMode('all')}
-                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'all' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
                         >
                           All
                         </button>
                         <button
                           type="button"
                           onClick={() => setDetailFilterMode('day')}
-                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'day' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'day' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
                         >
                           Day
                         </button>
                         <button
                           type="button"
                           onClick={() => setDetailFilterMode('month')}
-                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'month' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all min-h-[44px] ${detailFilterMode === 'month' ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950' : 'bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-zinc-700'}`}
                         >
                           Month
                         </button>
@@ -694,7 +694,7 @@ export default function CheckInCheckOut() {
                             type="date"
                             value={detailFilterDay}
                             onChange={(e) => setDetailFilterDay(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
                           />
                         </>
                       )}
@@ -705,7 +705,7 @@ export default function CheckInCheckOut() {
                             type="month"
                             value={detailFilterMonth}
                             onChange={(e) => setDetailFilterMonth(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
                           />
                         </>
                       )}
@@ -747,7 +747,7 @@ export default function CheckInCheckOut() {
                       {isPrivilegedRole && filteredForgotRecords.length > 0 && (
                         <button
                           onClick={exportForgotCheckoutsToExcel}
-                          className="px-4 py-2 bg-white hover:bg-rose-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
+                          className="px-4 py-2 bg-white hover:bg-rose-50 dark:bg-gray-800 dark:hover:bg-zinc-700 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -771,13 +771,13 @@ export default function CheckInCheckOut() {
                           <tbody className="divide-y divide-rose-100/40 dark:divide-rose-900/20 text-slate-700 dark:text-zinc-300">
                             {filteredForgotRecords.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-4 py-6 text-center text-rose-700 dark:text-rose-400 font-medium italic bg-white dark:bg-zinc-950">
+                                <td colSpan={5} className="px-4 py-6 text-center text-rose-700 dark:text-rose-400 font-medium italic bg-white dark:bg-black">
                                   No forgot checkout records found matching filters
                                 </td>
                               </tr>
                             ) : (
                               filteredForgotRecords.map((record) => (
-                                <tr key={record.id} className="hover:bg-rose-50/10 dark:hover:bg-rose-955/5 bg-white dark:bg-zinc-950">
+                                <tr key={record.id} className="hover:bg-rose-50/10 dark:hover:bg-rose-955/5 bg-white dark:bg-black">
                                   <td className="px-4 py-3.5 font-semibold text-slate-905 dark:text-white">{record.user_name}</td>
                                   <td className="px-4 py-3.5 font-mono">{record.date}</td>
                                   <td className="px-4 py-3.5">
@@ -813,7 +813,7 @@ export default function CheckInCheckOut() {
 
               {/* Working Hours Summary - Only shown when details are expanded */}
               {showDetails && (
-                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-205 dark:border-zinc-800">
+                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-gray-900/30 border border-slate-205 dark:border-gray-800">
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
@@ -825,7 +825,7 @@ export default function CheckInCheckOut() {
                       {isPrivilegedRole && filteredAllRecords.length > 0 && (
                         <button
                           onClick={exportWorkingHoursToExcel}
-                          className="px-4 py-2 bg-white hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
+                          className="px-4 py-2 bg-white hover:bg-slate-100 dark:bg-gray-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-gray-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -834,11 +834,11 @@ export default function CheckInCheckOut() {
                         </button>
                       )}
                     </div>
-                    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs md:text-sm">
                           <thead>
-                            <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                            <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                               <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Employee</th>
                               <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Date</th>
                               <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Check In</th>
@@ -847,7 +847,7 @@ export default function CheckInCheckOut() {
                               <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">Flag</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-150 dark:divide-zinc-800 text-slate-700 dark:text-zinc-300">
+                          <tbody className="divide-y divide-slate-150 dark:divide-gray-800 text-slate-700 dark:text-zinc-300">
                             {filteredAllRecords.length === 0 ? (
                                <tr>
                                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500 font-medium italic">
@@ -888,7 +888,7 @@ export default function CheckInCheckOut() {
                                            Late Checkout
                                          </span>
                                        ) : isShortDay ? (
-                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-805 dark:bg-amber-955/20 dark:text-amber-400">
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-805 dark:bg-amber-955/20 dark:text-yellow-500">
                                            &lt; 9 Hours
                                          </span>
                                        ) : (
@@ -905,7 +905,7 @@ export default function CheckInCheckOut() {
                         </table>
                       </div>
                     </div>
-                    <div className="flex gap-4 flex-wrap text-xs text-slate-500 border-t border-slate-100 dark:border-zinc-800 pt-3">
+                    <div className="flex gap-4 flex-wrap text-xs text-slate-500 border-t border-slate-100 dark:border-gray-800 pt-3">
                       <span>Records shown: {isPrivilegedRole ? filteredAllRecords.length : Math.min(20, filteredAllRecords.length)}</span>
                       <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-rose-500/20 border border-rose-350 rounded"></span> Red = Forgot/Late Checkout</span>
                       <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-amber-500/20 border border-amber-350 rounded"></span> Yellow = Short Day (&lt;9 hours)</span>
@@ -919,9 +919,9 @@ export default function CheckInCheckOut() {
             {/* Late Checkout Modal */}
             {isLateCheckoutModalOpen && lateCheckoutRecord && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
                   {/* Header */}
-                  <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900">
+                  <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                       Resolve Checkout
                     </h3>
@@ -929,15 +929,15 @@ export default function CheckInCheckOut() {
                   </div>
 
                   {/* Body */}
-                  <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
+                  <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-black">
                     <div className="space-y-1">
                       <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Date</p>
-                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-205 dark:border-zinc-800">{lateCheckoutRecord.date}</p>
+                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-205 dark:border-gray-800">{lateCheckoutRecord.date}</p>
                     </div>
 
                     <div className="space-y-1">
                       <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Check In Time</p>
-                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-xl border border-slate-205 dark:border-zinc-800">
+                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-205 dark:border-gray-800">
                         {new Date(lateCheckoutRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -952,7 +952,7 @@ export default function CheckInCheckOut() {
                         value={lateCheckoutTime}
                         onChange={(e) => setLateCheckoutTime(e.target.value)}
                         required
-                        className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                        className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
                       />
                       <p className="text-[11px] text-rose-600 dark:text-rose-455 font-medium leading-relaxed">
                         ⚠️ Submitting this will flag a late check-out warning to the CFO, HR, and IT Admin.
@@ -960,7 +960,7 @@ export default function CheckInCheckOut() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+                    <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
                       <button
                         type="button"
                         onClick={() => {
@@ -968,7 +968,7 @@ export default function CheckInCheckOut() {
                           setLateCheckoutRecord(null);
                         }}
                         disabled={isSubmittingLateCheckout}
-                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold rounded-xl transition-all min-h-[48px] shadow-sm"
+                        className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold rounded-xl transition-all min-h-[48px] shadow-sm"
                       >
                         Cancel
                       </button>

@@ -219,7 +219,7 @@ export default function ReportsView() {
   
   if (!hasFullAccess) {
     return (
-      <div className="p-12 rounded-2xl bg-white dark:bg-zinc-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
+      <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
         <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">
           {t('common', 'accessDenied', lang)}
         </h2>
@@ -239,12 +239,12 @@ export default function ReportsView() {
       </div>
 
       {/* FINANCE TAB DISABLED — uncomment to re-enable
-      <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 max-w-sm shadow-sm">
+      <div className="flex bg-slate-100 dark:bg-gray-900 p-1 rounded-xl border border-slate-200 dark:border-gray-800 max-w-sm shadow-sm">
         <button
           onClick={() => setActiveTab('hr')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
             activeTab === 'hr'
-              ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold'
+              ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-yellow-500 shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
           }`}
         >
@@ -254,7 +254,7 @@ export default function ReportsView() {
           onClick={() => setActiveTab('finance')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
             activeTab === 'finance'
-              ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold'
+              ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-yellow-500 shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
           }`}
         >
@@ -267,27 +267,27 @@ export default function ReportsView() {
       {activeTab === 'hr' && (
         <div className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
               <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Active Staff</p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{activeStaffCount}</p>
             </div>
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
               <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Total Headcount</p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{staffRecords.length}</p>
             </div>
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
               <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Est. Monthly Payroll</p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
+          <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
             <div className="p-5 border-b border-purple-700 dark:border-purple-800 flex justify-between items-center bg-purple-600 dark:bg-purple-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
               {canEditStaff && (
                 <button 
                   onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -299,7 +299,7 @@ export default function ReportsView() {
             <div className="flex-1 overflow-auto scrollbar-thin">
               <table className="w-full text-left border-collapse text-xs md:text-sm">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                  <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('reports', 'colNameRole', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
@@ -307,7 +307,7 @@ export default function ReportsView() {
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-150 dark:divide-zinc-850 text-slate-700 dark:text-zinc-300">
+                <tbody className="divide-y divide-slate-150 dark:divide-gray-800 text-slate-700 dark:text-zinc-300">
                   {staffRecords.map(staff => (
                     <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white text-left">
@@ -321,7 +321,7 @@ export default function ReportsView() {
                           staff.status === 'Active' || !staff.status 
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' 
                             : staff.status === 'On Leave' 
-                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900/30' 
+                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-yellow-500 dark:border-amber-900/30' 
                             : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-455 dark:border-rose-900/30'
                         }`}>
                           {staff.status || 'Active'}
@@ -331,14 +331,14 @@ export default function ReportsView() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => { setViewingStaff(staff); setIsViewStaffModalOpen(true); }}
-                            className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm inline-flex"
+                            className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm inline-flex"
                           >
                             View
                           </button>
                           {canEditStaff && (
                             <button 
                               onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                              className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/30 text-xs font-semibold transition-all shadow-sm inline-flex"
+                              className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-yellow-500 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/30 text-xs font-semibold transition-all shadow-sm inline-flex"
                             >
                               Edit
                             </button>
@@ -368,9 +368,9 @@ export default function ReportsView() {
       {/* VIEW STAFF MODAL */}
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             
-            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900">
+            <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                 Staff Profile
               </h2>
@@ -384,30 +384,30 @@ export default function ReportsView() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-zinc-900/10">
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-gray-900/10">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 flex flex-col justify-center shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Full Name</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.full_name || 'N/A'}</p>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 flex flex-col justify-center shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Department</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.department || 'N/A'}</p>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 flex flex-col justify-center shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Role</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.roles?.role_name || 'N/A'}</p>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 flex flex-col justify-center shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Status</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.status || 'Active'}</p>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 flex flex-col justify-center shadow-sm">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Salary</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">RM {viewingStaff.salary || '0'}</p>
                 </div>
@@ -415,7 +415,7 @@ export default function ReportsView() {
               </div>
             </div>
             
-            <div className="p-5 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 flex justify-end gap-3">
+            <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
               {canEditStaff && (
                 <button 
                   onClick={() => {
@@ -436,8 +436,8 @@ export default function ReportsView() {
 
       {isStaffModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-900">
+          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
               <button 
                 onClick={() => setIsStaffModalOpen(false)} 
@@ -453,10 +453,10 @@ export default function ReportsView() {
               const excludedDepartments = ['Top Management', 'TM', 'Executive', 'Board'];
               const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments])).filter(d => !excludedDepartments.includes(d));
               return (
-            <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-zinc-950">
+            <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-black">
               {!editingStaff && (
-                <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl">
-                  <p className="text-xs text-indigo-700 dark:text-indigo-400 font-semibold uppercase tracking-wider block mb-0.5">System Automation Active</p>
+                <div className="p-4 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl">
+                  <p className="text-xs text-indigo-700 dark:text-yellow-500 font-semibold uppercase tracking-wider block mb-0.5">System Automation Active</p>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Filling this out will automatically generate credentials and initialize a matching database profile record.</p>
                 </div>
               )}
@@ -464,18 +464,18 @@ export default function ReportsView() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Full Name</label>
-                  <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 
                 {!editingStaff && (
                   <>
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Login Email</label>
-                      <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                     </div>
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-455 dark:text-zinc-355">Temp Password</label>
-                      <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                     </div>
                   </>
                 )}
@@ -492,12 +492,12 @@ export default function ReportsView() {
                           e.target.value = ''; // Reset select state
                         }
                       }}
-                      className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
                     >
                       {uniqueDepartments.map(dept => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
-                      <option value="ADD_NEW" className="font-semibold text-purple-600 dark:text-purple-400">+ Add New Department</option>
+                      <option value="ADD_NEW" className="font-semibold text-purple-600 dark:text-yellow-500">+ Add New Department</option>
                     </select>
                   ) : (
                     <div className="relative">
@@ -508,13 +508,13 @@ export default function ReportsView() {
                         defaultValue={editingStaff?.department || ''} 
                         required 
                         autoFocus={departmentInputType === 'text'}
-                        className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" 
+                        className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" 
                       />
                       {uniqueDepartments.length > 0 && (
                         <button 
                           type="button"
                           onClick={() => setDepartmentInputType('select')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 font-semibold px-2 py-1 bg-slate-100 dark:bg-zinc-800 rounded-lg"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 font-semibold px-2 py-1 bg-slate-100 dark:bg-gray-800 rounded-lg"
                         >
                           Cancel
                         </button>
@@ -524,7 +524,7 @@ export default function ReportsView() {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
-                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
                     <option value="General Manager">General Manager</option>
                     <option value="Head of Department">Head of Department</option>
                     <option value="Senior Executive">Senior Executive</option>
@@ -541,11 +541,11 @@ export default function ReportsView() {
                 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
-                  <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="col-span-2 space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>
-                  <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                  <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
                     <option value="Active">Active</option>
                     <option value="On Leave">On Leave</option>
                     <option value="Resigned">Resigned / Terminated</option>
@@ -553,11 +553,11 @@ export default function ReportsView() {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
                 <button 
                   type="submit" 
                   disabled={isProcessing} 
-                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                 >
                   {isProcessing ? 'Automating...' : 'Save & Automate'}
                 </button>

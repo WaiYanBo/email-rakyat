@@ -26,12 +26,12 @@ const getSortValue = (obj: any, key: string) => {
 
 const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
   <th
-    className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors select-none group whitespace-nowrap text-xs text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800 sticky top-0 bg-slate-50 dark:bg-zinc-900 z-10 shadow-sm"
+    className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors select-none group whitespace-nowrap text-xs text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 bg-slate-50 dark:bg-gray-900 z-10 shadow-sm"
     onClick={() => onClick(sortKey)}
   >
     <div className="flex items-center gap-1.5 justify-start">
       <span>{label}</span>
-      <span className={`text-[10px] transition-opacity ${currentSort.key === sortKey ? 'text-indigo-600 dark:text-indigo-400 font-bold opacity-100' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
+      <span className={`text-[10px] transition-opacity ${currentSort.key === sortKey ? 'text-indigo-600 dark:text-yellow-500 font-bold opacity-100' : 'text-gray-400 opacity-0 group-hover:opacity-100'}`}>
         {currentSort.key === sortKey ? (currentSort.direction === 'asc' ? '▲' : '▼') : '↕'}
       </span>
     </div>
@@ -182,19 +182,19 @@ export default function ClientTable({
         <span>Swipe table horizontally to view more</span>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
+      <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-zinc-800 px-3 md:px-4 bg-slate-50/50 dark:bg-zinc-900/80 overflow-x-auto scrollbar-none">
+        <div className="flex border-b border-slate-200 dark:border-gray-800 px-3 md:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setViewMode('standard')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             Standard View
           </button>
           <button
             onClick={() => setViewMode('expanded')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-cyan-500 dark:text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             Expanded View (Full Details)
           </button>
@@ -209,22 +209,22 @@ export default function ClientTable({
               <select
                 value={exportScope}
                 onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
-                className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer flex-1 sm:flex-none min-h-[48px] shadow-sm"
+                className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer flex-1 sm:flex-none min-h-[48px] shadow-sm"
               >
                 <option value="current">Export Current View</option>
                 <option value="full">Export Full Database</option>
               </select>
 
-              <div className="flex bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm">
-                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-zinc-800 transition-colors min-h-[48px]">CSV</button>
-                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-zinc-800 transition-colors min-h-[48px]">Excel</button>
+              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm">
+                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-gray-800 transition-colors min-h-[48px]">CSV</button>
+                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-gray-800 transition-colors min-h-[48px]">Excel</button>
                 <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors min-h-[48px]">PDF</button>
               </div>
 
               {canEdit && (
                 <button
                   onClick={onAddClick}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-cyan-700"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-cyan-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -242,13 +242,13 @@ export default function ClientTable({
                 placeholder="Search Client Database..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] shadow-sm"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] shadow-sm"
               />
             </div>
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto min-h-[48px] shadow-sm"
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto min-h-[48px] shadow-sm"
             >
               <option value="all">All Dates</option>
               <option value="year">This Year</option>
@@ -257,7 +257,7 @@ export default function ClientTable({
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto scrollbar-thin bg-white dark:bg-zinc-950 relative">
+        <div className="flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative">
           <table className="w-full text-left border-collapse whitespace-nowrap text-xs md:text-sm">
             <thead>
               {viewMode === 'standard' ? (
@@ -269,19 +269,19 @@ export default function ClientTable({
                   <SortHeader label="Paid" sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Package" sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Category" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
-                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-left">Actions</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
               ) : (
                 <tr>
                   {Object.keys(filteredClients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at'].includes(k)).map(key => (
                     <SortHeader key={key} label={key} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
-                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-205 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-left">Actions</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-205 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
               )}
             </thead>
 
-            <tbody className="divide-y divide-slate-150 dark:divide-zinc-850">
+            <tbody className="divide-y divide-slate-150 dark:divide-gray-800">
               {filteredClients.length > 0 ? filteredClients.map((client) => {
                 const rowId = client.id || client.NAME + client["PHONE NUMBER"];
                 return (
@@ -292,7 +292,7 @@ export default function ClientTable({
                         <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
                         <td className="px-4 py-3.5 font-bold text-slate-805 dark:text-white min-w-[200px] whitespace-normal leading-snug">{client.NAME}</td>
                         <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
-                        <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-amber-400">{client["PENDING (RM)"] || '0'}</td>
+                        <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350">{client["CASE CATEGORY"]}</td>
@@ -308,7 +308,7 @@ export default function ClientTable({
                     )}
 
                     {/* Actions Menu - Compact Row Buttons */}
-                    <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-zinc-950 group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
+                    <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
                       <div className="flex items-center justify-start gap-2">
                         <button
                           onClick={() => onViewClick(client)}
@@ -319,7 +319,7 @@ export default function ClientTable({
                         {canEdit && (
                           <button
                             onClick={() => onEditClick(client)}
-                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm"
+                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
                           >
                             Edit
                           </button>

@@ -474,7 +474,7 @@ export default function ExecutiveOverview() {
   return (
     <div className="space-y-8 animate-page-transition pt-12 md:pt-0 relative mb-8">
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-indigo-400 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-yellow-500 tracking-tight">
           {t('overview', 'pageTitle', lang)}{' '}
           <span className="text-slate-500 dark:text-slate-400 font-medium">
             {t('overview', 'pageHighlight', lang)}
@@ -489,7 +489,7 @@ export default function ExecutiveOverview() {
 
       {/* ANNOUNCEMENTS SECTION */}
       {!showHistory ? (
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mt-6">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mt-6">
           <div className="p-6 border-b border-blue-700 dark:border-blue-800 bg-blue-600 dark:bg-blue-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">
@@ -539,7 +539,7 @@ export default function ExecutiveOverview() {
                     key={a.id}
                     className={`p-5 rounded-xl border transition-all ${isToday
                       ? 'border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/10 dark:bg-indigo-950/5'
-                      : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40'
+                      : 'border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40'
                       } hover:border-indigo-300 dark:hover:border-zinc-700 hover:shadow-sm`}
                   >
                     {/* Top row: type badge + date + actions menu */}
@@ -548,8 +548,8 @@ export default function ExecutiveOverview() {
                         <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
                           ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
                           : a.type === 'Memo'
-                            ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
-                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-350 dark:border-zinc-700'
+                            ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-gray-800 dark:text-zinc-350 dark:border-gray-700'
                           }`}>
                           {a.type}
                         </span>
@@ -571,7 +571,7 @@ export default function ExecutiveOverview() {
                             </svg>
                           </button>
                           {activeMenuId === a.id && (
-                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
+                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -609,7 +609,7 @@ export default function ExecutiveOverview() {
                     </p>
 
                     {/* Footer: author + action buttons — always inside the card */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between gap-3">
+                    <div className="pt-3 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-between gap-3">
                       <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold truncate min-w-0" title={a.author}>
                         {a.author}
                       </span>
@@ -618,7 +618,7 @@ export default function ExecutiveOverview() {
                           onClick={() => handleTranslate(a.id, a.title, a.content)}
                           disabled={translatingIds[a.id]}
                           type="button"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 transition-all flex-shrink-0"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-gray-700 transition-all flex-shrink-0"
                           title="Translate / Terjemah"
                         >
                           {translatingIds[a.id] ? (
@@ -648,24 +648,24 @@ export default function ExecutiveOverview() {
         </div>
       ) : (
         /* HISTORY VIEW */
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mt-6">
-          <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mt-6">
+          <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">
+              <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">
                 {t('overview', 'announcementHistory', lang)}
               </h2>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-medium">{t('overview', 'historySubtitle', lang)}</p>
             </div>
             <button
               onClick={() => setShowHistory(false)}
-              className="text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+              className="text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
             >
               {t('overview', 'backToToday', lang)}
             </button>
           </div>
 
           {/* Filter Section */}
-          <div className="p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20 space-y-4">
+          <div className="p-5 border-b border-slate-200 dark:border-gray-800 bg-slate-50/30 dark:bg-gray-900/20 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Type Filter */}
               <div className="space-y-1">
@@ -673,7 +673,7 @@ export default function ExecutiveOverview() {
                 <select
                   value={historyFilterType}
                   onChange={(e) => setHistoryFilterType(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
                   <option value="All">{t('overview', 'allTypes', lang)}</option>
                   <option value="Info">{t('overview', 'infoBadge', lang)}</option>
@@ -690,7 +690,7 @@ export default function ExecutiveOverview() {
                 <select
                   value={historyFilterMonth}
                   onChange={(e) => setHistoryFilterMonth(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
                   <option value="All">{lang === 'bm' ? 'Semua Bulan' : 'All Months'}</option>
                   {getUniqueMonths().map(ym => (
@@ -707,7 +707,7 @@ export default function ExecutiveOverview() {
                   setHistoryFilterType('All');
                   setHistoryFilterMonth('All');
                 }}
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider block"
+                className="text-xs font-bold text-indigo-600 dark:text-yellow-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider block"
               >
                 {t('overview', 'clearFilters', lang)}
               </button>
@@ -728,15 +728,15 @@ export default function ExecutiveOverview() {
                 const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
 
                 return (
-                  <div key={a.id} className="p-5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:border-slate-350 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between min-h-[160px]">
+                  <div key={a.id} className="p-5 rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 hover:border-slate-350 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between min-h-[160px]">
                     <div className="space-y-2">
                       <div className="flex flex-row justify-between items-start gap-2">
                         <div className="flex items-center gap-2">
                           <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
                             ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                             : a.type === 'Memo'
-                              ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
-                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+                              ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-gray-800 dark:text-zinc-300 dark:border-gray-700'
                             }`}>
                             {a.type}
                           </span>
@@ -758,7 +758,7 @@ export default function ExecutiveOverview() {
                               </svg>
                             </button>
                             {activeMenuId === a.id && (
-                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
+                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -794,7 +794,7 @@ export default function ExecutiveOverview() {
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center gap-4">
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-gray-800 flex justify-between items-center gap-4">
                       <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-zinc-400 truncate min-w-0" title={a.author}>
                         <span className="font-semibold truncate">{a.author}</span>
                       </div>
@@ -803,7 +803,7 @@ export default function ExecutiveOverview() {
                           onClick={() => handleTranslate(a.id, a.title, a.content)}
                           disabled={translatingIds[a.id]}
                           type="button"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-202 dark:border-zinc-700 transition-all text-xs"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-202 dark:border-gray-700 transition-all text-xs"
                           title="Translate / Terjemah"
                         >
                           {translatingIds[a.id] ? (
@@ -836,11 +836,11 @@ export default function ExecutiveOverview() {
       {/* POST/EDIT NOTICE MODAL */}
       {mounted && isNoticeModalOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-zinc-950 w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-zinc-800">
+          <div className="bg-white dark:bg-black w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900 flex justify-between items-center">
+            <div className="p-5 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900 flex justify-between items-center">
               <div>
-                <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">
+                <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">
                   {editingNotice
                     ? (lang === 'bm' ? 'Kemaskini Pengumuman' : 'Edit Announcement')
                     : t('overview', 'postNewAnnouncement', lang)
@@ -864,7 +864,7 @@ export default function ExecutiveOverview() {
             </div>
 
             {/* Modal Body */}
-            <form key={editingNotice ? editingNotice.id : 'new-notice'} onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-5 overflow-y-auto max-h-[70vh] bg-white dark:bg-zinc-950">
+            <form key={editingNotice ? editingNotice.id : 'new-notice'} onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-5 overflow-y-auto max-h-[70vh] bg-white dark:bg-black">
               {/* Title Input */}
               <div className="space-y-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{t('overview', 'announcementTitle', lang)}</label>
@@ -873,7 +873,7 @@ export default function ExecutiveOverview() {
                   name="title"
                   required
                   defaultValue={editingNotice ? editingNotice.title : ''}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   placeholder="e.g. Q3 Quarterly Meeting"
                   disabled={isPostingNotice}
                 />
@@ -885,7 +885,7 @@ export default function ExecutiveOverview() {
                 <select
                   name="type"
                   defaultValue={editingNotice ? editingNotice.type : 'Info'}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 min-h-[48px]"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 >
                   <option value="Info">ℹ️ Info (Standard)</option>
@@ -901,10 +901,10 @@ export default function ExecutiveOverview() {
                   type="date"
                   name="scheduled_date"
                   defaultValue={editingNotice ? editingNotice.scheduled_at.split('T')[0] : new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 />
-                <div className="mt-2 p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-xl">
+                <div className="mt-2 p-3 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl">
                   <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
                     <span className="font-semibold block mb-0.5">Publish Settings:</span>
                     Past dates will be placed in history. Future dates will schedule this post for later.
@@ -920,18 +920,18 @@ export default function ExecutiveOverview() {
                   required
                   rows={5}
                   defaultValue={editingNotice ? editingNotice.content : ''}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none disabled:opacity-50"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none disabled:opacity-50"
                   placeholder="Write your announcement message here..."
                   disabled={isPostingNotice}
                 />
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
                 <button
                   type="button"
                   onClick={handleCloseNoticeModal}
-                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all min-h-[48px]"
+                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all min-h-[48px]"
                   disabled={isPostingNotice}
                 >
                   {t('overview', 'cancel', lang)}
@@ -966,16 +966,16 @@ export default function ExecutiveOverview() {
 
           return (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-              <div className="bg-white dark:bg-zinc-950 w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-zinc-800">
+              <div className="bg-white dark:bg-black w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-gray-800">
                 {/* Modal Header */}
-                <div className="p-6 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex justify-between items-start gap-4">
+                <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900 flex justify-between items-start gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide uppercase ${selectedAnnouncement.type === 'Urgent'
                         ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                         : selectedAnnouncement.type === 'Memo'
-                          ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30'
-                          : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-800 dark:text-zinc-350 dark:border-zinc-700'
+                          ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                          : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-gray-800 dark:text-zinc-350 dark:border-gray-700'
                         }`}>
                         {selectedAnnouncement.type}
                       </span>
@@ -989,19 +989,19 @@ export default function ExecutiveOverview() {
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-sm text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap bg-white dark:bg-zinc-950">
+                <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-sm text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap bg-white dark:bg-black">
                   {modalContent}
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-6 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/50 flex justify-between items-center gap-4">
+                <div className="p-6 border-t border-slate-100 dark:border-gray-800/80 bg-slate-50 dark:bg-gray-900/50 flex justify-between items-center gap-4">
                   <span className="text-xs text-slate-500 dark:text-zinc-450">Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleTranslate(selectedAnnouncement.id, selectedAnnouncement.title, selectedAnnouncement.content)}
                       disabled={translatingIds[selectedAnnouncement.id]}
                       type="button"
-                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 transition-all min-h-[48px] flex items-center gap-1.5 shadow-sm"
+                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 transition-all min-h-[48px] flex items-center gap-1.5 shadow-sm"
                     >
                       {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? (lang === 'bm' ? 'Asal' : 'Original') : (lang === 'bm' ? 'Terjemah' : 'Translate')}
                     </button>
@@ -1023,12 +1023,12 @@ export default function ExecutiveOverview() {
 
       {/* EXECUTIVE SNAPSHOT (Bottom Section) */}
       {hasFullAccess && !isIT && stats && (
-        <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-zinc-800/80">
-          <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-400 tracking-tight">{t('overview', 'executiveSnapshot', lang)}</h2>
+        <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-gray-800/80">
+          <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">{t('overview', 'executiveSnapshot', lang)}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-white border border-slate-202 dark:bg-zinc-900/40 dark:border-zinc-800/80 shadow-sm"><p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('overview', 'totalClients', lang)}</p><p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{stats.totalClients}</p></div>
+            <div className="p-5 rounded-2xl bg-white border border-slate-202 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm"><p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('overview', 'totalClients', lang)}</p><p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{stats.totalClients}</p></div>
             <div className="p-5 rounded-2xl bg-emerald-50/30 border border-emerald-100 dark:bg-emerald-950/10 dark:border-emerald-900/30 shadow-sm"><p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">{t('overview', 'completed', lang)}</p><p className="text-3xl font-bold text-emerald-600 dark:text-emerald-405 mt-2">{stats.completed}</p></div>
-            <div className="p-5 rounded-2xl bg-amber-50/30 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30 shadow-sm"><p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">{t('overview', 'pending', lang)}</p><p className="text-3xl font-bold text-amber-600 dark:text-amber-405 mt-2">{stats.pending}</p></div>
+            <div className="p-5 rounded-2xl bg-amber-50/30 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30 shadow-sm"><p className="text-[11px] font-semibold text-amber-600 dark:text-yellow-500 uppercase tracking-wide">{t('overview', 'pending', lang)}</p><p className="text-3xl font-bold text-amber-600 dark:text-amber-405 mt-2">{stats.pending}</p></div>
             <div className="p-5 rounded-2xl bg-rose-50/30 border border-rose-100 dark:bg-rose-900/10 dark:border-rose-900/30 shadow-sm"><p className="text-[11px] font-semibold text-rose-650 dark:text-rose-455 uppercase tracking-wide">{t('overview', 'dropped', lang)}</p><p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">{stats.dropped}</p></div>
           </div>
         </div>

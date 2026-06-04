@@ -109,7 +109,7 @@ export default function PortalSidebar() {
       items.push({ 
         label: t('sidebar', 'navClients', lang), 
         path: '/portal/klien',
-        activeClass: 'bg-cyan-50/70 text-cyan-700 border-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400 dark:border-cyan-500',
+        activeClass: 'bg-cyan-50/70 text-cyan-700 border-cyan-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -122,7 +122,7 @@ export default function PortalSidebar() {
       items.push({ 
         label: t('sidebar', 'navReports', lang), 
         path: '/portal/laporan',
-        activeClass: 'bg-purple-50/70 text-purple-700 border-purple-600 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-500',
+        activeClass: 'bg-purple-50/70 text-purple-700 border-purple-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -134,7 +134,7 @@ export default function PortalSidebar() {
     items.push({ 
       label: t('sidebar', 'navSettings', lang), 
       path: '/portal/tetapan',
-      activeClass: 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-500',
+      activeClass: 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -150,7 +150,7 @@ export default function PortalSidebar() {
 
   if (loading) {
     return (
-      <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex items-center justify-center z-40">
+      <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-800 flex items-center justify-center z-40">
         <div className="text-slate-600 dark:text-zinc-400 text-sm font-semibold tracking-wide animate-pulse">
           {t('common', 'loading', lang)}
         </div>
@@ -178,12 +178,12 @@ export default function PortalSidebar() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden z-30" onClick={() => setIsOpen(false)} />
       )}
 
-      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-slate-50 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-900/60 flex flex-col z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-5 border-b border-slate-200 dark:border-zinc-900/60 flex-shrink-0">
+      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-900/60 flex flex-col z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-5 border-b border-slate-200 dark:border-gray-900/60 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2 min-w-0">
               <img src="/logo-v2.svg" alt="Logo" className="h-6 w-6 flex-shrink-0" />
-              <h1 className="text-base font-bold text-indigo-900 dark:text-indigo-400 tracking-wide truncate">
+              <h1 className="text-base font-bold text-indigo-900 dark:text-yellow-500 tracking-wide truncate">
                 Staff <span className="text-slate-500 dark:text-slate-400 font-medium">Portal</span>
               </h1>
             </div>
@@ -197,7 +197,7 @@ export default function PortalSidebar() {
             </button>
           </div>
           
-          <a href="/" className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-zinc-300 dark:hover:text-white bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 transition-all border border-slate-200 dark:border-zinc-800/80 shadow-sm min-h-[48px]">
+          <a href="/" className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-zinc-300 dark:hover:text-white bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-zinc-800 transition-all border border-slate-200 dark:border-gray-800/80 shadow-sm min-h-[48px]">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -205,16 +205,16 @@ export default function PortalSidebar() {
           </a>
         </div>
 
-        <div className="p-4 mx-3 mt-4 bg-slate-100/50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-xl flex-shrink-0">
+        <div className="p-4 mx-3 mt-4 bg-slate-100/50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800/80 rounded-xl flex-shrink-0">
           <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1 block">
             {t('sidebar', 'userLabel', lang)}
           </p>
           <p className="text-sm font-bold text-slate-800 dark:text-zinc-150 truncate">{profile?.name || 'User'}</p>
           <div className="flex gap-1.5 mt-2 flex-wrap">
-            <span className="text-[10px] px-2.5 py-0.5 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-950/40 font-semibold tracking-wide truncate">
+            <span className="text-[10px] px-2.5 py-0.5 bg-indigo-50 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-500 rounded-md border border-indigo-100 dark:border-indigo-950/40 font-semibold tracking-wide truncate">
               {profile?.role}
             </span>
-            <span className="text-[10px] px-2.5 py-0.5 bg-slate-200/60 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-300 rounded-md border border-slate-200 dark:border-zinc-700/60 font-semibold tracking-wide truncate">
+            <span className="text-[10px] px-2.5 py-0.5 bg-slate-200/60 text-slate-700 dark:bg-gray-800/80 dark:text-zinc-300 rounded-md border border-slate-200 dark:border-gray-700/60 font-semibold tracking-wide truncate">
               {profile?.department}
             </span>
           </div>
@@ -243,20 +243,20 @@ export default function PortalSidebar() {
           </ul>
         </nav>
 
-        <div className="border-t border-slate-200 dark:border-zinc-900/60 p-4 space-y-3 flex-shrink-0 bg-slate-50/40 dark:bg-zinc-900/40">
+        <div className="border-t border-slate-200 dark:border-gray-900/60 p-4 space-y-3 flex-shrink-0 bg-slate-50/40 dark:bg-gray-900/40">
           
           {/* Language Selector */}
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
               {t('sidebar', 'language', lang)}
             </span>
-            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 p-0.5">
+            <div className="flex items-center rounded-lg overflow-hidden border border-slate-200 dark:border-gray-800 bg-slate-100 dark:bg-gray-900 p-0.5">
               <button
                 onClick={() => setLang('en')}
                 aria-label="Switch to English"
                 className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
                   lang === 'en'
-                    ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                    ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                     : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
                 }`}
               >
@@ -267,7 +267,7 @@ export default function PortalSidebar() {
                 aria-label="Tukar ke Bahasa Malaysia"
                 className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
                   lang === 'bm'
-                    ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                    ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                     : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
                 }`}
               >
@@ -278,7 +278,7 @@ export default function PortalSidebar() {
 
           <button
             onClick={toggleTheme}
-            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-850/80 text-slate-600 hover:text-slate-900 dark:text-zinc-350 dark:hover:text-white text-xs font-semibold transition-all border border-slate-200 dark:border-zinc-800 shadow-sm min-h-[48px] flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-zinc-850/80 text-slate-600 hover:text-slate-900 dark:text-zinc-350 dark:hover:text-white text-xs font-semibold transition-all border border-slate-200 dark:border-gray-800 shadow-sm min-h-[48px] flex items-center justify-center gap-2"
           >
             {theme === 'light' ? (
               <>

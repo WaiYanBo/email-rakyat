@@ -176,9 +176,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     const p = entry.permissions;
 
     return (
-      <tr key={key} className={`border-b border-slate-100 dark:border-zinc-800 ${isDepartment ? 'bg-slate-50 dark:bg-zinc-900/50' : 'bg-white dark:bg-zinc-950 hover:bg-slate-50/50 dark:hover:bg-zinc-900/30'}`}>
+      <tr key={key} className={`border-b border-slate-100 dark:border-gray-800 ${isDepartment ? 'bg-slate-50 dark:bg-gray-900/50' : 'bg-white dark:bg-black hover:bg-slate-50/50 dark:hover:bg-zinc-900/30'}`}>
         <td className="px-4 py-3">
-          <p className={`font-semibold ${isDepartment ? 'text-indigo-700 dark:text-indigo-400 text-sm' : 'text-slate-800 dark:text-zinc-200 text-xs'}`}>{title}</p>
+          <p className={`font-semibold ${isDepartment ? 'text-indigo-700 dark:text-yellow-500 text-sm' : 'text-slate-800 dark:text-zinc-200 text-xs'}`}>{title}</p>
           <p className="text-[10px] text-slate-500 dark:text-zinc-500">{subtitle}</p>
         </td>
         <td className="px-4 py-3 text-center">
@@ -210,7 +210,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Access Control Matrix</h2>
           <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
@@ -226,19 +226,19 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         </button>
       </div>
 
-      <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-100/50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+              <tr className="bg-slate-100/50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs w-64">Target</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Clients</th>
+                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Clients</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center">Edit Clients</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Staff</th>
+                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Staff</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center">Edit Staff</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Attendance</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Snapshot</th>
-                {isITAdmin && <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">Manage Access</th>}
+                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Attendance</th>
+                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Snapshot</th>
+                {isITAdmin && <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">Manage Access</th>}
               </tr>
             </thead>
             <tbody>
@@ -254,7 +254,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               {/* Users without departments */}
               {users.filter(u => !u.department).length > 0 && (
                 <>
-                  <tr className="bg-slate-50 dark:bg-zinc-900/50 border-b border-slate-100 dark:border-zinc-800">
+                  <tr className="bg-slate-50 dark:bg-gray-900/50 border-b border-slate-100 dark:border-gray-800">
                     <td colSpan={7} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-500 text-xs uppercase tracking-wider">Unassigned / No Department</td>
                   </tr>
                   {users.filter(u => !u.department).map(user => (

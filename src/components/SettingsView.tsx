@@ -191,12 +191,12 @@ export default function SettingsView() {
   return (
     <div className="space-y-6">
       {(isITAdmin || permissions?.manage_access_control) && (
-        <div className="flex bg-slate-100/50 dark:bg-zinc-900/40 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 w-full sm:w-fit mx-auto mt-4 md:mt-0">
+        <div className="flex bg-slate-100/50 dark:bg-gray-900/40 p-1 rounded-xl border border-slate-200 dark:border-gray-800 w-full sm:w-fit mx-auto mt-4 md:mt-0">
           <button
             onClick={() => setActiveTab('profile')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
               activeTab === 'profile' 
-                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm' 
                 : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             }`}
           >
@@ -206,7 +206,7 @@ export default function SettingsView() {
             onClick={() => setActiveTab('access')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
               activeTab === 'access' 
-                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm' 
                 : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             }`}
           >
@@ -223,14 +223,14 @@ export default function SettingsView() {
       
       {/* LEFT COLUMN: Profile Overview Card */}
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
           {/* Header Graphic */}
           <div className="h-32 bg-gradient-to-r from-indigo-900 to-indigo-950 flex items-end justify-center pb-4 relative">
             <div className="absolute top-4 right-4 bg-indigo-550/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 text-[10px] font-semibold uppercase tracking-wider shadow-sm">
               {profile?.status || 'Active'}
             </div>
             {/* Avatar */}
-            <div className="w-20 h-20 bg-slate-50 dark:bg-zinc-800 rounded-full border-4 border-white dark:border-zinc-900 flex items-center justify-center text-lg font-bold text-indigo-600 dark:text-indigo-400 shadow-md transform translate-y-8 uppercase">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-900 flex items-center justify-center text-lg font-bold text-indigo-600 dark:text-yellow-500 shadow-md transform translate-y-8 uppercase">
               {profile?.full_name?.slice(0, 2) || 'ST'}
             </div>
           </div>
@@ -244,7 +244,7 @@ export default function SettingsView() {
               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{t('settings', 'userLabel', lang)} • {roleName}</p>
             </div>
             
-            <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-4 space-y-3 text-left text-xs font-medium">
+            <div className="border-t border-slate-100 dark:border-gray-800/80 pt-4 space-y-3 text-left text-xs font-medium">
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-450 dark:text-zinc-400">Email</span>
                 <span className="text-slate-800 dark:text-zinc-200 font-semibold truncate max-w-[180px]" title={sessionUser?.email}>
@@ -267,7 +267,7 @@ export default function SettingsView() {
 
         {/* Notice Box */}
         <div className="p-5 rounded-2xl bg-indigo-50/15 dark:bg-indigo-950/5 border border-indigo-100/50 dark:border-indigo-950/20 shadow-sm">
-          <h4 className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <h4 className="text-xs font-semibold text-indigo-700 dark:text-yellow-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             Employee Notice
           </h4>
           <p className="text-xs font-medium text-slate-650 dark:text-zinc-400 leading-relaxed">
@@ -279,20 +279,20 @@ export default function SettingsView() {
         </div>
 
         {/* Language Preference Card */}
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl p-6 space-y-4 shadow-sm">
           <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
             {lang === 'bm' ? 'Pilihan Bahasa' : 'Language Preference'}
           </h3>
           <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
             {lang === 'bm' ? 'Pilih bahasa paparan kegemaran anda untuk Portal Kakitangan.' : 'Select your preferred display language for the Staff Portal.'}
           </p>
-          <div className="flex items-center rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-950 p-0.5">
+          <div className="flex items-center rounded-xl overflow-hidden border border-slate-200 dark:border-gray-800 bg-slate-100 dark:bg-black p-0.5">
             <button
               onClick={() => setLang('en')}
               type="button"
               className={`flex-1 py-2.5 text-xs font-semibold tracking-wider transition-all rounded-lg min-h-[44px] ${
                 lang === 'en'
-                  ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                  ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                   : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
               }`}
             >
@@ -303,7 +303,7 @@ export default function SettingsView() {
               type="button"
               className={`flex-1 py-2.5 text-xs font-semibold tracking-wider transition-all rounded-lg min-h-[44px] ${
                 lang === 'bm'
-                  ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm'
+                  ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                   : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
               }`}
             >
@@ -317,13 +317,13 @@ export default function SettingsView() {
       <div className="lg:col-span-2 space-y-6 md:space-y-8">
         
         {/* Card 1: Personal Details */}
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
           </div>
           
-          <form onSubmit={handleUpdateProfile} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
+          <form onSubmit={handleUpdateProfile} className="p-6 space-y-4 bg-white dark:bg-black">
             {profileMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 profileMessage.type === 'success' 
@@ -346,7 +346,7 @@ export default function SettingsView() {
                 maxLength={100}
                 autoComplete="name"
                 aria-label="Full name"
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                 placeholder={t('settings', 'enterFullName', lang)}
               />
             </div>
@@ -355,7 +355,7 @@ export default function SettingsView() {
               <button 
                 type="submit" 
                 disabled={isSavingProfile}
-                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
+                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >
                 {isSavingProfile ? t('settings', 'saving', lang) : t('settings', 'updateProfile', lang)}
               </button>
@@ -364,13 +364,13 @@ export default function SettingsView() {
         </div>
 
         {/* Card 2: Account Security */}
-        <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
           </div>
           
-          <form onSubmit={handleUpdatePassword} className="p-6 space-y-4 bg-white dark:bg-zinc-950">
+          <form onSubmit={handleUpdatePassword} className="p-6 space-y-4 bg-white dark:bg-black">
             {passwordMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 passwordMessage.type === 'success' 
@@ -394,13 +394,13 @@ export default function SettingsView() {
                   maxLength={128}
                   autoComplete="current-password"
                   aria-label="Current password"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                  className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                   placeholder={t('settings', 'enterCurrentPw', lang)}
                 />
               </div>
 
               {/* Password policy hint */}
-              <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-xl text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
+              <div className="p-4 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
                 <span className="font-semibold text-slate-700 dark:text-zinc-200 uppercase tracking-wide block mb-0.5">{t('settings', 'pwRequirements', lang)}</span>
                 {t('settings', 'pwRequirementsDetail', lang)}
               </div>
@@ -418,7 +418,7 @@ export default function SettingsView() {
                     maxLength={128}
                     autoComplete="new-password"
                     aria-label="New password"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                    className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                     placeholder={t('settings', 'min8Chars', lang)}
                   />
                 </div>
@@ -434,7 +434,7 @@ export default function SettingsView() {
                     maxLength={128}
                     autoComplete="new-password"
                     aria-label="Confirm new password"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                    className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                     placeholder={t('settings', 'confirmNewPw', lang)}
                   />
                 </div>
@@ -445,7 +445,7 @@ export default function SettingsView() {
               <button 
                 type="submit" 
                 disabled={isUpdatingPassword}
-                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
+                className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >
                 {isUpdatingPassword ? t('settings', 'updating', lang) : t('settings', 'changePassword', lang)}
               </button>

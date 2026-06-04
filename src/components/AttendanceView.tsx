@@ -135,7 +135,7 @@ export default function AttendanceView() {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
+    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
       {/* Header */}
       <div className="p-6 md:p-8 border-b border-emerald-700 dark:border-emerald-800 bg-emerald-600 dark:bg-emerald-900">
         <div>
@@ -162,7 +162,7 @@ export default function AttendanceView() {
             {/* Filter Controls */}
             <div className="space-y-4">
               {/* Employee Name Search */}
-              <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+              <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                   {t('attendanceAdmin', 'searchByName', lang)}
                 </label>
@@ -171,14 +171,14 @@ export default function AttendanceView() {
                   placeholder={t('attendanceAdmin', 'typeName', lang)}
                   value={searchName}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-slate-400 min-h-[48px]"
+                  className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-slate-400 min-h-[48px]"
                 />
               </div>
 
               {/* Filter Mode Toggle & Date/Month Selector */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Filter Mode */}
-                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                     {t('attendanceAdmin', 'filterBy', lang)}
                   </label>
@@ -188,7 +188,7 @@ export default function AttendanceView() {
                       className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all min-h-[48px] border ${
                         filterMode === 'date'
                           ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
-                          : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                          : 'bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
                       }`}
                     >
                       {t('attendanceAdmin', 'byDate', lang)}
@@ -198,7 +198,7 @@ export default function AttendanceView() {
                       className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-xs md:text-sm transition-all min-h-[48px] border ${
                         filterMode === 'month'
                           ? 'bg-slate-900 text-white border-slate-900 dark:bg-zinc-100 dark:text-zinc-950 dark:border-zinc-100'
-                          : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                          : 'bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-zinc-700'
                       }`}
                     >
                       {t('attendanceAdmin', 'byMonth', lang)}
@@ -207,7 +207,7 @@ export default function AttendanceView() {
                 </div>
 
                 {/* Date/Month Input */}
-                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-zinc-900/20 border border-slate-200 dark:border-zinc-800/80">
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                     {filterMode === 'date' ? t('attendanceAdmin', 'selectDate', lang) : t('attendanceAdmin', 'selectMonth', lang)}
                   </label>
@@ -215,7 +215,7 @@ export default function AttendanceView() {
                     type={filterMode === 'date' ? 'date' : 'month'}
                     value={filterMode === 'date' ? selectedDate : selectedMonth}
                     onChange={(e) => filterMode === 'date' ? handleDateChange(e.target.value) : handleMonthChange(e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 transition-all min-h-[48px]"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 transition-all min-h-[48px]"
                   />
                 </div>
               </div>
@@ -233,11 +233,11 @@ export default function AttendanceView() {
             </div>
 
             {/* Records Table */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm mt-4">
+            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs md:text-sm">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                    <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                       <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colEmployee', lang)}</th>
                       <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
                       <th className="px-5 py-3.5 text-center font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
@@ -299,7 +299,7 @@ export default function AttendanceView() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-amber-705 dark:text-amber-400 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-105 dark:border-amber-900/30">
+                              <span className="text-amber-705 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-105 dark:border-amber-900/30">
                                 {t('attendanceAdmin', 'pending', lang)}
                               </span>
                             )}
@@ -325,9 +325,9 @@ export default function AttendanceView() {
 
             {/* Statistics Section */}
             {filteredRecords.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-6 border-t border-slate-200 dark:border-zinc-800">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-6 border-t border-slate-200 dark:border-gray-800">
                 {/* Total Checked In */}
-                <div className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/20 dark:bg-zinc-900/40 shadow-sm">
+                <div className="p-5 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/20 dark:bg-gray-900/40 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
                   <p className="text-3xl font-bold text-slate-805 dark:text-white mt-2">
                     {filteredRecords.filter((r) => r.check_in_time).length}

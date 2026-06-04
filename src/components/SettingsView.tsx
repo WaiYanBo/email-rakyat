@@ -4,6 +4,8 @@ import { sanitizeInput, isValidName, isStrongPassword } from '../utils/security'
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import AccessControlView from './AccessControlView';
+import { usePermissions } from '../hooks/usePermissions';
+
 
 export default function SettingsView() {
   const [profile, setProfile] = useState<any>(null);
@@ -26,6 +28,7 @@ export default function SettingsView() {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const { lang, setLang } = usePortalLanguage();
+  const { permissions } = usePermissions(profile);
 
   // Fetch Profile & Session
   const loadUserSettings = async () => {
@@ -184,9 +187,10 @@ export default function SettingsView() {
   const roleName = profile?.role_name || profile?.roles?.role_name || profile?.role || 'Unknown';
   const isITAdmin = roleName === 'IT Admin';
 
+
   return (
     <div className="space-y-6">
-      {isITAdmin && (
+      {(isITAdmin || permissions?.manage_access_control) && (
         <div className="flex bg-slate-100/50 dark:bg-zinc-900/40 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 w-full sm:w-fit mx-auto mt-4 md:mt-0">
           <button
             onClick={() => setActiveTab('profile')}
@@ -211,8 +215,8 @@ export default function SettingsView() {
         </div>
       )}
 
-      {activeTab === 'access' && isITAdmin ? (
-        <AccessControlView />
+      {activeTab === 'access' && (isITAdmin || permissions?.manage_access_control) ? (
+        <AccessControlView isITAdmin={isITAdmin} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-page-transition pt-4 md:pt-0">
 

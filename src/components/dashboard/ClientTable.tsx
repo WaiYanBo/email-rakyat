@@ -269,14 +269,14 @@ export default function ClientTable({
                   <SortHeader label="Paid" sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Package" sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Category" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
-                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-right">Actions</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
               ) : (
                 <tr>
                   {Object.keys(filteredClients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at'].includes(k)).map(key => (
                     <SortHeader key={key} label={key} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
-                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-205 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-right">Actions</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-205 dark:border-zinc-800 sticky top-0 right-0 bg-slate-50 dark:bg-zinc-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
               )}
             </thead>
@@ -308,8 +308,8 @@ export default function ClientTable({
                     )}
 
                     {/* Actions Menu - Compact Row Buttons */}
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap sticky right-0 bg-white dark:bg-zinc-950 group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-zinc-950 group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
+                      <div className="flex items-center justify-start gap-2">
                         <button
                           onClick={() => onViewClick(client)}
                           className="h-8 px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"

@@ -14,10 +14,11 @@ interface PermissionEntry {
     edit_staff: boolean;
     view_attendance: boolean;
     view_snapshot: boolean;
+    manage_access_control: boolean;
   };
 }
 
-export default function AccessControlView() {
+export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { lang } = usePortalLanguage();
@@ -60,7 +61,7 @@ export default function AccessControlView() {
           target_type: 'department',
           target_id: dept,
           permissions: {
-            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false
+            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false
           }
         };
       });
@@ -71,7 +72,7 @@ export default function AccessControlView() {
           target_type: 'user',
           target_id: user.id,
           permissions: {
-            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any
+            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any
           } // null signifies "Inherit from department" in the UI mentally, but for simplicity we'll just store booleans if they override
         };
       });
@@ -98,12 +99,10 @@ export default function AccessControlView() {
   const togglePermission = (key: string, module: keyof PermissionEntry['permissions']) => {
     setPermissionsMatrix(prev => {
       const entry = prev[key];
-      // If user permission is being set from undefined/null to something, handle it.
-      // For simplicity, we just toggle boolean.
       const current = entry.permissions[module];
       const nextVal = current === true ? false : true;
       
-      return {
+      const newMatrix = {
         ...prev,
         [key]: {
           ...entry,
@@ -113,6 +112,26 @@ export default function AccessControlView() {
           }
         }
       };
+
+      if (key.startsWith('dept_')) {
+        const deptName = key.replace('dept_', '');
+        users.forEach(u => {
+          if (u.department === deptName) {
+            const userKey = `user_${u.id}`;
+            if (newMatrix[userKey]) {
+               newMatrix[userKey] = {
+                 ...newMatrix[userKey],
+                 permissions: {
+                   ...newMatrix[userKey].permissions,
+                   [module]: nextVal
+                 }
+               };
+            }
+          }
+        });
+      }
+
+      return newMatrix;
     });
   };
 
@@ -180,6 +199,11 @@ export default function AccessControlView() {
         <td className="px-4 py-3 text-center">
           <input type="checkbox" checked={!!p.view_snapshot} onChange={() => togglePermission(key, 'view_snapshot')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
         </td>
+        {isITAdmin && (
+          <td className="px-4 py-3 text-center">
+            <input type="checkbox" checked={!!p.manage_access_control} onChange={() => togglePermission(key, 'manage_access_control')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+          </td>
+        )}
       </tr>
     );
   };
@@ -214,6 +238,7 @@ export default function AccessControlView() {
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center">Edit Staff</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Attendance</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">View Snapshot</th>
+                {isITAdmin && <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-zinc-800">Manage Access</th>}
               </tr>
             </thead>
             <tbody>

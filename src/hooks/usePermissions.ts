@@ -8,6 +8,7 @@ export interface Permissions {
   edit_staff: boolean;
   view_attendance: boolean;
   view_snapshot: boolean;
+  manage_access_control: boolean;
 }
 
 export function usePermissions(profile: any) {
@@ -18,6 +19,7 @@ export function usePermissions(profile: any) {
     edit_staff: false,
     view_attendance: false,
     view_snapshot: false,
+    manage_access_control: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +52,7 @@ export function usePermissions(profile: any) {
           edit_staff: defaultHasFullAccess,
           view_attendance: defaultHasFullAccess,
           view_snapshot: defaultHasFullAccess,
+          manage_access_control: false,
         };
 
         if (data && data.length > 0) {
@@ -63,6 +66,7 @@ export function usePermissions(profile: any) {
             edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? finalPerms.edit_staff,
             view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? finalPerms.view_attendance,
             view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? finalPerms.view_snapshot,
+            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? finalPerms.manage_access_control,
           };
         }
         
@@ -75,6 +79,7 @@ export function usePermissions(profile: any) {
             edit_staff: true,
             view_attendance: true,
             view_snapshot: true,
+            manage_access_control: true,
           };
         }
 

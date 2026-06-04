@@ -107,8 +107,8 @@ export default function ReportsView() {
     const cleanSalary = isFinite(salaryValue) && salaryValue >= 0 ? salaryValue : 0;
 
     // Whitelist role values from the select
-    const allowedRoles = ['Intern', 'Contract', 'General Manager', 'COO', 'CFO'];
-    const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern';
+    const allowedRoles = ['Chairman', 'CEO', 'COO', 'CFO', 'Finance', 'Marketing', 'Accounting', 'Creative', 'IT Admin', 'Intern HR', 'Contract', 'General Manager', 'Part Time'];
+    const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern HR';
     const allowedStatuses = ['Active', 'On Leave', 'Resigned'];
     const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
 
@@ -231,7 +231,7 @@ export default function ReportsView() {
         <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
-      {/* Modern Tabs pills */}
+      {/* FINANCE TAB DISABLED — uncomment to re-enable
       <div className="flex bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 max-w-sm shadow-sm">
         <button
           onClick={() => setActiveTab('hr')}
@@ -254,6 +254,7 @@ export default function ReportsView() {
           {t('reports', 'tabFinance', lang)}
         </button>
       </div>
+      */}
 
       {/* ======================= HR TAB ======================= */}
       {activeTab === 'hr' && (
@@ -334,13 +335,14 @@ export default function ReportsView() {
         </div>
       )}
 
-      {/* ======================= FINANCE TAB ======================= */}
+      {/* ======================= FINANCE TAB DISABLED — uncomment to re-enable =======================
       {activeTab === 'finance' && (
         <div className="p-8 border border-amber-200 dark:border-amber-900/40 bg-amber-50/15 dark:bg-amber-955/5 rounded-2xl text-center shadow-sm">
           <p className="text-amber-800 dark:text-amber-450 font-semibold tracking-wide text-sm">Finance Ledger Database Not Yet Created</p>
           <p className="text-xs mt-2 font-medium text-slate-500 dark:text-zinc-400">IT Admin must create a `finance_ledger` table in Supabase before automating this section.</p>
         </div>
       )}
+      */}
 
       {/* ======================= AUTOMATED HR MODAL ======================= */}
       {isStaffModalOpen && (
@@ -389,12 +391,20 @@ export default function ReportsView() {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
-                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Intern'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
-                    <option value="Intern">Intern</option>
-                    <option value="Contract">Contract</option>
-                    <option value="General Manager">General Manager</option>
+                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Intern HR'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                    <option value="Chairman">Chairman</option>
+                    <option value="CEO">CEO</option>
                     <option value="COO">COO</option>
                     <option value="CFO">CFO</option>
+                    <option value="General Manager">General Manager</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Accounting">Accounting</option>
+                    <option value="Creative">Creative</option>
+                    <option value="IT Admin">IT Admin</option>
+                    <option value="Intern HR">Intern HR</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Part Time">Part Time</option>
                   </select>
                 </div>
                 

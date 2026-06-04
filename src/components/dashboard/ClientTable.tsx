@@ -194,13 +194,13 @@ export default function ClientTable({
           </button>
           <button 
             onClick={() => setViewMode('expanded')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-cyan-500 dark:text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             Expanded View (Full Details)
           </button>
         </div>
 
-        <div className="p-4 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900 flex-shrink-0">
+        <div className="p-4 border-b border-cyan-700 dark:border-cyan-800 bg-cyan-600 dark:bg-cyan-900 flex-shrink-0">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
             <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">Client Registry</h3>
             
@@ -224,7 +224,7 @@ export default function ClientTable({
               {canEdit && (
                 <button 
                   onClick={onAddClick}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-indigo-100 dark:border-indigo-700"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-cyan-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -323,7 +323,7 @@ export default function ClientTable({
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => onViewClick(client)}
-                          className="h-8 px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
+                          className="h-8 px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
                         >
                           View
                         </button>

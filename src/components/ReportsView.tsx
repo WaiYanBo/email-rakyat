@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sanitizeInput, isValidEmail, isStrongPassword } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function ReportsView() {
   const [loading, setLoading] = useState(true);
@@ -11,6 +12,7 @@ export default function ReportsView() {
   const [profile, setProfile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'hr' | 'finance'>('hr');
   const { lang } = usePortalLanguage();
+  const { permissions, loading: permsLoading } = usePermissions(profile);
 
   // REAL DATABASE STATE
   const [staffRecords, setStaffRecords] = useState<any[]>([]);
@@ -19,6 +21,7 @@ export default function ReportsView() {
   // MODAL STATE
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
+  const [departmentInputType, setDepartmentInputType] = useState<'select' | 'text'>('select');
 
   // FETCH STAFF RECORDS FUNCTION
   const fetchStaffRecords = async () => {
@@ -237,7 +240,7 @@ export default function ReportsView() {
           onClick={() => setActiveTab('hr')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
             activeTab === 'hr'
-              ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold'
+              ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
           }`}
         >
@@ -247,7 +250,7 @@ export default function ReportsView() {
           onClick={() => setActiveTab('finance')}
           className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
             activeTab === 'finance'
-              ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold'
+              ? 'bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-sm font-bold'
               : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
           }`}
         >
@@ -275,11 +278,11 @@ export default function ReportsView() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-5 border-b border-indigo-700 dark:border-indigo-800 flex justify-between items-center bg-indigo-600 dark:bg-indigo-900">
+            <div className="p-5 border-b border-purple-700 dark:border-purple-800 flex justify-between items-center bg-purple-600 dark:bg-purple-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
               <button 
-                onClick={() => { setEditingStaff(null); setIsStaffModalOpen(true); }} 
-                className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-indigo-100 dark:border-indigo-700"
+                onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
+                className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -320,7 +323,7 @@ export default function ReportsView() {
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <button 
-                          onClick={() => { setEditingStaff(staff); setIsStaffModalOpen(true); }} 
+                          onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
                           className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm inline-flex"
                         >
                           Edit
@@ -358,6 +361,12 @@ export default function ReportsView() {
               </button>
             </div>
             
+            {(() => {
+              const standardDepartments = ['Human Resources', 'Finance', 'Accounting', 'Marketing', 'IT', 'Operations', 'Sales'];
+              const dynamicDepartments = staffRecords.map(s => s.department).filter(Boolean) as string[];
+              const excludedDepartments = ['Top Management', 'TM', 'Executive', 'Board'];
+              const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments])).filter(d => !excludedDepartments.includes(d));
+              return (
             <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-zinc-950">
               {!editingStaff && (
                 <div className="p-4 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl">
@@ -387,24 +396,60 @@ export default function ReportsView() {
 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Department</label>
-                  <input type="text" name="dept" defaultValue={editingStaff?.department} required className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  {departmentInputType === 'select' && uniqueDepartments.length > 0 ? (
+                    <select 
+                      name="dept" 
+                      defaultValue={editingStaff?.department || uniqueDepartments[0]} 
+                      onChange={(e) => {
+                        if (e.target.value === 'ADD_NEW') {
+                          setDepartmentInputType('text');
+                          e.target.value = ''; // Reset select state
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                    >
+                      {uniqueDepartments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                      <option value="ADD_NEW" className="font-semibold text-purple-600 dark:text-purple-400">+ Add New Department</option>
+                    </select>
+                  ) : (
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        name="dept" 
+                        placeholder={uniqueDepartments.length > 0 ? "Enter new department name" : "e.g. Human Resources"}
+                        defaultValue={editingStaff?.department || ''} 
+                        required 
+                        autoFocus={departmentInputType === 'text'}
+                        className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" 
+                      />
+                      {uniqueDepartments.length > 0 && (
+                        <button 
+                          type="button"
+                          onClick={() => setDepartmentInputType('select')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 font-semibold px-2 py-1 bg-slate-100 dark:bg-zinc-800 rounded-lg"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
-                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Intern HR'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
-                    <option value="Chairman">Chairman</option>
-                    <option value="CEO">CEO</option>
-                    <option value="COO">COO</option>
-                    <option value="CFO">CFO</option>
+                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
                     <option value="General Manager">General Manager</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Accounting">Accounting</option>
-                    <option value="Creative">Creative</option>
-                    <option value="IT Admin">IT Admin</option>
-                    <option value="Intern HR">Intern HR</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Part Time">Part Time</option>
+                    <option value="Head of Department">Head of Department</option>
+                    <option value="Senior Executive">Senior Executive</option>
+                    <option value="Executive">Executive</option>
+                    <option value="Junior Executive">Junior Executive</option>
+                    <option value="Specialist">Specialist</option>
+                    <option value="Analyst">Analyst</option>
+                    <option value="Admin Assistant">Admin Assistant</option>
+                    <option value="Intern">Intern</option>
+                    <option value="Contract Worker">Contract Worker</option>
+                    <option value="Part-Time Worker">Part-Time Worker</option>
                   </select>
                 </div>
                 
@@ -426,12 +471,14 @@ export default function ReportsView() {
                 <button 
                   type="submit" 
                   disabled={isProcessing} 
-                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                 >
                   {isProcessing ? 'Automating...' : 'Save & Automate'}
                 </button>
               </div>
             </form>
+              );
+            })()}
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { sanitizeInput, sanitizeLongText } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 import { translateText } from '../utils/translator';
 import { createPortal } from 'react-dom';
 
@@ -12,6 +13,7 @@ export default function ExecutiveOverview() {
   const [highPriorityCases, setHighPriorityCases] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const { lang } = usePortalLanguage();
+  const { permissions, loading: permsLoading } = usePermissions(profile);
 
   // --- REAL-TIME ANNOUNCEMENT STATE (Synced from Supabase) ---
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -489,7 +491,7 @@ export default function ExecutiveOverview() {
       {/* ANNOUNCEMENTS SECTION */}
       {!showHistory ? (
         <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden mt-6">
-          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="p-6 border-b border-blue-700 dark:border-blue-800 bg-blue-600 dark:bg-blue-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">
                 {t('overview', 'announcements', lang)}
@@ -504,7 +506,7 @@ export default function ExecutiveOverview() {
               {pastCount > 0 && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex-1 sm:flex-none text-xs font-semibold bg-indigo-700 hover:bg-indigo-800 text-white dark:bg-indigo-800 dark:hover:bg-indigo-700 px-4 py-2.5 rounded-xl border border-indigo-500 dark:border-indigo-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-blue-700 hover:bg-blue-800 text-white dark:bg-blue-800 dark:hover:bg-blue-700 px-4 py-2.5 rounded-xl border border-blue-500 dark:border-blue-700 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   {t('overview', 'viewHistory', lang)}
                 </button>
@@ -512,7 +514,7 @@ export default function ExecutiveOverview() {
               {hasFullAccess && (
                 <button
                   onClick={() => setIsNoticeModalOpen(true)}
-                  className="flex-1 sm:flex-none text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white px-4 py-2.5 rounded-xl transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-white hover:bg-slate-50 text-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 dark:text-white px-4 py-2.5 rounded-xl transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   {t('overview', 'postNotice', lang)}
                 </button>
@@ -938,7 +940,7 @@ export default function ExecutiveOverview() {
                 <button
                   type="submit"
                   disabled={isPostingNotice}
-                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[48px]"
+                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[48px]"
                 >
                   {isPostingNotice ? (
                     <span className="flex items-center gap-2">

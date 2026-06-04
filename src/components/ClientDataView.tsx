@@ -4,6 +4,7 @@ import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 import { ErrorBoundary } from './ErrorBoundary';
 
 export default function ClientDataView() {
@@ -11,6 +12,7 @@ export default function ClientDataView() {
   const [profile, setProfile] = useState<any>(null);
   const [dbClients, setDbClients] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
+  const { permissions, loading: permsLoading } = usePermissions(profile);
   
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -378,7 +380,7 @@ export default function ClientDataView() {
                   <button 
                     type="submit" 
                     disabled={loading} 
-                    className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                   >
                     {loading ? 'Saving...' : 'Save Changes'}
                   </button>

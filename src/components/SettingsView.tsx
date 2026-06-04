@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { sanitizeInput, isValidName, isStrongPassword } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import AccessControlView from './AccessControlView';
 
 export default function SettingsView() {
   const [profile, setProfile] = useState<any>(null);
@@ -10,6 +11,7 @@ export default function SettingsView() {
   const [loading, setLoading] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'access'>('profile');
   
   // Profile Form State
   const [fullName, setFullName] = useState('');
@@ -178,8 +180,42 @@ export default function SettingsView() {
     );
   }
 
+
+  const roleName = profile?.role_name || profile?.roles?.role_name || profile?.role || 'Unknown';
+  const isITAdmin = true; // Temporarily allow access to debug
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-page-transition pt-12 md:pt-0">
+    <div className="space-y-6">
+      {isITAdmin && (
+        <div className="flex bg-slate-100/50 dark:bg-zinc-900/40 p-1 rounded-xl border border-slate-200 dark:border-zinc-800 w-full sm:w-fit mx-auto mt-4 md:mt-0">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
+              activeTab === 'profile' 
+                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            {t('settings', 'editProfile', lang)}
+          </button>
+          <button
+            onClick={() => setActiveTab('access')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
+              activeTab === 'access' 
+                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+            }`}
+          >
+            Access Control (Admin)
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'access' && isITAdmin ? (
+        <AccessControlView />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-page-transition pt-4 md:pt-0">
+
       
       {/* LEFT COLUMN: Profile Overview Card */}
       <div className="lg:col-span-1 space-y-6">
@@ -201,7 +237,7 @@ export default function SettingsView() {
               <h2 className="text-lg font-bold text-slate-800 dark:text-white truncate">
                 {profile?.full_name || 'Staff Member'}
               </h2>
-              <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{t('settings', 'userLabel', lang)}</p>
+              <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{t('settings', 'userLabel', lang)} • {roleName}</p>
             </div>
             
             <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-4 space-y-3 text-left text-xs font-medium">
@@ -412,9 +448,9 @@ export default function SettingsView() {
             </div>
           </form>
         </div>
-
       </div>
-
+    </div>
+      )}
     </div>
   );
 }

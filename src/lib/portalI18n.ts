@@ -190,7 +190,7 @@ export const translations = {
     totalHeadcount: { en: 'Total Headcount', bm: 'Jumlah Kakitangan' },
     estPayroll: { en: 'Est. Monthly Payroll', bm: 'Anggaran Gaji Bulanan' },
     staffDirectory: { en: 'Staff Directory', bm: 'Direktori Kakitangan' },
-    onboardStaff: { en: '+ Onboard Staff', bm: '+ Daftar Kakitangan' },
+    onboardStaff: { en: 'Onboard Staff', bm: 'Daftar Kakitangan' },
     colNameRole: { en: 'Name & Role', bm: 'Nama & Jawatan' },
     colDept: { en: 'Dept', bm: 'Jabatan' },
     colSalary: { en: 'Salary (RM)', bm: 'Gaji (RM)' },

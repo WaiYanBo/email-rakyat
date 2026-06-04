@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function PortalSidebar() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -11,6 +12,7 @@ export default function PortalSidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const { lang, setLang } = usePortalLanguage();
+  const { permissions } = usePermissions(profile);
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
@@ -87,14 +89,14 @@ export default function PortalSidebar() {
   const getNavItems = () => {
     if (!profile) return [];
     
-    const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile.role);
-    const hasViewAccess = ['Intern', 'Contract'].includes(profile.role);
-    const canViewClients = hasFullAccess || hasViewAccess;
+    const canViewClients = permissions?.view_clients || false;
+    const canViewReports = permissions?.view_staff || false;
     
     const items = [
       { 
         label: t('sidebar', 'navOverview', lang), 
         path: '/portal',
+        activeClass: 'bg-blue-50/70 text-blue-700 border-blue-600 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -107,6 +109,7 @@ export default function PortalSidebar() {
       items.push({ 
         label: t('sidebar', 'navClients', lang), 
         path: '/portal/klien',
+        activeClass: 'bg-cyan-50/70 text-cyan-700 border-cyan-600 dark:bg-cyan-950/20 dark:text-cyan-400 dark:border-cyan-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -115,10 +118,11 @@ export default function PortalSidebar() {
       });
     }
     
-    if (hasFullAccess) {
+    if (canViewReports) {
       items.push({ 
         label: t('sidebar', 'navReports', lang), 
         path: '/portal/laporan',
+        activeClass: 'bg-purple-50/70 text-purple-700 border-purple-600 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -130,6 +134,7 @@ export default function PortalSidebar() {
     items.push({ 
       label: t('sidebar', 'navSettings', lang), 
       path: '/portal/tetapan',
+      activeClass: 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-500',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -226,7 +231,7 @@ export default function PortalSidebar() {
                   href={item.path}
                   className={`px-4 py-3 rounded-xl text-sm font-medium transition-all block min-h-[48px] flex items-center gap-3 border-l-4 ${
                     isActive(item.path)
-                      ? 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-500 font-semibold shadow-sm'
+                      ? `${item.activeClass} font-semibold shadow-sm`
                       : 'text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-900/65 hover:text-slate-900 dark:hover:text-zinc-200 border-transparent'
                   }`}
                 >

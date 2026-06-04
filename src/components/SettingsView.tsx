@@ -182,7 +182,7 @@ export default function SettingsView() {
 
 
   const roleName = profile?.role_name || profile?.roles?.role_name || profile?.role || 'Unknown';
-  const isITAdmin = true; // Temporarily allow access to debug
+  const isITAdmin = roleName === 'IT Admin';
 
   return (
     <div className="space-y-6">

@@ -466,8 +466,7 @@ export default function ExecutiveOverview() {
   };
 
   const isIT = profile?.role?.toLowerCase() === 'it admin';
-  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager']
-    .some(role => profile?.role?.toLowerCase() === role.toLowerCase());
+  const hasFullAccess = permissions?.view_snapshot || false;
   const todayCount = getTodayAnnouncements().length;
   const pastCount = getPastAnnouncements().length;
   const displayedAnnouncements = getDisplayedAnnouncements();

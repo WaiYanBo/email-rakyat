@@ -32,22 +32,32 @@ export default function ClientDataView() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`full_name, department, roles ( role_name )`)
+        .select(`full_name, department, roles ( role_name ), role_id`)
         .eq('id', session.user.id)
         .single();
 
       if (profileData) {
-        const roleName = profileData.roles?.role_name || 'No Role';
+        let roleName = 'No Role';
+        if (profileData.roles) {
+          if (Array.isArray(profileData.roles)) {
+            roleName = profileData.roles[0]?.role_name || 'No Role';
+          } else {
+            roleName = profileData.roles?.role_name || 'No Role';
+          }
+        } else if (profileData.role_id) {
+          const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
+          if (roleData) roleName = roleData.role_name;
+        }
+
         setProfile({
           name: profileData.full_name,
           department: profileData.department,
           role: roleName,
         });
 
-        const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(roleName);
-        const hasViewAccess = ['Intern', 'Contract'].includes(roleName);
+        const canViewClients = permissions?.view_clients || false;
         
-        if (hasFullAccess || hasViewAccess) {
+        if (canViewClients) {
           const { data: clientsData } = await supabase.from('clients').select('*');
             
           if (clientsData) {
@@ -62,7 +72,7 @@ export default function ClientDataView() {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [permissions]);
 
   // --- HANDLERS ---
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
@@ -187,7 +197,7 @@ export default function ClientDataView() {
     }
   };
 
-  if (loading) {
+  if (loading || permsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] px-4">
         <div className="text-indigo-600 font-semibold animate-pulse text-lg tracking-wide">
@@ -197,8 +207,8 @@ export default function ClientDataView() {
     );
   }
 
-  const canEdit = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
-  const canView = canEdit || ['Intern', 'Contract'].includes(profile?.role);
+  const canEdit = permissions?.edit_clients || false;
+  const canView = permissions?.view_clients || false;
 
   if (!canView) {
     return (

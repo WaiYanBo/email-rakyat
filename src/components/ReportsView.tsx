@@ -212,7 +212,9 @@ export default function ReportsView() {
     );
   }
 
-  const hasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin'].includes(profile?.role);
+  const hasFullAccess = permissions?.view_staff || false;
+  const canEditStaff = permissions?.edit_staff || false;
+  
   if (!hasFullAccess) {
     return (
       <div className="p-12 rounded-2xl bg-white dark:bg-zinc-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
@@ -280,15 +282,17 @@ export default function ReportsView() {
           <div className="bg-white dark:bg-zinc-900/50 border border-slate-205 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
             <div className="p-5 border-b border-purple-700 dark:border-purple-800 flex justify-between items-center bg-purple-600 dark:bg-purple-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
-              <button 
-                onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <span>{t('reports', 'onboardStaff', lang)}</span>
-              </button>
+              {canEditStaff && (
+                <button 
+                  onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-purple-600 dark:hover:bg-purple-500 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                  <span>{t('reports', 'onboardStaff', lang)}</span>
+                </button>
+              )}
             </div>
             <div className="flex-1 overflow-auto scrollbar-thin">
               <table className="w-full text-left border-collapse text-xs md:text-sm">
@@ -298,7 +302,7 @@ export default function ReportsView() {
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-center">{t('reports', 'colStatus', lang)}</th>
-                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>
+                    {canEditStaff && <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-150 dark:divide-zinc-850 text-slate-700 dark:text-zinc-300">
@@ -321,14 +325,16 @@ export default function ReportsView() {
                           {staff.status || 'Active'}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <button 
-                          onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                          className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm inline-flex"
-                        >
-                          Edit
-                        </button>
-                      </td>
+                      {canEditStaff && (
+                        <td className="px-4 py-3.5 text-right">
+                          <button 
+                            onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
+                            className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-zinc-700 text-xs font-semibold transition-all shadow-sm inline-flex"
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

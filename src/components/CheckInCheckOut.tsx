@@ -467,7 +467,7 @@ export default function CheckInCheckOut() {
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8">
       {/* Header */}
-      <div className="p-6 md:p-8 border-b border-blue-700 dark:border-blue-800 bg-blue-600 dark:bg-blue-900">
+      <div className="p-6 md:p-8 border-b border-blue-700 dark:border-yellow-500/50 bg-blue-600 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             Time Tracking
@@ -503,7 +503,7 @@ export default function CheckInCheckOut() {
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check In</p>
                         {todayRecord.check_in_time && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                             </svg>
@@ -519,7 +519,7 @@ export default function CheckInCheckOut() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
                               todayRecord.check_in_within_zone
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/50'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/50'
                                 : 'bg-rose-50 text-rose-800 border-rose-205 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                             }`}>
                               {todayRecord.check_in_within_zone ? 'In Zone' : 'Outside Zone'}
@@ -541,7 +541,7 @@ export default function CheckInCheckOut() {
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Check Out</p>
                         {todayRecord.check_out_time && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/30">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/30">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                             </svg>
@@ -557,7 +557,7 @@ export default function CheckInCheckOut() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
                               todayRecord.check_out_within_zone
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/50'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/50'
                                 : 'bg-rose-50 text-rose-800 border-rose-205 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                             }`}>
                               {todayRecord.check_out_within_zone ? 'In Zone' : 'Outside Zone'}
@@ -892,7 +892,7 @@ export default function CheckInCheckOut() {
                                            &lt; 9 Hours
                                          </span>
                                        ) : (
-                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-805 dark:bg-emerald-950/20 dark:text-emerald-400">
+                                         <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-805 dark:bg-black/20 dark:text-yellow-500">
                                            Full Day
                                          </span>
                                        )}

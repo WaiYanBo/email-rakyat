@@ -5,6 +5,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import AccessControlView from './AccessControlView';
 import { usePermissions } from '../hooks/usePermissions';
+import ProfilePhotoUpload from './ProfilePhotoUpload';
 
 
 export default function SettingsView() {
@@ -42,7 +43,7 @@ export default function SettingsView() {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select(`full_name, department, salary, status, role_id, roles ( role_name )`)
+        .select(`full_name, department, salary, status, role_id, avatar_url, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
       
@@ -230,9 +231,13 @@ export default function SettingsView() {
               {profile?.status || 'Active'}
             </div>
             {/* Avatar */}
-            <div className="w-20 h-20 bg-slate-50 dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-900 flex items-center justify-center text-lg font-bold text-indigo-600 dark:text-yellow-500 shadow-md transform translate-y-8 uppercase">
-              {profile?.full_name?.slice(0, 2) || 'ST'}
-            </div>
+            <ProfilePhotoUpload 
+              userId={sessionUser?.id || ''} 
+              initialAvatarUrl={profile?.avatar_url || null} 
+              userInitials={profile?.full_name?.slice(0, 2) || 'ST'}
+              onUploadSuccess={(url) => setProfile({ ...profile, avatar_url: url })}
+              lang={lang}
+            />
           </div>
           
           {/* Summary Info */}
@@ -266,7 +271,7 @@ export default function SettingsView() {
         </div>
 
         {/* Notice Box */}
-        <div className="p-5 rounded-2xl bg-indigo-50/15 dark:bg-indigo-950/5 border border-indigo-100/50 dark:border-indigo-950/20 shadow-sm">
+        <div className="p-5 rounded-2xl bg-indigo-50/15 dark:bg-black/5 border border-indigo-100/50 dark:border-indigo-950/20 shadow-sm">
           <h4 className="text-xs font-semibold text-indigo-700 dark:text-yellow-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             Employee Notice
           </h4>
@@ -318,7 +323,7 @@ export default function SettingsView() {
         
         {/* Card 1: Personal Details */}
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+          <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
           </div>
@@ -327,7 +332,7 @@ export default function SettingsView() {
             {profileMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 profileMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-emerald-955/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-800 dark:text-emerald-350' 
+                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-800 dark:text-emerald-350' 
                   : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-800 dark:text-rose-350'
               }`}>
                 {profileMessage.text}
@@ -365,7 +370,7 @@ export default function SettingsView() {
 
         {/* Card 2: Account Security */}
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-indigo-700 dark:border-indigo-800 bg-indigo-600 dark:bg-indigo-900">
+          <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
           </div>
@@ -374,7 +379,7 @@ export default function SettingsView() {
             {passwordMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
                 passwordMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-emerald-955/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-850 dark:text-emerald-350' 
+                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-850 dark:text-emerald-350' 
                   : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-850 dark:text-rose-350'
               }`}>
                 {passwordMessage.text}

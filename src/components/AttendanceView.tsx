@@ -137,7 +137,7 @@ export default function AttendanceView() {
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
       {/* Header */}
-      <div className="p-6 md:p-8 border-b border-emerald-700 dark:border-emerald-800 bg-emerald-600 dark:bg-emerald-900">
+      <div className="p-6 md:p-8 border-b border-emerald-700 dark:border-yellow-500/50 bg-emerald-600 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             {t('attendanceAdmin', 'title', lang)}
@@ -276,7 +276,7 @@ export default function AttendanceView() {
                             {record.check_in_time && (
                               <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                 record.check_in_within_zone
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
                                   : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
                                 {record.check_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
@@ -308,7 +308,7 @@ export default function AttendanceView() {
                             {record.check_out_time && (
                               <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                 record.check_out_within_zone
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
                                   : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
                                 {record.check_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
@@ -336,12 +336,12 @@ export default function AttendanceView() {
                 </div>
 
                 {/* In Zone */}
-                <div className="p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t('attendanceAdmin', 'statInZone', lang)}</p>
+                <div className="p-5 rounded-2xl border border-emerald-100 dark:border-yellow-500/30 bg-emerald-50/30 dark:bg-black/10 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-yellow-500">{t('attendanceAdmin', 'statInZone', lang)}</p>
                   <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-300 mt-2">
                     {filteredRecords.filter((r) => r.check_in_within_zone).length}
                   </p>
-                  <p className="text-xs text-emerald-500 dark:text-emerald-500/80 mt-1">{t('attendanceAdmin', 'statOnSite', lang)}</p>
+                  <p className="text-xs text-emerald-500 dark:text-yellow-500/80 mt-1">{t('attendanceAdmin', 'statOnSite', lang)}</p>
                 </div>
 
                 {/* Outside Zone */}

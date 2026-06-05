@@ -282,12 +282,12 @@ export default function ReportsView() {
           </div>
 
           <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-5 border-b border-purple-700 dark:border-purple-800 flex justify-between items-center bg-purple-600 dark:bg-purple-900">
+            <div className="p-5 border-b border-purple-700 dark:border-yellow-500/50 flex justify-between items-center bg-purple-600 dark:bg-gray-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
               {canEditStaff && (
                 <button 
                   onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-purple-700"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-yellow-500/50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -319,7 +319,7 @@ export default function ReportsView() {
                       <td className="px-4 py-3.5 text-center">
                         <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${
                           staff.status === 'Active' || !staff.status 
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30' 
                             : staff.status === 'On Leave' 
                             ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-yellow-500 dark:border-amber-900/30' 
                             : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-455 dark:border-rose-900/30'
@@ -338,7 +338,7 @@ export default function ReportsView() {
                           {canEditStaff && (
                             <button 
                               onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
-                              className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-yellow-500 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/30 text-xs font-semibold transition-all shadow-sm inline-flex"
+                              className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-gray-900/30 dark:text-yellow-500 dark:hover:bg-yellow-500/20 border border-indigo-200 dark:border-yellow-500/30 text-xs font-semibold transition-all shadow-sm inline-flex"
                             >
                               Edit
                             </button>

@@ -200,7 +200,7 @@ export default function ClientTable({
           </button>
         </div>
 
-        <div className="p-4 border-b border-cyan-700 dark:border-cyan-800 bg-cyan-600 dark:bg-cyan-900 flex-shrink-0">
+        <div className="p-4 border-b border-cyan-700 dark:border-yellow-500/50 bg-cyan-600 dark:bg-gray-900 flex-shrink-0">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
             <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">Client Registry</h3>
 
@@ -224,7 +224,7 @@ export default function ClientTable({
               {canEdit && (
                 <button
                   onClick={onAddClick}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-cyan-700"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto min-h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>

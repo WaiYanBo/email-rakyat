@@ -248,6 +248,14 @@ export const translations = {
     enterCurrentPw: { en: 'Enter your current password', bm: 'Masukkan kata laluan semasa anda' },
     min8Chars: { en: 'Min 8 characters', bm: 'Min 8 aksara' },
     confirmNewPw: { en: 'Confirm new password', bm: 'Sahkan kata laluan baharu' },
+    // Profile Photo Upload
+    viewPhoto: { en: 'View Photo', bm: 'Lihat Gambar' },
+    updatePhoto: { en: 'Update Profile Photo', bm: 'Kemas Kini Gambar' },
+    removePhoto: { en: 'Remove Profile Photo', bm: 'Buang Gambar' },
+    adjustImage: { en: 'Adjust Image', bm: 'Sesuaikan Gambar' },
+    zoom: { en: 'Zoom', bm: 'Zum' },
+    useThisPhoto: { en: 'Use This Photo', bm: 'Guna Gambar Ini' },
+    savingPhoto: { en: 'Saving...', bm: 'Menyimpan...' },
   },
 
   // ─── Common / Shared ──────────────────────────────────────────────────────

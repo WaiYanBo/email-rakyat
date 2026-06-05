@@ -49,7 +49,7 @@ export default function PortalSidebar() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`full_name, department, roles ( role_name )`)
+        .select(`full_name, department, avatar_url, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
@@ -57,6 +57,7 @@ export default function PortalSidebar() {
         setProfile({
           name: profileData.full_name,
           department: profileData.department,
+          avatar_url: profileData.avatar_url,
           role: profileData.roles?.role_name || 'No Role',
         });
       }
@@ -96,7 +97,7 @@ export default function PortalSidebar() {
       { 
         label: t('sidebar', 'navOverview', lang), 
         path: '/portal',
-        activeClass: 'bg-blue-50/70 text-blue-700 border-blue-600 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-500',
+        activeClass: 'bg-blue-50/70 text-blue-700 border-blue-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -205,11 +206,18 @@ export default function PortalSidebar() {
           </a>
         </div>
 
-        <div className="p-4 mx-3 mt-4 bg-slate-100/50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800/80 rounded-xl flex-shrink-0">
-          <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1 block">
+        <a href="/portal/tetapan" className="p-4 mx-3 mt-4 bg-slate-100/50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800/80 rounded-xl flex-shrink-0 block hover:bg-slate-200/50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer group">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-2 block">
             {t('sidebar', 'userLabel', lang)}
           </p>
-          <p className="text-sm font-bold text-slate-800 dark:text-zinc-150 truncate">{profile?.name || 'User'}</p>
+          <div className="flex items-center gap-3 mb-2">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
+            ) : (
+              <img src="/logo.png" alt="Default Avatar" className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow-sm" />
+            )}
+            <p className="text-sm font-bold text-slate-800 dark:text-zinc-150 truncate">{profile?.name || 'User'}</p>
+          </div>
           <div className="flex gap-1.5 mt-2 flex-wrap">
             <span className="text-[10px] px-2.5 py-0.5 bg-indigo-50 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-500 rounded-md border border-indigo-100 dark:border-indigo-950/40 font-semibold tracking-wide truncate">
               {profile?.role}
@@ -218,7 +226,7 @@ export default function PortalSidebar() {
               {profile?.department}
             </span>
           </div>
-        </div>
+        </a>
 
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
           <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest px-3 mb-2.5">

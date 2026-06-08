@@ -30,7 +30,7 @@ export default function ReportsView() {
     try {
       const { data: staffData, error } = await supabase
         .from('profiles')
-        .select(`id, full_name, department, salary, status, roles ( role_name )`);
+        .select(`id, full_name, department, salary, status, remarks, roles ( role_name )`);
       
       if (error) {
         console.error('Error fetching staff records:', error);
@@ -110,9 +110,16 @@ export default function ReportsView() {
     const rawPassword = (data.password as string) || '';
     const salaryValue = parseFloat(data.salary as string);
     const cleanSalary = isFinite(salaryValue) && salaryValue >= 0 ? salaryValue : 0;
+    const cleanRemarks = sanitizeInput((data.remarks as string) || '', 1000);
 
     // Whitelist role values from the select
-    const allowedRoles = ['Chairman', 'CEO', 'COO', 'CFO', 'Finance', 'Marketing', 'Accounting', 'Creative', 'IT Admin', 'Intern HR', 'Contract', 'General Manager', 'Part Time'];
+    const allowedRoles = [
+      'Chairman', 'CEO', 'COO', 'CFO',
+      'General Manager', 'Head of Department', 'Senior Executive', 'Executive', 
+      'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant', 
+      'Intern', 'Contract Worker', 'Part-Time Worker',
+      'Finance', 'Marketing', 'Accounting', 'Creative', 'IT Admin', 'Intern HR', 'Contract', 'Part Time'
+    ];
     const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern HR';
     const allowedStatuses = ['Active', 'On Leave', 'Resigned'];
     const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
@@ -144,7 +151,8 @@ export default function ReportsView() {
             department: cleanDept,
             role_id: roleObj.id,
             salary: cleanSalary,
-            status: cleanStatus
+            status: cleanStatus,
+            remarks: cleanRemarks
           });
         
         if (upsertError) throw new Error(`Update failed: ${upsertError.message}`);
@@ -188,7 +196,8 @@ export default function ReportsView() {
             department: cleanDept,
             role_id: roleObj.id,
             salary: cleanSalary,
-            status: cleanStatus
+            status: cleanStatus,
+            remarks: cleanRemarks
           });
         
         if (profileError) throw new Error(`Profile creation failed: ${profileError.message}`);
@@ -230,6 +239,48 @@ export default function ReportsView() {
   // HR Calculations
   const activeStaffCount = staffRecords.filter(s => s.status === 'Active' || !s.status).length;
   const totalPayroll = staffRecords.filter(s => s.status !== 'Resigned').reduce((sum, s) => sum + parseFloat(s.salary || 0), 0);
+
+  const roleHierarchy: Record<string, number> = {
+    'Chairman': 1,
+    'CEO': 2,
+    'COO': 3,
+    'CFO': 4,
+    'General Manager': 5,
+    'Head of Department': 6,
+    'Senior Executive': 7,
+    'IT Admin': 8,
+    'Executive': 9,
+    'Finance': 9,
+    'Marketing': 9,
+    'Accounting': 9,
+    'Creative': 9,
+    'Junior Executive': 10,
+    'Specialist': 11,
+    'Analyst': 12,
+    'Admin Assistant': 13,
+    // Bottom tier
+    'Intern': 90,
+    'Intern HR': 90,
+    'Contract Worker': 91,
+    'Contract': 91,
+    'Part-Time Worker': 92,
+    'Part Time': 92,
+  };
+
+  const sortedStaffRecords = [...staffRecords].sort((a, b) => {
+    const roleA = a.roles?.role_name || '';
+    const roleB = b.roles?.role_name || '';
+    const rankA = roleHierarchy[roleA] || 99;
+    const rankB = roleHierarchy[roleB] || 99;
+    
+    if (rankA !== rankB) return rankA - rankB;
+    
+    const deptA = a.department || '';
+    const deptB = b.department || '';
+    if (deptA !== deptB) return deptA.localeCompare(deptB);
+    
+    return (a.full_name || '').localeCompare(b.full_name || '');
+  });
 
   return (
     <div className="space-y-6 animate-page-transition pt-12 md:pt-0 relative mb-8">
@@ -302,19 +353,21 @@ export default function ReportsView() {
                   <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('reports', 'colNameRole', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden lg:table-cell">Remarks</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-center">{t('reports', 'colStatus', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-150 dark:divide-gray-800 text-slate-700 dark:text-zinc-300">
-                  {staffRecords.map(staff => (
+                  {sortedStaffRecords.map(staff => (
                     <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white text-left">
                         {staff.full_name} 
                         <span className="block text-[10px] font-semibold text-slate-450 dark:text-zinc-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span>
                       </td>
                       <td className="px-4 py-3.5 text-left hidden md:table-cell">{staff.department}</td>
+                      <td className="px-4 py-3.5 text-left hidden lg:table-cell max-w-[150px] truncate" title={staff.remarks || ''}>{staff.remarks || '-'}</td>
                       <td className="px-4 py-3.5 text-right hidden lg:table-cell font-mono text-slate-800 dark:text-zinc-200">{staff.salary || '0'}</td>
                       <td className="px-4 py-3.5 text-center">
                         <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${
@@ -411,6 +464,11 @@ export default function ReportsView() {
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Salary</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">RM {viewingStaff.salary || '0'}</p>
                 </div>
+                
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col shadow-sm sm:col-span-2 lg:col-span-3">
+                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-2">Remarks</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-zinc-300 break-words whitespace-pre-wrap">{viewingStaff.remarks || 'No remarks provided.'}</p>
+                </div>
 
               </div>
             </div>
@@ -448,7 +506,7 @@ export default function ReportsView() {
             </div>
             
             {(() => {
-              const standardDepartments = ['Human Resources', 'Finance', 'Accounting', 'Marketing', 'IT', 'Operations', 'Sales'];
+              const standardDepartments = ['Human Resources', 'Finance', 'Accounting', 'Marketing', 'Media', 'IT', 'Operations', 'Sales'];
               const dynamicDepartments = staffRecords.map(s => s.department).filter(Boolean) as string[];
               const excludedDepartments = ['Top Management', 'TM', 'Executive', 'Board'];
               const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments])).filter(d => !excludedDepartments.includes(d));
@@ -550,6 +608,11 @@ export default function ReportsView() {
                     <option value="On Leave">On Leave</option>
                     <option value="Resigned">Resigned / Terminated</option>
                   </select>
+                </div>
+                
+                <div className="col-span-2 space-y-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Remarks</label>
+                  <textarea name="remarks" defaultValue={editingStaff?.remarks || ''} rows={3} placeholder="Add any internal notes about this staff member..." className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 resize-y" />
                 </div>
               </div>
 

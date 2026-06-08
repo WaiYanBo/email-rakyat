@@ -18,6 +18,16 @@ interface PermissionEntry {
   };
 }
 
+const Toggle = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
+  <button
+    type="button"
+    onClick={onChange}
+    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${checked ? 'bg-indigo-600 dark:bg-yellow-500' : 'bg-slate-300 dark:bg-gray-700'}`}
+  >
+    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+  </button>
+);
+
 export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -176,32 +186,35 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     const p = entry.permissions;
 
     return (
-      <tr key={key} className={`border-b border-slate-100 dark:border-gray-800 ${isDepartment ? 'bg-slate-50 dark:bg-gray-900/50' : 'bg-white dark:bg-black hover:bg-slate-50/50 dark:hover:bg-zinc-900/30'}`}>
-        <td className="px-4 py-3">
-          <p className={`font-semibold ${isDepartment ? 'text-indigo-700 dark:text-yellow-500 text-sm' : 'text-slate-800 dark:text-zinc-200 text-xs'}`}>{title}</p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500">{subtitle}</p>
+      <tr key={key} className={`border-b border-slate-100 dark:border-gray-800 transition-colors ${isDepartment ? 'bg-slate-50 dark:bg-gray-900/50' : 'bg-white dark:bg-black hover:bg-indigo-50/30 dark:hover:bg-zinc-900/50'}`}>
+        <td className="px-4 py-4 relative">
+          {isDepartment && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 dark:bg-yellow-500 rounded-r-md"></div>}
+          <div className={isDepartment ? '' : 'pl-4 border-l-2 border-slate-200 dark:border-gray-800'}>
+            <p className={`font-semibold ${isDepartment ? 'text-indigo-700 dark:text-yellow-500 text-sm' : 'text-slate-800 dark:text-zinc-200 text-sm'}`}>{title}</p>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-500 mt-0.5">{subtitle}</p>
+          </div>
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.view_clients} onChange={() => togglePermission(key, 'view_clients')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.view_clients} onChange={() => togglePermission(key, 'view_clients')} />
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.edit_clients} onChange={() => togglePermission(key, 'edit_clients')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.edit_clients} onChange={() => togglePermission(key, 'edit_clients')} />
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.view_staff} onChange={() => togglePermission(key, 'view_staff')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.view_staff} onChange={() => togglePermission(key, 'view_staff')} />
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.edit_staff} onChange={() => togglePermission(key, 'edit_staff')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.edit_staff} onChange={() => togglePermission(key, 'edit_staff')} />
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.view_attendance} onChange={() => togglePermission(key, 'view_attendance')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.view_attendance} onChange={() => togglePermission(key, 'view_attendance')} />
         </td>
-        <td className="px-4 py-3 text-center">
-          <input type="checkbox" checked={!!p.view_snapshot} onChange={() => togglePermission(key, 'view_snapshot')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.view_snapshot} onChange={() => togglePermission(key, 'view_snapshot')} />
         </td>
         {isITAdmin && (
-          <td className="px-4 py-3 text-center">
-            <input type="checkbox" checked={!!p.manage_access_control} onChange={() => togglePermission(key, 'manage_access_control')} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+          <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+            <Toggle checked={!!p.manage_access_control} onChange={() => togglePermission(key, 'manage_access_control')} />
           </td>
         )}
       </tr>
@@ -230,15 +243,54 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-100/50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs w-64">Target</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Clients</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center">Edit Clients</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Staff</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center">Edit Staff</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Attendance</th>
-                <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">View Snapshot</th>
-                {isITAdmin && <th className="px-4 py-3 font-semibold text-slate-600 dark:text-zinc-400 text-xs text-center border-l border-slate-200 dark:border-gray-800">Manage Access</th>}
+              <tr className="bg-slate-100/80 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs w-64 uppercase tracking-wider">
+                  Target (Dept / User)
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">View Clients</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Read-only access to client DB</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">Edit Clients</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Add, edit, or delete clients</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">View Staff</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View staff profiles</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">Edit Staff</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Modify staff details</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">Attendance</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View clock-ins</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider">Snapshot</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View cam snaps</span>
+                  </div>
+                </th>
+                {isITAdmin && (
+                  <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                    <div className="flex flex-col items-center">
+                      <span className="uppercase tracking-wider text-rose-600 dark:text-rose-400">Manage Access</span>
+                      <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Edit matrix</span>
+                    </div>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>

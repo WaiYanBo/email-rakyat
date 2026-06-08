@@ -151,7 +151,7 @@ export default function PortalSidebar() {
 
   if (loading) {
     return (
-      <div className="fixed left-0 top-0 h-screen w-full md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-800 flex items-center justify-center z-40">
+      <div className="fixed left-0 top-0 h-[100dvh] w-full md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-800 flex items-center justify-center z-40">
         <div className="text-slate-600 dark:text-zinc-400 text-sm font-semibold tracking-wide animate-pulse">
           {t('common', 'loading', lang)}
         </div>
@@ -179,7 +179,7 @@ export default function PortalSidebar() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden z-30" onClick={() => setIsOpen(false)} />
       )}
 
-      <div className={`fixed left-0 top-0 h-screen w-full sm:w-72 md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-900/60 flex flex-col z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`fixed left-0 top-0 h-[100dvh] w-full sm:w-72 md:w-64 bg-slate-50 dark:bg-black border-r border-slate-200 dark:border-gray-900/60 flex flex-col z-40 overflow-y-auto transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-5 border-b border-slate-200 dark:border-gray-900/60 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2 min-w-0">
@@ -251,7 +251,7 @@ export default function PortalSidebar() {
           </ul>
         </nav>
 
-        <div className="border-t border-slate-200 dark:border-gray-900/60 p-4 space-y-3 flex-shrink-0 bg-slate-50/40 dark:bg-gray-900/40">
+        <div className="border-t border-slate-200 dark:border-gray-900/60 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 flex-shrink-0 bg-slate-50/40 dark:bg-gray-900/40">
           
           {/* Language Selector */}
           <div className="flex items-center justify-between px-1">

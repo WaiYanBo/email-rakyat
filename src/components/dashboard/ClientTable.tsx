@@ -17,11 +17,16 @@ const getSortValue = (obj: any, key: string) => {
     }
     return 0;
   }
-  if (['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)'].includes(key)) {
+  if (['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'].includes(key)) {
     const rawNumber = String(obj[key] || '0').replace(/[^0-9.-]+/g, '');
     return parseFloat(rawNumber) || 0;
   }
   return String(obj[key] || '').toLowerCase().trim();
+};
+
+const hasPendingAmount = (pendingVal: any) => {
+  const num = parseFloat(String(pendingVal || '0').replace(/[^0-9.-]+/g, ''));
+  return !isNaN(num) && num > 0;
 };
 
 const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
@@ -124,7 +129,10 @@ export default function ClientTable({
           "Paid (RM)": cleanClient["TOTAL PAID (RM)"] || '0',
           "Pending (RM)": cleanClient["PENDING (RM)"] || '0',
           "Package (RM)": cleanClient["PACKAGE (RM)"] || '0',
-          "Status": cleanClient["CASE STATUS"] || '-'
+          "Status": cleanClient["CASE STATUS"] || '-',
+          "Investigation Paper": cleanClient["Investigation Paper"] || '-',
+          "Report": cleanClient.Report || '-',
+          "Action Taken by police": cleanClient["Action Taken by police"] || '-',
         };
       }
 
@@ -168,7 +176,23 @@ export default function ClientTable({
       body: tableRows,
       startY: 20,
       styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [79, 70, 229] } // Indigo-600
+      headStyles: { fillColor: [79, 70, 229] }, // Indigo-600
+      didParseCell: (data) => {
+        if (data.section === 'body' && (tableColumn[data.column.index] === 'Name' || tableColumn[data.column.index] === 'NAME')) {
+           const rowData = exportData[data.row.index];
+           const pendingVal = rowData["Pending (RM)"] || rowData["PENDING (RM)"];
+           const isPending = hasPendingAmount(pendingVal);
+           if (isPending) {
+             data.cell.styles.fillColor = [254, 249, 195]; // light yellow (yellow-100)
+             data.cell.styles.textColor = [113, 63, 18]; // high contrast dark yellow (yellow-900)
+             data.cell.styles.fontStyle = 'bold';
+           } else {
+             data.cell.styles.fillColor = [220, 252, 231]; // light green (green-100)
+             data.cell.styles.textColor = [20, 83, 45]; // high contrast dark green (green-900)
+             data.cell.styles.fontStyle = 'bold';
+           }
+        }
+      }
     });
     doc.save(`EmailRakyat_Clients_${getExportDate()}.pdf`);
   };
@@ -268,6 +292,9 @@ export default function ClientTable({
                   <SortHeader label="Pending" sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Paid" sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Package" sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
+                  <SortHeader label="Investigation Paper" sortKey="Investigation Paper" currentSort={sort} onClick={handleSort} />
+                  <SortHeader label="Report" sortKey="Report" currentSort={sort} onClick={handleSort} />
+                  <SortHeader label="Action Taken" sortKey="Action Taken by police" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Category" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
                   <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
@@ -284,23 +311,31 @@ export default function ClientTable({
             <tbody className="divide-y divide-slate-150 dark:divide-gray-800">
               {filteredClients.length > 0 ? filteredClients.map((client) => {
                 const rowId = client.id || client.NAME + client["PHONE NUMBER"];
+                const isPending = hasPendingAmount(client["PENDING (RM)"]);
+                const nameHighlightClasses = isPending 
+                  ? "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 font-bold"
+                  : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
+
                 return (
                   <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
 
                     {viewMode === 'standard' ? (
                       <>
                         <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
-                        <td className="px-4 py-3.5 font-bold text-slate-805 dark:text-white min-w-[200px] whitespace-normal leading-snug">{client.NAME}</td>
+                        <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>{client.NAME}</td>
                         <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
                         <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
+                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client["Investigation Paper"] || ''}>{client["Investigation Paper"] || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client.Report || ''}>{client.Report || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client["Action Taken by police"] || ''}>{client["Action Taken by police"] || '-'}</td>
                         <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350">{client["CASE CATEGORY"]}</td>
                       </>
                     ) : (
                       <>
                         {Object.entries(client).filter(([k]) => !['id', '_stableKey', 'updated_at'].includes(k)).map(([k, v]) => (
-                          <td key={k} className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 max-w-[150px] truncate" title={String(v || '')}>
+                          <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={String(v || '')}>
                             {String(v || '-')}
                           </td>
                         ))}

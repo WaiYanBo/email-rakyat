@@ -28,3 +28,4 @@ pnpm-debug.log*
 
 # Environment files
 .env.*
+public/models/

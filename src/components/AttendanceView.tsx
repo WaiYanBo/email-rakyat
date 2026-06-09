@@ -3,17 +3,19 @@ import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function AttendanceView() {
   const [profile, setProfile] = useState<any>(null);
+  const { permissions, loading: permsLoading } = usePermissions(profile);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [searchName, setSearchName] = useState<string>('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [filterMode, setFilterMode] = useState<'date' | 'month'>('date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
-  const [uniqueEmployees, setUniqueEmployees] = useState<string[]>([]);
+  const [uniqueEmployees, setUniqueEmployees] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
 
   useEffect(() => {
@@ -26,28 +28,75 @@ export default function AttendanceView() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`full_name, roles ( role_name )`)
+        .select(`id, department, full_name, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
+      let roleName = 'No Role';
       if (profileData) {
-        setProfile({ name: profileData.full_name, role: profileData.roles?.role_name });
+        if (profileData.roles) {
+          const rolesVar = profileData.roles as any;
+          if (Array.isArray(rolesVar)) {
+            roleName = rolesVar[0]?.role_name || 'No Role';
+          } else {
+            roleName = rolesVar?.role_name || 'No Role';
+          }
+        }
+        setProfile({ id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName });
       }
 
-      await fetchAttendanceRecords();
+      // Fetch all profiles to populate employee search dropdown
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name', { ascending: true });
+      if (profilesData) {
+        setUniqueEmployees(profilesData);
+      }
+
       setLoading(false);
     };
 
     loadData();
   }, []);
 
-  const fetchAttendanceRecords = async () => {
+  const fetchAttendanceRecords = async (date: string, month: string, mode: 'date' | 'month', employeeId: string) => {
+    if (!employeeId) {
+      setAttendanceRecords([]);
+      setFilteredRecords([]);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { data: records, error } = await supabase
+      let query = supabase
         .from('attendance')
-        .select('*')
+        .select('id,user_id,date,check_in_time,check_in_distance,check_in_within_zone,check_out_time,check_out_distance,check_out_within_zone,is_late_checkout');
+
+      if (employeeId !== 'all') {
+        query = query.eq('user_id', employeeId);
+      }
+
+      query = query
         .order('date', { ascending: false })
         .order('check_in_time', { ascending: false });
+
+      if (mode === 'date' && date) {
+        query = query.eq('date', date);
+      } else if (mode === 'month' && month) {
+        const startDate = `${month}-01`;
+        const [yearStr, monthStr] = month.split('-');
+        let year = parseInt(yearStr);
+        let nextMonth = parseInt(monthStr) + 1;
+        if (nextMonth > 12) {
+          nextMonth = 1;
+          year += 1;
+        }
+        const endDate = `${year}-${String(nextMonth).padStart(2, '0')}-01`;
+        query = query.gte('date', startDate).lt('date', endDate);
+      }
+
+      const { data: records, error } = await query;
 
       if (error) {
         console.error('Error fetching attendance:', error);
@@ -55,50 +104,42 @@ export default function AttendanceView() {
       }
 
       if (records) {
-        setAttendanceRecords(records);
-        const employees = [...new Set(records.map(r => r.user_name))].sort();
-        setUniqueEmployees(employees);
-        applyFilters(records, selectedDate, selectedMonth, searchName, filterMode);
+        const enrichedRecords = records.map((r: any) => {
+          const employee = uniqueEmployees.find((e: any) => e.id === r.user_id);
+          return {
+            ...r,
+            user_name: employee ? employee.full_name : 'Unknown'
+          };
+        });
+
+        setAttendanceRecords(enrichedRecords);
+        setFilteredRecords(enrichedRecords);
       }
     } catch (err) {
       console.error('Exception fetching attendance:', err);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const applyFilters = (records: any[], date: string, month: string, name: string, mode: 'date' | 'month') => {
-    let filtered = records;
-
-    if (name) {
-      filtered = filtered.filter(r => r.user_name?.toLowerCase().includes(name.toLowerCase()));
-    }
-
-    if (mode === 'date') {
-      filtered = filtered.filter(r => r.date === date);
-    } else if (mode === 'month') {
-      filtered = filtered.filter(r => r.date?.startsWith(month));
-    }
-
-    setFilteredRecords(filtered);
   };
 
   const handleFilterModeChange = (mode: 'date' | 'month') => {
     setFilterMode(mode);
-    applyFilters(attendanceRecords, selectedDate, selectedMonth, searchName, mode);
+    fetchAttendanceRecords(selectedDate, selectedMonth, mode, selectedEmployeeId);
   };
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
-    applyFilters(attendanceRecords, date, selectedMonth, searchName, filterMode);
+    fetchAttendanceRecords(date, selectedMonth, filterMode, selectedEmployeeId);
   };
 
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
-    applyFilters(attendanceRecords, selectedDate, month, searchName, filterMode);
+    fetchAttendanceRecords(selectedDate, month, filterMode, selectedEmployeeId);
   };
 
-  const handleNameChange = (name: string) => {
-    setSearchName(name);
-    applyFilters(attendanceRecords, selectedDate, selectedMonth, name, filterMode);
+  const handleEmployeeChange = (employeeId: string) => {
+    setSelectedEmployeeId(employeeId);
+    fetchAttendanceRecords(selectedDate, selectedMonth, filterMode, employeeId);
   };
 
   const exportToExcel = () => {
@@ -130,7 +171,17 @@ export default function AttendanceView() {
     XLSX.writeFile(wb, filename);
   };
 
-  if (profile?.role && !['HR', 'CFO', 'IT Admin'].includes(profile.role)) {
+  const hasAccess = permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
+
+  if (loading || permsLoading) {
+    return (
+      <div className="p-8 text-center text-slate-500 animate-pulse bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl">
+        Loading Attendance Records...
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
     return null;
   }
 
@@ -161,18 +212,31 @@ export default function AttendanceView() {
           <div className="space-y-6">
             {/* Filter Controls */}
             <div className="space-y-4">
-              {/* Employee Name Search */}
+              {/* Employee Selection Dropdown */}
               <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
-                  {t('attendanceAdmin', 'searchByName', lang)}
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550 mb-2">
+                  {lang === 'bm' ? 'Pilih Pekerja' : 'Select Employee'}
                 </label>
-                <input
-                  type="text"
-                  placeholder={t('attendanceAdmin', 'typeName', lang)}
-                  value={searchName}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-slate-400 min-h-[48px]"
-                />
+                <div className="relative">
+                  <select
+                    value={selectedEmployeeId}
+                    onChange={(e) => handleEmployeeChange(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] appearance-none pr-10 cursor-pointer"
+                  >
+                    <option value="">{lang === 'bm' ? 'Sila Pilih Pekerja...' : 'Please Select Employee...'}</option>
+                    <option value="all">{lang === 'bm' ? 'Semua Pekerja' : 'All Employees'}</option>
+                    {uniqueEmployees.map((emp: any) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.full_name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 dark:text-zinc-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {/* Filter Mode Toggle & Date/Month Selector */}
@@ -246,10 +310,16 @@ export default function AttendanceView() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-150 dark:divide-zinc-805">
-                    {filteredRecords.length === 0 ? (
+                    {!selectedEmployeeId ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center text-slate-450 dark:text-zinc-500 font-medium italic">
-                          {t('attendanceAdmin', 'noRecords', lang)} {selectedDate}
+                          {lang === 'bm' ? 'Sila pilih pekerja dari senarai di atas.' : 'Please select an employee from the dropdown list above.'}
+                        </td>
+                      </tr>
+                    ) : filteredRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-450 dark:text-zinc-500 font-medium italic">
+                          {t('attendanceAdmin', 'noRecords', lang)} {filterMode === 'date' ? selectedDate : selectedMonth}
                         </td>
                       </tr>
                     ) : (
@@ -257,6 +327,15 @@ export default function AttendanceView() {
                         <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                           <td className="px-5 py-4">
                             <p className="font-semibold text-slate-900 dark:text-white">{record.user_name}</p>
+                            {filterMode === 'month' && record.date && (
+                              <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
+                                {new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            )}
                           </td>
                           <td className="px-5 py-4">
                             {record.check_in_time ? (

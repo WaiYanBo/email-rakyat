@@ -45,7 +45,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch all profiles to get users and unique departments
       const { data: profiles, error: profError } = await supabase
         .from('profiles')
         .select('id, full_name, department, roles(role_name)');
@@ -56,7 +55,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       setDepartments(depts);
       setUsers(profiles || []);
 
-      // 2. Fetch existing permissions
       const { data: perms, error: permError } = await supabase
         .from('access_permissions')
         .select('*');
@@ -65,7 +63,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       const matrix: Record<string, PermissionEntry> = {};
       
-      // Initialize matrix with defaults for departments
       depts.forEach(dept => {
         matrix[`dept_${dept}`] = {
           target_type: 'department',
@@ -76,18 +73,16 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         };
       });
 
-      // Initialize matrix with defaults for users
       profiles?.forEach(user => {
         matrix[`user_${user.id}`] = {
           target_type: 'user',
           target_id: user.id,
           permissions: {
             view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any
-          } // null signifies "Inherit from department" in the UI mentally, but for simplicity we'll just store booleans if they override
+          } // null defaults to inherited department settings
         };
       });
 
-      // Overlay saved permissions
       perms?.forEach(p => {
         const key = p.target_type === 'department' ? `dept_${p.target_id}` : `user_${p.target_id}`;
         matrix[key] = {
@@ -96,6 +91,26 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_id: p.target_id,
           permissions: { ...matrix[key]?.permissions, ...p.permissions }
         };
+      });
+
+      // Synchronize department toggle states based on user overrides
+      depts.forEach(deptName => {
+        const deptKey = `dept_${deptName}`;
+        if (matrix[deptKey]) {
+          const deptUsers = profiles?.filter(p => p.department === deptName) || [];
+          if (deptUsers.length > 0) {
+            const modules: (keyof PermissionEntry['permissions'])[] = [
+              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control'
+            ];
+            modules.forEach(module => {
+              const allChecked = deptUsers.every(u => {
+                const uKey = `user_${u.id}`;
+                return matrix[uKey]?.permissions[module] === true;
+              });
+              matrix[deptKey].permissions[module] = allChecked;
+            });
+          }
+        }
       });
 
       setPermissionsMatrix(matrix);
@@ -124,6 +139,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       };
 
       if (key.startsWith('dept_')) {
+        // Cascade department toggle to all users
         const deptName = key.replace('dept_', '');
         users.forEach(u => {
           if (u.department === deptName) {
@@ -139,6 +155,29 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             }
           }
         });
+      } else if (key.startsWith('user_')) {
+        // Sync department state if a single user overrides changes
+        const userId = key.replace('user_', '');
+        const userObj = users.find(u => u.id === userId);
+        if (userObj && userObj.department) {
+          const deptName = userObj.department;
+          const deptKey = `dept_${deptName}`;
+          if (newMatrix[deptKey]) {
+            const deptUsers = users.filter(u => u.department === deptName);
+            const allChecked = deptUsers.every(u => {
+              const uKey = `user_${u.id}`;
+              return newMatrix[uKey]?.permissions[module] === true;
+            });
+            
+            newMatrix[deptKey] = {
+              ...newMatrix[deptKey],
+              permissions: {
+                ...newMatrix[deptKey].permissions,
+                [module]: allChecked
+              }
+            };
+          }
+        }
       }
 
       return newMatrix;
@@ -160,9 +199,21 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           await supabase.from('access_permissions').insert({
             target_type: entry.target_type,
             target_id: entry.target_id,
-            permissions: entry.permissions
           });
         }
+      }
+      
+      // Clear permissions cache in sessionStorage so updates are reflected immediately
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key && key.startsWith('portal_perms_')) {
+            sessionStorage.removeItem(key);
+            i--;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to clear session storage cache:', e);
       }
       
       alert('Permissions saved successfully!');

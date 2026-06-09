@@ -16,15 +16,10 @@ export default function SettingsView() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'access'>('profile');
   
-  // Profile Form State
   const [fullName, setFullName] = useState('');
-  
-  // Password Form State
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
-  // Status/Alert State
   const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -43,7 +38,7 @@ export default function SettingsView() {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select(`full_name, department, salary, status, role_id, avatar_url, roles ( role_name )`)
+        .select(`id, full_name, department, salary, status, role_id, avatar_url, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
       
@@ -57,10 +52,11 @@ export default function SettingsView() {
         
         // Handle roles relationship
         if (profileData.roles) {
-          if (Array.isArray(profileData.roles)) {
-            roleName = profileData.roles[0]?.role_name || 'No Role';
+          const rolesVar = profileData.roles as any;
+          if (Array.isArray(rolesVar)) {
+            roleName = rolesVar[0]?.role_name || 'No Role';
           } else {
-            roleName = profileData.roles?.role_name || 'No Role';
+            roleName = rolesVar?.role_name || 'No Role';
           }
         } else if (profileData.role_id) {
           const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
@@ -69,7 +65,8 @@ export default function SettingsView() {
         
         setProfile({
           ...profileData,
-          role_name: roleName
+          role_name: roleName,
+          role: roleName
         });
       }
       setLoading(false);
@@ -124,7 +121,7 @@ export default function SettingsView() {
     e.preventDefault();
     setPasswordMessage(null);
 
-    if (!oldPassword || oldPassword.length < 1) {
+    if (!oldPassword) {
       setPasswordMessage({ type: 'error', text: 'Please enter your current password.' });
       return;
     }
@@ -259,12 +256,6 @@ export default function SettingsView() {
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-450 dark:text-zinc-400">Department</span>
                 <span className="text-slate-800 dark:text-zinc-200 font-semibold">{profile?.department || '-'}</span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-slate-455 dark:text-zinc-400">Base Salary</span>
-                <span className="text-slate-800 dark:text-zinc-200 font-mono font-semibold">
-                  {profile?.salary ? `RM ${parseFloat(profile.salary).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : 'RM 0.00'}
-                </span>
               </div>
             </div>
           </div>

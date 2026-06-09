@@ -22,57 +22,115 @@ export default function ClientDataView() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
 
+  // SEARCH AND FILTER STATE
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   useEffect(() => {
-    async function loadData() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/portal/login';
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select(`full_name, department, roles ( role_name ), role_id`)
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileData) {
-        let roleName = 'No Role';
-        if (profileData.roles) {
-          if (Array.isArray(profileData.roles)) {
-            roleName = profileData.roles[0]?.role_name || 'No Role';
-          } else {
-            roleName = profileData.roles?.role_name || 'No Role';
-          }
-        } else if (profileData.role_id) {
-          const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
-          if (roleData) roleName = roleData.role_name;
+    let isMounted = true;
+    const timer = setTimeout(async () => {
+      async function loadData() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.href = '/portal/login';
+          return;
         }
 
-        setProfile({
-          name: profileData.full_name,
-          department: profileData.department,
-          role: roleName,
-        });
+        let currentProfile = profile;
+        if (!currentProfile) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select(`full_name, department, roles ( role_name ), role_id`)
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileData) {
+            let roleName = 'No Role';
+            if (profileData.roles) {
+              if (Array.isArray(profileData.roles)) {
+                roleName = profileData.roles[0]?.role_name || 'No Role';
+              } else {
+                roleName = profileData.roles?.role_name || 'No Role';
+              }
+            } else if (profileData.role_id) {
+              const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
+              if (roleData) roleName = roleData.role_name;
+            }
+
+            currentProfile = {
+              id: session.user.id,
+              name: profileData.full_name,
+              department: profileData.department,
+              role: roleName,
+            };
+            if (isMounted) setProfile(currentProfile);
+          }
+        }
 
         const canViewClients = permissions?.view_clients || false;
         
         if (canViewClients) {
-          const { data: clientsData } = await supabase.from('clients').select('*');
+          let query = supabase.from('clients');
+          
+          if (viewMode === 'standard') {
+            query = query.select('id,DATE,NAME,"PHONE NUMBER","IC NUMBER","CASE CATEGORY","TOTAL PAID (RM)","PENDING (RM)","PACKAGE (RM)","CASE STATUS","Investigation Paper",Report,"Action Taken by police"', { count: 'exact' });
+          } else {
+            query = query.select('*', { count: 'exact' });
+          }
+          
+          if (searchQuery) {
+            query = query.or(`NAME.ilike.%${searchQuery}%,"IC NUMBER".ilike.%${searchQuery}%,"PHONE NUMBER".ilike.%${searchQuery}%,"CASE CATEGORY".ilike.%${searchQuery}%`);
+          }
+
+          if (dateFilter !== 'all') {
+             const now = new Date();
+             const yearStr = String(now.getFullYear()).slice(-2);
+             const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+             
+             if (dateFilter === 'year') {
+                query = query.like('DATE', `%/${yearStr}`);
+             } else if (dateFilter === 'month') {
+                query = query.like('DATE', `%/${monthStr}/${yearStr}`);
+             }
+          }
+
+          query = query.order('id', { ascending: false });
+
+          const from = (currentPage - 1) * 25;
+          const to = from + 25 - 1;
+          query = query.range(from, to);
+
+          const { data: clientsData, count, error } = await query;
             
-          if (clientsData) {
+          if (clientsData && isMounted) {
             const safeData = clientsData.map((c, idx) => ({
               ...c,
               _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
             }));
             setDbClients(safeData);
+            if (count !== null && count !== undefined) {
+              setTotalCount(count);
+            }
+            setFetchError(null);
+          } else if (error) {
+            console.error('Error fetching clients:', error);
+            if (isMounted) setFetchError(error.message || JSON.stringify(error));
           }
         }
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
-    }
-    loadData();
-  }, [permissions]);
+      loadData();
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [permissions, searchQuery, dateFilter, viewMode, currentPage]);
 
   // --- HANDLERS ---
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
@@ -82,6 +140,15 @@ export default function ClientDataView() {
   // New Handlers for the View Detail Box
   const handleOpenViewModal = (client: any) => { setViewingClient(client); setIsViewModalOpen(true); };
   const handleCloseViewModal = () => { setIsViewModalOpen(false); setViewingClient(null); };
+
+  const handleExportFull = async () => {
+    const { data: clientsData } = await supabase.from('clients').select('*');
+    if (!clientsData) return [];
+    return clientsData.map((c, idx) => ({
+      ...c,
+      _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
+    }));
+  };
 
   const writeAuditLog = async (action: 'INSERT' | 'UPDATE' | 'DELETE', recordId: string, changes: any) => {
     try {
@@ -244,9 +311,25 @@ export default function ClientDataView() {
       </div>
 
       <div className="w-full">
+        {fetchError && (
+          <div className="mb-4 p-4 bg-red-100 text-red-900 border border-red-200 rounded-xl">
+            <h3 className="font-bold">Error fetching data from Supabase:</h3>
+            <p className="font-mono text-sm">{fetchError}</p>
+          </div>
+        )}
         <ClientTable 
           clients={dbClients} 
           canEdit={canEdit} 
+          searchQuery={searchQuery}
+          onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+          dateFilter={dateFilter}
+          onDateFilterChange={(df) => { setDateFilter(df); setCurrentPage(1); }}
+          viewMode={viewMode}
+          onViewModeChange={(vm) => { setViewMode(vm); setCurrentPage(1); }}
+          currentPage={currentPage}
+          totalCount={totalCount}
+          onPageChange={setCurrentPage}
+          onExportFull={handleExportFull}
           onAddClick={handleOpenAddModal} 
           onEditClick={handleOpenEditModal} 
           onViewClick={handleOpenViewModal}

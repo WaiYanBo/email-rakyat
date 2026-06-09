@@ -46,20 +46,37 @@ const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
 export default function ClientTable({
   clients,
   canEdit,
+  searchQuery,
+  onSearchChange,
+  dateFilter,
+  onDateFilterChange,
+  viewMode,
+  onViewModeChange,
+  currentPage,
+  totalCount,
+  onPageChange,
+  onExportFull,
   onAddClick,
   onEditClick,
   onViewClick
 }: {
   clients: any[],
   canEdit: boolean,
+  searchQuery: string,
+  onSearchChange: (q: string) => void,
+  dateFilter: string,
+  onDateFilterChange: (df: string) => void,
+  viewMode: 'standard' | 'expanded',
+  onViewModeChange: (mode: 'standard' | 'expanded') => void,
+  currentPage: number,
+  totalCount: number,
+  onPageChange: (page: number) => void,
+  onExportFull: () => Promise<any[]>,
   onAddClick: () => void,
   onEditClick: (client: any) => void,
   onViewClick: (client: any) => void
 }) {
-  const [search, setSearch] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
   const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'DATE', direction: 'desc' });
-  const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
   const [exportScope, setExportScope] = useState<'current' | 'full'>('current');
 
   const handleSort = (key: string) => {
@@ -68,32 +85,6 @@ export default function ClientTable({
 
   const filteredClients = useMemo(() => {
     let result = [...clients];
-    const now = new Date();
-
-    if (dateFilter !== 'all') {
-      result = result.filter(c => {
-        if (!c.DATE) return false;
-        const parts = String(c.DATE).trim().split('/');
-        if (parts.length === 3) {
-          let year = parseInt(parts[2], 10);
-          if (year < 100) year += 2000;
-          const month = parseInt(parts[1], 10) - 1;
-          if (dateFilter === 'year') return year === now.getFullYear();
-          if (dateFilter === 'month') return year === now.getFullYear() && month === now.getMonth();
-        }
-        return true;
-      });
-    }
-
-    if (search) {
-      const lowerSearch = search.toLowerCase();
-      result = result.filter(c =>
-        (c.NAME && String(c.NAME).toLowerCase().includes(lowerSearch)) ||
-        (c["IC NUMBER"] && String(c["IC NUMBER"]).toLowerCase().includes(lowerSearch)) ||
-        (c["PHONE NUMBER"] && String(c["PHONE NUMBER"]).toLowerCase().includes(lowerSearch)) ||
-        (c["CASE CATEGORY"] && String(c["CASE CATEGORY"]).toLowerCase().includes(lowerSearch))
-      );
-    }
 
     result.sort((a: any, b: any) => {
       const valA = getSortValue(a, sort.key);
@@ -109,12 +100,12 @@ export default function ClientTable({
     });
 
     return result;
-  }, [search, dateFilter, sort, clients]);
+  }, [sort, clients]);
 
   const getExportDate = () => new Date().toISOString().split('T')[0];
 
-  const getExportData = () => {
-    const baseData = exportScope === 'full' ? clients : filteredClients;
+  const getExportData = async () => {
+    const baseData = exportScope === 'full' ? await onExportFull() : filteredClients;
 
     return baseData.map(client => {
       const { id, _stableKey, updated_at, ...cleanClient } = client;
@@ -140,8 +131,8 @@ export default function ClientTable({
     });
   };
 
-  const handleExportExcel = () => {
-    const exportData = getExportData();
+  const handleExportExcel = async () => {
+    const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -149,8 +140,8 @@ export default function ClientTable({
     XLSX.writeFile(wb, `EmailRakyat_Clients_${getExportDate()}.xlsx`);
   };
 
-  const handleExportCSV = () => {
-    const exportData = getExportData();
+  const handleExportCSV = async () => {
+    const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
     const ws = XLSX.utils.json_to_sheet(exportData);
     const csv = XLSX.utils.sheet_to_csv(ws);
@@ -161,8 +152,8 @@ export default function ClientTable({
     link.click();
   };
 
-  const handleExportPDF = () => {
-    const exportData = getExportData();
+  const handleExportPDF = async () => {
+    const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
 
     const doc = new jsPDF('landscape');
@@ -198,7 +189,7 @@ export default function ClientTable({
   };
 
   return (
-    <div className="flex flex-col h-[80vh] md:h-[75vh]">
+    <div className="flex flex-col h-auto w-full">
       <div className="md:hidden flex items-center gap-1.5 text-[11px] text-slate-450 dark:text-zinc-500 font-semibold uppercase tracking-wider mb-2 px-1">
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -211,13 +202,13 @@ export default function ClientTable({
         {/* Navigation Tabs */}
         <div className="flex border-b border-slate-200 dark:border-gray-800 px-3 md:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none">
           <button
-            onClick={() => setViewMode('standard')}
+            onClick={() => onViewModeChange('standard')}
             className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             Standard View
           </button>
           <button
-            onClick={() => setViewMode('expanded')}
+            onClick={() => onViewModeChange('expanded')}
             className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             Expanded View (Full Details)
@@ -264,14 +255,14 @@ export default function ClientTable({
               <input
                 type="text"
                 placeholder="Search Client Database..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] shadow-sm"
               />
             </div>
             <select
               value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
+              onChange={(e) => onDateFilterChange(e.target.value)}
               className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto min-h-[48px] shadow-sm"
             >
               <option value="all">All Dates</option>
@@ -327,10 +318,10 @@ export default function ClientTable({
                         <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
-                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client["Investigation Paper"] || ''}>{client["Investigation Paper"] || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client.Report || ''}>{client.Report || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350 max-w-[150px] truncate" title={client["Action Taken by police"] || ''}>{client["Action Taken by police"] || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-750 dark:text-zinc-350">{client["CASE CATEGORY"]}</td>
+                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Investigation Paper"] || ''}>{client["Investigation Paper"] || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client.Report || ''}>{client.Report || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Action Taken by police"] || ''}>{client["Action Taken by police"] || '-'}</td>
+                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
                       </>
                     ) : (
                       <>
@@ -373,6 +364,52 @@ export default function ClientTable({
             </tbody>
           </table>
         </div>
+
+        {(() => {
+          const totalPages = Math.ceil(totalCount / 25) || 1;
+          const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * 25 + 1;
+          const endRecord = Math.min(currentPage * 25, totalCount);
+
+          return (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80">
+              <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                Showing <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> to <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> of <span className="font-semibold text-slate-800 dark:text-white">{totalCount}</span> clients
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Prev</span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  <span className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 dark:bg-yellow-500 text-white dark:text-black shadow-sm">
+                    {currentPage}
+                  </span>
+                  <span className="text-slate-450 dark:text-zinc-500 text-xs font-semibold px-2">
+                    of {totalPages}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>Next</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

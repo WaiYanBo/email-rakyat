@@ -77,7 +77,8 @@ export default function ExecutiveOverview() {
         .from('announcements')
         .select('*')
         .lte('scheduled_at', new Date().toISOString()) // Only show announcements scheduled for today or earlier
-        .order('scheduled_at', { ascending: false });
+        .order('scheduled_at', { ascending: false })
+        .limit(100);
 
       if (error) {
         console.error('Error fetching announcements:', error);
@@ -117,7 +118,7 @@ export default function ExecutiveOverview() {
         // Query profile with explicit relationship
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select(`full_name, role_id, roles(role_name)`)
+          .select(`id, department, full_name, role_id, roles(role_name)`)
           .eq('id', session.user.id)
           .single();
 
@@ -153,26 +154,37 @@ export default function ExecutiveOverview() {
           } else {
             console.warn('No roles relationship and no role_id found - user has no role assigned!');
           }
-          setProfile({ name: profileData.full_name, role: roleName });
-          console.log('Set profile:', { name: profileData.full_name, role: roleName, roleId: profileData.role_id });
+          setProfile({
+            id: profileData.id,
+            department: profileData.department,
+            name: profileData.full_name,
+            role: roleName
+          });
+          console.log('Set profile:', { id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName, roleId: profileData.role_id });
           console.log('✅ Final roleName for access check:', roleName);
         }
 
         if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager'].includes(roleName)) {
-          const { data: clientsData } = await supabase.from('clients').select('*');
-          if (clientsData) {
-            const pCases = clientsData.filter(c => parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) > 5000).sort((a, b) => parseFloat(String(b['PENDING (RM)']).replace(/[^0-9.-]+/g, '')) - parseFloat(String(a['PENDING (RM)']).replace(/[^0-9.-]+/g, ''))).slice(0, 5);
-            setHighPriorityCases(pCases);
+          // Run lightweight count-only queries using HTTP HEAD (0 rows fetched, 0 bytes row egress)
+          const [totalRes, completedRes, droppedRes] = await Promise.all([
+            supabase.from('clients').select('*', { count: 'exact', head: true }),
+            supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%COMPLETED%'),
+            supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%DROPPED%')
+          ]);
 
-            let totalPending = 0; let completed = 0; let dropped = 0; let pending = 0;
-            clientsData.forEach(c => {
-              if (String(c['CASE STATUS']).includes('COMPLETED')) completed++;
-              else if (String(c['CASE STATUS']).includes('DROPPED')) dropped++;
-              else pending++;
-              totalPending += parseFloat(String(c['PENDING (RM)'] || '0').replace(/[^0-9.-]+/g, '')) || 0;
-            });
-            setStats({ totalClients: clientsData.length, completed, dropped, pending, totalPending });
-          }
+          const totalClients = totalRes.count || 0;
+          const completed = completedRes.count || 0;
+          const dropped = droppedRes.count || 0;
+          const pending = totalClients - completed - dropped;
+
+          setStats({
+            totalClients,
+            completed,
+            dropped,
+            pending,
+            totalPending: 0
+          });
+          setHighPriorityCases([]);
         }
 
         // 1. Initial Load of Announcements

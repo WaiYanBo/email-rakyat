@@ -24,26 +24,80 @@ export function usePermissions(profile: any) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile) {
-      setLoading(false);
-      return;
-    }
-
     const fetchPermissions = async () => {
       try {
+        let userId = profile?.id;
+        let department = profile?.department;
+        let role = profile?.role || profile?.role_name;
+
+        if (!userId) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            userId = session.user.id;
+          }
+        }
+
+        if (userId) {
+          const cacheKey = `portal_perms_${userId}`;
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              setPermissions(parsed);
+              setLoading(false);
+              return;
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+
+        if (userId && (!department || !role)) {
+          const { data: profData } = await supabase
+            .from('profiles')
+            .select(`department, roles(role_name), role_id`)
+            .eq('id', userId)
+            .single();
+
+          if (profData) {
+            department = department || profData.department;
+            if (!role) {
+              if (profData.roles) {
+                if (Array.isArray(profData.roles)) {
+                  role = profData.roles[0]?.role_name || 'No Role';
+                } else {
+                  role = profData.roles?.role_name || 'No Role';
+                }
+              } else if (profData.role_id) {
+                const { data: roleData } = await supabase
+                  .from('roles')
+                  .select('role_name')
+                  .eq('id', profData.role_id)
+                  .single();
+                if (roleData) {
+                  role = roleData.role_name;
+                }
+              }
+            }
+          }
+        }
+
+        if (!userId && !role) {
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('access_permissions')
           .select('*')
-          .in('target_id', [profile.id, profile.department]);
+          .in('target_id', [userId, department].filter(Boolean));
 
         if (error) {
-          // If table doesn't exist yet, we just swallow and use defaults
           console.warn('access_permissions table query failed', error);
         }
 
-        // Hardcoded defaults to fallback on
-        const defaultHasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'].includes(profile.role);
-        const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker'].includes(profile.role);
+        const defaultHasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'].includes(role || '');
+        const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker'].includes(role || '');
 
         let finalPerms: Permissions = {
           view_clients: defaultHasFullAccess || defaultHasViewAccess,
@@ -70,8 +124,7 @@ export function usePermissions(profile: any) {
           };
         }
         
-        // Safety lock: IT Admin ALWAYS has full access
-        if (profile.role === 'IT Admin') {
+        if (role === 'IT Admin') {
           finalPerms = {
             view_clients: true,
             edit_clients: true,
@@ -84,6 +137,13 @@ export function usePermissions(profile: any) {
         }
 
         setPermissions(finalPerms);
+        if (userId) {
+          try {
+            sessionStorage.setItem(`portal_perms_${userId}`, JSON.stringify(finalPerms));
+          } catch (e) {
+            // ignore
+          }
+        }
       } catch (err) {
         console.error('Error fetching permissions:', err);
       } finally {

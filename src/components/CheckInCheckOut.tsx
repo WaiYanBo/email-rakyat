@@ -54,34 +54,37 @@ export default function CheckInCheckOut() {
     return { hours, minutes };
   };
 
-  // Fetch all attendance records and identify forgot checkouts (excluding today)
+  // Fetch attendance records efficiently
   const fetchForgotCheckoutRecords = async () => {
     try {
-      const { data: records, error } = await supabase
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Fetch forgot checkouts specifically (server-side filtering)
+      const { data: forgotRecords, error: forgotError } = await supabase
         .from('attendance')
         .select('*')
+        .not('date', 'eq', today)
+        .not('check_in_time', 'is', null)
+        .is('check_out_time', null)
         .order('date', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching attendance records:', error);
-        return;
+      if (forgotError) {
+        console.error('Error fetching forgot checkout records:', forgotError);
+      } else if (forgotRecords) {
+        setForgotCheckoutRecords(forgotRecords);
       }
 
-      if (records) {
-        setAllRecords(records);
-        
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Filter records where:
-        // 1. check_in_time exists but check_out_time is null (forgot checkout)
-        // 2. Date is NOT today (don't flag incomplete days that are still in progress)
-        const forgot = records.filter(r => 
-          r.check_in_time && 
-          !r.check_out_time && 
-          r.date !== today
-        );
-        setForgotCheckoutRecords(forgot);
+      // 2. Fetch a limited set of recent records for general view/export
+      const { data: recentRecords, error: allErr } = await supabase
+        .from('attendance')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(300);
+
+      if (allErr) {
+         console.error('Error fetching recent attendance records:', allErr);
+      } else if (recentRecords) {
+         setAllRecords(recentRecords);
       }
     } catch (err) {
       console.error('Exception fetching records:', err);

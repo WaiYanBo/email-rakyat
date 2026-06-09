@@ -31,12 +31,12 @@ export default function ReportsView() {
       const { data: staffData, error } = await supabase
         .from('profiles')
         .select(`id, full_name, department, salary, status, remarks, roles ( role_name )`);
-      
+
       if (error) {
         console.error('Error fetching staff records:', error);
         return;
       }
-      
+
       if (staffData) {
         setStaffRecords(staffData);
         console.log('Staff records updated:', staffData.length, 'records');
@@ -55,17 +55,31 @@ export default function ReportsView() {
       }
 
       // 1. Verify User Access
-      const { data: profileData } = await supabase.from('profiles').select(`full_name, roles ( role_name )`).eq('id', session.user.id).single();
+      const { data: profileData } = await supabase.from('profiles').select(`id, department, full_name, roles ( role_name )`).eq('id', session.user.id).single();
       if (profileData) {
-        setProfile({ name: profileData.full_name, role: profileData.roles?.role_name || 'No Role' });
+        let roleName = 'No Role';
+        if (profileData.roles) {
+          const rolesVar = profileData.roles as any;
+          if (Array.isArray(rolesVar)) {
+            roleName = rolesVar[0]?.role_name || 'No Role';
+          } else {
+            roleName = rolesVar?.role_name || 'No Role';
+          }
+        }
+        setProfile({
+          id: profileData.id,
+          department: profileData.department,
+          name: profileData.full_name,
+          role: roleName
+        });
       }
 
       // 2. Initial Load of Staff Data
       await fetchStaffRecords();
-      
+
       setLoading(false);
     }
-    
+
     loadData();
 
     // 3. Setup Realtime Listener for instant updates
@@ -99,7 +113,7 @@ export default function ReportsView() {
   const saveStaffRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    
+
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
 
@@ -115,8 +129,8 @@ export default function ReportsView() {
     // Whitelist role values from the select
     const allowedRoles = [
       'Chairman', 'CEO', 'COO', 'CFO',
-      'General Manager', 'Head of Department', 'Senior Executive', 'Executive', 
-      'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant', 
+      'General Manager', 'Head of Department', 'Senior Executive', 'Executive',
+      'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant',
       'Intern', 'Contract Worker', 'Part-Time Worker',
       'Finance', 'Marketing', 'Accounting', 'Creative', 'IT Admin', 'Intern HR', 'Contract', 'Part Time'
     ];
@@ -136,7 +150,7 @@ export default function ReportsView() {
         .select('id')
         .eq('role_name', cleanRole)
         .single();
-        
+
       if (roleError) {
         throw new Error('Role not found in database. Please ensure the role exists in the roles table.');
       }
@@ -154,9 +168,9 @@ export default function ReportsView() {
             status: cleanStatus,
             remarks: cleanRemarks
           });
-        
+
         if (upsertError) throw new Error(`Update failed: ${upsertError.message}`);
-        
+
         alert('✓ Staff record updated! Changes will sync automatically.');
         setIsStaffModalOpen(false);
 
@@ -199,9 +213,9 @@ export default function ReportsView() {
             status: cleanStatus,
             remarks: cleanRemarks
           });
-        
+
         if (profileError) throw new Error(`Profile creation failed: ${profileError.message}`);
-        
+
         alert('✓ New staff account created! Email: ' + rawEmail + '\nChanges will sync automatically.');
         setIsStaffModalOpen(false);
       }
@@ -225,7 +239,7 @@ export default function ReportsView() {
 
   const hasFullAccess = permissions?.view_staff || false;
   const canEditStaff = permissions?.edit_staff || false;
-  
+
   if (!hasFullAccess) {
     return (
       <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
@@ -272,13 +286,13 @@ export default function ReportsView() {
     const roleB = b.roles?.role_name || '';
     const rankA = roleHierarchy[roleA] || 99;
     const rankB = roleHierarchy[roleB] || 99;
-    
+
     if (rankA !== rankB) return rankA - rankB;
-    
+
     const deptA = a.department || '';
     const deptB = b.department || '';
     if (deptA !== deptB) return deptA.localeCompare(deptB);
-    
+
     return (a.full_name || '').localeCompare(b.full_name || '');
   });
 
@@ -336,8 +350,8 @@ export default function ReportsView() {
             <div className="p-5 border-b border-purple-700 dark:border-yellow-500/50 flex justify-between items-center bg-purple-600 dark:bg-gray-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
               {canEditStaff && (
-                <button 
-                  onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
+                <button
+                  onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
                   className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-yellow-500/50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -363,20 +377,19 @@ export default function ReportsView() {
                   {sortedStaffRecords.map(staff => (
                     <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white text-left">
-                        {staff.full_name} 
+                        {staff.full_name}
                         <span className="block text-[10px] font-semibold text-slate-450 dark:text-zinc-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span>
                       </td>
                       <td className="px-4 py-3.5 text-left hidden md:table-cell">{staff.department}</td>
                       <td className="px-4 py-3.5 text-left hidden lg:table-cell max-w-[150px] truncate" title={staff.remarks || ''}>{staff.remarks || '-'}</td>
                       <td className="px-4 py-3.5 text-right hidden lg:table-cell font-mono text-slate-800 dark:text-zinc-200">{staff.salary || '0'}</td>
                       <td className="px-4 py-3.5 text-center">
-                        <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${
-                          staff.status === 'Active' || !staff.status 
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30' 
-                            : staff.status === 'On Leave' 
-                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-yellow-500 dark:border-amber-900/30' 
+                        <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${staff.status === 'Active' || !staff.status
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                          : staff.status === 'On Leave'
+                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-yellow-500 dark:border-amber-900/30'
                             : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-455 dark:border-rose-900/30'
-                        }`}>
+                          }`}>
                           {staff.status || 'Active'}
                         </span>
                       </td>
@@ -389,8 +402,8 @@ export default function ReportsView() {
                             View
                           </button>
                           {canEditStaff && (
-                            <button 
-                              onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }} 
+                            <button
+                              onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
                               className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-gray-900/30 dark:text-yellow-500 dark:hover:bg-yellow-500/20 border border-indigo-200 dark:border-yellow-500/30 text-xs font-semibold transition-all shadow-sm inline-flex"
                             >
                               Edit
@@ -422,13 +435,13 @@ export default function ReportsView() {
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                 Staff Profile
               </h2>
-              <button 
-                onClick={() => { setIsViewStaffModalOpen(false); setViewingStaff(null); }} 
+              <button
+                onClick={() => { setIsViewStaffModalOpen(false); setViewingStaff(null); }}
                 className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -439,7 +452,7 @@ export default function ReportsView() {
 
             <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-gray-900/10">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                
+
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Full Name</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.full_name || 'N/A'}</p>
@@ -464,7 +477,7 @@ export default function ReportsView() {
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Salary</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">RM {viewingStaff.salary || '0'}</p>
                 </div>
-                
+
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col shadow-sm sm:col-span-2 lg:col-span-3">
                   <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-2">Remarks</p>
                   <p className="text-sm font-medium text-slate-800 dark:text-zinc-300 break-words whitespace-pre-wrap">{viewingStaff.remarks || 'No remarks provided.'}</p>
@@ -472,10 +485,10 @@ export default function ReportsView() {
 
               </div>
             </div>
-            
+
             <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
               {canEditStaff && (
-                <button 
+                <button
                   onClick={() => {
                     setIsViewStaffModalOpen(false);
                     setEditingStaff(viewingStaff);
@@ -497,135 +510,135 @@ export default function ReportsView() {
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
-              <button 
-                onClick={() => setIsStaffModalOpen(false)} 
+              <button
+                onClick={() => setIsStaffModalOpen(false)}
                 className="text-slate-400 hover:text-rose-500 p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
-            
+
             {(() => {
               const standardDepartments = ['Human Resources', 'Finance', 'Accounting', 'Marketing', 'Media', 'IT', 'Operations', 'Sales'];
               const dynamicDepartments = staffRecords.map(s => s.department).filter(Boolean) as string[];
               const excludedDepartments = ['Top Management', 'TM', 'Executive', 'Board'];
               const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments])).filter(d => !excludedDepartments.includes(d));
               return (
-            <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-black">
-              {!editingStaff && (
-                <div className="p-4 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl">
-                  <p className="text-xs text-indigo-700 dark:text-yellow-500 font-semibold uppercase tracking-wider block mb-0.5">System Automation Active</p>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Filling this out will automatically generate credentials and initialize a matching database profile record.</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Full Name</label>
-                  <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                
-                {!editingStaff && (
-                  <>
-                    <div className="col-span-2 space-y-1">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Login Email</label>
-                      <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                    </div>
-                    <div className="col-span-2 space-y-1">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-455 dark:text-zinc-355">Temp Password</label>
-                      <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                    </div>
-                  </>
-                )}
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Department</label>
-                  {departmentInputType === 'select' && uniqueDepartments.length > 0 ? (
-                    <select 
-                      name="dept" 
-                      defaultValue={editingStaff?.department || uniqueDepartments[0]} 
-                      onChange={(e) => {
-                        if (e.target.value === 'ADD_NEW') {
-                          setDepartmentInputType('text');
-                          e.target.value = ''; // Reset select state
-                        }
-                      }}
-                      className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
-                    >
-                      {uniqueDepartments.map(dept => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                      <option value="ADD_NEW" className="font-semibold text-purple-600 dark:text-yellow-500">+ Add New Department</option>
-                    </select>
-                  ) : (
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        name="dept" 
-                        placeholder={uniqueDepartments.length > 0 ? "Enter new department name" : "e.g. Human Resources"}
-                        defaultValue={editingStaff?.department || ''} 
-                        required 
-                        autoFocus={departmentInputType === 'text'}
-                        className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" 
-                      />
-                      {uniqueDepartments.length > 0 && (
-                        <button 
-                          type="button"
-                          onClick={() => setDepartmentInputType('select')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 font-semibold px-2 py-1 bg-slate-100 dark:bg-gray-800 rounded-lg"
-                        >
-                          Cancel
-                        </button>
-                      )}
+                <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-black">
+                  {!editingStaff && (
+                    <div className="p-4 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl">
+                      <p className="text-xs text-indigo-700 dark:text-yellow-500 font-semibold uppercase tracking-wider block mb-0.5">System Automation Active</p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Filling this out will automatically generate credentials and initialize a matching database profile record.</p>
                     </div>
                   )}
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
-                  <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
-                    <option value="General Manager">General Manager</option>
-                    <option value="Head of Department">Head of Department</option>
-                    <option value="Senior Executive">Senior Executive</option>
-                    <option value="Executive">Executive</option>
-                    <option value="Junior Executive">Junior Executive</option>
-                    <option value="Specialist">Specialist</option>
-                    <option value="Analyst">Analyst</option>
-                    <option value="Admin Assistant">Admin Assistant</option>
-                    <option value="Intern">Intern</option>
-                    <option value="Contract Worker">Contract Worker</option>
-                    <option value="Part-Time Worker">Part-Time Worker</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
-                  <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>
-                  <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
-                    <option value="Active">Active</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="Resigned">Resigned / Terminated</option>
-                  </select>
-                </div>
-                
-                <div className="col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Remarks</label>
-                  <textarea name="remarks" defaultValue={editingStaff?.remarks || ''} rows={3} placeholder="Add any internal notes about this staff member..." className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 resize-y" />
-                </div>
-              </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
-                <button 
-                  type="submit" 
-                  disabled={isProcessing} 
-                  className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
-                >
-                  {isProcessing ? 'Automating...' : 'Save & Automate'}
-                </button>
-              </div>
-            </form>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Full Name</label>
+                      <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+
+                    {!editingStaff && (
+                      <>
+                        <div className="col-span-2 space-y-1">
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Login Email</label>
+                          <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-455 dark:text-zinc-355">Temp Password</label>
+                          <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Department</label>
+                      {departmentInputType === 'select' && uniqueDepartments.length > 0 ? (
+                        <select
+                          name="dept"
+                          defaultValue={editingStaff?.department || uniqueDepartments[0]}
+                          onChange={(e) => {
+                            if (e.target.value === 'ADD_NEW') {
+                              setDepartmentInputType('text');
+                              e.target.value = ''; // Reset select state
+                            }
+                          }}
+                          className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                        >
+                          {uniqueDepartments.map(dept => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))}
+                          <option value="ADD_NEW" className="font-semibold text-purple-600 dark:text-yellow-500">+ Add New Department</option>
+                        </select>
+                      ) : (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="dept"
+                            placeholder={uniqueDepartments.length > 0 ? "Enter new department name" : "e.g. Human Resources"}
+                            defaultValue={editingStaff?.department || ''}
+                            required
+                            autoFocus={departmentInputType === 'text'}
+                            className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                          />
+                          {uniqueDepartments.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setDepartmentInputType('select')}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 font-semibold px-2 py-1 bg-slate-100 dark:bg-gray-800 rounded-lg"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
+                      <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                        <option value="General Manager">General Manager</option>
+                        <option value="Head of Department">Head of Department</option>
+                        <option value="Senior Executive">Senior Executive</option>
+                        <option value="Executive">Executive</option>
+                        <option value="Junior Executive">Junior Executive</option>
+                        <option value="Specialist">Specialist</option>
+                        <option value="Analyst">Analyst</option>
+                        <option value="Admin Assistant">Admin Assistant</option>
+                        <option value="Intern">Intern</option>
+                        <option value="Contract Worker">Contract Worker</option>
+                        <option value="Part-Time Worker">Part-Time Worker</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
+                      <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>
+                      <select name="status" defaultValue={editingStaff?.status || 'Active'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                        <option value="Active">Active</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Resigned">Resigned / Terminated</option>
+                      </select>
+                    </div>
+
+                    <div className="col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Remarks</label>
+                      <textarea name="remarks" defaultValue={editingStaff?.remarks || ''} rows={3} placeholder="Add any internal notes about this staff member..." className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 resize-y" />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
+                    <button
+                      type="submit"
+                      disabled={isProcessing}
+                      className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                    >
+                      {isProcessing ? 'Automating...' : 'Save & Automate'}
+                    </button>
+                  </div>
+                </form>
               );
             })()}
           </div>

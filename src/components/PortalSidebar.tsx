@@ -49,12 +49,13 @@ export default function PortalSidebar() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`full_name, department, avatar_url, roles ( role_name )`)
+        .select(`id, full_name, department, avatar_url, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
       if (profileData) {
         setProfile({
+          id: profileData.id,
           name: profileData.full_name,
           department: profileData.department,
           avatar_url: profileData.avatar_url,
@@ -75,6 +76,11 @@ export default function PortalSidebar() {
   };
 
   const handleLogout = async () => {
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      // ignore
+    }
     await supabase.auth.signOut();
     window.location.href = '/portal/login';
   };

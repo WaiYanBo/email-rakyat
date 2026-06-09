@@ -373,6 +373,7 @@ export default function ExecutiveOverview() {
               content: cleanContent,
               type: cleanType,
               author_name: sanitizeInput(profile?.name || 'Unknown', 100),
+              author_id: profile?.id,
               scheduled_at: scheduledDateTime,
               created_at: new Date().toISOString()
             }
@@ -380,7 +381,8 @@ export default function ExecutiveOverview() {
           .select();
 
         if (error) {
-          alert('Failed to post announcement. Please try again.');
+          console.error('Insert announcement error:', error);
+          alert(`Failed to post announcement. ${error.message || 'Please try again.'}`);
         } else {
           const newRecord = data?.[0];
           if (newRecord) {
@@ -561,7 +563,7 @@ export default function ExecutiveOverview() {
                           ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
                           : a.type === 'Memo'
                             ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
-                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-gray-800 dark:text-zinc-350 dark:border-gray-700'
+                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-700/60 dark:text-zinc-100 dark:border-zinc-600/60'
                           }`}>
                           {a.type}
                         </span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
+import { BillingGenerator } from './dashboard/BillingGenerator';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
@@ -21,6 +22,29 @@ export default function ClientDataView() {
   // MODAL STATE - VIEW (NEW)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
+
+  // BILLING STATE
+  const [billingRecords, setBillingRecords] = useState<any[]>([]);
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+
+  const loadBillingRecords = async (clientId: string) => {
+    const { data, error } = await supabase
+      .from('billing_records')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      setBillingRecords(data);
+    }
+  };
+
+  useEffect(() => {
+    if (viewingClient?.id) {
+      loadBillingRecords(viewingClient.id);
+    } else {
+      setBillingRecords([]);
+    }
+  }, [viewingClient]);
 
   // SEARCH AND FILTER STATE
   const [searchQuery, setSearchQuery] = useState('');
@@ -372,6 +396,73 @@ export default function ClientDataView() {
                   );
                 })}
               </div>
+
+              {/* BILLING & DOCUMENTS SECTION */}
+              <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">Billing & Documents</h3>
+                  <button
+                    onClick={() => setIsBillingModalOpen(true)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+                  >
+                    Generate Document
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Invoices Column */}
+                  <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
+                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Invoices</h4>
+                    {billingRecords.filter(r => r.document_type === 'invoice').length === 0 ? (
+                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">No invoices generated yet.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {billingRecords.filter(r => r.document_type === 'invoice').map(record => (
+                          <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
+                            <div>
+                              <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
+                              <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
+                            </div>
+                            {record.drive_url ? (
+                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
+                                View
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400">Processing...</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Receipts Column */}
+                  <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
+                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Receipts</h4>
+                    {billingRecords.filter(r => r.document_type === 'receipt').length === 0 ? (
+                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">No receipts generated yet.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {billingRecords.filter(r => r.document_type === 'receipt').map(record => (
+                          <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
+                            <div>
+                              <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
+                              <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
+                            </div>
+                            {record.drive_url ? (
+                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
+                                View
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400">Processing...</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
@@ -393,6 +484,36 @@ export default function ClientDataView() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* BILLING GENERATOR MODAL */}
+      {isBillingModalOpen && viewingClient && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="relative w-full max-w-xl">
+            <button
+              onClick={() => setIsBillingModalOpen(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+            <BillingGenerator
+              clientData={{
+                id: viewingClient.id,
+                name: viewingClient.NAME || 'N/A',
+                ic: viewingClient['IC NUMBER'] || 'N/A',
+                address: viewingClient.ADDRESS || 'N/A'
+              }}
+              onSuccess={() => {
+                setTimeout(() => {
+                  setIsBillingModalOpen(false);
+                  loadBillingRecords(viewingClient.id);
+                }, 1500); // Give user a brief moment to see success message before closing
+              }}
+            />
           </div>
         </div>
       )}

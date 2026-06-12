@@ -39,7 +39,7 @@ export const exportAttendanceToExcel = (
 
   const weeks: Date[][] = [];
   let currentWeek: Date[] = [];
-  
+
   // Pad the first week if the month doesn't start on Sunday
   const startDay = startDate.getDay(); // 0 is Sunday
   for (let i = 0; i < startDay; i++) {
@@ -114,33 +114,33 @@ export const exportAttendanceToExcel = (
         const m = String(day.getMonth() + 1).padStart(2, '0');
         const d = String(day.getDate()).padStart(2, '0');
         const dateStr = `${y}-${m}-${d}`; // Local YYYY-MM-DD
-        
+
         dateRow.push(`${d}/${m}/${y}`);
 
         const record = recordsByDate[dateStr];
         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
         const defaultStatus = isWeekend ? (day.getDay() === 0 ? 'Rest Day' : 'Off Day') : 'N/A';
-        
+
         if (record && record.check_in_time) {
           checkInRow.push(extractTime(record.check_in_time));
-          
+
           if (record.check_out_time) {
             checkOutRow.push(extractTime(record.check_out_time));
-            
+
             const checkIn = new Date(record.check_in_time);
             const checkOut = new Date(record.check_out_time);
             const workMs = checkOut.getTime() - checkIn.getTime();
             totalWorkRow.push(formatDuration(workMs));
-            
+
             const breakMs = 60 * 60 * 1000; // 1 hour
             breakRow.push('01:00:00');
-            
+
             const totalHoursMs = Math.max(0, workMs - breakMs);
             totalHoursRow.push(formatDuration(totalHoursMs));
-            
+
             const maxWorkMs = 8 * 60 * 60 * 1000; // 8 hours
             maxWorkRow.push('08:00:00');
-            
+
             const overtimeMs = Math.max(0, totalHoursMs - maxWorkMs);
             overtimeRow.push(formatDuration(overtimeMs));
           } else {
@@ -170,7 +170,7 @@ export const exportAttendanceToExcel = (
       aoa.push(totalHoursRow);
       aoa.push(maxWorkRow);
       aoa.push(overtimeRow);
-      
+
       aoa.push(['', '', '', '', '', '', '', '']); // Spacer between weeks
       aoa.push(['', '', '', '', '', '', '', '']); // Spacer
     });
@@ -180,14 +180,14 @@ export const exportAttendanceToExcel = (
     // Apply styling
     Object.keys(ws).forEach(key => {
       if (key.startsWith('!')) return; // Skip metadata keys like !cols, !ref
-      
+
       const decoded = XLSX.utils.decode_cell(key);
       const r = decoded.r;
       const c = decoded.c;
 
       const cell = ws[key];
       const val = String(cell.v || '').trim();
-      
+
       const isDaysRow = ["Metrics", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].includes(val);
       const isWeekCount = val.startsWith("Week ");
       const isNA = val === "N/A" || val === "No Checkout" || val === "Rest Day" || val === "Off Day";
@@ -227,7 +227,7 @@ export const exportAttendanceToExcel = (
       if (r >= 3 && c >= 0 && c <= 7) {
         const offsetRow = r - 3;
         const rowInBlock = offsetRow % 12;
-        
+
         // Rows 0 to 8 within a block represent the 9 rows of the table (Metrics down to Overtime)
         if (rowInBlock <= 8) {
           const border: any = {};
@@ -235,7 +235,7 @@ export const exportAttendanceToExcel = (
           if (rowInBlock === 8) border.bottom = { style: "medium", color: { rgb: "FF000000" } };
           if (c === 0) border.left = { style: "medium", color: { rgb: "FF000000" } };
           if (c === 7) border.right = { style: "medium", color: { rgb: "FF000000" } };
-          
+
           if (Object.keys(border).length > 0) {
             cell.s.border = border;
           }
@@ -245,6 +245,11 @@ export const exportAttendanceToExcel = (
 
     // Hide default Excel gridlines for a clean "white background" look globally
     ws['!views'] = [{ showGridLines: false }];
+
+    // Merge the title row (row 0) across the first 6 columns (A1 to F1) so long names aren't cut off
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }
+    ];
 
     // Make columns a bit wider for visibility
     const colWidths = [20, 15, 15, 15, 15, 15, 15, 15];

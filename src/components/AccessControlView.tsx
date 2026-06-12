@@ -15,6 +15,7 @@ interface PermissionEntry {
     view_attendance: boolean;
     view_snapshot: boolean;
     manage_access_control: boolean;
+    manage_drive: boolean;
   };
 }
 
@@ -68,7 +69,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'department',
           target_id: dept,
           permissions: {
-            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false
+            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false
           }
         };
       });
@@ -78,7 +79,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'user',
           target_id: user.id,
           permissions: {
-            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any
+            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any
           } // null defaults to inherited department settings
         };
       });
@@ -100,7 +101,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           const deptUsers = profiles?.filter(p => p.department === deptName) || [];
           if (deptUsers.length > 0) {
             const modules: (keyof PermissionEntry['permissions'])[] = [
-              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control'
+              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive'
             ];
             modules.forEach(module => {
               const allChecked = deptUsers.every(u => {
@@ -263,6 +264,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
           <Toggle checked={!!p.view_snapshot} onChange={() => togglePermission(key, 'view_snapshot')} />
         </td>
+        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
+          <Toggle checked={!!p.manage_drive} onChange={() => togglePermission(key, 'manage_drive')} />
+        </td>
         {isITAdmin && (
           <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
             <Toggle checked={!!p.manage_access_control} onChange={() => togglePermission(key, 'manage_access_control')} />
@@ -334,6 +338,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View cam snaps</span>
                   </div>
                 </th>
+                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
+                  <div className="flex flex-col items-center">
+                    <span className="uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Drive</span>
+                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Manage company files</span>
+                  </div>
+                </th>
                 {isITAdmin && (
                   <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                     <div className="flex flex-col items-center">
@@ -358,7 +368,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               {users.filter(u => !u.department).length > 0 && (
                 <>
                   <tr className="bg-slate-50 dark:bg-gray-900/50 border-b border-slate-100 dark:border-gray-800">
-                    <td colSpan={7} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-500 text-xs uppercase tracking-wider">Unassigned / No Department</td>
+                    <td colSpan={isITAdmin ? 9 : 8} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-500 text-xs uppercase tracking-wider">Unassigned / No Department</td>
                   </tr>
                   {users.filter(u => !u.department).map(user => (
                     renderMatrixRow(user.full_name, user.roles?.role_name || 'No Role', `user_${user.id}`, false)

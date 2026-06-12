@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { supabase } from '../../lib/supabase';
 import { toWords } from 'number-to-words';
 
-// Define the interface for client data
 export interface ClientData {
   id: string; // Used as client_id in supabase
   name: string;
   ic: string;
   address: string;
+  payments?: (string | number | null)[];
 }
 
 interface BillingGeneratorProps {
@@ -19,14 +19,55 @@ interface BillingGeneratorProps {
 
 export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, onSuccess }) => {
   const [documentType, setDocumentType] = useState<'invoice' | 'receipt'>('invoice');
-  const [items, setItems] = useState<{ description: string; amount: string }[]>([{ description: '', amount: '' }]);
+  const [items, setItems] = useState<{ description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([{ description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
   const [deposit, setDeposit] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  // Removed billing_records fetch since payments come from clientData
+
+  const getPaymentOrdinalString = (index: number, count: number) => {
+    const num = count + index + 1;
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return num + "st Payment";
+    if (j === 2 && k !== 12) return num + "nd Payment";
+    if (j === 3 && k !== 13) return num + "rd Payment";
+    return num + "th Payment";
+  };
+
+  useEffect(() => {
+    if (documentType === 'receipt') {
+      const pastPayments = clientData.payments ? clientData.payments.filter(p => p !== null && p !== '' && p !== undefined && p !== 0 && p !== '0') : [];
+      
+      const populatedItems = pastPayments.map((amt, index) => ({
+        description: '',
+        qty: '',
+        unitPrice: '',
+        paymentDetails: getPaymentOrdinalString(index, 0),
+        date: '',
+        amount: String(amt).replace(/,/g, '')
+      }));
+
+      // Add one blank item for the new payment
+      populatedItems.push({
+        description: '',
+        qty: '',
+        unitPrice: '',
+        paymentDetails: getPaymentOrdinalString(populatedItems.length, 0),
+        date: '',
+        amount: ''
+      });
+
+      setItems(populatedItems);
+    } else {
+      setItems([{ description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+    }
+  }, [documentType, clientData.payments]);
 
   const addItem = () => {
     if (items.length < 6) {
-      setItems([...items, { description: '', amount: '' }]);
+      const nextPayment = getPaymentOrdinalString(items.length, 0);
+      setItems([...items, { description: '', qty: '', unitPrice: '', paymentDetails: documentType === 'receipt' ? nextPayment : '', date: '', amount: '' }]);
     }
   };
 
@@ -34,9 +75,20 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: 'description' | 'amount', value: string) => {
+  const updateItem = (index: number, field: 'description' | 'qty' | 'unitPrice' | 'paymentDetails' | 'date' | 'amount', value: string) => {
     const newItems = [...items];
     newItems[index][field] = value;
+
+    if (documentType === 'invoice' && (field === 'qty' || field === 'unitPrice')) {
+      const q = Number(newItems[index].qty) || 0;
+      const u = Number(newItems[index].unitPrice) || 0;
+      if (newItems[index].qty || newItems[index].unitPrice) {
+        newItems[index].amount = (q * u).toFixed(2);
+      } else {
+        newItems[index].amount = '';
+      }
+    }
+
     setItems(newItems);
   };
 
@@ -45,8 +97,9 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
   const generateDocument = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.some(item => !item.description || !item.amount)) {
-      setStatusMessage({ type: 'error', text: 'Please fill in description and amount for all items.' });
+    const hasAnyItem = items.some(item => item.description || item.amount || item.qty || item.unitPrice || item.paymentDetails || item.date);
+    if (!hasAnyItem) {
+      setStatusMessage({ type: 'error', text: 'Please add at least one item detail.' });
       return;
     }
 
@@ -114,6 +167,8 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         totalX: 513, totalY: 472.7,
         totalWordsX: 150, totalWordsY: 472.7,
         refNumberBottomX: 0, refNumberBottomY: 0, // Unused for invoice
+        qtyStartX: 448, qtyStartY: 566.2, qtyLineHeight: 9.6,
+        unitPriceStartX: 472, unitPriceStartY: 566.2, unitPriceLineHeight: 9.6,
       };
 
       const receiptCoords = {
@@ -123,12 +178,14 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         refNumberX: 457.3, refNumberY: 588.68,
         dateX: 457.3, dateY: 548.88,
         descStartX: 71.25, descStartY: 496, descLineHeight: 11,
-        amountStartX: 465, amountStartY: 496, amountLineHeight: 11,
+        amountStartX: 467, amountStartY: 496, amountLineHeight: 11,
         subtotalX: 0, subtotalY: 0, // Unused
         depositX: 0, depositY: 0, // Unused
-        totalX: 465, totalY: 407.499,
+        totalX: 467, totalY: 407.499,
         totalWordsX: 0, totalWordsY: 0, // Unused
         refNumberBottomX: 71.25, refNumberBottomY: 393, // Put a placeholder Y for bottom ref number
+        paymentDetailsStartX: 335, paymentDetailsStartY: 496, paymentDetailsLineHeight: 11,
+        itemDateStartX: 405, itemDateStartY: 496, itemDateLineHeight: 11,
       };
 
       const coords = documentType === 'invoice' ? invoiceCoords : receiptCoords;
@@ -152,6 +209,8 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         total: { font: customFontBold, color: rgb(0, 0, 0), size: invoiceFontSize },     // Example: Bold total
         totalWords: { font: customFontBold, color: rgb(0, 0, 0), size: invoiceFontSize },
         refNumberBottom: { font: customFontBold, color: rgb(0, 0, 0), size: invoiceFontSize },
+        qty: { font: customFont, color: rgb(0, 0, 0), size: invoiceFontSize },
+        unitPrice: { font: customFont, color: rgb(0, 0, 0), size: invoiceFontSize },
       };
 
       const receiptStyles = {
@@ -167,6 +226,8 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         total: { font: customFontBold, color: rgb(224 / 255, 27 / 255, 132 / 255), size: receiptFontSize }, // Example: Bold total
         totalWords: { font: customFontBold, color: rgb(0, 0, 0), size: receiptFontSize }, // Unused
         refNumberBottom: { font: customFontBold, color: rgb(0, 0, 0), size: receiptFontSize },
+        paymentDetails: { font: customFont, color: rgb(0, 0, 0), size: receiptFontSize },
+        itemDate: { font: customFont, color: rgb(0, 0, 0), size: receiptFontSize },
       };
 
       const styles = documentType === 'invoice' ? invoiceStyles : receiptStyles;
@@ -186,9 +247,28 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       items.forEach((item, index) => {
         const currentDescY = coords.descStartY - (index * coords.descLineHeight);
         const currentAmountY = coords.amountStartY - (index * coords.amountLineHeight);
-        firstPage.drawText(`${item.description}`, { x: coords.descStartX, y: currentDescY, ...styles.desc });
+        if (item.description) {
+          firstPage.drawText(`${item.description}`, { x: coords.descStartX, y: currentDescY, ...styles.desc });
+        }
         if (item.amount) {
           firstPage.drawText(formatCurrency(item.amount), { x: coords.amountStartX, y: currentAmountY, ...styles.amount });
+        }
+        if (documentType === 'invoice') {
+          const currentQtyY = (coords as typeof invoiceCoords).qtyStartY - (index * (coords as typeof invoiceCoords).qtyLineHeight);
+          const currentUnitPriceY = (coords as typeof invoiceCoords).unitPriceStartY - (index * (coords as typeof invoiceCoords).unitPriceLineHeight);
+          if (item.qty) firstPage.drawText(`${item.qty}`, { x: (coords as typeof invoiceCoords).qtyStartX, y: currentQtyY, ...invoiceStyles.qty });
+          if (item.unitPrice) firstPage.drawText(formatCurrency(item.unitPrice), { x: (coords as typeof invoiceCoords).unitPriceStartX, y: currentUnitPriceY, ...invoiceStyles.unitPrice });
+        } else {
+          const currentPaymentY = (coords as typeof receiptCoords).paymentDetailsStartY - (index * (coords as typeof receiptCoords).paymentDetailsLineHeight);
+          const currentDateY = (coords as typeof receiptCoords).itemDateStartY - (index * (coords as typeof receiptCoords).itemDateLineHeight);
+          if (item.paymentDetails) firstPage.drawText(`${item.paymentDetails}`, { x: (coords as typeof receiptCoords).paymentDetailsStartX, y: currentPaymentY, ...receiptStyles.paymentDetails });
+
+          let printDate = item.date;
+          if (item.date && item.date.includes('-') && item.date.split('-')[0].length === 4) {
+            const [year, month, day] = item.date.split('-');
+            printDate = `${day}/${month}/${year}`;
+          }
+          if (item.date) firstPage.drawText(`${printDate}`, { x: (coords as typeof receiptCoords).itemDateStartX, y: currentDateY, ...receiptStyles.itemDate });
         }
       });
 
@@ -202,10 +282,11 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
         const toTitleCase = (str: string) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 
-        let totalWordsStr = integerPart === 0 ? 'Zero' : toTitleCase(toWords(integerPart).replace(/,/g, '').replace(/-/g, ' '));
+        let rawWords = integerPart === 0 ? 'Zero' : toTitleCase(toWords(integerPart).replace(/,/g, '').replace(/-/g, ' '));
+        let totalWordsStr = rawWords.replace(/(.*(?:Hundred|Thousand|Million|Billion))\s+(.+)/i, '$1 and $2');
         if (decimalPart > 0) {
           const decimalWords = toTitleCase(toWords(decimalPart).replace(/,/g, '').replace(/-/g, ' '));
-          totalWordsStr += ` And ${decimalWords} Cents`;
+          totalWordsStr += ` and ${decimalWords} Cents`;
         }
         totalWordsStr += ' Only';
 
@@ -236,32 +317,38 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         window.URL.revokeObjectURL(url);
       }, 1000);
 
-      // 6. Upload to backend
-      const base64data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-      });
+      // 6. Upload to Supabase Storage
+      const docCategory = documentType === 'invoice' ? 'Invoices' : 'Receipts';
+      const now = new Date();
+      const yearStr = now.getFullYear().toString();
+      const monthNames = [
+        '01-January', '02-February', '03-March', '04-April', '05-May', '06-June', 
+        '07-July', '08-August', '09-September', '10-October', '11-November', '12-December'
+      ];
+      const monthStr = monthNames[now.getMonth()];
+      
+      // Target path: e.g. "Invoices/2026/01-January/INV123.pdf"
+      const filePath = `${docCategory}/${yearStr}/${monthStr}/${fileName}`;
 
-      const uploadRes = await fetch('/api/drive-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file: base64data,
-          fileName: fileName,
-          documentType: documentType,
-          mimeType: 'application/pdf'
-        }),
-      });
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('billing_documents')
+        .upload(filePath, blob, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
 
-      const resData = await uploadRes.json();
-
-      if (!uploadRes.ok) {
-        throw new Error(resData.error || 'Failed to upload to Google Drive');
+      if (uploadError) {
+        throw new Error(uploadError.message || 'Failed to upload to Supabase Storage');
       }
 
-      // 7. Insert to Supabase on 200 OK
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('billing_documents')
+        .getPublicUrl(filePath);
+
+      const fileUrl = publicUrlData.publicUrl;
+
+      // 7. Insert to Supabase database
       const { error: dbError } = await supabase
         .from('billing_records')
         .insert([
@@ -270,7 +357,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
             document_type: documentType,
             ref_number: refNumber,
             amount: total,
-            drive_url: resData.webViewLink || null,
+            drive_url: fileUrl,
           }
         ]);
 
@@ -345,40 +432,95 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
           <div className="space-y-3">
             {items.map((item, index) => (
-              <div key={index} className="flex gap-3 items-start">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="w-1/3">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Amount (RM)"
-                    value={item.amount}
-                    onChange={(e) => updateItem(index, 'amount', e.target.value)}
-                    required
-                  />
-                </div>
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="mt-2 text-red-500 hover:text-red-700"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+              <div key={index} className="flex flex-col sm:flex-row gap-2 items-start w-full bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-slate-100 sm:border-none mb-2 sm:mb-0">
+                {documentType === 'invoice' ? (
+                  <div className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:flex-[4.5]">
+                    <div className="col-span-2 sm:flex-[2]">
+                      <input
+                        type="text"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 sm:flex-1">
+                      <input
+                        type="number"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Qty"
+                        value={item.qty}
+                        onChange={(e) => updateItem(index, 'qty', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 sm:flex-[1.5]">
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Unit Price"
+                        value={item.unitPrice}
+                        onChange={(e) => updateItem(index, 'unitPrice', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:flex-[3]">
+                    <div className="col-span-2 sm:flex-1">
+                      <input
+                        type="text"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 sm:flex-1">
+                      <input
+                        type="text"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Payment Details"
+                        value={item.paymentDetails}
+                        onChange={(e) => updateItem(index, 'paymentDetails', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 sm:flex-1">
+                      <input
+                        type="date"
+                        className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm"
+                        placeholder="Date"
+                        value={item.date}
+                        onChange={(e) => updateItem(index, 'date', e.target.value)}
+                      />
+                    </div>
+                  </div>
                 )}
+                
+                <div className="w-full sm:w-auto flex items-center sm:items-start gap-2 mt-1 sm:mt-0 sm:flex-[1.5]">
+                  <div className="flex-1 sm:w-full">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className={`w-full px-2 py-2 border border-gray-300 rounded-lg outline-none transition text-sm ${documentType === 'invoice' ? 'bg-gray-100 cursor-not-allowed' : 'focus:ring-blue-500 focus:border-blue-500'}`}
+                      placeholder="Amount (RM)"
+                      value={item.amount}
+                      onChange={(e) => updateItem(index, 'amount', e.target.value)}
+                      readOnly={documentType === 'invoice'}
+                    />
+                  </div>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="p-2 sm:p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 sm:mt-0.5"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

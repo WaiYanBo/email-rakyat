@@ -158,11 +158,25 @@ export default function ClientDataView() {
 
   // --- HANDLERS ---
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
-  const handleOpenEditModal = (client: any) => { setEditingClient(client); setIsModalOpen(true); };
+  const handleOpenEditModal = async (client: any) => { 
+    setEditingClient(client); 
+    setIsModalOpen(true); 
+    if (client?.id) {
+      const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
+      if (data) setEditingClient({ ...data, _stableKey: client._stableKey });
+    }
+  };
   const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); };
 
   // New Handlers for the View Detail Box
-  const handleOpenViewModal = (client: any) => { setViewingClient(client); setIsViewModalOpen(true); };
+  const handleOpenViewModal = async (client: any) => { 
+    setViewingClient(client); 
+    setIsViewModalOpen(true); 
+    if (client?.id) {
+      const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
+      if (data) setViewingClient({ ...data, _stableKey: client._stableKey });
+    }
+  };
   const handleCloseViewModal = () => { setIsViewModalOpen(false); setViewingClient(null); };
 
   const handleExportFull = async () => {
@@ -491,29 +505,42 @@ export default function ClientDataView() {
       {/* BILLING GENERATOR MODAL */}
       {isBillingModalOpen && viewingClient && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="relative w-full max-w-xl">
-            <button
-              onClick={() => setIsBillingModalOpen(false)}
-              className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+          <div className="relative w-full max-w-xl max-h-[95vh] flex flex-col">
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setIsBillingModalOpen(false)}
+                className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
+              >
+                <span className="text-sm font-semibold">Close</span>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto rounded-xl shadow-2xl bg-white">
             <BillingGenerator
               clientData={{
                 id: viewingClient.id,
                 name: viewingClient.NAME || 'N/A',
                 ic: viewingClient['IC NUMBER'] || 'N/A',
-                address: viewingClient.ADDRESS || 'N/A'
+                address: viewingClient.ADDRESS || 'N/A',
+                payments: [
+                  viewingClient['1ST PAYMENT'] ?? viewingClient['1st PAYMENT'] ?? viewingClient['1st payment'],
+                  viewingClient['2ND PAYMENT'] ?? viewingClient['2nd PAYMENT'] ?? viewingClient['2nd payment'],
+                  viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
+                  viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
+                  viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
+                  viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment']
+                ]
               }}
               onSuccess={() => {
                 setTimeout(() => {
                   setIsBillingModalOpen(false);
                   loadBillingRecords(viewingClient.id);
-                }, 1500); // Give user a brief moment to see success message before closing
+                }, 1500);
               }}
             />
+            </div>
           </div>
         </div>
       )}

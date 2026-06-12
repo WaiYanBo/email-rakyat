@@ -1,0 +1,10 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import FileDriveView from '../../components/FileDriveView';
+---
+
+<DashboardLayout title="Pemacu Syarikat">
+  <div class="h-full">
+    <FileDriveView client:only="react" />
+  </div>
+</DashboardLayout>

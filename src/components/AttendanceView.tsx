@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
-
+import { exportAttendanceToExcel } from '../utils/excelExport';
 export default function AttendanceView() {
   const [profile, setProfile] = useState<any>(null);
   const { permissions, loading: permsLoading } = usePermissions(profile);
@@ -148,27 +148,8 @@ export default function AttendanceView() {
       return;
     }
 
-    const exportData = filteredRecords.map(record => ({
-      'Employee Name': record.user_name || '-',
-      'Date': record.date || '-',
-      'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
-      'Check In Location': record.check_in_distance !== null ? `${record.check_in_distance}m` : '-',
-      'Check In Status': record.check_in_within_zone ? 'In Zone' : 'Outside Zone',
-      'Check Out Time': record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '-',
-      'Check Out Location': record.check_out_distance !== null ? `${record.check_out_distance}m` : '-',
-      'Check Out Status': record.check_out_within_zone ? 'In Zone' : 'Outside Zone',
-      'Late Checkout': record.is_late_checkout ? 'Yes (Flagged to CFO, HR, IT)' : 'No'
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Attendance Records');
-
-    const colWidths = [20, 12, 15, 15, 15, 15, 15, 15];
-    ws['!cols'] = colWidths.map(width => ({ wch: width }));
-
-    const filename = `Attendance_${filterMode === 'date' ? selectedDate : selectedMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    // Call the new utility function
+    exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth);
   };
 
   const hasAccess = permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');

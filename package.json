@@ -15,7 +15,7 @@
     "@fontsource/inter": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@pdf-lib/fontkit": "^1.1.1",
-    "@supabase/supabase-js": "^2.106.1",
+    "@supabase/supabase-js": "^2.108.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/number-to-words": "^1.2.3",
     "@types/react": "^19.2.15",
@@ -30,6 +30,7 @@
     "react-dom": "^19.2.6",
     "react-easy-crop": "^5.5.7",
     "tailwindcss": "^4.1.18",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
+    "xlsx-js-style": "^1.2.0"
   }
 }

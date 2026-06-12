@@ -137,6 +137,11 @@ export default function ReportsView() {
     const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern HR';
     const allowedStatuses = ['Active', 'On Leave', 'Resigned'];
     const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
+    
+    let finalDept = cleanDept;
+    if (['Chairman', 'CEO', 'COO', 'CFO'].includes(cleanRole)) {
+      finalDept = 'BOD';
+    }
 
     if (!cleanName) {
       alert('Staff name is required.');
@@ -162,7 +167,7 @@ export default function ReportsView() {
           .upsert({
             id: editingStaff.id,
             full_name: cleanName,
-            department: cleanDept,
+            department: finalDept,
             role_id: roleObj.id,
             salary: cleanSalary,
             status: cleanStatus,
@@ -207,7 +212,7 @@ export default function ReportsView() {
           .upsert({
             id: authData.user.id,
             full_name: cleanName,
-            department: cleanDept,
+            department: finalDept,
             role_id: roleObj.id,
             salary: cleanSalary,
             status: cleanStatus,
@@ -596,6 +601,10 @@ export default function ReportsView() {
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Job Role</label>
                       <select name="role" defaultValue={editingStaff?.roles?.role_name || 'Executive'} className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-slate-900 dark:text-zinc-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
+                        <option value="Chairman">Chairman</option>
+                        <option value="CEO">CEO</option>
+                        <option value="COO">COO</option>
+                        <option value="CFO">CFO</option>
                         <option value="General Manager">General Manager</option>
                         <option value="Head of Department">Head of Department</option>
                         <option value="Senior Executive">Senior Executive</option>

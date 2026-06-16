@@ -22,7 +22,11 @@ CREATE POLICY "Drive SELECT Policy"
       OR 
       -- Department Isolated Access: Any user can read their own department folder
       (
-        (storage.foldername(name))[1] = (SELECT department FROM public.profiles WHERE id = auth.uid())
+        LOWER((storage.foldername(name))[1]) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid())) || '/'
       )
     )
   );
@@ -42,7 +46,11 @@ CREATE POLICY "Drive INSERT Policy"
       OR 
       -- Department Isolated Access: Any user can upload to their own department folder
       (
-        (storage.foldername(name))[1] = (SELECT department FROM public.profiles WHERE id = auth.uid())
+        LOWER((storage.foldername(name))[1]) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid())) || '/'
       )
     )
   );
@@ -60,7 +68,11 @@ CREATE POLICY "Drive UPDATE Policy"
       )
       OR 
       (
-        (storage.foldername(name))[1] = (SELECT department FROM public.profiles WHERE id = auth.uid())
+        LOWER((storage.foldername(name))[1]) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid())) || '/'
       )
     )
   );
@@ -78,7 +90,11 @@ CREATE POLICY "Drive DELETE Policy"
       )
       OR 
       (
-        (storage.foldername(name))[1] = (SELECT department FROM public.profiles WHERE id = auth.uid())
+        LOWER((storage.foldername(name))[1]) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid()))
+        OR
+        LOWER(name) = LOWER((SELECT department FROM public.profiles WHERE id = auth.uid())) || '/'
       )
     )
   );

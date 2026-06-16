@@ -92,13 +92,106 @@ export default function PortalSidebar() {
     return currentPath.startsWith(path);
   };
 
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
+
+export default function PortalSidebar() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentPath, setCurrentPath] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { lang, setLang } = usePortalLanguage();
+  const { permissions } = usePermissions(profile);
+
+  useEffect(() => {
+    setCurrentPath(window.location.pathname);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('portal-theme') as 'light' | 'dark' | null;
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+        setTheme(savedTheme);
+      }
+    } catch (error) {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('portal-theme', theme);
+      const htmlElement = document.documentElement;
+      if (theme === 'dark') {
+        htmlElement.classList.add('dark');
+      } else {
+        htmlElement.classList.remove('dark');
+      }
+    } catch (error) {}
+  }, [theme]);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/portal/login';
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select(`id, full_name, department, avatar_url, roles ( role_name )`)
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileData) {
+        setProfile({
+          id: profileData.id,
+          name: profileData.full_name,
+          department: profileData.department,
+          avatar_url: profileData.avatar_url,
+          role: profileData.roles?.role_name || 'No Role',
+        });
+      }
+      setLoading(false);
+    }
+    loadProfile();
+  }, []);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [currentPath]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleLogout = async () => {
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      // ignore
+    }
+    await supabase.auth.signOut();
+    window.location.href = '/portal/login';
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/portal' || path === '/portal/') {
+      return currentPath === '/portal' || currentPath === '/portal/' || currentPath === '/portal/index.astro';
+    }
+    return currentPath.startsWith(path);
+  };
+
   // Renders navigation item details with clean icons
   const getNavItems = () => {
     if (!profile) return [];
 
     const canViewClients = permissions?.view_clients || false;
     const canViewReports = permissions?.view_staff || false;
-    const canManageDrive = permissions?.manage_drive || false;
     const canViewAttendance = permissions?.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
 
     const items = [
@@ -153,24 +246,19 @@ export default function PortalSidebar() {
       });
     }
 
-    if (canManageDrive) {
-      items.push({
-        label: t('sidebar', 'navDrive', lang),
-        path: '/portal/pemacu',
-        activeClass: 'bg-emerald-50/70 text-emerald-700 border-emerald-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
-        icon: (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-          </svg>
-        )
-      });
-    }
+    items.push({
+      label: t('sidebar', 'navDrive', lang),
+      path: '/portal/pemacu',
+      activeClass: 'bg-emerald-50/70 text-emerald-700 border-emerald-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      )
+    });
 
     items.push({
       label: t('sidebar', 'navSettings', lang),
-      path: '/portal/tetapan',
-      activeClass: 'bg-indigo-50/70 text-indigo-700 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500',
-      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>

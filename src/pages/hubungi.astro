@@ -1,182 +1,295 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Hero from '../components/Hero.astro';
-import { Image } from 'astro:assets';
+import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import { Image } from "astro:assets";
 
 // Import images from src/assets
-import hubungiBg from '../assets/hubungi.webp';
-import azizulImg from '../assets/Azizul.png';
+import hubungiBg from "../assets/hubungi.webp";
+import shazzImg from "../assets/shazz.webp";
 ---
 
 <Layout
   title="Hubungi Kami - Email Rakyat"
   description="Saluran rasmi untuk bantuan mangsa Ah Long. Hubungi kami segera."
 >
-    <Hero
-      line1="HUBUNGI KAMI"
-      showDetails={false}
-      backgroundImage={hubungiBg}
-    />
+  <Hero line1="HUBUNGI KAMI" showDetails={false} backgroundImage={hubungiBg} />
 
-    <div class="max-w-7xl mx-auto px-4 py-10 w-full">
+  <div class="max-w-7xl mx-auto px-4 py-10 w-full">
+    <div class="text-center mb-8 max-w-3xl mx-auto">
+      <h2
+        class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3"
+      >
+        SALURAN <span class="text-yellow-500">RASMI</span>
+      </h2>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-2xl mx-auto">
+        Sekiranya anda memerlukan khidmat nasihat atau bantuan lanjut, sila
+        hubungi Team Email Rakyat untuk membuat temu janji. Data anda
+        dirahsiakan sepenuhnya.
+      </p>
+    </div>
 
-      <div class="text-center mb-8 max-w-3xl mx-auto">
-        <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3">
-          SALURAN <span class="text-yellow-500">RASMI</span>
-        </h2>
-        <p class="text-gray-400 text-sm leading-relaxed max-w-2xl mx-auto">
-          Sekiranya anda memerlukan khidmat nasihat atau bantuan lanjut, sila hubungi Team Email Rakyat untuk membuat temu janji. Data anda dirahsiakan sepenuhnya.
-        </p>
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+      <div
+        class="bg-gray-900/60 backdrop-blur-md rounded-lg p-8 border border-gray-700/50 shadow-2xl hover:border-yellow-500/50 transition-all duration-300 group relative overflow-hidden"
+      >
+        <div
+          class="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"
+        >
+        </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-
-        <div class="bg-gray-900/60 backdrop-blur-md rounded-lg p-8 border border-gray-700/50 shadow-2xl hover:border-yellow-500/50 transition-all duration-300 group relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
-
-          <div class="flex items-center gap-5 mb-5 border-b border-gray-700 pb-5">
-             <Image
-               src={azizulImg}
-               alt="Muhammad Azizul"
-               class="w-14 h-14 rounded-full object-cover border border-gray-600 shadow-lg group-hover:border-yellow-500 transition-colors"
-             />
-             <div>
-               <p class="text-[10px] text-yellow-500 font-bold uppercase tracking-widest mb-1">Pegawai Bertugas</p>
-               <h3 class="text-lg font-black text-white tracking-wide">Muhammad Azizul</h3>
-               <p class="text-gray-400 text-xs">Pegawai Perhubungan Awam</p>
-             </div>
-          </div>
-
-          <div class="space-y-3">
-            <a
-              href="https://WaiYanTeamEmailRakyat.wasap.my"
-              target="_blank"
-              rel="noopener noreferrer"
-              onclick="return gtag_report_conversion('https://WaiYanTeamEmailRakyat.wasap.my');"
-              class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-yellow-500 hover:bg-gray-800 transition-all cursor-pointer group/item"
+        <div class="flex items-center gap-5 mb-5 border-b border-gray-700 pb-5">
+          <Image
+            src={shazzImg}
+            alt="Puan Shazz Medley"
+            class="w-14 h-14 rounded-full object-cover border border-gray-600 shadow-lg group-hover:border-yellow-500 transition-colors"
+          />
+          <div>
+            <p
+              class="text-[10px] text-yellow-500 font-bold uppercase tracking-widest mb-1"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-4 text-gray-400 group-hover/item:text-yellow-500 transition-colors">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-              </svg>
-              <div>
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Telefon / WhatsApp</p>
-                <p class="text-white font-mono text-sm font-bold group-hover/item:text-yellow-500 transition-colors">012-409 9956</p>
-              </div>
-            </a>
-
-            <a
-              href="#"
-              id="email-link"
-              data-user="aduan"
-              data-domain="e-rakyat.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-yellow-500 hover:bg-gray-800 transition-all cursor-pointer group/item"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-4 text-gray-400 group-hover/item:text-yellow-500 transition-colors">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-              </svg>
-              <div>
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Email Rasmi</p>
-                <p id="email-display" class="text-white font-mono text-sm font-bold group-hover/item:text-yellow-500 transition-colors break-all">Klik untuk paparkan emel</p>
-              </div>
-            </a>
-
-            <script is:inline>
-              (function () {
-                var link = document.getElementById('email-link');
-                if (!link) return;
-                var display = document.getElementById('email-display');
-                var revealed = false;
-                function reveal() {
-                  if (revealed) return;
-                  revealed = true;
-                  var email = link.dataset.user + '\u0040' + link.dataset.domain;
-                  if (display) display.textContent = email;
-                  link.setAttribute('href', 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email));
-                }
-                link.addEventListener('mouseenter', reveal);
-                link.addEventListener('focus', reveal);
-                link.addEventListener('touchstart', reveal, { passive: true });
-                link.addEventListener('click', reveal);
-              })();
-            </script>
+              Pegawai Bertugas
+            </p>
+            <h3 class="text-lg font-black text-white tracking-wide">
+              Puan Shazz Medley
+            </h3>
+            <p class="text-gray-400 text-xs">Pengurus Pentadbiran</p>
           </div>
         </div>
 
-        <div class="bg-gray-900/60 backdrop-blur-md rounded-lg p-8 border border-gray-700/50 shadow-2xl hover:border-yellow-500/50 transition-all duration-300 group relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+        <div class="space-y-3">
+          <a
+            href="https://WaiYanTeamEmailRakyat.wasap.my"
+            target="_blank"
+            rel="noopener noreferrer"
+            onclick="return gtag_report_conversion('https://WaiYanTeamEmailRakyat.wasap.my');"
+            class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-yellow-500 hover:bg-gray-800 transition-all cursor-pointer group/item"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 mr-4 text-gray-400 group-hover/item:text-yellow-500 transition-colors"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"
+              ></path>
+            </svg>
+            <div>
+              <p class="text-[10px] text-gray-500 uppercase font-bold">
+                Telefon / WhatsApp
+              </p>
+              <p
+                class="text-white font-mono text-sm font-bold group-hover/item:text-yellow-500 transition-colors"
+              >
+                012-623 2949
+              </p>
+            </div>
+          </a>
 
-          <div class="flex items-center gap-5 mb-5 border-b border-gray-700 pb-5">
-             <div class="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center text-2xl border border-gray-600 shadow-lg group-hover:border-yellow-500 transition-colors text-white">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-             </div>
-             <div>
-               <p class="text-[10px] text-yellow-500 font-bold uppercase tracking-widest mb-1">Info Operasi</p>
-               <h3 class="text-lg font-black text-white tracking-wide">JADUAL KAMI</h3>
-               <p class="text-gray-400 text-xs">Selasa - Ahad</p>
-             </div>
+          <a
+            href="#"
+            id="email-link"
+            data-user="aduan"
+            data-domain="e-rakyat.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700 hover:border-yellow-500 hover:bg-gray-800 transition-all cursor-pointer group/item"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 mr-4 text-gray-400 group-hover/item:text-yellow-500 transition-colors"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+              ></path>
+            </svg>
+            <div>
+              <p class="text-[10px] text-gray-500 uppercase font-bold">
+                Email Rasmi
+              </p>
+              <p
+                id="email-display"
+                class="text-white font-mono text-sm font-bold group-hover/item:text-yellow-500 transition-colors break-all"
+              >
+                Klik untuk paparkan emel
+              </p>
+            </div>
+          </a>
+
+          <script is:inline>
+            (function () {
+              var link = document.getElementById("email-link");
+              if (!link) return;
+              var display = document.getElementById("email-display");
+              var revealed = false;
+              function reveal() {
+                if (revealed) return;
+                revealed = true;
+                var email = link.dataset.user + "\u0040" + link.dataset.domain;
+                if (display) display.textContent = email;
+                link.setAttribute(
+                  "href",
+                  "https://mail.google.com/mail/?view=cm&fs=1&to=" +
+                    encodeURIComponent(email),
+                );
+              }
+              link.addEventListener("mouseenter", reveal);
+              link.addEventListener("focus", reveal);
+              link.addEventListener("touchstart", reveal, { passive: true });
+              link.addEventListener("click", reveal);
+            })();
+          </script>
+        </div>
+      </div>
+
+      <div
+        class="bg-gray-900/60 backdrop-blur-md rounded-lg p-8 border border-gray-700/50 shadow-2xl hover:border-yellow-500/50 transition-all duration-300 group relative overflow-hidden"
+      >
+        <div
+          class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"
+        >
+        </div>
+
+        <div class="flex items-center gap-5 mb-5 border-b border-gray-700 pb-5">
+          <div
+            class="w-14 h-14 bg-gray-900 rounded-full flex items-center justify-center text-2xl border border-gray-600 shadow-lg group-hover:border-yellow-500 transition-colors text-white"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-7 h-7"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+            </svg>
           </div>
+          <div>
+            <p
+              class="text-[10px] text-yellow-500 font-bold uppercase tracking-widest mb-1"
+            >
+              Info Operasi
+            </p>
+            <h3 class="text-lg font-black text-white tracking-wide">
+              JADUAL KAMI
+            </h3>
+            <p class="text-gray-400 text-xs">Selasa - Ahad</p>
+          </div>
+        </div>
 
-          <div class="space-y-3">
-            <div class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-4 text-gray-400">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-              <div>
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Waktu Operasi</p>
-                <p class="text-white font-bold text-sm">10:00 Pagi – 6:00 Petang</p>
-                <p class="text-[10px] text-yellow-500 mt-1 font-bold">Setiap Hari (Kecuali Isnin)</p>
-              </div>
+        <div class="space-y-3">
+          <div
+            class="flex items-center p-3 bg-gray-900 rounded-lg border border-gray-700"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6 mr-4 text-gray-400"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path>
+            </svg>
+            <div>
+              <p class="text-[10px] text-gray-500 uppercase font-bold">
+                Waktu Operasi
+              </p>
+              <p class="text-white font-bold text-sm">
+                10:00 Pagi – 6:00 Petang
+              </p>
+              <p class="text-[10px] text-yellow-500 mt-1 font-bold">
+                Setiap Hari (Kecuali Isnin)
+              </p>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
+    <section
+      class="mt-10 bg-gradient-to-br from-gray-900/80 to-black rounded-xl border border-gray-800 p-6 md:p-8 shadow-2xl"
+    >
+      <div class="max-w-4xl">
+        <div
+          class="inline-block px-3 py-1 mb-4 text-[10px] font-semibold tracking-wider text-yellow-500 uppercase bg-yellow-500/10 rounded-full border border-yellow-500/20"
+        >
+          Sebelum Hubungi Kami
+        </div>
+        <h3
+          class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3"
+        >
+          Sediakan Maklumat Asas Ini
+        </h3>
+        <p class="text-gray-400 text-sm md:text-base leading-relaxed max-w-3xl">
+          Untuk mempercepatkan semakan awal kes, sediakan butiran ringkas yang
+          penting. Ini membantu kami memahami situasi anda dengan lebih jelas
+          tanpa mengubah proses atau gaya bantuan semasa.
+        </p>
       </div>
 
-      <section class="mt-10 bg-gradient-to-br from-gray-900/80 to-black rounded-xl border border-gray-800 p-6 md:p-8 shadow-2xl">
-        <div class="max-w-4xl">
-          <div class="inline-block px-3 py-1 mb-4 text-[10px] font-semibold tracking-wider text-yellow-500 uppercase bg-yellow-500/10 rounded-full border border-yellow-500/20">
-            Sebelum Hubungi Kami
-          </div>
-          <h3 class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3">
-            Sediakan Maklumat Asas Ini
-          </h3>
-          <p class="text-gray-400 text-sm md:text-base leading-relaxed max-w-3xl">
-            Untuk mempercepatkan semakan awal kes, sediakan butiran ringkas yang penting. Ini membantu kami memahami situasi anda dengan lebih jelas tanpa mengubah proses atau gaya bantuan semasa.
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
+          <p
+            class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2"
+          >
+            1. Butiran Kes
+          </p>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            Nama pihak terlibat, jenis masalah, tempoh gangguan, dan sama ada
+            kes melibatkan Ah Long, debt collector, atau syarikat kredit.
           </p>
         </div>
-
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
-            <p class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2">1. Butiran Kes</p>
-            <p class="text-sm text-gray-300 leading-relaxed">
-              Nama pihak terlibat, jenis masalah, tempoh gangguan, dan sama ada kes melibatkan Ah Long, debt collector, atau syarikat kredit.
-            </p>
-          </div>
-          <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
-            <p class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2">2. Bukti Sokongan</p>
-            <p class="text-sm text-gray-300 leading-relaxed">
-              Simpan tangkap layar WhatsApp, rakaman panggilan, nombor akaun, resit bayaran, surat tuntutan, atau gambar gangguan jika ada.
-            </p>
-          </div>
-          <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
-            <p class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2">3. Status Terkini</p>
-            <p class="text-sm text-gray-300 leading-relaxed">
-              Maklumkan sama ada laporan polis sudah dibuat, ada ancaman semasa, atau anda memerlukan bimbingan segera untuk langkah seterusnya.
-            </p>
-          </div>
+        <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
+          <p
+            class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2"
+          >
+            2. Bukti Sokongan
+          </p>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            Simpan tangkap layar WhatsApp, rakaman panggilan, nombor akaun,
+            resit bayaran, surat tuntutan, atau gambar gangguan jika ada.
+          </p>
         </div>
-      </section>
-
-      <div class="mt-10 text-center">
-         <p class="text-gray-500 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
-           <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-           Communications are Secured with End-to-End Encryption
-         </p>
+        <div class="rounded-lg border border-gray-700 bg-gray-900/70 p-5">
+          <p
+            class="text-[10px] uppercase tracking-widest text-yellow-500 font-bold mb-2"
+          >
+            3. Status Terkini
+          </p>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            Maklumkan sama ada laporan polis sudah dibuat, ada ancaman semasa,
+            atau anda memerlukan bimbingan segera untuk langkah seterusnya.
+          </p>
+        </div>
       </div>
+    </section>
 
+    <div class="mt-10 text-center">
+      <p
+        class="text-gray-500 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+      >
+        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"
+        ></span>
+        Communications are Secured with End-to-End Encryption
+      </p>
     </div>
+  </div>
 </Layout>

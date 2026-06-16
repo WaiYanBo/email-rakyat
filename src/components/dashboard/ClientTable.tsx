@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -52,9 +52,6 @@ export default function ClientTable({
   onDateFilterChange,
   viewMode,
   onViewModeChange,
-  currentPage,
-  totalCount,
-  onPageChange,
   onExportFull,
   onAddClick,
   onEditClick,
@@ -68,9 +65,6 @@ export default function ClientTable({
   onDateFilterChange: (df: string) => void,
   viewMode: 'standard' | 'expanded',
   onViewModeChange: (mode: 'standard' | 'expanded') => void,
-  currentPage: number,
-  totalCount: number,
-  onPageChange: (page: number) => void,
   onExportFull: () => Promise<any[]>,
   onAddClick: () => void,
   onEditClick: (client: any) => void,
@@ -78,12 +72,18 @@ export default function ClientTable({
 }) {
   const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'DATE', direction: 'desc' });
   const [exportScope, setExportScope] = useState<'current' | 'full'>('current');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to first page when data (or search/filters) changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [clients, sort]);
 
   const handleSort = (key: string) => {
     setSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
   };
 
-  const filteredClients = useMemo(() => {
+  const sortedClients = useMemo(() => {
     let result = [...clients];
 
     result.sort((a: any, b: any) => {
@@ -102,17 +102,21 @@ export default function ClientTable({
     return result;
   }, [sort, clients]);
 
+  const paginatedClients = useMemo(() => {
+    const start = (currentPage - 1) * 25;
+    return sortedClients.slice(start, start + 25);
+  }, [sortedClients, currentPage]);
+
   const getExportDate = () => new Date().toISOString().split('T')[0];
 
   const getExportData = async () => {
-    const baseData = exportScope === 'full' ? await onExportFull() : filteredClients;
+    const baseData = exportScope === 'full' ? await onExportFull() : sortedClients;
 
     return baseData.map(client => {
       const { id, _stableKey, updated_at, ...cleanClient } = client;
 
       if (viewMode === 'standard' && exportScope === 'current') {
         return {
-          "Date": cleanClient.DATE || '-',
           "Name": cleanClient.NAME || '-',
           "Phone": cleanClient["PHONE NUMBER"] || '-',
           "IC Number": cleanClient["IC NUMBER"] || '-',
@@ -124,6 +128,7 @@ export default function ClientTable({
           "Investigation Paper": cleanClient["Investigation Paper"] || '-',
           "Report": cleanClient.Report || '-',
           "Action Taken by police": cleanClient["Action Taken by police"] || '-',
+          "Date": cleanClient.DATE || '-',
         };
       }
 
@@ -174,8 +179,8 @@ export default function ClientTable({
            const pendingVal = rowData["Pending (RM)"] || rowData["PENDING (RM)"];
            const isPending = hasPendingAmount(pendingVal);
            if (isPending) {
-             data.cell.styles.fillColor = [254, 249, 195]; // light yellow (yellow-100)
-             data.cell.styles.textColor = [113, 63, 18]; // high contrast dark yellow (yellow-900)
+             data.cell.styles.fillColor = [254, 226, 226]; // light red (red-100)
+             data.cell.styles.textColor = [127, 29, 29]; // high contrast dark red (red-900)
              data.cell.styles.fontStyle = 'bold';
            } else {
              data.cell.styles.fillColor = [220, 252, 231]; // light green (green-100)
@@ -277,7 +282,6 @@ export default function ClientTable({
             <thead>
               {viewMode === 'standard' ? (
                 <tr>
-                  <SortHeader label="Date" sortKey="DATE" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Name" sortKey="NAME" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Phone" sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Pending" sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
@@ -287,11 +291,12 @@ export default function ClientTable({
                   <SortHeader label="Report" sortKey="Report" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Action Taken" sortKey="Action Taken by police" currentSort={sort} onClick={handleSort} />
                   <SortHeader label="Category" sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
+                  <SortHeader label="Date" sortKey="DATE" currentSort={sort} onClick={handleSort} />
                   <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">Actions</th>
                 </tr>
               ) : (
                 <tr>
-                  {Object.keys(filteredClients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at'].includes(k)).map(key => (
+                  {Object.keys(clients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at'].includes(k)).map(key => (
                     <SortHeader key={key} label={key} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
                   <th className="px-4 py-3.5 font-semibold text-slate-550 dark:text-zinc-400 border-b border-slate-205 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">Actions</th>
@@ -300,11 +305,11 @@ export default function ClientTable({
             </thead>
 
             <tbody className="divide-y divide-slate-150 dark:divide-gray-800">
-              {filteredClients.length > 0 ? filteredClients.map((client) => {
+              {paginatedClients.length > 0 ? paginatedClients.map((client) => {
                 const rowId = client.id || client.NAME + client["PHONE NUMBER"];
                 const isPending = hasPendingAmount(client["PENDING (RM)"]);
                 const nameHighlightClasses = isPending
-                  ? "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 font-bold"
+                  ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"
                   : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
 
                 return (
@@ -312,7 +317,6 @@ export default function ClientTable({
 
                     {viewMode === 'standard' ? (
                       <>
-                        <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
                         <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>{client.NAME}</td>
                         <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
                         <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
@@ -322,6 +326,7 @@ export default function ClientTable({
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client.Report || ''}>{client.Report || '-'}</td>
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Action Taken by police"] || ''}>{client["Action Taken by police"] || '-'}</td>
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
+                        <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
                       </>
                     ) : (
                       <>
@@ -366,18 +371,19 @@ export default function ClientTable({
         </div>
 
         {(() => {
-          const totalPages = Math.ceil(totalCount / 25) || 1;
-          const startRecord = totalCount === 0 ? 0 : (currentPage - 1) * 25 + 1;
-          const endRecord = Math.min(currentPage * 25, totalCount);
+          const totalRecords = sortedClients.length;
+          const totalPages = Math.ceil(totalRecords / 25) || 1;
+          const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * 25 + 1;
+          const endRecord = Math.min(currentPage * 25, totalRecords);
 
           return (
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80">
               <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                Showing <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> to <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> of <span className="font-semibold text-slate-800 dark:text-white">{totalCount}</span> clients
+                Showing <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> to <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> of <span className="font-semibold text-slate-800 dark:text-white">{totalRecords}</span> clients
               </div>
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => onPageChange(currentPage - 1)}
+                  onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
                 >
@@ -397,7 +403,7 @@ export default function ClientTable({
                 </div>
 
                 <button
-                  onClick={() => onPageChange(currentPage + 1)}
+                  onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
                 >

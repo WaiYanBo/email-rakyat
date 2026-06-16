@@ -49,8 +49,6 @@ export default function ClientDataView() {
   const [dateFilter, setDateFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -99,7 +97,7 @@ export default function ClientDataView() {
           let query = supabase.from('clients');
 
           if (viewMode === 'standard') {
-            query = query.select('id,DATE,NAME,"PHONE NUMBER","IC NUMBER","CASE CATEGORY","TOTAL PAID (RM)","PENDING (RM)","PACKAGE (RM)","CASE STATUS","Investigation Paper",Report,"Action Taken by police"', { count: 'exact' });
+            query = query.select('id,NAME,"PHONE NUMBER","IC NUMBER","CASE CATEGORY","TOTAL PAID (RM)","PENDING (RM)","PACKAGE (RM)","CASE STATUS","Investigation Paper",Report,"Action Taken by police",DATE', { count: 'exact' });
           } else {
             query = query.select('*', { count: 'exact' });
           }
@@ -120,13 +118,8 @@ export default function ClientDataView() {
              }
           }
 
-          query = query.order('id', { ascending: false });
-
-          const from = (currentPage - 1) * 25;
-          const to = from + 25 - 1;
-          query = query.range(from, to);
-
-          const { data: clientsData, count, error } = await query;
+          // No pagination on the server-side anymore - fetch all to allow global sorting
+          const { data: clientsData, error } = await query;
 
           if (clientsData && isMounted) {
             const safeData = clientsData.map((c, idx) => ({
@@ -134,9 +127,6 @@ export default function ClientDataView() {
               _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
             }));
             setDbClients(safeData);
-            if (count !== null && count !== undefined) {
-              setTotalCount(count);
-            }
             setFetchError(null);
           } else if (error) {
             console.error('Error fetching clients:', error);
@@ -152,7 +142,7 @@ export default function ClientDataView() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [permissions, searchQuery, dateFilter, viewMode, currentPage]);
+  }, [permissions, searchQuery, dateFilter, viewMode]);
 
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
   const handleOpenEditModal = async (client: any) => {
@@ -263,6 +253,7 @@ export default function ClientDataView() {
     const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
 
     const clientPayload = {
+      No: data.No ? parseInt(data.No as string, 10) : null,
       NAME: sanitizeInput((data.NAME as string) || '', 100),
       'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
       'PHONE NUMBER': sanitizeInput((data['PHONE NUMBER'] as string) || '', 20),
@@ -277,11 +268,17 @@ export default function ClientDataView() {
       EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
       REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
       '1st PAYMENT': parseSafeAmount(data['1st PAYMENT']),
+      '1st PAYMENT DATE': sanitizeInput((data['1st PAYMENT DATE'] as string) || '', 20),
       '2nd PAYMENT': parseSafeAmount(data['2nd PAYMENT']),
+      '2nd PAYMENT DATE': sanitizeInput((data['2nd PAYMENT DATE'] as string) || '', 20),
       '3rd PAYMENT': parseSafeAmount(data['3rd PAYMENT']),
+      '3rd PAYMENT DATE': sanitizeInput((data['3rd PAYMENT DATE'] as string) || '', 20),
       '4th PAYMENT': parseSafeAmount(data['4th PAYMENT']),
+      '4th PAYMENT DATE': sanitizeInput((data['4th PAYMENT DATE'] as string) || '', 20),
       '5th PAYMENT': parseSafeAmount(data['5th PAYMENT']),
+      '5th PAYMENT DATE': sanitizeInput((data['5th PAYMENT DATE'] as string) || '', 20),
       '6th PAYMENT': parseSafeAmount(data['6th PAYMENT']),
+      '6th PAYMENT DATE': sanitizeInput((data['6th PAYMENT DATE'] as string) || '', 20),
       'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
       'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
       'Report': sanitizeInput((data.Report as string) || '', 500),
@@ -356,14 +353,11 @@ export default function ClientDataView() {
           clients={dbClients}
           canEdit={canEdit}
           searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+          onSearchChange={(q) => { setSearchQuery(q); }}
           dateFilter={dateFilter}
-          onDateFilterChange={(df) => { setDateFilter(df); setCurrentPage(1); }}
+          onDateFilterChange={(df) => { setDateFilter(df); }}
           viewMode={viewMode}
-          onViewModeChange={(vm) => { setViewMode(vm); setCurrentPage(1); }}
-          currentPage={currentPage}
-          totalCount={totalCount}
-          onPageChange={setCurrentPage}
+          onViewModeChange={(vm) => { setViewMode(vm); }}
           onExportFull={handleExportFull}
           onAddClick={handleOpenAddModal}
           onEditClick={handleOpenEditModal}
@@ -396,6 +390,7 @@ export default function ClientDataView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Object.entries(viewingClient).map(([key, value]) => {
                   if (['id', '_stableKey', 'updated_at'].includes(key)) return null;
+                  if (/(1st|2nd|3rd|4th|5th|6th)\s+payment/i.test(key)) return null;
 
                   return (
                     <div key={key} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
@@ -407,6 +402,46 @@ export default function ClientDataView() {
                   );
                 })}
               </div>
+
+              {/* PAYMENTS SECTION */}
+              {(() => {
+                const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+                const payments = paymentIndices.map(prefix => {
+                  const amountKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment`);
+                  const dateKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment date`);
+                  
+                  const amount = amountKey ? viewingClient[amountKey] : null;
+                  const date = dateKey ? viewingClient[dateKey] : null;
+                  
+                  return { prefix, amount, date };
+                }).filter(p => (p.amount !== null && p.amount !== '') || (p.date !== null && p.date !== ''));
+
+                if (payments.length === 0) return null;
+
+                return (
+                  <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Payment Schedule</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {payments.map(p => (
+                         <div key={p.prefix} className="flex w-full bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800/80 shadow-sm overflow-hidden">
+                            <div className="flex-1 p-4 border-r border-slate-100 dark:border-gray-800/80 w-1/2">
+                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{p.prefix} Payment Amount</p>
+                               <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-words">
+                                 {p.amount !== null && p.amount !== '' ? (String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
+                               </p>
+                            </div>
+                            <div className="flex-1 p-4 w-1/2">
+                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{p.prefix} Payment Date</p>
+                               <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">
+                                 {p.date !== null && p.date !== '' ? String(p.date) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
+                               </p>
+                            </div>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* BILLING & DOCUMENTS SECTION */}
               <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
@@ -565,6 +600,10 @@ export default function ClientDataView() {
 
             <form onSubmit={handleSaveClient} className="flex-1 overflow-y-auto p-6 space-y-4 bg-white dark:bg-black">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1 sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-2">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
+                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Full Name</label>
                   <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
@@ -611,7 +650,7 @@ export default function ClientDataView() {
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white">Financial Details</h3>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Package Value (RM)</label>
                   <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
@@ -623,29 +662,55 @@ export default function ClientDataView() {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Pending (RM)</label>
                   <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
+
+                {/* PAYMENTS */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
                   <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment Date</label>
+                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
                   <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment Date</label>
+                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
                   <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment Date</label>
+                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
                   <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment Date</label>
+                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
                   <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment Date</label>
+                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
                   <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment Date</label>
+                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">

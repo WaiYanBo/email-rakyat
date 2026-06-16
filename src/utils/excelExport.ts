@@ -23,7 +23,8 @@ export const exportAttendanceToExcel = (
   records: any[],
   filterMode: 'date' | 'month',
   selectedDate: string,
-  selectedMonth: string
+  selectedMonth: string,
+  publicHolidays: any[] = []
 ) => {
   if (!records || records.length === 0) return;
 
@@ -95,11 +96,9 @@ export const exportAttendanceToExcel = (
     aoa.push(['', '', '', '', '', '', '', '']); // Empty row
 
     weeks.forEach((week, weekIdx) => {
-      // Table Header
       aoa.push([`Week ${weekIdx + 1}`, '', '', '', '', '', '', '']);
       aoa.push(['Metrics', ...DAYS_OF_WEEK]);
 
-      // Rows
       const dateRow: any[] = ['Date'];
       const checkInRow: any[] = ['Check In Time'];
       const checkOutRow: any[] = ['Check Out Time'];
@@ -119,7 +118,15 @@ export const exportAttendanceToExcel = (
 
         const record = recordsByDate[dateStr];
         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-        const defaultStatus = isWeekend ? (day.getDay() === 0 ? 'Rest Day' : 'Off Day') : 'N/A';
+
+        // Check for public holiday
+        const holiday = publicHolidays.find(h => h.date === dateStr);
+        const isPublicHoliday = !!holiday;
+
+        let defaultStatus = isWeekend ? (day.getDay() === 0 ? 'Rest Day' : 'Off Day') : 'N/A';
+        if (isPublicHoliday) {
+          defaultStatus = holiday.name;
+        }
 
         if (record && record.check_in_time) {
           checkInRow.push(extractTime(record.check_in_time));
@@ -202,16 +209,37 @@ export const exportAttendanceToExcel = (
       }
 
       let isHeaderRow = false;
+      let isPublicHolidayCol = false;
+
       if (r >= 3 && c >= 0 && c <= 7) {
         const offsetRow = r - 3;
         const rowInBlock = offsetRow % 12;
         if (rowInBlock === 0 || rowInBlock === 1) {
           isHeaderRow = true; // Metrics or Date row
         }
+
+        // Check if the current column is a public holiday by looking at the Date row
+        if (c >= 1 && rowInBlock <= 8) {
+          const blockStartRow = r - rowInBlock;
+          const dateCellRef = XLSX.utils.encode_cell({ r: blockStartRow + 1, c: c });
+          const dateCell = ws[dateCellRef];
+          if (dateCell && dateCell.v) {
+            const parts = String(dateCell.v).split('/');
+            if (parts.length === 3) {
+              const [d, m, y] = parts;
+              const dateStr = `${y}-${m}-${d}`;
+              if (publicHolidays.some(h => h.date === dateStr)) {
+                isPublicHolidayCol = true;
+              }
+            }
+          }
+        }
       }
 
       // 2. Background Color / Highlighting
-      if (val === "Rest Day") {
+      if (isPublicHolidayCol) {
+        cell.s.fill = { fgColor: { rgb: "FFE1BEE7" } }; // Light Purple for Public Holidays
+      } else if (val === "Rest Day") {
         cell.s.fill = { fgColor: { rgb: "FFFFCDD2" } }; // Light Red for Sunday
       } else if (val === "Off Day") {
         cell.s.fill = { fgColor: { rgb: "FFFFE082" } }; // Light Amber/Yellow for Saturday

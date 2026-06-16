@@ -23,7 +23,6 @@ export default function ExecutiveOverview() {
   const [historyFilterType, setHistoryFilterType] = useState<string>('All');
   const [historyFilterMonth, setHistoryFilterMonth] = useState<string>('All');
 
-  // --- ANNOUNCEMENT TRANSLATION STATE ---
   const [translatedAnnouncements, setTranslatedAnnouncements] = useState<Record<string, { title: string; content: string; lang: 'en' | 'bm' }>>({});
   const [translatingIds, setTranslatingIds] = useState<Record<string, boolean>>({});
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
@@ -70,7 +69,6 @@ export default function ExecutiveOverview() {
     }
   };
 
-  // FETCH ANNOUNCEMENTS FROM DATABASE
   const fetchAnnouncements = async () => {
     try {
       const { data: announcementsData, error } = await supabase
@@ -330,7 +328,6 @@ export default function ExecutiveOverview() {
 
     try {
       if (editingNotice) {
-        // UPDATE Existing Announcement
         const { data, error } = await supabase
           .from('announcements')
           .update({
@@ -364,7 +361,6 @@ export default function ExecutiveOverview() {
           await fetchAnnouncements();
         }
       } else {
-        // INSERT New Announcement
         const { data, error } = await supabase
           .from('announcements')
           .insert([
@@ -501,7 +497,7 @@ export default function ExecutiveOverview() {
         </p>
       </div>
 
-      {/* ANNOUNCEMENTS SECTION */}
+
       {!showHistory ? (
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mt-6">
           <div className="p-6 border-b border-blue-700 dark:border-yellow-500/50 bg-blue-600 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -678,10 +674,10 @@ export default function ExecutiveOverview() {
             </button>
           </div>
 
-          {/* Filter Section */}
+
           <div className="p-5 border-b border-slate-200 dark:border-gray-800 bg-slate-50/30 dark:bg-gray-900/20 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Type Filter */}
+
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block">{t('overview', 'filterByType', lang)}</label>
                 <select
@@ -696,7 +692,7 @@ export default function ExecutiveOverview() {
                 </select>
               </div>
 
-              {/* Month Filter */}
+
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block">
                   {lang === 'bm' ? 'Tapis Mengikut Bulan' : 'Filter By Month'}
@@ -728,7 +724,7 @@ export default function ExecutiveOverview() {
             )}
           </div>
 
-          {/* History Content */}
+
           <div className="p-6 flex flex-col gap-4 max-h-[600px] overflow-y-auto scrollbar-thin">
             {getHistoryAnnouncements().length === 0 ? (
               <div className="text-center py-12 w-full">
@@ -851,7 +847,7 @@ export default function ExecutiveOverview() {
       {mounted && isNoticeModalOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-gray-800">
-            {/* Modal Header */}
+
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900 flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">
@@ -877,9 +873,9 @@ export default function ExecutiveOverview() {
               </button>
             </div>
 
-            {/* Modal Body */}
+
             <form key={editingNotice ? editingNotice.id : 'new-notice'} onSubmit={handlePostNotice} className="p-6 md:p-8 space-y-5 overflow-y-auto max-h-[70vh] bg-white dark:bg-black">
-              {/* Title Input */}
+
               <div className="space-y-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{t('overview', 'announcementTitle', lang)}</label>
                 <input
@@ -893,7 +889,7 @@ export default function ExecutiveOverview() {
                 />
               </div>
 
-              {/* Urgency Level */}
+
               <div className="space-y-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'urgencyLevel', lang)}</label>
                 <select
@@ -908,7 +904,7 @@ export default function ExecutiveOverview() {
                 </select>
               </div>
 
-              {/* Date Picker */}
+
               <div className="space-y-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'announcementDate', lang)}</label>
                 <input
@@ -926,7 +922,7 @@ export default function ExecutiveOverview() {
                 </div>
               </div>
 
-              {/* Content Area */}
+
               <div className="space-y-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('overview', 'messageContent', lang)}</label>
                 <textarea
@@ -940,7 +936,7 @@ export default function ExecutiveOverview() {
                 />
               </div>
 
-              {/* Submit Buttons */}
+
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
                 <button
                   type="button"
@@ -971,7 +967,7 @@ export default function ExecutiveOverview() {
         document.body
       )}
 
-      {/* DETAILED ANNOUNCEMENT VIEW MODAL */}
+
       {mounted && selectedAnnouncement && createPortal(
         (() => {
           const isTranslated = !!translatedAnnouncements[selectedAnnouncement.id];
@@ -981,7 +977,7 @@ export default function ExecutiveOverview() {
           return (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
               <div className="bg-white dark:bg-black w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-gray-800">
-                {/* Modal Header */}
+
                 <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900 flex justify-between items-start gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -1002,12 +998,12 @@ export default function ExecutiveOverview() {
                   </button>
                 </div>
 
-                {/* Modal Body */}
+
                 <div className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[50vh] text-sm text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap bg-white dark:bg-black">
                   {modalContent}
                 </div>
 
-                {/* Modal Footer */}
+
                 <div className="p-6 border-t border-slate-100 dark:border-gray-800/80 bg-slate-50 dark:bg-gray-900/50 flex justify-between items-center gap-4">
                   <span className="text-xs text-slate-500 dark:text-zinc-450">Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
                   <div className="flex gap-2">

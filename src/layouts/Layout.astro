@@ -12,11 +12,11 @@ interface Props {
     noindex?: boolean;
 }
 
-const { 
-    title = "Bantuan Mangsa Ah Long & Hutang | Email Rakyat | Report Loan Shark & Debt Collector", 
+const {
+    title = "Bantuan Mangsa Ah Long & Hutang | Email Rakyat | Report Loan Shark & Debt Collector",
     description = "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.",
     image,
-    noindex = false 
+    noindex = false
 } = Astro.props;
 const currentPath = Astro.url.pathname;
 const isPortal = currentPath.startsWith('/portal');
@@ -74,8 +74,7 @@ const isPortal = currentPath.startsWith('/portal');
 
         <slot name="head" />
         <script src="/scripts/analytics.js" defer></script>
-        
-        {/* PWA Service Worker Registration */}
+
         <script is:inline>
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
@@ -86,19 +85,19 @@ const isPortal = currentPath.startsWith('/portal');
             }
         </script>
     </head>
-    
+
     <body class:list={[
         "font-sans min-h-screen flex flex-col",
         isPortal ? "bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300" : "bg-gray-900 text-white"
     ]}>
-        
+
         {/* SECURE NAVBAR ROUTING - HIDDEN ON PORTAL */}
         {!isPortal && <Navbar />}
-        
+
         <main class="flex-grow">
             <slot />
-        </main>        
-        
+        </main>
+
         {/* PUBLIC WIDGETS (Hidden entirely in the Admin Portal) */}
         {!isPortal && (
             <>
@@ -165,7 +164,7 @@ const isPortal = currentPath.startsWith('/portal');
                 </div>
             </>
         )}
-        
+
         <style is:global>
             .reveal-on-scroll {
                 opacity: 0;
@@ -195,17 +194,17 @@ const isPortal = currentPath.startsWith('/portal');
                 const toggleDevice = document.getElementById("toggle-device");
 
                 if (!overlay || !step1 || !step2 || !btnAcceptAll || !btnDecline || !btnManage || !btnBack || !btnSavePrefs || !toggleDevice) return;
-        
+
                 const savedPrefs = localStorage.getItem("cookie_preferences");
                 const currentPage = window.location.pathname;
                 const isBantuanPage = currentPage.startsWith('/bantuan');
                 const isPolicyPage = currentPage.startsWith('/polisi-kuki');
-                
+
                 if (!savedPrefs && !isBantuanPage && !isPolicyPage) {
                     overlay.classList.remove("hidden");
                     document.body.style.overflow = "hidden";
                 }
-        
+
                 btnManage.addEventListener("click", () => {
                     step1.classList.add("hidden");
                     step2.classList.remove("hidden");
@@ -227,7 +226,7 @@ const isPortal = currentPath.startsWith('/portal');
                     localStorage.setItem("cookie_preferences", JSON.stringify({ essential: true, device: false }));
                     closeAndReload();
                 });
-        
+
                 btnSavePrefs.addEventListener("click", () => {
                     localStorage.setItem("cookie_preferences", JSON.stringify({ essential: true, device: toggleDevice.checked }));
                     closeAndReload();
@@ -235,8 +234,8 @@ const isPortal = currentPath.startsWith('/portal');
 
                 function closeAndReload() {
                     overlay?.classList.add("hidden");
-                    document.body.style.overflow = "auto"; 
-                    window.location.reload(); 
+                    document.body.style.overflow = "auto";
+                    window.location.reload();
                 }
             });
 

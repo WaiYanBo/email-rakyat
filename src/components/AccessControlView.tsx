@@ -36,7 +36,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   const [departments, setDepartments] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  
+
   const [permissionsMatrix, setPermissionsMatrix] = useState<Record<string, PermissionEntry>>({});
 
   useEffect(() => {
@@ -49,9 +49,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       const { data: profiles, error: profError } = await supabase
         .from('profiles')
         .select('id, full_name, department, roles(role_name)');
-      
+
       if (profError) throw profError;
-      
+
       const depts = Array.from(new Set(profiles?.map(p => p.department).filter(Boolean))) as string[];
       setDepartments(depts);
       setUsers(profiles || []);
@@ -59,11 +59,11 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       const { data: perms, error: permError } = await supabase
         .from('access_permissions')
         .select('*');
-        
+
       if (permError) throw permError;
 
       const matrix: Record<string, PermissionEntry> = {};
-      
+
       depts.forEach(dept => {
         matrix[`dept_${dept}`] = {
           target_type: 'department',
@@ -127,7 +127,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       const entry = prev[key];
       const current = entry.permissions[module];
       const nextVal = current === true ? false : true;
-      
+
       const newMatrix = {
         ...prev,
         [key]: {
@@ -169,7 +169,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               const uKey = `user_${u.id}`;
               return newMatrix[uKey]?.permissions[module] === true;
             });
-            
+
             newMatrix[deptKey] = {
               ...newMatrix[deptKey],
               permissions: {
@@ -203,7 +203,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           });
         }
       }
-      
+
       // Clear permissions cache in sessionStorage so updates are reflected immediately
       try {
         for (let i = 0; i < sessionStorage.length; i++) {
@@ -216,7 +216,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       } catch (e) {
         console.warn('Failed to clear session storage cache:', e);
       }
-      
+
       alert('Permissions saved successfully!');
       fetchData(); // Refresh IDs
     } catch (err) {
@@ -363,8 +363,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   ))}
                 </React.Fragment>
               ))}
-              
-              {/* Users without departments */}
+
               {users.filter(u => !u.department).length > 0 && (
                 <>
                   <tr className="bg-slate-50 dark:bg-gray-900/50 border-b border-slate-100 dark:border-gray-800">

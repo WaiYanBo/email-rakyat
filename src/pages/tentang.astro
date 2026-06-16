@@ -12,19 +12,19 @@ const leadership = [
   {
     name: "Raja Emel",
     role: "Pengerusi (Chairman)",
-    image: chairmanImg,  
+    image: chairmanImg,
     description: `
       <p class="mb-2">Raja Emel merupakan seorang bekas pengamal media arus perdana New Straits Times dan aktivis masyarakat yang berpengalaman lebih kurang 20 tahun. Sepanjang tempoh tersebut, beliau telah menyelesaikan kira-kira 20,000 aduan rakyat Malaysia, dengan pendekatan unik menggunakan medium emel sepenuhnya, sehingga digelar “Raja Emel”.</p>
-      
+
       <p class="mb-2">Beliau mempunyai minat mendalam dalam memperjuangkan dan menyelesaikan isu-isu rakyat, berlandaskan ilmu, pengalaman serta kefahaman terhadap sistem dan tatakelola agensi berkaitan. Gabungan pengalaman media, kemahiran komunikasi dan ketekunan dalam tindakan telah membolehkan beliau membantu rakyat mendapatkan keadilan serta penyelesaian yang sewajarnya.</p>
-      
+
       <p>Beliau juga dikenali sebagai seorang pejuang rakyat yang kental dan berprinsip, tidak pernah gentar atau takut dalam memperjuangkan isu-isu rakyat, walaupun berdepan tekanan, cabaran atau halangan daripada pihak berkepentingan.</p>
     `
   },
   {
     name: "Muhammad Jazli",
     role: "Ketua Pegawai Eksekutif (CEO)",
-    image: ceoImg, 
+    image: ceoImg,
     description: `
       <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran. Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat. Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
 
@@ -34,9 +34,9 @@ const leadership = [
     `
   },
   {
-    name: "Muhammad Azizul", 
+    name: "Muhammad Azizul",
     role: "Ketua Pegawai Operasi (COO)",
-    image: treasurerImg, 
+    image: treasurerImg,
     description: `
       <p class="mb-2">Tuan Zul merupakan seorang Perunding Kanan dan Aktivis Advokasi Kewangan Masyarakat yang berpengalaman luas dalam menangani isu-isu kewangan rakyat di Malaysia, khususnya berkaitan pinjaman tidak berlesen (Ah Long), pengurusan hutang, amalan pengutipan hutang, serta cabaran hubungan antara pengguna dan institusi perbankan. Beliau aktif membantu masyarakat yang terkesan oleh bebanan hutang, tekanan pengutip hutang yang agresif, dan salah faham terhadap produk serta prosedur kewangan bank.</p>
 
@@ -48,27 +48,27 @@ const leadership = [
 ];
 ---
 
-<Layout 
-  title="Tentang Kami - Email Rakyat" 
+<Layout
+  title="Tentang Kami - Email Rakyat"
   description="Kenali barisan kepimpinan Email Rakyat yang berdedikasi memperjuangkan keadilan pengguna."
 >
-    <Hero 
-      line1="TENTANG KAMI" 
-      showDetails={false} 
+    <Hero
+      line1="TENTANG KAMI"
+      showDetails={false}
       backgroundImage={tentangBg}
     />
 
     <div class="max-w-6xl mx-auto px-4 py-8 w-full">
-      
+
       <div class="max-w-4xl mx-auto mb-8 text-center">
         <div class="inline-block px-3 py-1 mb-2 text-[10px] font-semibold tracking-wider text-yellow-500 uppercase bg-yellow-500/10 rounded-full border border-yellow-500/20">
             Falsafah Perjuangan Kami
         </div>
-  
+
         <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-wide mb-3">
             MEMPERKASA HAK, MEMULIHKAN KEHIDUPAN
         </h2>
-  
+
         <p class="text-base md:text-lg leading-relaxed font-light text-gray-300">
           <strong class="text-white">Email Rakyat</strong> ditubuhkan sebagai benteng pertahanan pengguna. Misi kami adalah menyediakan khidmat konsultansi yang <span class="text-yellow-500">bebas</span>, <span class="text-yellow-500">tegas</span>, dan <span class="text-yellow-500">berfakta</span> bagi membebaskan masyarakat daripada belenggu penindasan.
         </p>
@@ -117,16 +117,16 @@ const leadership = [
           </span>
         </div>
       </div>
-      
+
       <div class="space-y-6 mt-6">
         {leadership.map((leader, index) => (
           <div class="bg-gray-900/40 p-5 md:p-6 rounded-xl border border-gray-800 hover:border-yellow-500/30 transition-all duration-300 shadow-lg relative overflow-hidden">
-            
+
             <div class={`w-full md:w-48 mb-4 md:mb-1 relative group rounded-xl overflow-hidden border border-gray-700 bg-gray-800 shadow-md ${index % 2 === 1 ? 'md:float-right md:ml-6' : 'md:float-left md:mr-6'}`}>
               <div class="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div class="relative aspect-[3/4] w-full">
-                <Image 
-                  src={leader.image} 
+                <Image
+                  src={leader.image}
                   alt={leader.name}
                   class="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                 />
@@ -140,7 +140,7 @@ const leadership = [
               <p class="text-yellow-500 font-semibold text-xs mb-3 uppercase tracking-wider border-b border-gray-700 pb-2 inline-block">
                 {leader.role}
               </p>
-              
+
               <div class="prose prose-invert prose-sm text-gray-300 leading-normal text-justify max-w-none" set:html={leader.description} />
             </div>
 

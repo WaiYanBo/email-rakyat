@@ -16,6 +16,7 @@ export default function AttendanceView() {
   const [filterMode, setFilterMode] = useState<'date' | 'month'>('date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [uniqueEmployees, setUniqueEmployees] = useState<any[]>([]);
+  const [publicHolidays, setPublicHolidays] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
 
   useEffect(() => {
@@ -52,6 +53,18 @@ export default function AttendanceView() {
         .order('full_name', { ascending: true });
       if (profilesData) {
         setUniqueEmployees(profilesData);
+      }
+
+      // Fetch public holidays
+      try {
+        const { data: holidaysData } = await supabase
+          .from('public_holidays')
+          .select('*');
+        if (holidaysData) {
+          setPublicHolidays(holidaysData);
+        }
+      } catch (err) {
+        console.warn('Could not fetch public holidays', err);
       }
 
       setLoading(false);
@@ -149,7 +162,7 @@ export default function AttendanceView() {
     }
 
     // Call the new utility function
-    exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth);
+    exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth, publicHolidays);
   };
 
   const hasAccess = permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
@@ -168,7 +181,7 @@ export default function AttendanceView() {
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
-      {/* Header */}
+
       <div className="p-6 md:p-8 border-b border-emerald-700 dark:border-yellow-500/50 bg-emerald-600 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
@@ -180,7 +193,7 @@ export default function AttendanceView() {
         </div>
       </div>
 
-      {/* Content */}
+
       <div className="p-6 md:p-8">
         {loading ? (
           <div className="text-center py-16">
@@ -191,9 +204,9 @@ export default function AttendanceView() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Filter Controls */}
+
             <div className="space-y-4">
-              {/* Employee Selection Dropdown */}
+
               <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550 mb-2">
                   {lang === 'bm' ? 'Pilih Pekerja' : 'Select Employee'}
@@ -222,7 +235,7 @@ export default function AttendanceView() {
 
               {/* Filter Mode Toggle & Date/Month Selector */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Filter Mode */}
+
                 <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                     {t('attendanceAdmin', 'filterBy', lang)}
@@ -265,7 +278,7 @@ export default function AttendanceView() {
                 </div>
               </div>
 
-              {/* Export Button */}
+
               <button
                 onClick={exportToExcel}
                 className="w-full px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold tracking-wide transition-all flex items-center justify-center gap-2 min-h-[48px] shadow-sm border border-emerald-600"
@@ -277,7 +290,7 @@ export default function AttendanceView() {
               </button>
             </div>
 
-            {/* Records Table */}
+
             <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs md:text-sm">
@@ -383,10 +396,10 @@ export default function AttendanceView() {
               </div>
             </div>
 
-            {/* Statistics Section */}
+
             {filteredRecords.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-6 border-t border-slate-200 dark:border-gray-800">
-                {/* Total Checked In */}
+
                 <div className="p-5 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/20 dark:bg-gray-900/40 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
                   <p className="text-3xl font-bold text-slate-805 dark:text-white mt-2">
@@ -395,7 +408,7 @@ export default function AttendanceView() {
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">{t('common', 'of', lang)} {filteredRecords.length} {t('attendanceAdmin', 'statEmployees', lang)}</p>
                 </div>
 
-                {/* In Zone */}
+
                 <div className="p-5 rounded-2xl border border-emerald-100 dark:border-yellow-500/30 bg-emerald-50/30 dark:bg-black/10 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-yellow-500">{t('attendanceAdmin', 'statInZone', lang)}</p>
                   <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-300 mt-2">
@@ -404,7 +417,7 @@ export default function AttendanceView() {
                   <p className="text-xs text-emerald-500 dark:text-yellow-500/80 mt-1">{t('attendanceAdmin', 'statOnSite', lang)}</p>
                 </div>
 
-                {/* Outside Zone */}
+
                 <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-955/10 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-455">{t('attendanceAdmin', 'statOutside', lang)}</p>
                   <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">

@@ -2,29 +2,29 @@
 import { Image } from 'astro:assets';
 import defaultBg from '../assets/background.webp';
 
-const { 
-  line1 = "Hubungi Segera!!", 
-  line2 = "Kami Bantu Anda", 
+const {
+  line1 = "Hubungi Segera!!",
+  line2 = "Kami Bantu Anda",
   line3 = "Hanya Dengan Cara Yang Sah!",
   showDetails = true,
   backgroundImage = defaultBg
 } = Astro.props;
 
-const heightClass = "h-[40vh] md:h-[50vh]"; 
+const heightClass = "h-[40vh] md:h-[50vh]";
 // Navbar is fixed; add top padding so hero content doesn't sit under it.
 const safeTopPadClass = showDetails ? "pt-20 md:pt-24" : "pt-10 md:pt-12";
 ---
 
 <section class={`relative ${heightClass} ${safeTopPadClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
-  
+
   <div class="absolute inset-0 z-0">
-    <Image 
-      src={backgroundImage} 
-      alt="Background Pattern" 
+    <Image
+      src={backgroundImage}
+      alt="Background Pattern"
       class="w-full h-full object-cover opacity-100"
       loading="eager"
       fetchpriority="high"
-      widths={[640, 768, 1024, 1280, 1536]} 
+      widths={[640, 768, 1024, 1280, 1536]}
       sizes="(max-width: 768px) 100vw, 100vw"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
@@ -78,7 +78,7 @@ const safeTopPadClass = showDetails ? "pt-20 md:pt-24" : "pt-10 md:pt-12";
       /* --- SUB-PAGE LAYOUT --- */
       <div class="flex flex-col items-center justify-center pt-8">
         <div class="w-12 h-1 bg-yellow-500 mb-6"></div>
-        
+
         <h1 class="text-2xl sm:text-3xl md:text-5xl font-black text-white uppercase tracking-widest drop-shadow-2xl">
           {line1}
         </h1>

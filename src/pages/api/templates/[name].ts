@@ -11,7 +11,7 @@ export function getStaticPaths() {
 
 export const GET: APIRoute = async ({ params }) => {
   const { name } = params;
-  
+
   if (!name || (name !== 'blank-invoice' && name !== 'blank-receipt')) {
     return new Response('Not found', { status: 404 });
   }
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ params }) => {
   try {
     const filePath = path.resolve(process.cwd(), 'public', 'templates', `${name}.pdf`);
     const fileBuffer = fs.readFileSync(filePath);
-    
+
     return new Response(fileBuffer, {
       status: 200,
       headers: {

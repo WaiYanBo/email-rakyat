@@ -22,14 +22,13 @@ export default function FileDriveView() {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [userProfile, setUserProfile] = useState<any | null>(null);
   const [isGlobalAdmin, setIsGlobalAdmin] = useState(false);
-  
-  // Modals
+
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  
+
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  
+
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,7 +50,7 @@ export default function FileDriveView() {
         const globalAdmins = ['IT Admin', 'Chairman', 'CEO', 'COO', 'CFO'];
         const isGlobal = globalAdmins.includes(roleName);
         setIsGlobalAdmin(isGlobal);
-        
+
         // If not global admin, enforce starting path to their department folder
         if (!isGlobal && profile.department) {
           setCurrentPath(profile.department);
@@ -82,7 +81,7 @@ export default function FileDriveView() {
         });
 
       if (error) throw error;
-      
+
       // Filter out the dummy .keep files but keep the folders
       const validItems = data?.filter(item => item.name !== '.keep') || [];
       setItems(validItems);
@@ -104,7 +103,7 @@ export default function FileDriveView() {
       const parts = prev.split('/').filter(Boolean);
       parts.pop();
       const newPath = parts.join('/');
-      
+
       // Prevent non-admins from going to root
       if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department)) {
         return userProfile.department;
@@ -118,7 +117,7 @@ export default function FileDriveView() {
       if (!prev) return '';
       const parts = prev.split('/').filter(Boolean);
       const newPath = parts.slice(0, index + 1).join('/');
-      
+
       // Prevent non-admins from going to root or outside their department
       if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department)) {
         return userProfile.department;
@@ -134,10 +133,10 @@ export default function FileDriveView() {
       // Create a dummy file to instantiate the folder
       const folderPath = currentPath ? `${currentPath}/${newFolderName.trim()}/.keep` : `${newFolderName.trim()}/.keep`;
       const dummyBlob = new Blob([''], { type: 'text/plain' });
-      
+
       const { error } = await supabase.storage.from('company_drive').upload(folderPath, dummyBlob);
       if (error) throw error;
-      
+
       setNewFolderName('');
       setIsCreateFolderOpen(false);
       fetchItems();
@@ -179,7 +178,7 @@ export default function FileDriveView() {
         // Find all files in the folder
         const folderPrefix = currentPath ? `${currentPath}/${selectedItem.name}` : selectedItem.name;
         const { data: folderContents } = await supabase.storage.from('company_drive').list(folderPrefix);
-        
+
         if (folderContents && folderContents.length > 0) {
           filesToDelete = folderContents.map(f => `${folderPrefix}/${f.name}`);
         } else {
@@ -191,7 +190,7 @@ export default function FileDriveView() {
 
       const { error } = await supabase.storage.from('company_drive').remove(filesToDelete);
       if (error) throw error;
-      
+
       setIsDeleteOpen(false);
       setSelectedItem(null);
       fetchItems();
@@ -216,7 +215,7 @@ export default function FileDriveView() {
         const { error } = await supabase.storage.from('company_drive').move(oldPath, newPath);
         if (error) throw error;
       }
-      
+
       setIsRenameOpen(false);
       fetchItems();
     } catch (err: any) {
@@ -232,7 +231,7 @@ export default function FileDriveView() {
       const filePath = currentPath ? `${currentPath}/${selectedItem.name}` : selectedItem.name;
       const { data, error } = await supabase.storage.from('company_drive').download(filePath);
       if (error) throw error;
-      
+
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -272,7 +271,7 @@ export default function FileDriveView() {
 
   return (
     <div className="space-y-6 animate-fade-in relative max-w-6xl mx-auto h-[calc(100vh-120px)] flex flex-col">
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/70 dark:bg-black/50 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-white/50 dark:border-gray-800 shadow-sm flex-shrink-0">
         <div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
@@ -283,7 +282,7 @@ export default function FileDriveView() {
           </h2>
           <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1 font-medium">{t('drive', 'pageSubtitle', lang)}</p>
         </div>
-        
+
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setIsCreateFolderOpen(true)}
@@ -294,7 +293,7 @@ export default function FileDriveView() {
             </svg>
             {t('drive', 'newFolder', lang)}
           </button>
-          
+
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
@@ -315,13 +314,12 @@ export default function FileDriveView() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        {/* Main Drive Area */}
+
         <div className="flex-1 bg-white/70 dark:bg-black/50 backdrop-blur-xl border border-white/50 dark:border-gray-800 shadow-sm rounded-3xl flex flex-col min-h-0 overflow-hidden relative">
-          
-          {/* Breadcrumbs */}
+
           <div className="p-4 border-b border-slate-100 dark:border-gray-800/80 flex items-center gap-2 text-sm font-semibold overflow-x-auto">
             {isGlobalAdmin && (
-              <button 
+              <button
                 onClick={() => setCurrentPath('')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${currentPath === '' ? 'text-indigo-700 bg-indigo-50 dark:text-yellow-500 dark:bg-yellow-500/10' : 'text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-gray-800'}`}
               >
@@ -331,7 +329,7 @@ export default function FileDriveView() {
                 Drive
               </button>
             )}
-            
+
             {!isGlobalAdmin && breadcrumbs.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 dark:text-gray-500 whitespace-nowrap">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -342,10 +340,10 @@ export default function FileDriveView() {
             )}
 
             {breadcrumbs.map((crumb, idx) => {
-              // Hide breadcrumbs outside of department for non-admins to avoid confusion? 
+              // Hide breadcrumbs outside of department for non-admins to avoid confusion?
               // Actually, the department folder IS the first crumb.
               const isDeptRoot = !isGlobalAdmin && idx === 0;
-              
+
               return (
                 <React.Fragment key={idx}>
                   {(isGlobalAdmin || idx > 0) && (
@@ -353,7 +351,7 @@ export default function FileDriveView() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   )}
-                  <button 
+                  <button
                     onClick={() => navigateToCrumb(idx)}
                     disabled={isDeptRoot}
                     className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${idx === breadcrumbs.length - 1 ? 'text-indigo-700 bg-indigo-50 dark:text-yellow-500 dark:bg-yellow-500/10' : isDeptRoot ? 'text-slate-700 bg-slate-100 dark:text-zinc-300 dark:bg-gray-800 cursor-default' : 'text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-gray-800'}`}
@@ -365,7 +363,6 @@ export default function FileDriveView() {
             })}
           </div>
 
-          {/* Files Grid */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-black/20">
             {loading ? (
               <div className="h-full flex items-center justify-center">
@@ -384,7 +381,7 @@ export default function FileDriveView() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {currentPath !== '' && (!userProfile || isGlobalAdmin || currentPath !== userProfile.department) && (
-                  <div 
+                  <div
                     onClick={navigateUp}
                     className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 hover:border-indigo-300 dark:hover:border-yellow-500/50 hover:shadow-md transition-all h-36"
                   >
@@ -396,13 +393,13 @@ export default function FileDriveView() {
                     <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Back</span>
                   </div>
                 )}
-                
+
                 {items.map((item) => {
                   const isFolder = !item.id; // Supabase list returns id=null for prefix "folders"
                   const isSelected = selectedItem?.name === item.name;
 
                   return (
-                    <div 
+                    <div
                       key={item.name}
                       onClick={() => isFolder ? navigateTo(item.name) : setSelectedItem(item)}
                       className={`group cursor-pointer bg-white dark:bg-gray-900 border rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all h-36 relative overflow-hidden ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-yellow-500 dark:ring-yellow-500/20 shadow-md bg-indigo-50/30 dark:bg-yellow-500/5' : 'border-slate-200 dark:border-gray-800 hover:border-indigo-300 dark:hover:border-gray-600 hover:shadow-sm'}`}
@@ -413,7 +410,7 @@ export default function FileDriveView() {
                       <span className={`text-xs font-bold text-center w-full truncate px-2 ${isSelected ? 'text-indigo-700 dark:text-yellow-500' : 'text-slate-700 dark:text-zinc-300'}`}>
                         {item.name}
                       </span>
-                      
+
                       {!isFolder && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }} className="p-1.5 bg-white/90 dark:bg-black/90 backdrop-blur rounded-lg shadow-sm text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500">
@@ -431,7 +428,6 @@ export default function FileDriveView() {
           </div>
         </div>
 
-        {/* Details Pane */}
         {selectedItem && (
           <div className="w-full lg:w-80 bg-white/70 dark:bg-black/50 backdrop-blur-xl border border-white/50 dark:border-gray-800 shadow-sm rounded-3xl p-6 flex flex-col min-h-0 animate-fade-in flex-shrink-0">
             <div className="flex justify-between items-center mb-6">
@@ -442,7 +438,7 @@ export default function FileDriveView() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="flex flex-col items-center mb-6 p-6 bg-slate-50 dark:bg-gray-900/50 rounded-2xl border border-slate-100 dark:border-gray-800">
               <div className="w-20 h-20 mb-4 bg-white dark:bg-black rounded-2xl shadow-sm flex items-center justify-center border border-slate-100 dark:border-gray-800">
                 {!selectedItem.id ? getFolderIcon() : getFileIcon(selectedItem.name)}
@@ -486,13 +482,12 @@ export default function FileDriveView() {
         )}
       </div>
 
-      {/* Modals */}
       {isCreateFolderOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-gray-800 animate-scale-in">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('drive', 'newFolder', lang)}</h3>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder={t('drive', 'folderName', lang)}
@@ -515,8 +510,8 @@ export default function FileDriveView() {
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-gray-800 animate-scale-in">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('drive', 'rename', lang)}</h3>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-gray-700 bg-white dark:bg-black text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 outline-none transition-all mb-6 font-medium"

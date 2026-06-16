@@ -199,7 +199,7 @@ export default function ClientTable({
 
       <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
 
-        {/* Navigation Tabs */}
+
         <div className="flex border-b border-slate-200 dark:border-gray-800 px-3 md:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none">
           <button
             onClick={() => onViewModeChange('standard')}
@@ -303,7 +303,7 @@ export default function ClientTable({
               {filteredClients.length > 0 ? filteredClients.map((client) => {
                 const rowId = client.id || client.NAME + client["PHONE NUMBER"];
                 const isPending = hasPendingAmount(client["PENDING (RM)"]);
-                const nameHighlightClasses = isPending 
+                const nameHighlightClasses = isPending
                   ? "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 font-bold"
                   : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
 
@@ -333,7 +333,7 @@ export default function ClientTable({
                       </>
                     )}
 
-                    {/* Actions Menu - Compact Row Buttons */}
+
                     <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
                       <div className="flex items-center justify-start gap-2">
                         <button

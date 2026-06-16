@@ -13,7 +13,7 @@ const navLinks = [
 <header id="main-navbar" class="fixed w-full top-0 z-50 transition-all duration-300 ease-in-out bg-transparent py-5">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center">
-      
+
       <a href="/" class="flex-shrink-0 flex items-center gap-3 group">
         <img src="/Logo.webp" alt="Email Rakyat Logo" class="h-10 w-auto group-hover:scale-105 transition-transform duration-300" />
         <span class="text-white font-extrabold text-xl uppercase tracking-widest hidden sm:block group-hover:text-yellow-500 transition-colors">
@@ -22,18 +22,18 @@ const navLinks = [
       </a>
       <nav class="hidden md:flex space-x-6 items-center">
         {navLinks.map((link) => (
-          <a 
-            href={link.path} 
+          <a
+            href={link.path}
             class={`text-sm font-bold uppercase tracking-wider transition-colors duration-300 hover:text-yellow-400 ${
-              pathname === link.path || (pathname === '/' + link.path.replace('/', '')) 
-                ? 'text-yellow-500' 
+              pathname === link.path || (pathname === '/' + link.path.replace('/', ''))
+                ? 'text-yellow-500'
                 : 'text-gray-200'
             }`}
           >
             {link.name}
           </a>
         ))}
-        
+
         <div class="flex items-center gap-3 pl-4 border-l border-gray-700">
           <a
             href="/portal/login"
@@ -65,18 +65,18 @@ const navLinks = [
   <div id="mobile-menu" class="hidden md:hidden absolute w-full bg-black/95 backdrop-blur-xl border-t border-gray-800 shadow-2xl">
     <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
       {navLinks.map((link) => (
-        <a 
-          href={link.path} 
+        <a
+          href={link.path}
           class={`block px-3 py-3 rounded-lg text-base font-bold uppercase tracking-wide transition-colors ${
-            pathname === link.path || (pathname === '/' + link.path.replace('/', '')) 
-              ? 'bg-yellow-500/10 text-yellow-500' 
+            pathname === link.path || (pathname === '/' + link.path.replace('/', ''))
+              ? 'bg-yellow-500/10 text-yellow-500'
               : 'text-gray-300 hover:bg-gray-800 hover:text-yellow-400'
           }`}
         >
           {link.name}
         </a>
       ))}
-      
+
       <div class="border-t border-gray-700 my-2 pt-2 space-y-2">
         <a
           href="/portal/login"
@@ -104,7 +104,6 @@ const navLinks = [
 
     if (!navbar || !mobileBtn || !mobileMenu) return;
 
-    // Scroll Responsive Logic
     const handleScroll = () => {
       if (window.scrollY > 20) {
         // Scrolled state: frosted glass, shadow, smaller padding
@@ -129,7 +128,6 @@ const navLinks = [
       document.body.style.overflow = isOpen ? 'hidden' : '';
     };
 
-    // Mobile Menu Toggle Logic
     mobileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       mobileMenu.classList.toggle('hidden');

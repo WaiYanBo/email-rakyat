@@ -7,9 +7,9 @@ interface Props {
     noindex?: boolean; // New: Allows hiding specific pages (like 404) from Google
 }
 
-const { 
-    title, 
-    description, 
+const {
+    title,
+    description,
     image = "/logo.png", // Fallback to logo if no specific image provided
     url = Astro.url,
     noindex = false

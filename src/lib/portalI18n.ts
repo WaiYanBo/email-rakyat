@@ -63,7 +63,6 @@ export const translations = {
     urgentBadge: { en: 'Urgent', bm: 'Segera' },
     memoBadge: { en: 'Memo', bm: 'Memo' },
     infoBadge: { en: 'Info', bm: 'Maklumat' },
-    // Post Notice Modal
     postNewAnnouncement: { en: 'Post New Announcement', bm: 'Hantar Pengumuman Baharu' },
     postSubtitle: { en: 'Share important updates with your team', bm: 'Kongsikan kemas kini penting kepada pasukan anda' },
     announcementTitle: { en: '📌 Announcement Title', bm: '📌 Tajuk Pengumuman' },
@@ -81,7 +80,6 @@ export const translations = {
     futureDates: { en: 'Future dates', bm: 'Tarikh hadapan' },
     scheduleLater: { en: '= Schedule for later', bm: '= Jadualkan untuk kemudian' },
     writtenBy: { en: '✏️', bm: '✏️' },
-    // Executive Snapshot
     executiveSnapshot: { en: 'Executive Snapshot', bm: 'Ringkasan Eksekutif' },
     totalClients: { en: 'Total Clients', bm: 'Jumlah Klien' },
     completed: { en: 'Completed', bm: 'Selesai' },
@@ -202,7 +200,6 @@ export const translations = {
     financeNANote: { en: 'IT Admin must create a `finance_ledger` table in Supabase before automating this section.', bm: 'IT Admin perlu mencipta jadual `finance_ledger` dalam Supabase sebelum bahagian ini boleh diautomatikkan.' },
     loading: { en: 'Loading Reports...', bm: 'Memuatkan Laporan...' },
     accessDenied: { en: 'Access Denied', bm: 'Akses Ditolak' },
-    // Staff Modal
     editStaff: { en: 'Edit Staff Data', bm: 'Edit Data Kakitangan' },
     onboarding: { en: 'Automated Onboarding', bm: 'Pendaftaran Automatik' },
     automationActive: { en: 'System Automation Active', bm: 'Automasi Sistem Aktif' },
@@ -249,7 +246,6 @@ export const translations = {
     enterCurrentPw: { en: 'Enter your current password', bm: 'Masukkan kata laluan semasa anda' },
     min8Chars: { en: 'Min 8 characters', bm: 'Min 8 aksara' },
     confirmNewPw: { en: 'Confirm new password', bm: 'Sahkan kata laluan baharu' },
-    // Profile Photo Upload
     viewPhoto: { en: 'View Photo', bm: 'Lihat Gambar' },
     updatePhoto: { en: 'Update Profile Photo', bm: 'Kemas Kini Gambar' },
     removePhoto: { en: 'Remove Profile Photo', bm: 'Buang Gambar' },

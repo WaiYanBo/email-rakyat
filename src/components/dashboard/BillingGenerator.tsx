@@ -38,7 +38,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
   useEffect(() => {
     if (documentType === 'receipt') {
       const pastPayments = clientData.payments ? clientData.payments.filter(p => p !== null && p !== '' && p !== undefined && p !== 0 && p !== '0') : [];
-      
+
       const populatedItems = pastPayments.map((amt, index) => ({
         description: '',
         qty: '',
@@ -143,7 +143,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
 
-      // Generate Reference Number
       const timestampId = Date.now().toString().slice(-4);
       const prefix = documentType === 'invoice' ? 'INV-TER' : 'RCP-TER';
       const refNumber = `${prefix}-${timestampId}`;
@@ -192,7 +191,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const invoiceFontSize = 5.5; // Adjust invoice font size
       const receiptFontSize = 8.5; // Adjust receipt font size
 
-      // === STYLING CONFIGURATION ===
       // You can manually change the font and color for each item here!
       // 'font': Choose between 'customFont' (Normal) or 'customFontBold' (Bold)
       // 'color': Use rgb(0,0,0) for Black, rgb(1,0,0) for Red, rgb(1,1,1) for White, etc.
@@ -322,11 +320,11 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const now = new Date();
       const yearStr = now.getFullYear().toString();
       const monthNames = [
-        '01-January', '02-February', '03-March', '04-April', '05-May', '06-June', 
+        '01-January', '02-February', '03-March', '04-April', '05-May', '06-June',
         '07-July', '08-August', '09-September', '10-October', '11-November', '12-December'
       ];
       const monthStr = monthNames[now.getMonth()];
-      
+
       // Target path: e.g. "Invoices/2026/01-January/INV123.pdf"
       const filePath = `${docCategory}/${yearStr}/${monthStr}/${fileName}`;
 
@@ -495,7 +493,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
                     </div>
                   </div>
                 )}
-                
+
                 <div className="w-full sm:w-auto flex items-center sm:items-start gap-2 mt-1 sm:mt-0 sm:flex-[1.5]">
                   <div className="flex-1 sm:w-full">
                     <input

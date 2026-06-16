@@ -33,7 +33,7 @@ async function getCroppedImg(
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // We DO NOT apply the background here anymore. 
+  // We DO NOT apply the background here anymore.
   // We just extract the cropped portion of the original image.
   ctx.drawImage(
     image,
@@ -54,9 +54,9 @@ async function getCroppedImg(
     }, 'image/jpeg', 0.95)
   })
 }
-export default function ProfilePhotoUpload({ 
-  userId, 
-  initialAvatarUrl, 
+export default function ProfilePhotoUpload({
+  userId,
+  initialAvatarUrl,
   userInitials,
   onUploadSuccess,
   lang = 'en'
@@ -64,19 +64,18 @@ export default function ProfilePhotoUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
-  
-  // Cropper State
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-  
+
   // Menu & View State
   const [showMenu, setShowMenu] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Close menu when clicking outside
@@ -109,14 +108,14 @@ export default function ProfilePhotoUpload({
       setIsUploading(true);
       setShowMenu(false);
       setError(null);
-      
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: null })
         .eq('id', userId);
 
       if (updateError) throw updateError;
-      
+
       setAvatarUrl(null);
       onUploadSuccess('');
       } catch (err: any) {
@@ -137,12 +136,12 @@ export default function ProfilePhotoUpload({
         setError(t('settings', 'imageTooLarge', lang));
         return;
       }
-      
+
       const imageUrl = URL.createObjectURL(file);
       setSelectedImage(imageUrl);
       setShowCropModal(true);
       setError(null);
-      
+
       // Reset input so the same file can be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -156,7 +155,7 @@ export default function ProfilePhotoUpload({
 
   const handleCropSave = async () => {
     if (!selectedImage || !croppedAreaPixels) return;
-    
+
     try {
       setIsUploading(true);
       setError(null);
@@ -181,7 +180,6 @@ export default function ProfilePhotoUpload({
       finalCanvas.width = faceImg.width;
       finalCanvas.height = faceImg.height;
 
-      // Pure Black Background
       finalCtx.fillStyle = '#000000';
       finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
       finalCtx.drawImage(faceImg, 0, 0);
@@ -197,7 +195,7 @@ export default function ProfilePhotoUpload({
 
       // 4. Upload to Supabase Storage
       const filePath = `${userId}/avatar-${Date.now()}.jpg`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, finalUploadBlob, {
@@ -213,7 +211,7 @@ export default function ProfilePhotoUpload({
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-        
+
       const newUrl = publicUrlData.publicUrl;
 
       // 4. Update profiles table
@@ -224,10 +222,9 @@ export default function ProfilePhotoUpload({
 
       if (updateError) throw updateError;
 
-      // Success
       setAvatarUrl(newUrl);
       onUploadSuccess(newUrl);
-      
+
       // Close Modal & Cleanup
       setShowCropModal(false);
       URL.revokeObjectURL(selectedImage);
@@ -250,7 +247,7 @@ export default function ProfilePhotoUpload({
   return (
     <div className="flex flex-col items-center">
       <div className="relative" ref={menuRef}>
-        <div 
+        <div
           onClick={handleContainerClick}
           className={`relative w-24 h-24 rounded-full border-4 border-white dark:border-gray-900 shadow-md transform translate-y-8 flex items-center justify-center overflow-hidden cursor-pointer group ${isUploading && !showCropModal ? 'opacity-70 pointer-events-none' : ''} bg-gray-100 dark:bg-gray-800`}
         >
@@ -279,7 +276,6 @@ export default function ProfilePhotoUpload({
           )}
         </div>
 
-        {/* Dropdown Menu */}
         {showMenu && avatarUrl && (
           <div className="absolute top-full mt-10 left-1/2 -translate-x-1/2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-30 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <button onClick={() => { setShowViewModal(true); setShowMenu(false); }} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-200 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-2">
@@ -298,12 +294,12 @@ export default function ProfilePhotoUpload({
         )}
       </div>
 
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        accept="image/jpeg, image/png, image/webp" 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg, image/png, image/webp"
+        className="hidden"
       />
 
       {error && (
@@ -312,7 +308,6 @@ export default function ProfilePhotoUpload({
         </div>
       )}
 
-      {/* Cropper Modal */}
       {showCropModal && selectedImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-gray-900 rounded-xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-gray-700">
@@ -324,7 +319,7 @@ export default function ProfilePhotoUpload({
                 </svg>
               </button>
             </div>
-            
+
             <div className="relative w-full h-[350px] bg-black">
               <Cropper
                 image={selectedImage}
@@ -338,7 +333,7 @@ export default function ProfilePhotoUpload({
                 onZoomChange={setZoom}
               />
             </div>
-            
+
             <div className="p-5 flex flex-col gap-5 bg-gray-900">
               <div className="flex items-center gap-4 text-gray-300 text-sm font-medium">
                 <span className="w-10">{t('settings', 'zoom', lang)}</span>
@@ -352,7 +347,7 @@ export default function ProfilePhotoUpload({
                   className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                 />
               </div>
-              <button 
+              <button
                 onClick={handleCropSave}
                 disabled={isUploading}
                 className="w-full py-3 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold rounded-lg shadow-lg disabled:opacity-50 transition-all flex justify-center items-center gap-2"
@@ -372,7 +367,6 @@ export default function ProfilePhotoUpload({
         </div>
       )}
 
-      {/* View Modal */}
       {showViewModal && avatarUrl && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowViewModal(false)}>
            <div className="relative max-w-lg w-full h-auto p-4 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>

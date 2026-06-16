@@ -15,7 +15,7 @@ export default function SettingsView() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'access'>('profile');
-  
+
   const [fullName, setFullName] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -41,7 +41,7 @@ export default function SettingsView() {
         .select(`id, full_name, department, salary, status, role_id, avatar_url, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
-      
+
       if (profileError) {
         console.error('Error fetching profile:', profileError);
       }
@@ -49,7 +49,7 @@ export default function SettingsView() {
       let roleName = 'No Role';
       if (profileData) {
         setFullName(profileData.full_name || '');
-        
+
         // Handle roles relationship
         if (profileData.roles) {
           const rolesVar = profileData.roles as any;
@@ -62,7 +62,7 @@ export default function SettingsView() {
           const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
           if (roleData) roleName = roleData.role_name;
         }
-        
+
         setProfile({
           ...profileData,
           role_name: roleName,
@@ -106,7 +106,7 @@ export default function SettingsView() {
       if (error) throw error;
 
       setProfileMessage({ type: 'success', text: 'Profile updated successfully! Refreshing...' });
-      
+
       // Reload page to propagate profile changes to sidebar immediately
       setTimeout(() => {
         window.location.reload();
@@ -157,7 +157,7 @@ export default function SettingsView() {
       }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      
+
       if (error) throw error;
 
       setPasswordMessage({ type: 'success', text: 'Password updated successfully! Please use your new password on next login.' });
@@ -193,8 +193,8 @@ export default function SettingsView() {
           <button
             onClick={() => setActiveTab('profile')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
-              activeTab === 'profile' 
-                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm' 
+              activeTab === 'profile'
+                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             }`}
           >
@@ -203,8 +203,8 @@ export default function SettingsView() {
           <button
             onClick={() => setActiveTab('access')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all min-h-[44px] ${
-              activeTab === 'access' 
-                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm' 
+              activeTab === 'access'
+                ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-yellow-500 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
             }`}
           >
@@ -218,26 +218,24 @@ export default function SettingsView() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-page-transition pt-4 md:pt-0">
 
-      
-      {/* LEFT COLUMN: Profile Overview Card */}
+
       <div className="lg:col-span-1 space-y-6">
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
-          {/* Header Graphic */}
+
           <div className="h-32 bg-gradient-to-r from-indigo-900 to-indigo-950 flex items-end justify-center pb-4 relative">
             <div className="absolute top-4 right-4 bg-indigo-550/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 text-[10px] font-semibold uppercase tracking-wider shadow-sm">
               {profile?.status || 'Active'}
             </div>
-            {/* Avatar */}
-            <ProfilePhotoUpload 
-              userId={sessionUser?.id || ''} 
-              initialAvatarUrl={profile?.avatar_url || null} 
+
+            <ProfilePhotoUpload
+              userId={sessionUser?.id || ''}
+              initialAvatarUrl={profile?.avatar_url || null}
               userInitials={profile?.full_name?.slice(0, 2) || 'ST'}
               onUploadSuccess={(url) => setProfile({ ...profile, avatar_url: url })}
               lang={lang}
             />
           </div>
-          
-          {/* Summary Info */}
+
           <div className="pt-12 pb-8 px-6 text-center space-y-4">
             <div>
               <h2 className="text-lg font-bold text-slate-800 dark:text-white truncate">
@@ -245,7 +243,7 @@ export default function SettingsView() {
               </h2>
               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{t('settings', 'userLabel', lang)} • {roleName}</p>
             </div>
-            
+
             <div className="border-t border-slate-100 dark:border-gray-800/80 pt-4 space-y-3 text-left text-xs font-medium">
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-450 dark:text-zinc-400">Email</span>
@@ -261,7 +259,7 @@ export default function SettingsView() {
           </div>
         </div>
 
-        {/* Notice Box */}
+
         <div className="p-5 rounded-2xl bg-indigo-50/15 dark:bg-black/5 border border-indigo-100/50 dark:border-indigo-950/20 shadow-sm">
           <h4 className="text-xs font-semibold text-indigo-700 dark:text-yellow-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             Employee Notice
@@ -274,7 +272,7 @@ export default function SettingsView() {
           </p>
         </div>
 
-        {/* Language Preference Card */}
+
         <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl p-6 space-y-4 shadow-sm">
           <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
             {lang === 'bm' ? 'Pilihan Bahasa' : 'Language Preference'}
@@ -311,25 +309,24 @@ export default function SettingsView() {
 
       {/* RIGHT COLUMN: Edit Profile & Password Change */}
       <div className="lg:col-span-2 space-y-6 md:space-y-8">
-        
-        {/* Card 1: Personal Details */}
+
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
           </div>
-          
+
           <form onSubmit={handleUpdateProfile} className="p-6 space-y-4 bg-white dark:bg-black">
             {profileMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
-                profileMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-800 dark:text-emerald-350' 
+                profileMessage.type === 'success'
+                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-800 dark:text-emerald-350'
                   : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-800 dark:text-rose-350'
               }`}>
                 {profileMessage.text}
               </div>
             )}
-            
+
             <div className="space-y-1">
               <label htmlFor="settings-full-name" className="block text-xs font-semibold text-slate-450 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'fullName', lang)}</label>
               <input
@@ -346,10 +343,10 @@ export default function SettingsView() {
                 placeholder={t('settings', 'enterFullName', lang)}
               />
             </div>
-            
+
             <div className="flex justify-end pt-2">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isSavingProfile}
                 className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >
@@ -359,24 +356,24 @@ export default function SettingsView() {
           </form>
         </div>
 
-        {/* Card 2: Account Security */}
+
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
           </div>
-          
+
           <form onSubmit={handleUpdatePassword} className="p-6 space-y-4 bg-white dark:bg-black">
             {passwordMessage && (
               <div className={`p-4 rounded-xl border text-xs font-semibold ${
-                passwordMessage.type === 'success' 
-                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-850 dark:text-emerald-350' 
+                passwordMessage.type === 'success'
+                  ? 'bg-emerald-50 dark:bg-yellow-500/10 border-emerald-100 dark:border-yellow-500/30 text-emerald-850 dark:text-emerald-350'
                   : 'bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/30 text-rose-850 dark:text-rose-350'
               }`}>
                 {passwordMessage.text}
               </div>
             )}
-            
+
             <div className="space-y-4">
               <div className="space-y-1">
                 <label htmlFor="settings-old-pw" className="block text-xs font-semibold text-slate-455 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'currentPassword', lang)}</label>
@@ -395,12 +392,12 @@ export default function SettingsView() {
                 />
               </div>
 
-              {/* Password policy hint */}
+
               <div className="p-4 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
                 <span className="font-semibold text-slate-700 dark:text-zinc-200 uppercase tracking-wide block mb-0.5">{t('settings', 'pwRequirements', lang)}</span>
                 {t('settings', 'pwRequirementsDetail', lang)}
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label htmlFor="settings-new-pw" className="block text-xs font-semibold text-slate-455 dark:text-zinc-400 uppercase tracking-wider">{t('settings', 'newPassword', lang)}</label>
@@ -436,10 +433,10 @@ export default function SettingsView() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end pt-2">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isUpdatingPassword}
                 className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 border border-indigo-600 disabled:opacity-50 transition-all shadow-sm min-h-[48px]"
               >

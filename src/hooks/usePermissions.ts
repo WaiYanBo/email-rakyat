@@ -100,13 +100,14 @@ export function usePermissions(profile: any) {
 
         const defaultHasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'].includes(role || '');
         const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker'].includes(role || '');
+        const defaultHasHRAccess = ['Chairman', 'CEO', 'CFO', 'IT Admin', 'HR'].includes(role || '');
 
         let finalPerms: Permissions = {
           view_clients: defaultHasFullAccess || defaultHasViewAccess,
           edit_clients: defaultHasFullAccess,
           view_staff: defaultHasFullAccess,
           edit_staff: defaultHasFullAccess,
-          view_attendance: defaultHasFullAccess,
+          view_attendance: defaultHasHRAccess,
           view_snapshot: defaultHasFullAccess,
           manage_access_control: false,
           manage_drive: defaultHasFullAccess,
@@ -115,7 +116,7 @@ export function usePermissions(profile: any) {
         if (data && data.length > 0) {
           const deptPerms = data.find(p => p.target_type === 'department')?.permissions || {};
           const userPerms = data.find(p => p.target_type === 'user')?.permissions || {};
-          
+
           finalPerms = {
             view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? finalPerms.view_clients,
             edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? finalPerms.edit_clients,
@@ -127,7 +128,7 @@ export function usePermissions(profile: any) {
             manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? finalPerms.manage_drive,
           };
         }
-        
+
         if (role === 'IT Admin') {
           finalPerms = {
             view_clients: true,

@@ -14,18 +14,15 @@ export default function ReportsView() {
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
 
-  // REAL DATABASE STATE
   const [staffRecords, setStaffRecords] = useState<any[]>([]);
   const [financeRecords, setFinanceRecords] = useState<any[]>([]); // Ready for finance table later
 
-  // MODAL STATE
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isViewStaffModalOpen, setIsViewStaffModalOpen] = useState(false);
   const [viewingStaff, setViewingStaff] = useState<any>(null);
   const [editingStaff, setEditingStaff] = useState<any>(null);
   const [departmentInputType, setDepartmentInputType] = useState<'select' | 'text'>('select');
 
-  // FETCH STAFF RECORDS FUNCTION
   const fetchStaffRecords = async () => {
     try {
       const { data: staffData, error } = await supabase
@@ -137,7 +134,7 @@ export default function ReportsView() {
     const cleanRole = allowedRoles.includes(data.role as string) ? data.role as string : 'Intern HR';
     const allowedStatuses = ['Active', 'On Leave', 'Resigned'];
     const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
-    
+
     let finalDept = cleanDept;
     if (['Chairman', 'CEO', 'COO', 'CFO'].includes(cleanRole)) {
       finalDept = 'BOD';
@@ -161,7 +158,6 @@ export default function ReportsView() {
       }
 
       if (editingStaff) {
-        // UPDATE EXISTING STAFF
         const { error: upsertError } = await supabase
           .from('profiles')
           .upsert({
@@ -180,7 +176,6 @@ export default function ReportsView() {
         setIsStaffModalOpen(false);
 
       } else {
-        // INSERT NEW STAFF
         if (!isValidEmail(rawEmail)) {
           alert('Please enter a valid email address.');
           setIsProcessing(false);
@@ -255,7 +250,6 @@ export default function ReportsView() {
     );
   }
 
-  // HR Calculations
   const activeStaffCount = staffRecords.filter(s => s.status === 'Active' || !s.status).length;
   const totalPayroll = staffRecords.filter(s => s.status !== 'Resigned').reduce((sum, s) => sum + parseFloat(s.salary || 0), 0);
 
@@ -308,32 +302,9 @@ export default function ReportsView() {
         <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
-      {/* FINANCE TAB DISABLED — uncomment to re-enable
-      <div className="flex bg-slate-100 dark:bg-gray-900 p-1 rounded-xl border border-slate-200 dark:border-gray-800 max-w-sm shadow-sm">
-        <button
-          onClick={() => setActiveTab('hr')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
-            activeTab === 'hr'
-              ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-yellow-500 shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-          }`}
-        >
-          {t('reports', 'tabHR', lang)}
-        </button>
-        <button
-          onClick={() => setActiveTab('finance')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all min-h-[40px] flex items-center justify-center ${
-            activeTab === 'finance'
-              ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-yellow-500 shadow-sm font-bold'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-          }`}
-        >
-          {t('reports', 'tabFinance', lang)}
-        </button>
-      </div>
-      */}
 
-      {/* ======================= HR TAB ======================= */}
+
+
       {activeTab === 'hr' && (
         <div className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
@@ -425,18 +396,11 @@ export default function ReportsView() {
         </div>
       )}
 
-      {/* ======================= FINANCE TAB DISABLED — uncomment to re-enable =======================
-      {activeTab === 'finance' && (
-        <div className="p-8 border border-amber-200 dark:border-amber-900/40 bg-amber-50/15 dark:bg-amber-955/5 rounded-2xl text-center shadow-sm">
-          <p className="text-amber-800 dark:text-amber-450 font-semibold tracking-wide text-sm">Finance Ledger Database Not Yet Created</p>
-          <p className="text-xs mt-2 font-medium text-slate-500 dark:text-zinc-400">IT Admin must create a `finance_ledger` table in Supabase before automating this section.</p>
-        </div>
-      )}
-      */}
 
-      {/* ======================= AUTOMATED HR MODAL ======================= */}
 
-      {/* VIEW STAFF MODAL */}
+
+
+
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">

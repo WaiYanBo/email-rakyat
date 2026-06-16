@@ -43,14 +43,14 @@ export default function CheckInCheckOut() {
   // Calculate working hours between check in and check out
   const calculateWorkingHours = (checkInTime: string, checkOutTime: string | null): { hours: number; minutes: number } | null => {
     if (!checkInTime || !checkOutTime) return null;
-    
+
     const checkIn = new Date(checkInTime);
     const checkOut = new Date(checkOutTime);
     const diffMs = checkOut.getTime() - checkIn.getTime();
-    
+
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     return { hours, minutes };
   };
 
@@ -191,9 +191,9 @@ export default function CheckInCheckOut() {
       setLocationStatus('Geolocation not supported');
       return false;
     }
-    
+
     setLocationStatus('Requesting location...');
-    
+
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -213,7 +213,7 @@ export default function CheckInCheckOut() {
 
   const getLocationAndCheckIn = async (type: 'check_in' | 'check_out') => {
     setIsProcessing(true);
-    
+
     try {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported on this device');
@@ -400,7 +400,7 @@ export default function CheckInCheckOut() {
       setIsLateCheckoutModalOpen(false);
       setLateCheckoutRecord(null);
       setLateCheckoutTime('');
-      
+
       // Refresh lists
       await fetchTodayRecord();
       await fetchForgotCheckoutRecords();
@@ -469,7 +469,7 @@ export default function CheckInCheckOut() {
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8">
-      {/* Header */}
+
       <div className="p-6 md:p-8 border-b border-blue-700 dark:border-yellow-500/50 bg-blue-600 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
@@ -481,7 +481,7 @@ export default function CheckInCheckOut() {
         </div>
       </div>
 
-      {/* Content */}
+
       <div className="p-6 md:p-8">
         {loading ? (
           <div className="text-center py-16">
@@ -498,9 +498,9 @@ export default function CheckInCheckOut() {
                 <div className="flex items-center gap-2 mb-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550">Today's Status</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Check In Card */}
+
                   <div className="p-5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -538,7 +538,7 @@ export default function CheckInCheckOut() {
                     </div>
                   </div>
 
-                  {/* Check Out Card */}
+
                   <div className="p-5 rounded-xl bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -579,7 +579,7 @@ export default function CheckInCheckOut() {
               </div>
             )}
 
-            {/* Action Buttons */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               <button
                 onClick={() => getLocationAndCheckIn('check_in')}
@@ -597,7 +597,7 @@ export default function CheckInCheckOut() {
                   )}
                 </div>
               </button>
-              
+
               <button
                 onClick={() => getLocationAndCheckIn('check_out')}
                 disabled={isProcessing || !todayRecord?.check_in_time || todayRecord?.check_out_time}
@@ -616,7 +616,7 @@ export default function CheckInCheckOut() {
               </button>
             </div>
 
-            {/* Location Status */}
+
             {locationStatus && (
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 mt-2">
                 <p className="text-xs text-center font-medium text-slate-505 dark:text-zinc-400">
@@ -627,7 +627,7 @@ export default function CheckInCheckOut() {
 
             {/* Forgot Checkout & Working Hours Section */}
             <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-gray-800">
-              {/* Details Toggle Button */}
+
               {(forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
                 <button
                   onClick={() => setShowDetails(!showDetails)}
@@ -646,9 +646,9 @@ export default function CheckInCheckOut() {
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                     Filter Attendance Logs
                   </h4>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Employee Filter */}
+
                     <div className="space-y-1">
                       <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Employee Name</label>
                       <input
@@ -660,7 +660,7 @@ export default function CheckInCheckOut() {
                       />
                     </div>
 
-                    {/* Filter Mode */}
+
                     <div className="space-y-1">
                       <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">Time Range</label>
                       <div className="flex gap-2">
@@ -688,7 +688,7 @@ export default function CheckInCheckOut() {
                       </div>
                     </div>
 
-                    {/* Date Selector */}
+
                     <div className="space-y-1">
                       {detailFilterMode === 'day' && (
                         <>
@@ -720,7 +720,7 @@ export default function CheckInCheckOut() {
                     </div>
                   </div>
 
-                  {/* Clear Button */}
+
                   {(detailFilterEmployee || detailFilterDay || detailFilterMonth) && (
                     <button
                       type="button"
@@ -862,10 +862,10 @@ export default function CheckInCheckOut() {
                                  const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
                                  const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
                                  const isForgotCheckout = record.check_in_time && !record.check_out_time;
-                                 
+
                                  return (
-                                   <tr 
-                                     key={record.id} 
+                                   <tr
+                                     key={record.id}
                                      className={`hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 ${
                                        isForgotCheckout ? 'bg-rose-50/20 dark:bg-rose-955/5' : isShortDay ? 'bg-amber-50/20 dark:bg-amber-955/5' : ''
                                      }`}
@@ -919,11 +919,11 @@ export default function CheckInCheckOut() {
               )}
             </div>
 
-            {/* Late Checkout Modal */}
+
             {isLateCheckoutModalOpen && lateCheckoutRecord && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
                 <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
-                  {/* Header */}
+
                   <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                       Resolve Checkout
@@ -931,7 +931,7 @@ export default function CheckInCheckOut() {
                     <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Stating actual checkout time for past date</p>
                   </div>
 
-                  {/* Body */}
+
                   <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-black">
                     <div className="space-y-1">
                       <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Date</p>
@@ -962,7 +962,7 @@ export default function CheckInCheckOut() {
                       </p>
                     </div>
 
-                    {/* Actions */}
+
                     <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-gray-800/80">
                       <button
                         type="button"

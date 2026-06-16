@@ -14,7 +14,7 @@ export default function ClientDataView() {
   const [dbClients, setDbClients] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
-  
+
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -23,7 +23,6 @@ export default function ClientDataView() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
 
-  // BILLING STATE
   const [billingRecords, setBillingRecords] = useState<any[]>([]);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
@@ -46,7 +45,6 @@ export default function ClientDataView() {
     }
   }, [viewingClient]);
 
-  // SEARCH AND FILTER STATE
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
@@ -96,16 +94,16 @@ export default function ClientDataView() {
         }
 
         const canViewClients = permissions?.view_clients || false;
-        
+
         if (canViewClients) {
           let query = supabase.from('clients');
-          
+
           if (viewMode === 'standard') {
             query = query.select('id,DATE,NAME,"PHONE NUMBER","IC NUMBER","CASE CATEGORY","TOTAL PAID (RM)","PENDING (RM)","PACKAGE (RM)","CASE STATUS","Investigation Paper",Report,"Action Taken by police"', { count: 'exact' });
           } else {
             query = query.select('*', { count: 'exact' });
           }
-          
+
           if (searchQuery) {
             query = query.or(`NAME.ilike.%${searchQuery}%,"IC NUMBER".ilike.%${searchQuery}%,"PHONE NUMBER".ilike.%${searchQuery}%,"CASE CATEGORY".ilike.%${searchQuery}%`);
           }
@@ -114,7 +112,7 @@ export default function ClientDataView() {
              const now = new Date();
              const yearStr = String(now.getFullYear()).slice(-2);
              const monthStr = String(now.getMonth() + 1).padStart(2, '0');
-             
+
              if (dateFilter === 'year') {
                 query = query.like('DATE', `%/${yearStr}`);
              } else if (dateFilter === 'month') {
@@ -129,7 +127,7 @@ export default function ClientDataView() {
           query = query.range(from, to);
 
           const { data: clientsData, count, error } = await query;
-            
+
           if (clientsData && isMounted) {
             const safeData = clientsData.map((c, idx) => ({
               ...c,
@@ -156,11 +154,10 @@ export default function ClientDataView() {
     };
   }, [permissions, searchQuery, dateFilter, viewMode, currentPage]);
 
-  // --- HANDLERS ---
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
-  const handleOpenEditModal = async (client: any) => { 
-    setEditingClient(client); 
-    setIsModalOpen(true); 
+  const handleOpenEditModal = async (client: any) => {
+    setEditingClient(client);
+    setIsModalOpen(true);
     if (client?.id) {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
       if (data) setEditingClient({ ...data, _stableKey: client._stableKey });
@@ -169,9 +166,9 @@ export default function ClientDataView() {
   const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); };
 
   // New Handlers for the View Detail Box
-  const handleOpenViewModal = async (client: any) => { 
-    setViewingClient(client); 
-    setIsViewModalOpen(true); 
+  const handleOpenViewModal = async (client: any) => {
+    setViewingClient(client);
+    setIsViewModalOpen(true);
     if (client?.id) {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
       if (data) setViewingClient({ ...data, _stableKey: client._stableKey });
@@ -192,7 +189,7 @@ export default function ClientDataView() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      
+
       const recordUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(recordId))
         ? recordId
         : null;
@@ -220,8 +217,8 @@ export default function ClientDataView() {
   const handleDeleteClient = async () => {
     if (!editingClient) return;
 
-    if (!window.confirm(lang === 'bm' 
-      ? `Adakah anda pasti mahu memadamkan klien "${editingClient.NAME}"?` 
+    if (!window.confirm(lang === 'bm'
+      ? `Adakah anda pasti mahu memadamkan klien "${editingClient.NAME}"?`
       : `Are you sure you want to delete client "${editingClient.NAME}"?`
     )) {
       return;
@@ -256,7 +253,7 @@ export default function ClientDataView() {
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); 
+    setLoading(true);
 
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
@@ -306,7 +303,7 @@ export default function ClientDataView() {
         const { error } = await supabase.from('clients').insert([clientPayload]);
         if (error) throw error;
       }
-      window.location.reload(); 
+      window.location.reload();
     } catch (_err) {
       alert('Failed to save. Please check your connection and try again.');
     } finally {
@@ -355,9 +352,9 @@ export default function ClientDataView() {
             <p className="font-mono text-sm">{fetchError}</p>
           </div>
         )}
-        <ClientTable 
-          clients={dbClients} 
-          canEdit={canEdit} 
+        <ClientTable
+          clients={dbClients}
+          canEdit={canEdit}
           searchQuery={searchQuery}
           onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
           dateFilter={dateFilter}
@@ -368,8 +365,8 @@ export default function ClientDataView() {
           totalCount={totalCount}
           onPageChange={setCurrentPage}
           onExportFull={handleExportFull}
-          onAddClick={handleOpenAddModal} 
-          onEditClick={handleOpenEditModal} 
+          onAddClick={handleOpenAddModal}
+          onEditClick={handleOpenEditModal}
           onViewClick={handleOpenViewModal}
         />
       </div>
@@ -380,13 +377,13 @@ export default function ClientDataView() {
       {isViewModalOpen && viewingClient && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                 Client Case Profile
               </h2>
-              <button 
-                onClick={handleCloseViewModal} 
+              <button
+                onClick={handleCloseViewModal}
                 className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -399,7 +396,7 @@ export default function ClientDataView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Object.entries(viewingClient).map(([key, value]) => {
                   if (['id', '_stableKey', 'updated_at'].includes(key)) return null;
-                  
+
                   return (
                     <div key={key} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                       <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{key}</p>
@@ -422,9 +419,9 @@ export default function ClientDataView() {
                     Generate Document
                   </button>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Invoices Column */}
+
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
                     <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Invoices</h4>
                     {billingRecords.filter(r => r.document_type === 'invoice').length === 0 ? (
@@ -450,7 +447,7 @@ export default function ClientDataView() {
                     )}
                   </div>
 
-                  {/* Receipts Column */}
+
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
                     <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Receipts</h4>
                     {billingRecords.filter(r => r.document_type === 'receipt').length === 0 ? (
@@ -478,21 +475,21 @@ export default function ClientDataView() {
                 </div>
               </div>
             </div>
-            
+
             <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
               {canEdit && (
-                <button 
+                <button
                   onClick={() => {
                     handleCloseViewModal();
                     handleOpenEditModal(viewingClient);
-                  }} 
+                  }}
                   className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
                 >
                   Edit Data
                 </button>
               )}
-              <button 
-                onClick={handleCloseViewModal} 
+              <button
+                onClick={handleCloseViewModal}
                 className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-colors min-h-[48px]"
               >
                 Close
@@ -502,7 +499,7 @@ export default function ClientDataView() {
         </div>
       )}
 
-      {/* BILLING GENERATOR MODAL */}
+
       {isBillingModalOpen && viewingClient && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
           <div className="relative w-full max-w-xl max-h-[95vh] flex flex-col">
@@ -551,13 +548,13 @@ export default function ClientDataView() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                 {editingClient ? 'Edit Client Record' : 'Add New Client'}
               </h2>
-              <button 
-                onClick={handleCloseModal} 
+              <button
+                onClick={handleCloseModal}
                 className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -676,9 +673,9 @@ export default function ClientDataView() {
               <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
                 <div className="w-full sm:w-auto">
                   {editingClient && ['CEO', 'CFO', 'IT Admin'].includes(profile?.role) && (
-                    <button 
-                      type="button" 
-                      onClick={handleDeleteClient} 
+                    <button
+                      type="button"
+                      onClick={handleDeleteClient}
                       className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-955/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
                     >
                       Delete Client
@@ -686,16 +683,16 @@ export default function ClientDataView() {
                   )}
                 </div>
                 <div className="flex gap-3 w-full sm:w-auto justify-end">
-                  <button 
-                    type="button" 
-                    onClick={handleCloseModal} 
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
                     className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[48px]"
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="submit" 
-                    disabled={loading} 
+                  <button
+                    type="submit"
+                    disabled={loading}
                     className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                   >
                     {loading ? 'Saving...' : 'Save Changes'}

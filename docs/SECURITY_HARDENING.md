@@ -46,11 +46,13 @@ This document outlines all security enhancements implemented to protect against 
 ### Content Security Policy (CSP)
 ```
 default-src 'self'
-script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net
-style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com
-img-src 'self' data: https:
-font-src 'self' data:
-connect-src 'self' https://api.supabase.co https://ap-southeast-1.supabase.co
+script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com
+style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com
+img-src 'self' data: blob: https:
+font-src 'self' data: https://fonts.gstatic.com
+worker-src 'self' blob:
+connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.supabase.co https://translate.googleapis.com https://unpkg.com https://cdn.jsdelivr.net https://www.google-analytics.com
+frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com
 frame-ancestors 'none'
 object-src 'none'
 ```

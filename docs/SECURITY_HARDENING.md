@@ -52,7 +52,8 @@ img-src 'self' data: blob: https:
 font-src 'self' data: https://fonts.gstatic.com
 worker-src 'self' blob:
 connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.supabase.co https://translate.googleapis.com https://unpkg.com https://cdn.jsdelivr.net https://www.google-analytics.com
-frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com
+frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://*.supabase.co https://view.officeapps.live.com
+media-src 'self' blob: https://*.supabase.co
 frame-ancestors 'none'
 object-src 'none'
 ```

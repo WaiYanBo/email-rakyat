@@ -143,7 +143,7 @@ export default function PortalSidebar() {
 
     if (canViewAttendance) {
       items.push({
-        label: lang === 'bm' ? 'Sumber Manusia' : 'Human Resources',
+        label: t('sidebar', 'navHR', lang),
         path: '/portal/hr',
         activeClass,
         icon: (

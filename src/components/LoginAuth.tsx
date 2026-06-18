@@ -20,18 +20,18 @@ export default function LoginAuth() {
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!isValidEmail(trimmedEmail)) {
-      setError('Please enter a valid email address.');
+      setError(t('login', 'emailRequired', lang));
       return;
     }
 
     if (!password || password.length < 1) {
-      setError('Please enter your password.');
+      setError(t('login', 'passwordRequired', lang));
       return;
     }
 
     // ── 2. Client-side rate limiting ─────────────────────────────────────
     if (!isLoginAllowed(trimmedEmail)) {
-      setError('Too many login attempts. Please wait 15 minutes before trying again.');
+      setError(t('login', 'rateLimitExceeded', lang));
       return;
     }
 
@@ -56,17 +56,17 @@ export default function LoginAuth() {
           authError.message.includes('Email not confirmed') ||
           authError.message.includes('user not found')
         ) {
-          setError('Invalid email or password.');
+          setError(t('login', 'invalidCredentials', lang));
         } else if (authError.message.includes('rate')) {
-          setError('Too many attempts. Please try again later.');
+          setError(t('login', 'tooManyAttempts', lang));
         } else {
           // Avoid leaking raw Supabase error messages
-          setError('Login failed. Please try again.');
+          setError(t('login', 'failed', lang));
         }
 
         // Show remaining attempts warning after 3 failures
         if (newCount >= 3) {
-          setError(`Invalid email or password. ${5 - newCount} attempt(s) remaining.`);
+          setError(t('login', 'attemptsRemaining', lang).replace('{count}', String(5 - newCount)));
         }
       } else if (data?.user) {
         clearRateLimit(trimmedEmail); // Reset on success
@@ -74,7 +74,7 @@ export default function LoginAuth() {
       }
     } catch (_err) {
       // Do NOT log sensitive details to console in production
-      setError('A network error occurred. Please try again.');
+      setError(t('login', 'networkError', lang));
     } finally {
       setLoading(false);
     }

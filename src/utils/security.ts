@@ -110,20 +110,45 @@ export function isValidPhoneNumber(phone: string): boolean {
  * Validates a password meets minimum security requirements.
  * At least 8 characters, one uppercase, one lowercase, one digit.
  */
-export function isStrongPassword(password: string): { valid: boolean; message: string } {
+export function isStrongPassword(password: string, lang: 'en' | 'bm' = 'en'): { valid: boolean; message: string } {
   if (!password || password.length < 8) {
-    return { valid: false, message: 'Password must be at least 8 characters long.' };
+    return {
+      valid: false,
+      message: lang === 'bm'
+        ? 'Kata laluan mestilah sekurang-kurangnya 8 aksara.'
+        : 'Password must be at least 8 characters long.'
+    };
   }
   if (!/[A-Z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one uppercase letter.' };
+    return {
+      valid: false,
+      message: lang === 'bm'
+        ? 'Kata laluan mesti mengandungi sekurang-kurangnya satu huruf besar.'
+        : 'Password must contain at least one uppercase letter.'
+    };
   }
   if (!/[a-z]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one lowercase letter.' };
+    return {
+      valid: false,
+      message: lang === 'bm'
+        ? 'Kata laluan mesti mengandungi sekurang-kurangnya satu huruf kecil.'
+        : 'Password must contain at least one lowercase letter.'
+    };
   }
   if (!/[0-9]/.test(password)) {
-    return { valid: false, message: 'Password must contain at least one number.' };
+    return {
+      valid: false,
+      message: lang === 'bm'
+        ? 'Kata laluan mesti mengandungi sekurang-kurangnya satu nombor.'
+        : 'Password must contain at least one number.'
+    };
   }
-  return { valid: true, message: 'Password is strong.' };
+  return {
+    valid: true,
+    message: lang === 'bm'
+      ? 'Kata laluan adalah kuat.'
+      : 'Password is strong.'
+  };
 }
 
 /**

@@ -15,6 +15,28 @@ export default function ClientDataView() {
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
 
+  const getLabel = (key: string) => {
+    const k = key.toUpperCase();
+    if (k === 'NAME') return lang === 'bm' ? 'Nama Penuh' : 'Full Name';
+    if (k === 'IC NUMBER') return lang === 'bm' ? 'No. Kad Pengenalan' : 'IC Number';
+    if (k === 'PHONE NUMBER') return lang === 'bm' ? 'No. Telefon' : 'Phone Number';
+    if (k === 'EMAIL') return lang === 'bm' ? 'E-mel' : 'Email';
+    if (k === 'ADDRESS') return lang === 'bm' ? 'Alamat' : 'Address';
+    if (k === 'DATE') return lang === 'bm' ? 'Tarikh' : 'Date';
+    if (k === 'CASE CATEGORY') return lang === 'bm' ? 'Kategori Kes' : 'Case Category';
+    if (k === 'CASE STATUS') return lang === 'bm' ? 'Status Kes' : 'Case Status';
+    if (k === 'INVOICE REF NO') return lang === 'bm' ? 'No. Rujukan Invois' : 'Invoice Ref No';
+    if (k === 'INVESTIGATION PAPER') return lang === 'bm' ? 'Kertas Siasatan' : 'Investigation Paper';
+    if (k === 'REPORT') return lang === 'bm' ? 'Laporan' : 'Report';
+    if (k === 'ACTION TAKEN BY POLICE') return lang === 'bm' ? 'Tindakan Pihak Polis' : 'Action Taken by police';
+    if (k === 'REMARK') return lang === 'bm' ? 'Catatan' : 'Remark';
+    if (k === 'NO') return lang === 'bm' ? 'No' : 'No';
+    if (k === 'PACKAGE (RM)') return lang === 'bm' ? 'Pakej (RM)' : 'Package (RM)';
+    if (k === 'TOTAL PAID (RM)') return lang === 'bm' ? 'Jumlah Dibayar (RM)' : 'Total Paid (RM)';
+    if (k === 'PENDING (RM)') return lang === 'bm' ? 'Belum Bayar (RM)' : 'Pending (RM)';
+    return key;
+  };
+
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -207,10 +229,7 @@ export default function ClientDataView() {
   const handleDeleteClient = async () => {
     if (!editingClient) return;
 
-    if (!window.confirm(lang === 'bm'
-      ? `Adakah anda pasti mahu memadamkan klien "${editingClient.NAME}"?`
-      : `Are you sure you want to delete client "${editingClient.NAME}"?`
-    )) {
+    if (!window.confirm(t('clients', 'confirmDelete', lang).replace('{name}', editingClient.NAME || ''))) {
       return;
     }
 
@@ -222,7 +241,7 @@ export default function ClientDataView() {
         .eq('id', editingClient.id);
 
       if (error) {
-        alert('Failed to delete client. Please try again.');
+        alert(lang === 'bm' ? 'Gagal memadam klien. Sila cuba lagi.' : 'Failed to delete client. Please try again.');
       } else {
         await writeAuditLog('DELETE', editingClient.id, {
           NAME: editingClient.NAME,
@@ -235,7 +254,7 @@ export default function ClientDataView() {
       }
     } catch (err) {
       console.error('Error deleting client:', err);
-      alert('Error deleting client. Please try again.');
+      alert(lang === 'bm' ? 'Ralat semasa memadam klien. Sila cuba lagi.' : 'Error deleting client. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -287,7 +306,7 @@ export default function ClientDataView() {
 
     // Basic validation
     if (!clientPayload.NAME) {
-      alert('Client name is required.');
+      alert(lang === 'bm' ? 'Nama klien diperlukan.' : 'Client name is required.');
       setLoading(false);
       return;
     }
@@ -302,7 +321,7 @@ export default function ClientDataView() {
       }
       window.location.reload();
     } catch (_err) {
-      alert('Failed to save. Please check your connection and try again.');
+      alert(t('clients', 'failedToSave', lang));
     } finally {
       setLoading(false);
       handleCloseModal();
@@ -374,7 +393,7 @@ export default function ClientDataView() {
 
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
-                Client Case Profile
+                {t('clients', 'clientCaseProfile', lang)}
               </h2>
               <button
                 onClick={handleCloseViewModal}
@@ -394,9 +413,9 @@ export default function ClientDataView() {
 
                   return (
                     <div key={key} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                      <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{key}</p>
+                      <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{getLabel(key)}</p>
                       <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">
-                        {value !== null && value !== '' ? String(value) : <span className="text-slate-400 dark:text-zinc-600 italic font-normal">Not Provided</span>}
+                        {value !== null && value !== '' ? String(value) : <span className="text-slate-400 dark:text-zinc-600 italic font-normal">{t('clients', 'notProvided', lang)}</span>}
                       </p>
                     </div>
                   );
@@ -420,19 +439,23 @@ export default function ClientDataView() {
 
                 return (
                   <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Payment Schedule</h3>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">{t('clients', 'paymentSchedule', lang)}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {payments.map(p => (
                          <div key={p.prefix} className="flex w-full bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800/80 shadow-sm overflow-hidden">
                             <div className="flex-1 p-4 border-r border-slate-100 dark:border-gray-800/80 w-1/2">
-                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{p.prefix} Payment Amount</p>
+                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">
+                                 {lang === 'bm' ? `Amaun Pembayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}` : `${p.prefix} Payment Amount`}
+                               </p>
                                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-words">
                                  {p.amount !== null && p.amount !== '' ? (String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
                                </p>
                             </div>
                             <div className="flex-1 p-4 w-1/2">
-                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{p.prefix} Payment Date</p>
-                               <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">
+                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">
+                                 {lang === 'bm' ? `Tarikh Pembayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}` : `${p.prefix} Payment Date`}
+                               </p>
+                               <p className="text-sm font-semibold text-slate-805 dark:text-white break-words">
                                  {p.date !== null && p.date !== '' ? String(p.date) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
                                </p>
                             </div>
@@ -446,21 +469,21 @@ export default function ClientDataView() {
               {/* BILLING & DOCUMENTS SECTION */}
               <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">Billing & Documents</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t('clients', 'billingDocs', lang)}</h3>
                   <button
                     onClick={() => setIsBillingModalOpen(true)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
                   >
-                    Generate Document
+                    {t('clients', 'generateDoc', lang)}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
-                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Invoices</h4>
+                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">{t('clients', 'invoices', lang)}</h4>
                     {billingRecords.filter(r => r.document_type === 'invoice').length === 0 ? (
-                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">No invoices generated yet.</p>
+                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">{t('clients', 'noInvoices', lang)}</p>
                     ) : (
                       <ul className="space-y-3">
                         {billingRecords.filter(r => r.document_type === 'invoice').map(record => (
@@ -471,7 +494,7 @@ export default function ClientDataView() {
                             </div>
                             {record.drive_url ? (
                               <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
-                                View
+                                {t('clients', 'viewDoc', lang)}
                               </a>
                             ) : (
                               <span className="text-xs text-slate-400">Processing...</span>
@@ -484,9 +507,9 @@ export default function ClientDataView() {
 
 
                   <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
-                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">Receipts</h4>
+                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">{t('clients', 'receipts', lang)}</h4>
                     {billingRecords.filter(r => r.document_type === 'receipt').length === 0 ? (
-                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">No receipts generated yet.</p>
+                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">{t('clients', 'noReceipts', lang)}</p>
                     ) : (
                       <ul className="space-y-3">
                         {billingRecords.filter(r => r.document_type === 'receipt').map(record => (
@@ -496,8 +519,8 @@ export default function ClientDataView() {
                               <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
                             </div>
                             {record.drive_url ? (
-                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
-                                View
+                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-805 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
+                                {t('clients', 'viewDoc', lang)}
                               </a>
                             ) : (
                               <span className="text-xs text-slate-400">Processing...</span>
@@ -518,16 +541,16 @@ export default function ClientDataView() {
                     handleCloseViewModal();
                     handleOpenEditModal(viewingClient);
                   }}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-gray-808 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
                 >
-                  Edit Data
+                  {t('clients', 'editData', lang)}
                 </button>
               )}
               <button
                 onClick={handleCloseViewModal}
                 className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-colors min-h-[48px]"
               >
-                Close
+                {t('clients', 'close', lang)}
               </button>
             </div>
           </div>
@@ -543,7 +566,7 @@ export default function ClientDataView() {
                 onClick={() => setIsBillingModalOpen(false)}
                 className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
               >
-                <span className="text-sm font-semibold">Close</span>
+                <span className="text-sm font-semibold">{t('clients', 'close', lang)}</span>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -586,7 +609,7 @@ export default function ClientDataView() {
 
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
-                {editingClient ? 'Edit Client Record' : 'Add New Client'}
+                {editingClient ? t('clients', 'editClientRecord', lang) : t('clients', 'addClient', lang)}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -732,10 +755,7 @@ export default function ClientDataView() {
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Remark</label>
                   <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
+                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
                 <div className="w-full sm:w-auto">
                   {editingClient && ['CEO', 'CFO', 'IT Admin'].includes(profile?.role) && (
                     <button
@@ -743,7 +763,7 @@ export default function ClientDataView() {
                       onClick={handleDeleteClient}
                       className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-955/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
                     >
-                      Delete Client
+                      {t('clients', 'deleteClient', lang)}
                     </button>
                   )}
                 </div>
@@ -753,15 +773,17 @@ export default function ClientDataView() {
                     onClick={handleCloseModal}
                     className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[48px]"
                   >
-                    Cancel
+                    {t('clients', 'cancel', lang)}
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
                     className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                   >
-                    {loading ? 'Saving...' : 'Save Changes'}
+                    {loading ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
                   </button>
+                </div>
+              </div>
                 </div>
               </div>
             </form>

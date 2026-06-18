@@ -97,3 +97,75 @@ html:not(.dark) body.bg-gray-50 {
   scrollbar-width: thin;
   scrollbar-color: var(--sb-thumb) var(--sb-track);
 }
+
+/* =========================================
+   Portal Contrast & Readability Accessibility Overrides
+   ========================================= */
+
+/* Light Mode Overrides */
+html:not(.dark) .portal-layout {
+  /* Muted and secondary labels (WCAG AA compliant contrast ratio of >= 4.5:1) */
+  .text-slate-400, .text-gray-400, .text-zinc-400, .text-neutral-400,
+  .text-slate-450, .text-slate-455, .text-slate-55, .text-slate-505 {
+    color: #4b5563 !important; /* gray-600 */
+  }
+  
+  /* Primary labels and text descriptions */
+  .text-slate-500, .text-gray-500, .text-zinc-500, .text-neutral-500 {
+    color: #374151 !important; /* gray-700 */
+  }
+  
+  /* Body/dark text details */
+  .text-slate-600, .text-gray-600, .text-zinc-600, .text-neutral-600,
+  .text-slate-650, .text-slate-700 {
+    color: #1f2937 !important; /* gray-800 */
+  }
+
+  /* Custom Indigo colors */
+  .text-indigo-650\/80, .text-indigo-650 {
+    color: #3730a3 !important; /* indigo-800 */
+  }
+  .text-indigo-750 {
+    color: #312e81 !important; /* indigo-900 */
+  }
+  .text-indigo-955 {
+    color: #1e1b4b !important; /* indigo-950 */
+  }
+
+  /* Higher contrast input placeholders */
+  ::placeholder {
+    color: #6b7280 !important; /* gray-500 */
+  }
+
+  /* High contrast select elements */
+  select, select option {
+    background-color: #ffffff !important;
+    color: #1f2937 !important; /* gray-800 */
+  }
+}
+
+/* Dark Mode Overrides */
+html.dark .portal-layout {
+  /* Secondary details and labels */
+  .text-slate-500, .text-gray-500, .text-zinc-500, .text-neutral-500,
+  .text-zinc-550, .text-zinc-650, .text-slate-55, .text-slate-505 {
+    color: #d1d5db !important; /* gray-300 */
+  }
+  
+  /* Primary details and titles */
+  .text-slate-400, .text-gray-400, .text-zinc-400, .text-neutral-400,
+  .text-slate-450, .text-slate-455 {
+    color: #f3f4f6 !important; /* gray-100 */
+  }
+
+  /* Higher contrast input placeholders */
+  ::placeholder {
+    color: #9ca3af !important; /* gray-400 */
+  }
+
+  /* High contrast select elements */
+  select, select option {
+    background-color: #18181b !important; /* zinc-900 */
+    color: #f4f4f5 !important; /* zinc-100 */
+  }
+}

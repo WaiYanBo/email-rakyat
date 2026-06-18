@@ -217,18 +217,18 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         console.warn('Failed to clear session storage cache:', e);
       }
 
-      alert('Permissions saved successfully!');
+      alert(t('accessControl', 'savedSuccess', lang));
       fetchData(); // Refresh IDs
     } catch (err) {
       console.error('Save failed', err);
-      alert('Failed to save permissions. Ensure the SQL script was run.');
+      alert(t('accessControl', 'saveFailed', lang));
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-slate-500 animate-pulse">Loading Access Control...</div>;
+    return <div className="p-8 text-center text-slate-500 animate-pulse">{t('accessControl', 'loading', lang)}</div>;
   }
 
   const renderMatrixRow = (title: string, subtitle: string, key: string, isDepartment: boolean) => {
@@ -280,9 +280,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Access Control Matrix</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{t('accessControl', 'matrixTitle', lang)}</h2>
           <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-            Manage viewing and editing permissions across the portal. Department permissions apply to all users in that department unless overridden by specific user settings.
+            {t('accessControl', 'matrixSubtitle', lang)}
           </p>
         </div>
         <button
@@ -290,7 +290,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           disabled={saving}
           className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl text-sm font-semibold shadow-sm transition-colors disabled:opacity-50"
         >
-          {saving ? 'Saving...' : 'Save Permissions'}
+          {saving ? t('accessControl', 'saving', lang) : t('accessControl', 'saveBtn', lang)}
         </button>
       </div>
 
@@ -300,55 +300,55 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             <thead>
               <tr className="bg-slate-100/80 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs w-64 uppercase tracking-wider">
-                  Target (Dept / User)
+                  {t('accessControl', 'colTarget', lang)}
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">View Clients</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Read-only access to client DB</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colViewClients', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colViewClientsDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">Edit Clients</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Add, edit, or delete clients</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colEditClients', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colEditClientsDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">View Staff</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View staff profiles</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colViewStaff', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colViewStaffDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">Edit Staff</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Modify staff details</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colEditStaff', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colEditStaffDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">Attendance</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View clock-ins</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colAttendance', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colAttendanceDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">Snapshot</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">View cam snaps</span>
+                    <span className="uppercase tracking-wider">{t('accessControl', 'colSnapshot', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colSnapshotDesc', lang)}</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                   <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Drive</span>
-                    <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Manage company files</span>
+                    <span className="uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t('accessControl', 'colDrive', lang)}</span>
+                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colDriveDesc', lang)}</span>
                   </div>
                 </th>
                 {isITAdmin && (
                   <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
                     <div className="flex flex-col items-center">
-                      <span className="uppercase tracking-wider text-rose-600 dark:text-rose-400">Manage Access</span>
-                      <span className="text-[10px] font-normal text-slate-500 mt-1 capitalize normal-case leading-tight max-w-[90px]">Edit matrix</span>
+                      <span className="uppercase tracking-wider text-rose-600 dark:text-rose-400">{t('accessControl', 'colManageAccess', lang)}</span>
+                      <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colManageAccessDesc', lang)}</span>
                     </div>
                   </th>
                 )}
@@ -357,9 +357,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             <tbody>
               {departments.map(dept => (
                 <React.Fragment key={`group_${dept}`}>
-                  {renderMatrixRow(dept, 'Department-wide Access', `dept_${dept}`, true)}
+                  {renderMatrixRow(dept, t('accessControl', 'deptWideAccess', lang), `dept_${dept}`, true)}
                   {users.filter(u => u.department === dept).map(user => (
-                    renderMatrixRow(user.full_name, user.roles?.role_name || 'No Role', `user_${user.id}`, false)
+                    renderMatrixRow(user.full_name, user.roles?.role_name || t('common', 'noRole', lang), `user_${user.id}`, false)
                   ))}
                 </React.Fragment>
               ))}
@@ -367,10 +367,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               {users.filter(u => !u.department).length > 0 && (
                 <>
                   <tr className="bg-slate-50 dark:bg-gray-900/50 border-b border-slate-100 dark:border-gray-800">
-                    <td colSpan={isITAdmin ? 9 : 8} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-500 text-xs uppercase tracking-wider">Unassigned / No Department</td>
+                    <td colSpan={isITAdmin ? 9 : 8} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-550 text-xs uppercase tracking-wider">{t('accessControl', 'unassignedDept', lang)}</td>
                   </tr>
                   {users.filter(u => !u.department).map(user => (
-                    renderMatrixRow(user.full_name, user.roles?.role_name || 'No Role', `user_${user.id}`, false)
+                    renderMatrixRow(user.full_name, user.roles?.role_name || t('common', 'noRole', lang), `user_${user.id}`, false)
                   ))}
                 </>
               )}

@@ -302,33 +302,30 @@ export default function ReportsView() {
         <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
-
-
-
       {activeTab === 'hr' && (
         <div className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
             <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
-              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Active Staff</p>
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('reports', 'activeStaff', lang)}</p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{activeStaffCount}</p>
             </div>
             <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
-              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Total Headcount</p>
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('reports', 'totalHeadcount', lang)}</p>
               <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">{staffRecords.length}</p>
             </div>
             <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
-              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">Est. Monthly Payroll</p>
-              <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
+              <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('reports', 'estPayroll', lang)}</p>
+              <p className="text-2xl font-bold text-slate-805 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-5 border-b border-indigo-950 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
-              <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
+            <div className="p-5 border-b border-indigo-955 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
+              <h3 className="text-sm font-bold text-white tracking-tight">{t('reports', 'staffDirectory', lang)}</h3>
               {canEditStaff && (
                 <button
                   onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-950 dark:bg-yellow-500 dark:text-black border border-slate-200 dark:border-yellow-500/50 dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-955 dark:bg-yellow-500 dark:text-black border border-slate-200 dark:border-yellow-500/50 dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -343,7 +340,7 @@ export default function ReportsView() {
                   <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('reports', 'colNameRole', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden md:table-cell">{t('reports', 'colDept', lang)}</th>
-                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden lg:table-cell">Remarks</th>
+                    <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs hidden lg:table-cell">{t('reports', 'colRemarks', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right hidden lg:table-cell">{t('reports', 'colSalary', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-center">{t('reports', 'colStatus', lang)}</th>
                     <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs text-right">{t('reports', 'colActions', lang)}</th>
@@ -375,14 +372,14 @@ export default function ReportsView() {
                             onClick={() => { setViewingStaff(staff); setIsViewStaffModalOpen(true); }}
                             className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm inline-flex"
                           >
-                            View
+                            {t('clients', 'viewDoc', lang)}
                           </button>
                           {canEditStaff && (
                             <button
                               onClick={() => { setEditingStaff(staff); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
                               className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-gray-900/30 dark:text-yellow-500 dark:hover:bg-yellow-500/20 border border-indigo-200 dark:border-yellow-500/30 text-xs font-semibold transition-all shadow-sm inline-flex"
                             >
-                              Edit
+                              {t('reports', 'editBtn', lang)}
                             </button>
                           )}
                         </div>
@@ -466,7 +463,7 @@ export default function ReportsView() {
                   }}
                   className="px-6 py-2.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors"
                 >
-                  Edit Record
+                  {t('reports', 'editStaff', lang)}
                 </button>
               )}
             </div>
@@ -478,7 +475,7 @@ export default function ReportsView() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
-              <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? 'Edit Staff Data' : 'Automated Onboarding'}</h2>
+              <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? t('reports', 'editStaff', lang) : t('reports', 'onboarding', lang)}</h2>
               <button
                 onClick={() => setIsStaffModalOpen(false)}
                 className="text-slate-400 hover:text-rose-500 p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl transition-colors"

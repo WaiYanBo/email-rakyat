@@ -157,7 +157,7 @@ export default function AttendanceView() {
 
   const exportToExcel = () => {
     if (filteredRecords.length === 0) {
-      alert('No records to export');
+      alert(t('attendance', 'noRecordsToExport', lang));
       return;
     }
 
@@ -170,7 +170,7 @@ export default function AttendanceView() {
   if (loading || permsLoading) {
     return (
       <div className="p-8 text-center text-slate-500 animate-pulse bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl">
-        Loading Attendance Records...
+        {t('attendanceAdmin', 'loading', lang)}
       </div>
     );
   }
@@ -209,7 +209,7 @@ export default function AttendanceView() {
 
               <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550 mb-2">
-                  {lang === 'bm' ? 'Pilih Pekerja' : 'Select Employee'}
+                  {t('attendanceAdmin', 'selectEmployee', lang)}
                 </label>
                 <div className="relative">
                   <select
@@ -217,8 +217,8 @@ export default function AttendanceView() {
                     onChange={(e) => handleEmployeeChange(e.target.value)}
                     className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] appearance-none pr-10 cursor-pointer"
                   >
-                    <option value="">{lang === 'bm' ? 'Sila Pilih Pekerja...' : 'Please Select Employee...'}</option>
-                    <option value="all">{lang === 'bm' ? 'Semua Pekerja' : 'All Employees'}</option>
+                    <option value="">{t('attendanceAdmin', 'pleaseSelectEmployee', lang)}</option>
+                    <option value="all">{t('attendanceAdmin', 'allEmployees', lang)}</option>
                     {uniqueEmployees.map((emp: any) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.full_name}
@@ -306,8 +306,8 @@ export default function AttendanceView() {
                   <tbody className="divide-y divide-slate-150 dark:divide-zinc-805">
                     {!selectedEmployeeId ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-slate-450 dark:text-zinc-500 font-medium italic">
-                          {lang === 'bm' ? 'Sila pilih pekerja dari senarai di atas.' : 'Please select an employee from the dropdown list above.'}
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-450 dark:text-zinc-550 font-medium italic">
+                          {t('attendanceAdmin', 'selectFromDropdown', lang)}
                         </td>
                       </tr>
                     ) : filteredRecords.length === 0 ? (
@@ -320,7 +320,9 @@ export default function AttendanceView() {
                       filteredRecords.map((record, idx) => (
                         <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                           <td className="px-5 py-4">
-                            <p className="font-semibold text-slate-900 dark:text-white">{record.user_name}</p>
+                            <p className="font-semibold text-slate-900 dark:text-white">
+                              {record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name}
+                            </p>
                             {filterMode === 'month' && record.date && (
                               <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
                                 {new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
@@ -334,11 +336,11 @@ export default function AttendanceView() {
                           <td className="px-5 py-4">
                             {record.check_in_time ? (
                               <div>
-                                <p className="font-semibold text-slate-805 dark:text-zinc-150 text-sm">
+                                <p className="font-semibold text-slate-805 dark:text-zinc-155 text-sm">
                                   {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.check_in_distance}m away
+                                  {record.check_in_distance}{t('attendance', 'away', lang)}
                                 </p>
                               </div>
                             ) : (
@@ -363,11 +365,11 @@ export default function AttendanceView() {
                                   {new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.check_out_distance !== null ? `${record.check_out_distance}m away` : 'No location data'}
+                                  {record.check_out_distance !== null ? `${record.check_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
                                 </p>
                                 {record.is_late_checkout && (
                                   <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
-                                    Flagged Late
+                                    {t('attendanceAdmin', 'flaggedLate', lang)}
                                   </span>
                                 )}
                               </div>

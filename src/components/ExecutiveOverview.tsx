@@ -275,7 +275,7 @@ export default function ExecutiveOverview() {
         .eq('id', id);
 
       if (error) {
-        alert('Failed to delete announcement. Please try again.');
+        alert(t('overview', 'failedDelete', lang));
       } else {
         await writeAuditLog('DELETE', id, {
           title,
@@ -288,7 +288,7 @@ export default function ExecutiveOverview() {
       }
     } catch (err) {
       console.error('Error deleting announcement:', err);
-      alert('Error deleting announcement. Please try again.');
+      alert(t('overview', 'errorDelete', lang));
     }
   };
 
@@ -311,12 +311,12 @@ export default function ExecutiveOverview() {
     const cleanType = allowedTypes.includes(rawType) ? rawType : 'Info';
 
     if (!cleanTitle) {
-      alert('Announcement title is required.');
+      alert(t('overview', 'titleRequired', lang));
       setIsPostingNotice(false);
       return;
     }
     if (!cleanContent) {
-      alert('Announcement content is required.');
+      alert(t('overview', 'contentRequired', lang));
       setIsPostingNotice(false);
       return;
     }
@@ -340,7 +340,7 @@ export default function ExecutiveOverview() {
           .select();
 
         if (error) {
-          alert('Failed to update announcement. Please try again.');
+          alert(t('overview', 'failedUpdate', lang));
         } else {
           await writeAuditLog('UPDATE', editingNotice.id, {
             before: {
@@ -378,7 +378,7 @@ export default function ExecutiveOverview() {
 
         if (error) {
           console.error('Insert announcement error:', error);
-          alert(`Failed to post announcement. ${error.message || 'Please try again.'}`);
+          alert(`${t('overview', 'failedPost', lang)}${error.message || ''}`);
         } else {
           const newRecord = data?.[0];
           if (newRecord) {
@@ -396,7 +396,7 @@ export default function ExecutiveOverview() {
         }
       }
     } catch (_err) {
-      alert('Error saving announcement. Please try again.');
+      alert(t('overview', 'errorSave', lang));
     } finally {
       setIsPostingNotice(false);
     }
@@ -646,7 +646,7 @@ export default function ExecutiveOverview() {
                           type="button"
                           className="h-8 px-4 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm flex-shrink-0"
                         >
-                          {lang === 'bm' ? 'Baca' : 'Read'}
+                          {t('overview', 'read', lang)}
                         </button>
                       </div>
                     </div>
@@ -695,14 +695,14 @@ export default function ExecutiveOverview() {
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block">
-                  {lang === 'bm' ? 'Tapis Mengikut Bulan' : 'Filter By Month'}
+                  {t('overview', 'filterByMonth', lang)}
                 </label>
                 <select
                   value={historyFilterMonth}
                   onChange={(e) => setHistoryFilterMonth(e.target.value)}
                   className="w-full px-4 py-2.5 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 >
-                  <option value="All">{lang === 'bm' ? 'Semua Bulan' : 'All Months'}</option>
+                  <option value="All">{t('overview', 'allMonths', lang)}</option>
                   {getUniqueMonths().map(ym => (
                     <option key={ym} value={ym}>
                       {getMonthLabel(ym, lang)}
@@ -831,7 +831,7 @@ export default function ExecutiveOverview() {
                           type="button"
                           className="h-8 px-3 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm"
                         >
-                          {lang === 'bm' ? 'Baca' : 'Read'}
+                          {t('overview', 'read', lang)}
                         </button>
                       </div>
                     </div>
@@ -852,13 +852,13 @@ export default function ExecutiveOverview() {
               <div>
                 <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">
                   {editingNotice
-                    ? (lang === 'bm' ? 'Kemaskini Pengumuman' : 'Edit Announcement')
+                    ? t('overview', 'editAnnouncement', lang)
                     : t('overview', 'postNewAnnouncement', lang)
                   }
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-medium">
                   {editingNotice
-                    ? (lang === 'bm' ? 'Kemaskini maklumat pengumuman di bawah' : 'Update the announcement details below')
+                    ? t('overview', 'editSubtitle', lang)
                     : t('overview', 'postSubtitle', lang)
                   }
                 </p>
@@ -884,7 +884,7 @@ export default function ExecutiveOverview() {
                   required
                   defaultValue={editingNotice ? editingNotice.title : ''}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
-                  placeholder="e.g. Q3 Quarterly Meeting"
+                  placeholder={t('overview', 'titlePlaceholder', lang)}
                   disabled={isPostingNotice}
                 />
               </div>
@@ -898,9 +898,9 @@ export default function ExecutiveOverview() {
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 >
-                  <option value="Info">ℹ️ Info (Standard)</option>
-                  <option value="Memo">📝 Memo (Important)</option>
-                  <option value="Urgent">⚠️ Urgent (Critical)</option>
+                  <option value="Info">ℹ️ {t('overview', 'infoBadge', lang)} ({lang === 'bm' ? 'Standard' : 'Standard'})</option>
+                  <option value="Memo">📝 {t('overview', 'memoBadge', lang)} ({lang === 'bm' ? 'Penting' : 'Important'})</option>
+                  <option value="Urgent">⚠️ {t('overview', 'urgentBadge', lang)} ({lang === 'bm' ? 'Kritikal' : 'Critical'})</option>
                 </select>
               </div>
 
@@ -916,8 +916,8 @@ export default function ExecutiveOverview() {
                 />
                 <div className="mt-2 p-3 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl">
                   <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    <span className="font-semibold block mb-0.5">Publish Settings:</span>
-                    Past dates will be placed in history. Future dates will schedule this post for later.
+                    <span className="font-semibold block mb-0.5">{lang === 'bm' ? 'Tetapan Penerbitan:' : 'Publish Settings:'}</span>
+                    {lang === 'bm' ? 'Tarikh lepas akan diletakkan dalam sejarah. Tarikh masa hadapan akan menjadualkan siaran ini untuk kemudian.' : 'Past dates will be placed in history. Future dates will schedule this post for later.'}
                   </p>
                 </div>
               </div>
@@ -931,7 +931,7 @@ export default function ExecutiveOverview() {
                   rows={5}
                   defaultValue={editingNotice ? editingNotice.content : ''}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none disabled:opacity-50"
-                  placeholder="Write your announcement message here..."
+                  placeholder={t('overview', 'messagePlaceholder', lang)}
                   disabled={isPostingNotice}
                 />
               </div>
@@ -954,10 +954,10 @@ export default function ExecutiveOverview() {
                   {isPostingNotice ? (
                     <span className="flex items-center gap-2">
                       <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                      {editingNotice ? (lang === 'bm' ? 'Menyimpan...' : 'Saving...') : t('overview', 'posting', lang)}
+                      {editingNotice ? t('overview', 'saving', lang) : t('overview', 'posting', lang)}
                     </span>
                   ) : (
-                    editingNotice ? (lang === 'bm' ? 'Simpan' : 'Save Changes') : t('overview', 'postToDashboard', lang)
+                    editingNotice ? t('overview', 'saveChanges', lang) : t('overview', 'postToDashboard', lang)
                   )}
                 </button>
               </div>
@@ -1003,9 +1003,8 @@ export default function ExecutiveOverview() {
                   {modalContent}
                 </div>
 
-
                 <div className="p-6 border-t border-slate-100 dark:border-gray-800/80 bg-slate-50 dark:bg-gray-900/50 flex justify-between items-center gap-4">
-                  <span className="text-xs text-slate-500 dark:text-zinc-450">Posted by <span className="font-semibold">{selectedAnnouncement.author}</span></span>
+                  <span className="text-xs text-slate-500 dark:text-zinc-455">{t('overview', 'postedBy', lang)} <span className="font-semibold">{selectedAnnouncement.author}</span></span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleTranslate(selectedAnnouncement.id, selectedAnnouncement.title, selectedAnnouncement.content)}
@@ -1013,14 +1012,14 @@ export default function ExecutiveOverview() {
                       type="button"
                       className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 transition-all min-h-[48px] flex items-center gap-1.5 shadow-sm"
                     >
-                      {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? (lang === 'bm' ? 'Asal' : 'Original') : (lang === 'bm' ? 'Terjemah' : 'Translate')}
+                      {translatingIds[selectedAnnouncement.id] ? '...' : isTranslated ? t('overview', 'original', lang) : t('overview', 'translate', lang)}
                     </button>
                     <button
                       onClick={() => setSelectedAnnouncement(null)}
                       type="button"
                       className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-all min-h-[48px]"
                     >
-                      {lang === 'bm' ? 'Tutup' : 'Close'}
+                      {t('clients', 'close', lang)}
                     </button>
                   </div>
                 </div>

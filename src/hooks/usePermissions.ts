@@ -39,20 +39,7 @@ export function usePermissions(profile: any) {
           }
         }
 
-        if (userId) {
-          const cacheKey = `portal_perms_${userId}`;
-          const cached = sessionStorage.getItem(cacheKey);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              setPermissions(parsed);
-              setLoading(false);
-              return;
-            } catch (e) {
-              // ignore
-            }
-          }
-        }
+        // Caching disabled to ensure real-time permission updates and prevent stale role lockouts
 
         if (userId && (!department || !role)) {
           const { data: profData } = await supabase
@@ -99,7 +86,7 @@ export function usePermissions(profile: any) {
         }
 
         const defaultHasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'].includes(role || '');
-        const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker'].includes(role || '');
+        const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker', 'Senior Executive', 'Executive', 'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant', 'Finance', 'Marketing', 'Accounting', 'Creative', 'HR', 'Intern HR'].includes(role || '');
         const defaultHasHRAccess = ['Chairman', 'CEO', 'CFO', 'IT Admin', 'HR'].includes(role || '');
 
         let finalPerms: Permissions = {

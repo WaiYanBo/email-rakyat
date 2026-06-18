@@ -1,19 +1,8 @@
 ---
+import HRControlPanel from '../../components/HRControlPanel';
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import AttendanceView from '../../components/AttendanceView';
-import PublicHolidaysView from '../../components/PublicHolidaysView';
 ---
 
 <DashboardLayout title="HR Control Panel - Staff Portal">
-  <div class="space-y-8 animate-page-transition pt-12 md:pt-0">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">HR Control Panel</h1>
-      <p class="text-slate-600 dark:text-zinc-400">Manage attendance records and company policies globally.</p>
-    </div>
-
-    <div class="space-y-12">
-      <AttendanceView client:only="react" />
-      <PublicHolidaysView client:only="react" />
-    </div>
-  </div>
+  <HRControlPanel client:only="react" />
 </DashboardLayout>

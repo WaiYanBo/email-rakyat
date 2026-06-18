@@ -288,7 +288,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors disabled:opacity-50"
+          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl text-sm font-semibold shadow-sm transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Permissions'}
         </button>

@@ -154,7 +154,7 @@ export default function PublicHolidaysView() {
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
-      <div className="p-6 md:p-8 border-b border-indigo-700 dark:border-indigo-500/50 bg-indigo-600 dark:bg-gray-900 flex justify-between items-center">
+      <div className="p-6 md:p-8 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900 flex justify-between items-center">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             {lang === 'bm' ? 'Cuti Umum Tahunan' : 'Annual Public Holidays'}
@@ -166,7 +166,7 @@ export default function PublicHolidaysView() {
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-white text-indigo-600 font-semibold rounded-xl text-sm shadow-sm hover:bg-indigo-50 transition-colors"
+            className="px-4 py-2 bg-white text-indigo-950 dark:bg-yellow-500 dark:text-black font-semibold rounded-xl text-sm shadow-sm hover:bg-indigo-50 dark:hover:bg-yellow-400 transition-colors"
           >
             {lang === 'bm' ? '+ Tambah Cuti' : '+ Add Holiday'}
           </button>
@@ -214,7 +214,7 @@ export default function PublicHolidaysView() {
               <button
                 onClick={handleSave}
                 disabled={!newDate || !newName}
-                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-lg transition-colors disabled:opacity-50"
               >
                 {lang === 'bm' ? 'Simpan' : 'Save'}
               </button>

@@ -323,12 +323,12 @@ export default function ReportsView() {
           </div>
 
           <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-5 border-b border-purple-700 dark:border-yellow-500/50 flex justify-between items-center bg-purple-600 dark:bg-gray-900">
+            <div className="p-5 border-b border-indigo-950 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
               <h3 className="text-sm font-bold text-white tracking-tight">Staff Registry</h3>
               {canEditStaff && (
                 <button
                   onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-purple-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1 border border-purple-100 dark:border-yellow-500/50"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-950 dark:bg-yellow-500 dark:text-black border border-slate-200 dark:border-yellow-500/50 dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -606,7 +606,7 @@ export default function ReportsView() {
                     <button
                       type="submit"
                       disabled={isProcessing}
-                      className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-purple-600 hover:bg-purple-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                      className="px-6 py-3 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black border-0 dark:hover:bg-yellow-400 transition-colors w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                     >
                       {isProcessing ? 'Automating...' : 'Save & Automate'}
                     </button>

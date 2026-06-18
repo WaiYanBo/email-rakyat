@@ -470,7 +470,7 @@ export default function CheckInCheckOut() {
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8">
 
-      <div className="p-6 md:p-8 border-b border-blue-700 dark:border-yellow-500/50 bg-blue-600 dark:bg-gray-900">
+      <div className="p-6 md:p-8 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             Time Tracking
@@ -584,7 +584,7 @@ export default function CheckInCheckOut() {
               <button
                 onClick={() => getLocationAndCheckIn('check_in')}
                 disabled={isProcessing || (todayRecord?.check_in_time && !todayRecord?.check_out_time)}
-                className="px-5 py-3 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
+                className="px-5 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
                 <div className="flex items-center justify-center gap-2">
                   {isProcessing ? (
@@ -978,7 +978,7 @@ export default function CheckInCheckOut() {
                       <button
                         type="submit"
                         disabled={isSubmittingLateCheckout}
-                        className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow transition-all min-h-[48px] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black font-semibold text-xs rounded-xl shadow transition-all min-h-[48px] flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
                         {isSubmittingLateCheckout ? (
                           <>

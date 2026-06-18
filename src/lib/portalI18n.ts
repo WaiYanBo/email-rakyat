@@ -282,6 +282,19 @@ export const translations = {
     unsupportedFile: { en: 'Unsupported file type for preview', bm: 'Jenis fail tidak disokong untuk pratonton' },
   },
 
+  // ─── Human Resources ──────────────────────────────────────────────────────
+  hr: {
+    title: { en: 'HR Control Panel', bm: 'Panel Kawalan HR' },
+    subtitle: { en: 'Manage attendance records, public holidays, leave system, and claims.', bm: 'Urus rekod kehadiran, cuti umum, sistem cuti, dan tuntutan.' },
+    tabAttendance: { en: 'Check In/Out Records', bm: 'Rekod Daftar Masuk/Keluar' },
+    tabHolidays: { en: 'Assign Public Holidays', bm: 'Urus Cuti Umum' },
+    tabLeave: { en: 'Leave System', bm: 'Sistem Cuti' },
+    tabClaims: { en: 'Claims', bm: 'Tuntutan' },
+    comingSoon: { en: 'Coming Soon', bm: 'Akan Datang' },
+    leavePlaceholder: { en: 'The Leave Management System is currently under development. Soon you will be able to apply for leave, view leave balance, and track approvals.', bm: 'Sistem Pengurusan Cuti kini sedang dibangunkan. Tidak lama lagi anda boleh memohon cuti, melihat baki cuti, dan menjejak kelulusan.' },
+    claimsPlaceholder: { en: 'The Claims System is currently under development. Soon you will be able to submit expense claims, upload receipts, and check claim reimbursement status.', bm: 'Sistem Tuntutan kini sedang dibangunkan. Tidak lama lagi anda boleh mengemukakan tuntutan perbelanjaan, memuat naik resit, dan menyemak status bayaran balik tuntutan.' },
+  },
+
   // ─── Common / Shared ──────────────────────────────────────────────────────
   common: {
     loading: { en: 'Loading...', bm: 'Memuatkan...' },

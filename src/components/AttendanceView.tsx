@@ -182,7 +182,7 @@ export default function AttendanceView() {
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
 
-      <div className="p-6 md:p-8 border-b border-emerald-700 dark:border-yellow-500/50 bg-emerald-600 dark:bg-gray-900">
+      <div className="p-6 md:p-8 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
             {t('attendanceAdmin', 'title', lang)}
@@ -281,7 +281,7 @@ export default function AttendanceView() {
 
               <button
                 onClick={exportToExcel}
-                className="w-full px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold tracking-wide transition-all flex items-center justify-center gap-2 min-h-[48px] shadow-sm border border-emerald-600"
+                className="w-full px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black text-xs md:text-sm font-semibold tracking-wide transition-all flex items-center justify-center gap-2 min-h-[48px] shadow-sm border border-indigo-600 dark:border-yellow-500"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>

@@ -84,17 +84,17 @@ export default function LoginAuth() {
     // FIX: Changed w-full to w-[90%] on mobile, adjusted padding (p-6 md:p-8)
     <div className="w-[90%] md:w-full max-w-md mx-auto p-6 md:p-8 bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl transition-colors duration-300">
       <div className="text-center mb-6 md:mb-8">
-        <h2 className="text-xl md:text-2xl font-black text-teal-800 dark:text-white uppercase tracking-wider mb-2 transition-colors">
+        <h2 className="text-xl md:text-2xl font-black text-indigo-900 dark:text-white uppercase tracking-wider mb-2 transition-colors">
           {t('login', 'title', lang)}
         </h2>
-        <p className="text-xs md:text-sm text-teal-600/80 dark:text-gray-400 transition-colors">
+        <p className="text-xs md:text-sm text-indigo-650/80 dark:text-gray-400 transition-colors">
           {t('login', 'subtitle', lang)}
         </p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5 md:space-y-6" noValidate>
         <div>
-          <label htmlFor="login-email" className="block text-xs md:text-sm font-bold text-teal-900 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
+          <label htmlFor="login-email" className="block text-xs md:text-sm font-bold text-indigo-950 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
             {t('login', 'email', lang)}
           </label>
           <input
@@ -104,7 +104,7 @@ export default function LoginAuth() {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             maxLength={254}
-            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
+            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-indigo-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
             required
             aria-required="true"
             aria-label="Email address"
@@ -112,7 +112,7 @@ export default function LoginAuth() {
         </div>
 
         <div>
-          <label htmlFor="login-password" className="block text-xs md:text-sm font-bold text-teal-900 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
+          <label htmlFor="login-password" className="block text-xs md:text-sm font-bold text-indigo-955 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
             {t('login', 'password', lang)}
           </label>
           <input
@@ -122,7 +122,7 @@ export default function LoginAuth() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             maxLength={128}
-            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-teal-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
+            className="w-full px-4 py-2.5 md:py-3 bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 dark:focus:border-yellow-500 focus:ring-1 focus:ring-indigo-500 dark:focus:ring-yellow-500 text-sm text-gray-900 dark:text-white transition-all placeholder-gray-400 dark:placeholder-gray-600 shadow-inner"
             required
             aria-required="true"
             aria-label="Password"
@@ -143,7 +143,7 @@ export default function LoginAuth() {
           type="submit"
           id="login-submit-btn"
           disabled={loading}
-          className="w-full py-2.5 md:py-3 px-4 bg-teal-600 hover:bg-teal-500 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-black font-black text-sm md:text-base uppercase tracking-widest rounded-lg transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          className="w-full py-2.5 md:py-3 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-black font-black text-sm md:text-base uppercase tracking-widest rounded-lg transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed mt-2"
         >
           {loading ? t('login', 'processing', lang) : t('login', 'loginBtn', lang)}
         </button>

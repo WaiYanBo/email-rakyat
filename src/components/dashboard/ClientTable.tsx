@@ -1,7 +1,4 @@
 import { useState, useMemo, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 const getSortValue = (obj: any, key: string) => {
   if (key === 'DATE') {
@@ -139,6 +136,7 @@ export default function ClientTable({
   const handleExportExcel = async () => {
     const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Client Database");
@@ -148,6 +146,7 @@ export default function ClientTable({
   const handleExportCSV = async () => {
     const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
+    const XLSX = await import('xlsx');
     const ws = XLSX.utils.json_to_sheet(exportData);
     const csv = XLSX.utils.sheet_to_csv(ws);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -160,6 +159,9 @@ export default function ClientTable({
   const handleExportPDF = async () => {
     const exportData = await getExportData();
     if (exportData.length === 0) return alert("No data to export");
+
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
 
     const doc = new jsPDF('landscape');
     doc.text(`Email Rakyat - Client Database (Exported: ${getExportDate()})`, 14, 15);

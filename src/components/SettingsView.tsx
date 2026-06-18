@@ -311,7 +311,7 @@ export default function SettingsView() {
       <div className="lg:col-span-2 space-y-6 md:space-y-8">
 
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
+          <div className="p-6 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
           </div>
@@ -358,7 +358,7 @@ export default function SettingsView() {
 
 
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-indigo-700 dark:border-yellow-500/50 bg-indigo-600 dark:bg-gray-900">
+          <div className="p-6 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
             <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
             <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
           </div>

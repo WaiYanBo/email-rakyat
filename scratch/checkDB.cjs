@@ -6,10 +6,7 @@ const key = env.match(/PUBLIC_SUPABASE_ANON_KEY=(.*)/)[1].replace(/['"]/g, '').t
 const supabase = createClient(url, key);
 
 async function check() {
-  const { data: policies, error: pErr } = await supabase.from('company_drive').select('*').limit(1);
-  console.log('company_drive access:', pErr || 'OK');
-  
-  const { data: profiles, error: prErr } = await supabase.from('profiles').select('*').limit(1);
-  console.log('profiles fields:', profiles ? Object.keys(profiles[0]) : prErr);
+  const { data: profiles, error: prErr } = await supabase.from('profiles').select('id, full_name, department, role_id').limit(10);
+  console.log('Profiles:', profiles || prErr);
 }
 check();

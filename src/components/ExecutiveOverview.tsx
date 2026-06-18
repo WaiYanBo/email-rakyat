@@ -500,7 +500,7 @@ export default function ExecutiveOverview() {
 
       {!showHistory ? (
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mt-6">
-          <div className="p-6 border-b border-blue-700 dark:border-yellow-500/50 bg-blue-600 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="p-6 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">
                 {t('overview', 'announcements', lang)}
@@ -515,7 +515,7 @@ export default function ExecutiveOverview() {
               {pastCount > 0 && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex-1 sm:flex-none text-xs font-semibold bg-blue-700 hover:bg-blue-800 text-white dark:bg-gray-800 dark:hover:bg-gray-700 px-4 py-2.5 rounded-xl border border-blue-500 dark:border-yellow-500/50 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-indigo-700 hover:bg-indigo-800 text-white dark:bg-gray-800 dark:hover:bg-gray-700 px-4 py-2.5 rounded-xl border border-indigo-500 dark:border-yellow-500/50 transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   {t('overview', 'viewHistory', lang)}
                 </button>
@@ -523,7 +523,7 @@ export default function ExecutiveOverview() {
               {hasFullAccess && (
                 <button
                   onClick={() => setIsNoticeModalOpen(true)}
-                  className="flex-1 sm:flex-none text-xs font-semibold bg-white hover:bg-slate-50 text-blue-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
+                  className="flex-1 sm:flex-none text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black px-4 py-2.5 rounded-xl transition-all min-h-[48px] flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   {t('overview', 'postNotice', lang)}
                 </button>
@@ -949,7 +949,7 @@ export default function ExecutiveOverview() {
                 <button
                   type="submit"
                   disabled={isPostingNotice}
-                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[48px]"
+                  className="px-5 py-3 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[48px]"
                 >
                   {isPostingNotice ? (
                     <span className="flex items-center gap-2">

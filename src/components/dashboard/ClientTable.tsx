@@ -28,6 +28,42 @@ const hasPendingAmount = (pendingVal: any) => {
   return !isNaN(num) && num > 0;
 };
 
+const parseAmount = (val: any): number => {
+  if (!val) return 0;
+  const clean = String(val).replace(/[^0-9.-]+/g, '');
+  return parseFloat(clean) || 0;
+};
+
+const parseMonthYear = (dateStr: any) => {
+  if (!dateStr) return null;
+  const s = String(dateStr).trim().toUpperCase();
+  if (s === 'KIV' || s === 'PENDING' || s === '') return null;
+  const parts = s.replace(/-/g, '/').split('/');
+  if (parts.length === 3) {
+    const m = parseInt(parts[1], 10);
+    let y = parseInt(parts[2], 10);
+    if (!isNaN(m) && !isNaN(y) && m >= 1 && m <= 12) {
+      if (y < 100) y += 2000;
+      return { month: m, year: y, key: `${y}-${String(m).padStart(2, '0')}` };
+    }
+  } else if (parts.length === 2) {
+    const m = parseInt(parts[0], 10);
+    let y = parseInt(parts[1], 10);
+    if (!isNaN(m) && !isNaN(y) && m >= 1 && m <= 12) {
+      if (y < 100) y += 2000;
+      return { month: m, year: y, key: `${y}-${String(m).padStart(2, '0')}` };
+    }
+  }
+  return null;
+};
+
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
 const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
   <th
     className="px-4 py-3.5 font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors select-none group whitespace-nowrap text-xs text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 bg-slate-50 dark:bg-gray-900 z-10 shadow-sm"
@@ -73,6 +109,7 @@ export default function ClientTable({
   const [sort, setSort] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'DATE', direction: 'desc' });
   const [exportScope, setExportScope] = useState<'current' | 'full'>('current');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState('all');
 
   const getLabel = (key: string) => {
     const k = key.toUpperCase();
@@ -96,9 +133,10 @@ export default function ClientTable({
     return key;
   };
 
-  // Reset to first page when data (or search/filters) changes
+  // Reset to first page and month filter when data (or search/filters) changes
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedMonth('all');
   }, [clients, sort]);
 
   const handleSort = (key: string) => {
@@ -128,6 +166,60 @@ export default function ClientTable({
     const start = (currentPage - 1) * 25;
     return sortedClients.slice(start, start + 25);
   }, [sortedClients, currentPage]);
+
+  const summaryClients = useMemo(() => {
+    if (selectedMonth === 'all') {
+      return sortedClients;
+    }
+    return sortedClients.filter(client => {
+      const parsed = parseMonthYear(client.DATE);
+      return parsed && parsed.key === selectedMonth;
+    });
+  }, [sortedClients, selectedMonth]);
+
+  const totalClients = summaryClients.length;
+
+  const totalPackage = useMemo(() => {
+    return summaryClients.reduce((acc, client) => acc + parseAmount(client["PACKAGE (RM)"]), 0);
+  }, [summaryClients]);
+
+  const totalPaid = useMemo(() => {
+    return summaryClients.reduce((acc, client) => acc + parseAmount(client["TOTAL PAID (RM)"]), 0);
+  }, [summaryClients]);
+
+  const totalPending = useMemo(() => {
+    return summaryClients.reduce((acc, client) => acc + parseAmount(client["PENDING (RM)"]), 0);
+  }, [summaryClients]);
+
+  const uniqueMonths = useMemo(() => {
+    const monthsMap = new Map<string, { month: number; year: number }>();
+    sortedClients.forEach(client => {
+      const parsed = parseMonthYear(client.DATE);
+      if (parsed) {
+        monthsMap.set(parsed.key, { month: parsed.month, year: parsed.year });
+      }
+    });
+
+    const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthNamesBm = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+
+    return Array.from(monthsMap.entries())
+      .map(([key, value]) => {
+        const name = lang === 'bm' ? monthNamesBm[value.month - 1] : monthNamesEn[value.month - 1];
+        return {
+          value: key,
+          label: `${name} ${value.year}`,
+          year: value.year,
+          month: value.month
+        };
+      })
+      .sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+      });
+  }, [sortedClients, lang]);
+
+  const monthlyCount = summaryClients.length;
 
   const getExportDate = () => new Date().toISOString().split('T')[0];
 
@@ -471,6 +563,102 @@ export default function ClientTable({
             </div>
           );
         })()}
+      </div>
+
+      {/* Dynamic Summary Cards & Month Registry Count Filter */}
+      <div className="mt-6 bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col gap-6">
+        <div className="flex items-center gap-2 pb-1">
+          <svg className="w-5 h-5 text-cyan-600 dark:text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2" />
+          </svg>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+            {t('clients', 'financialClientSummary', lang)}
+          </h4>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Clients */}
+          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              {t('clients', 'totalClients', lang)}
+            </span>
+            <span className="text-xl md:text-2xl font-extrabold text-cyan-700 dark:text-yellow-500 mt-2">
+              {totalClients}
+            </span>
+          </div>
+
+          {/* Card 2: Total Package */}
+          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              {t('clients', 'totalPackageSum', lang)}
+            </span>
+            <span className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-white mt-2">
+              RM {formatCurrency(totalPackage)}
+            </span>
+          </div>
+
+          {/* Card 3: Collected Amount */}
+          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              {t('clients', 'collectedAmountSum', lang)}
+            </span>
+            <span className="text-xl md:text-2xl font-extrabold text-emerald-600 dark:text-emerald-500 mt-2">
+              RM {formatCurrency(totalPaid)}
+            </span>
+          </div>
+
+          {/* Card 4: Pending Amount */}
+          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+              {t('clients', 'pendingAmountSum', lang)}
+            </span>
+            <span className="text-xl md:text-2xl font-extrabold text-rose-600 dark:text-rose-500 mt-2">
+              RM {formatCurrency(totalPending)}
+            </span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-slate-100 dark:border-gray-800" />
+
+        {/* Month Registry Count Filter Sub-section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <h5 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+              {t('clients', 'monthlyRegistration', lang)}
+            </h5>
+            <p className="text-xs text-slate-400 dark:text-zinc-500">
+              {t('clients', 'monthlyRegistrationSub', lang)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer min-h-[40px] shadow-sm min-w-[160px]"
+            >
+              <option value="all">
+                {t('clients', 'allMonthsOption', lang)}
+              </option>
+              {uniqueMonths.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="bg-cyan-50 dark:bg-yellow-500/10 border border-cyan-100 dark:border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-2 min-h-[40px]">
+              <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                {lang === 'bm' ? 'Klien:' : 'Clients:'}
+              </span>
+              <span className="text-sm font-extrabold text-cyan-600 dark:text-yellow-500">
+                {monthlyCount}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

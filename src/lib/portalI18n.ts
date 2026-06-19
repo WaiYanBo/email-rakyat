@@ -289,6 +289,14 @@ export const translations = {
     prev: { en: 'Prev', bm: 'Sebelum' },
     next: { en: 'Next', bm: 'Seterusnya' },
     actions: { en: 'Actions', bm: 'Tindakan' },
+    financialClientSummary: { en: 'Financial & Client Summary', bm: 'Ringkasan Kewangan & Klien' },
+    totalPackageSum: { en: 'Total Package Amount', bm: 'Jumlah Kasar Pakej' },
+    collectedAmountSum: { en: 'Total Collected Amount', bm: 'Jumlah Dikutip (Berbayar)' },
+    pendingAmountSum: { en: 'Total Pending Amount', bm: 'Jumlah Tunggakan (Belum Bayar)' },
+    monthlyRegistration: { en: 'Monthly Client Registration', bm: 'Daftar Klien Bulanan' },
+    monthlyRegistrationSub: { en: 'View the number of client registrations by month.', bm: 'Lihat bilangan pendaftaran klien mengikut bulan pendaftaran.' },
+    allMonthsOption: { en: 'All Months', bm: 'Semua Bulan' },
+    totalClients: { en: 'Total Clients', bm: 'Jumlah Klien' },
   },
 
   // ─── Reports ──────────────────────────────────────────────────────────────

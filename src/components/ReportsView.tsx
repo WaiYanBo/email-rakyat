@@ -501,18 +501,18 @@ export default function ReportsView() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Full Name</label>
-                      <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <input type="text" name="name" defaultValue={editingStaff?.full_name} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                     </div>
 
                     {!editingStaff && (
                       <>
                         <div className="col-span-2 space-y-1">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Login Email</label>
-                          <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                          <input type="email" name="email" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                         </div>
                         <div className="col-span-2 space-y-1">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-455 dark:text-zinc-355">Temp Password</label>
-                          <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                          <input type="text" name="password" required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                         </div>
                       </>
                     )}
@@ -545,7 +545,7 @@ export default function ReportsView() {
                             defaultValue={editingStaff?.department || ''}
                             required
                             autoFocus={departmentInputType === 'text'}
-                            className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                            className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]"
                           />
                           {uniqueDepartments.length > 0 && (
                             <button
@@ -582,7 +582,7 @@ export default function ReportsView() {
 
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
-                      <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                     </div>
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>
@@ -595,7 +595,7 @@ export default function ReportsView() {
 
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Remarks</label>
-                      <textarea name="remarks" defaultValue={editingStaff?.remarks || ''} rows={3} placeholder="Add any internal notes about this staff member..." className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 resize-y" />
+                      <textarea name="remarks" defaultValue={editingStaff?.remarks || ''} rows={3} placeholder="Add any internal notes about this staff member..." className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-900 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 resize-y" />
                     </div>
                   </div>
 

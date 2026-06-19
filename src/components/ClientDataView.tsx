@@ -329,7 +329,7 @@ export default function ClientDataView() {
         if (!currentProfile) {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select(`full_name, department, roles ( role_name ), role_id`)
+            .select(`full_name, department, roles(role_name), role_id`)
             .eq('id', session.user.id)
             .single();
 
@@ -963,7 +963,7 @@ export default function ClientDataView() {
                     handleCloseViewModal();
                     handleOpenEditModal(viewingClient);
                   }}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-gray-808 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
                 >
                   {t('clients', 'editData', lang)}
                 </button>
@@ -1048,35 +1048,35 @@ export default function ClientDataView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1 sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
-                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Full Name</label>
-                  <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">IC Number</label>
-                  <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Phone Number</label>
-                  <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Email</label>
-                  <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Address</label>
-                  <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Date (DD/MM/YY)</label>
-                  <input type="text" name="DATE" defaultValue={editingClient?.DATE || ''} placeholder="DD/MM/YY" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="DATE" defaultValue={editingClient?.DATE || ''} placeholder="DD/MM/YY" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Category</label>
-                  <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Case Status</label>
@@ -1089,7 +1089,7 @@ export default function ClientDataView() {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
-                  <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
@@ -1098,65 +1098,65 @@ export default function ClientDataView() {
 
                 <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Package Value (RM)</label>
-                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Total Paid (RM)</label>
-                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Pending (RM)</label>
-                  <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 {/* PAYMENTS */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
-                  <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment Date</label>
-                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
-                  <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment Date</label>
-                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
-                  <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment Date</label>
-                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
-                  <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment Date</label>
-                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
-                  <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment Date</label>
-                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
-                  <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment Date</label>
-                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
@@ -1165,22 +1165,22 @@ export default function ClientDataView() {
 
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Investigation Paper</label>
-                  <input type="text" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Report</label>
-                  <input type="text" name="Report" defaultValue={editingClient?.Report || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Report" defaultValue={editingClient?.Report || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Action Taken by police</label>
-                  <input type="text" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Remark</label>
-                  <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+                  <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
                 <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
                 <div className="w-full sm:w-auto">
-                  {editingClient && ['CEO', 'CFO', 'IT Admin'].includes(profile?.role) && (
+                  {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || permissions?.manage_access_control) && (
                     <button
                       type="button"
                       onClick={handleDeleteClient}

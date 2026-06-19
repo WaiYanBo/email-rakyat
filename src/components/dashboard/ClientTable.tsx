@@ -229,7 +229,7 @@ export default function ClientTable({
         <span>{t('clients', 'swipeHint', lang)}</span>
       </div>
 
-      <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
+      <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
 
 
         <div className="flex border-b border-slate-200 dark:border-gray-800 px-3 md:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none">
@@ -256,15 +256,15 @@ export default function ClientTable({
               <select
                 value={exportScope}
                 onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
-                className="bg-white dark:bg-gray-900 border border-slate-205 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer flex-1 sm:flex-none min-h-[48px] shadow-sm"
+                className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer flex-1 sm:flex-none min-h-[48px] shadow-sm"
               >
                 <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
                 <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
               </select>
 
-              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-205 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm">
-                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-gray-800 transition-colors min-h-[48px]">CSV</button>
-                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-150 dark:border-gray-800 transition-colors min-h-[48px]">Excel</button>
+              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm">
+                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors min-h-[48px]">CSV</button>
+                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors min-h-[48px]">Excel</button>
                 <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors min-h-[48px]">PDF</button>
               </div>
 
@@ -295,7 +295,7 @@ export default function ClientTable({
             <select
               value={dateFilter}
               onChange={(e) => onDateFilterChange(e.target.value)}
-              className="bg-white dark:bg-gray-900 border border-slate-205 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto min-h-[48px] shadow-sm"
+              className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto min-h-[48px] shadow-sm"
             >
               <option value="all">{t('clients', 'allDates', lang)}</option>
               <option value="year">{t('clients', 'thisYear', lang)}</option>
@@ -319,14 +319,14 @@ export default function ClientTable({
                   <SortHeader label={getLabel("ACTION TAKEN")} sortKey="Action Taken by police" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("CATEGORY")} sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("DATE")} sortKey="DATE" currentSort={sort} onClick={handleSort} />
-                  <th className="px-4 py-3.5 font-semibold text-slate-555 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               ) : (
                 <tr>
-                  {Object.keys(clients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at'].includes(k)).map(key => (
+                  {Object.keys(clients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at', 'isVirtual', 'folderName'].includes(k)).map(key => (
                     <SortHeader key={key} label={getLabel(key)} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
-                  <th className="px-4 py-3.5 font-semibold text-slate-555 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                  <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               )}
             </thead>
@@ -335,7 +335,9 @@ export default function ClientTable({
               {paginatedClients.length > 0 ? paginatedClients.map((client) => {
                 const rowId = client.id || client.NAME + client["PHONE NUMBER"];
                 const isPending = hasPendingAmount(client["PENDING (RM)"]);
-                const nameHighlightClasses = isPending
+                const nameHighlightClasses = client.isVirtual
+                  ? "bg-slate-100 text-slate-700 dark:bg-zinc-800/40 dark:text-zinc-300 italic"
+                  : isPending
                   ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"
                   : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
 
@@ -344,9 +346,18 @@ export default function ClientTable({
 
                     {viewMode === 'standard' ? (
                       <>
-                        <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>{client.NAME}</td>
+                        <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>
+                          <div className="flex items-center gap-1.5">
+                            {client.isVirtual && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-105 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
+                                Storage
+                              </span>
+                            )}
+                            <span>{client.NAME}</span>
+                          </div>
+                        </td>
                         <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
-                        <td className="px-4 py-3.5 font-mono text-amber-650 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
+                        <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Investigation Paper"] || ''}>{client["Investigation Paper"] || '-'}</td>
@@ -357,9 +368,18 @@ export default function ClientTable({
                       </>
                     ) : (
                       <>
-                        {Object.entries(client).filter(([k]) => !['id', '_stableKey', 'updated_at'].includes(k)).map(([k, v]) => (
+                        {Object.entries(client).filter(([k]) => !['id', '_stableKey', 'updated_at', 'isVirtual', 'folderName'].includes(k)).map(([k, v]) => (
                           <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={String(v || '')}>
-                            {String(v || '-')}
+                            {k === 'NAME' && client.isVirtual ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-105 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
+                                  Storage
+                                </span>
+                                <span>{String(v || '-')}</span>
+                              </div>
+                            ) : (
+                              String(v || '-')
+                            )}
                           </td>
                         ))}
                       </>
@@ -377,7 +397,7 @@ export default function ClientTable({
                         {canEdit && (
                           <button
                             onClick={() => onEditClick(client)}
-                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
+                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
                           >
                             {t('reports', 'editBtn', lang)}
                           </button>
@@ -420,7 +440,7 @@ export default function ClientTable({
                 <button
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-202 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -432,7 +452,7 @@ export default function ClientTable({
                   <span className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 dark:bg-yellow-500 text-white dark:text-black shadow-sm">
                     {currentPage}
                   </span>
-                  <span className="text-slate-450 dark:text-zinc-500 text-xs font-semibold px-2">
+                  <span className="text-slate-450 dark:text-zinc-550 text-xs font-semibold px-2">
                     {t('common', 'of', lang)} {totalPages}
                   </span>
                 </div>
@@ -440,7 +460,7 @@ export default function ClientTable({
                 <button
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-202 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>{t('clients', 'next', lang)}</span>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

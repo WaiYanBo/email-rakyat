@@ -824,7 +824,7 @@ export default function CheckInCheckOut() {
 
               {/* Working Hours Summary - Only shown when details are expanded */}
               {showDetails && (
-                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-gray-900/30 border border-slate-205 dark:border-gray-800">
+                <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800">
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
@@ -943,12 +943,12 @@ export default function CheckInCheckOut() {
                   <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-black">
                     <div className="space-y-1">
                       <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">{t('attendance', 'date', lang)}</p>
-                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-205 dark:border-gray-800">{lateCheckoutRecord.date}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-200 dark:border-gray-800">{lateCheckoutRecord.date}</p>
                     </div>
 
                     <div className="space-y-1">
                       <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">{t('attendanceAdmin', 'colCheckIn', lang)}</p>
-                      <p className="text-sm font-semibold text-slate-805 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-205 dark:border-gray-800">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-200 dark:border-gray-800">
                         {new Date(lateCheckoutRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -965,7 +965,7 @@ export default function CheckInCheckOut() {
                         required
                         className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
                       />
-                      <p className="text-[11px] text-rose-600 dark:text-rose-455 font-medium leading-relaxed">
+                      <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium leading-relaxed">
                         {t('attendance', 'warningLateCheckoutSubmit', lang)}
                       </p>
                     </div>

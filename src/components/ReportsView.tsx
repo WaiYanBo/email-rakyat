@@ -298,7 +298,7 @@ export default function ReportsView() {
   return (
     <div className="space-y-6 animate-page-transition pt-12 md:pt-0 relative mb-8">
       <div className="flex flex-col gap-1.5 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-805 dark:text-white tracking-tight">{t('reports', 'pageTitle', lang)}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">{t('reports', 'pageTitle', lang)}</h1>
         <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">{t('reports', 'pageSubtitle', lang)}</p>
       </div>
 
@@ -315,11 +315,11 @@ export default function ReportsView() {
             </div>
             <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
               <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('reports', 'estPayroll', lang)}</p>
-              <p className="text-2xl font-bold text-slate-805 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2 tracking-tight">RM {totalPayroll.toLocaleString()}</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
+          <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
             <div className="p-5 border-b border-indigo-955 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
               <h3 className="text-sm font-bold text-white tracking-tight">{t('reports', 'staffDirectory', lang)}</h3>
               {canEditStaff && (
@@ -370,7 +370,7 @@ export default function ReportsView() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => { setViewingStaff(staff); setIsViewStaffModalOpen(true); }}
-                            className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-750 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-750 border border-slate-205 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm inline-flex"
+                            className="h-8 px-3.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm inline-flex"
                           >
                             {t('clients', 'viewDoc', lang)}
                           </button>
@@ -400,7 +400,7 @@ export default function ReportsView() {
 
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
 
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
@@ -473,7 +473,7 @@ export default function ReportsView() {
 
       {isStaffModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? t('reports', 'editStaff', lang) : t('reports', 'onboarding', lang)}</h2>
               <button
@@ -582,7 +582,7 @@ export default function ReportsView() {
 
                     <div className="space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Base Salary (RM)</label>
-                      <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-205 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <input type="number" step="0.01" name="salary" defaultValue={editingStaff?.salary || 0} required className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900/40 text-slate-905 dark:text-white text-sm font-semibold focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                     </div>
                     <div className="col-span-2 space-y-1">
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Employment Status</label>

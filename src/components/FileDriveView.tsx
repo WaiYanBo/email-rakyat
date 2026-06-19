@@ -845,7 +845,7 @@ export default function FileDriveView() {
     return (
       <div
         onClick={navigateUp}
-        className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-205 dark:border-gray-800 rounded-xl px-4 h-16 flex items-center gap-3 hover:border-indigo-305 dark:hover:border-yellow-500/50 hover:shadow-md transition-all relative overflow-hidden select-none"
+        className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl px-4 h-16 flex items-center gap-3 hover:border-indigo-300 dark:hover:border-yellow-500/50 hover:shadow-md transition-all relative overflow-hidden select-none"
       >
         <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-black flex items-center justify-center text-slate-550 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-yellow-505 transition-colors flex-shrink-0">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -881,7 +881,7 @@ export default function FileDriveView() {
             ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-yellow-500 dark:ring-yellow-500/20 shadow-md bg-indigo-50/30 dark:bg-yellow-500/5' 
             : activeOverFolder === item.name
               ? 'border-dashed border-2 border-indigo-650 bg-indigo-50/50 dark:border-yellow-500 dark:bg-yellow-550/10 scale-95 shadow-md z-10'
-              : 'border-slate-205 dark:border-gray-800 hover:border-indigo-350 dark:hover:border-gray-700 hover:shadow-sm'
+              : 'border-slate-200 dark:border-gray-800 hover:border-indigo-300 dark:hover:border-gray-700 hover:shadow-sm'
         }`}
       >
         <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
@@ -1896,7 +1896,7 @@ export default function FileDriveView() {
 
               <div className="h-5 w-[1px] bg-slate-200 dark:bg-gray-800 mx-1"></div>
 
-              <div className="flex bg-slate-100 dark:bg-gray-950 p-1 rounded-xl border border-slate-205 dark:border-gray-855">
+              <div className="flex bg-slate-100 dark:bg-gray-950 p-1 rounded-xl border border-slate-200 dark:border-gray-800">
                 <button
                   onClick={() => setLayoutMode('grid')}
                   className={`p-1.5 rounded-lg transition-all ${layoutMode === 'grid' ? 'bg-white dark:bg-zinc-900 text-indigo-650 dark:text-yellow-500 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-zinc-350'}`}

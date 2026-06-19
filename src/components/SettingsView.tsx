@@ -264,7 +264,7 @@ export default function SettingsView() {
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl p-6 space-y-4 shadow-sm">
+            <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 space-y-4 shadow-sm">
               <h3 className="text-xs font-semibold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
                 {t('settings', 'langPrefTitle', lang)}
               </h3>
@@ -298,7 +298,7 @@ export default function SettingsView() {
             </div>
           </div>          {/* RIGHT COLUMN: Edit Profile & Password Change */}
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
-            <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
               <div className="p-6 border-b border-indigo-900 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
                 <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'editProfile', lang)}</h3>
                 <p className="text-xs text-indigo-100 mt-1 font-medium">{t('settings', 'editProfileSub', lang)}</p>
@@ -327,7 +327,7 @@ export default function SettingsView() {
                     maxLength={100}
                     autoComplete="name"
                     aria-label="Full name"
-                    className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                    className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                     placeholder={t('settings', 'enterFullName', lang)}
                   />
                 </div>
@@ -344,7 +344,7 @@ export default function SettingsView() {
               </form>
             </div>
 
-            <div className="bg-white dark:bg-gray-900/50 border border-slate-205 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
               <div className="p-6 border-b border-indigo-900 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
                 <h3 className="text-base font-bold text-white tracking-tight">{t('settings', 'accountSecurity', lang)}</h3>
                 <p className="text-xs text-indigo-105 mt-1 font-medium">{t('settings', 'accountSecuritySub', lang)}</p>
@@ -374,7 +374,7 @@ export default function SettingsView() {
                       maxLength={128}
                       autoComplete="current-password"
                       aria-label="Current password"
-                      className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                      className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                       placeholder={t('settings', 'enterCurrentPw', lang)}
                     />
                   </div>
@@ -397,7 +397,7 @@ export default function SettingsView() {
                         maxLength={128}
                         autoComplete="new-password"
                         aria-label="New password"
-                        className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-205 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                        className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                         placeholder={t('settings', 'min8Chars', lang)}
                       />
                     </div>
@@ -413,7 +413,7 @@ export default function SettingsView() {
                         maxLength={128}
                         autoComplete="new-password"
                         aria-label="Confirm new password"
-                        className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-202 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
+                        className="w-full px-4 py-3 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50 min-h-[48px]"
                         placeholder={t('settings', 'confirmNewPw', lang)}
                       />
                     </div>

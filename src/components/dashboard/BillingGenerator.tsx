@@ -6,6 +6,7 @@ import { toWords } from 'number-to-words';
 
 export interface ClientData {
   id: string; // Used as client_id in supabase
+  clientNo?: string | number; // Assigned client number
   name: string;
   ic: string;
   address: string;
@@ -143,12 +144,34 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
 
-      const timestampId = Date.now().toString().slice(-4);
-      const prefix = documentType === 'invoice' ? 'INV-TER' : 'RCP-TER';
-      const refNumber = `${prefix}-${timestampId}`;
+      let invoiceCount = 1;
+      if (documentType === 'invoice') {
+        const { data: existingInvoices, error: countError } = await supabase
+          .from('billing_records')
+          .select('id')
+          .eq('client_id', clientData.id)
+          .eq('document_type', 'invoice')
+          .is('deleted_at', null);
+        
+        if (countError) {
+          console.error('Error fetching existing invoices count:', countError);
+        } else if (existingInvoices) {
+          invoiceCount = existingInvoices.length + 1;
+        }
+      }
+
+      const clientNoVal = clientData.clientNo !== undefined && clientData.clientNo !== null && clientData.clientNo !== '' ? clientData.clientNo : '0';
+      const refNumber = documentType === 'invoice'
+        ? `INV-TER-${clientNoVal}-${invoiceCount} Invoices`
+        : `RCP-TER-${String(clientNoVal).padStart(4, '0')}`;
 
       // Date formatted as DD/MM/YYYY
       const date = new Date().toLocaleDateString('en-GB');
+
+      // Set PDF Metadata to overwrite template name in browser tab title
+      pdfDoc.setTitle(refNumber);
+      pdfDoc.setAuthor('Team Email Rakyat');
+      pdfDoc.setSubject(`${documentType === 'invoice' ? 'Invoice' : 'Receipt'} for ${clientData.name}`);
 
       // 4. Stamp data using coordinates (Variables left easily tweakable)
       // NOTE: Adjust these coordinates based on the actual blank PDF template layout.
@@ -317,19 +340,16 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       // 6. Upload to Supabase Storage
       const docCategory = documentType === 'invoice' ? 'Invoices' : 'Receipts';
-      const now = new Date();
-      const yearStr = now.getFullYear().toString();
-      const monthNames = [
-        '01-January', '02-February', '03-March', '04-April', '05-May', '06-June',
-        '07-July', '08-August', '09-September', '10-October', '11-November', '12-December'
-      ];
-      const monthStr = monthNames[now.getMonth()];
+      
+      // Sanitize client name for the folder path
+      const safeClientName = clientData.name.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+      const clientFolder = `${clientNoVal} ${safeClientName}`;
 
-      // Target path: e.g. "Invoices/2026/01-January/INV123.pdf"
-      const filePath = `${docCategory}/${yearStr}/${monthStr}/${fileName}`;
+      // Target path: e.g. "Finance/billing_documents/Invoices/151 Testing A/INV-TER-151-2 Invoices.pdf"
+      const filePath = `Finance/billing_documents/${docCategory}/${clientFolder}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('billing_documents')
+        .from('company_drive')
         .upload(filePath, blob, {
           contentType: 'application/pdf',
           upsert: true,
@@ -341,7 +361,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       // Get public URL
       const { data: publicUrlData } = supabase.storage
-        .from('billing_documents')
+        .from('company_drive')
         .getPublicUrl(filePath);
 
       const fileUrl = publicUrlData.publicUrl;
@@ -361,7 +381,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       if (dbError) {
         console.error('Supabase insert error:', dbError);
-        throw new Error('Upload succeeded, but failed to save record to database.');
+        throw new Error(`Upload succeeded, but failed to save record to database: ${dbError.message} (Code: ${dbError.code})`);
       }
 
       setStatusMessage({ type: 'success', text: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} generated and uploaded successfully!` });

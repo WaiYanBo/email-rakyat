@@ -48,20 +48,219 @@ export default function ClientDataView() {
   const [billingRecords, setBillingRecords] = useState<any[]>([]);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
-  const loadBillingRecords = async (clientId: string) => {
-    const { data, error } = await supabase
-      .from('billing_records')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      setBillingRecords(data);
+  const loadBillingRecords = async (clientId: string, clientNo?: any, clientName?: string) => {
+    try {
+      const actualNo = clientNo !== undefined ? clientNo : (viewingClient?.No ?? viewingClient?.NO ?? '');
+      const actualName = clientName !== undefined ? clientName : (viewingClient?.NAME ?? '');
+      
+      const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+      const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
+      const clientFolder = `${clientNoVal} ${safeClientName}`;
+
+      // 1. Fetch metadata records from billing_records database to get amounts
+      const { data: dbRecords, error: dbError } = await supabase
+        .from('billing_records')
+        .select('*')
+        .eq('client_id', clientId)
+        .is('deleted_at', null);
+
+      const dbMap = new Map();
+      if (!dbError && dbRecords) {
+        dbRecords.forEach(r => {
+          dbMap.set(r.ref_number, r);
+        });
+      }
+
+      // 2. List files from company_drive storage under Invoices
+      const { data: storageInvoices, error: errInv } = await supabase.storage
+        .from('company_drive')
+        .list(`Finance/billing_documents/Invoices/${clientFolder}`, { limit: 100 });
+
+      // 3. List files from company_drive storage under Receipts
+      const { data: storageReceipts, error: errRec } = await supabase.storage
+        .from('company_drive')
+        .list(`Finance/billing_documents/Receipts/${clientFolder}`, { limit: 100 });
+
+      const invoicesList: any[] = [];
+      if (!errInv && storageInvoices) {
+        storageInvoices.forEach(file => {
+          if (file.name === '.keep') return;
+          const refNumber = file.name.replace('.pdf', '');
+          const dbRec = dbMap.get(refNumber);
+          
+          const filePath = `Finance/billing_documents/Invoices/${clientFolder}/${file.name}`;
+          const { data: publicUrlData } = supabase.storage
+            .from('company_drive')
+            .getPublicUrl(filePath);
+
+          invoicesList.push({
+            id: dbRec?.id || file.id || refNumber,
+            document_type: 'invoice',
+            ref_number: refNumber,
+            amount: dbRec?.amount || 0,
+            created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
+            drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
+          });
+        });
+      }
+
+      const receiptsList: any[] = [];
+      if (!errRec && storageReceipts) {
+        storageReceipts.forEach(file => {
+          if (file.name === '.keep') return;
+          const refNumber = file.name.replace('.pdf', '');
+          const dbRec = dbMap.get(refNumber);
+
+          const filePath = `Finance/billing_documents/Receipts/${clientFolder}/${file.name}`;
+          const { data: publicUrlData } = supabase.storage
+            .from('company_drive')
+            .getPublicUrl(filePath);
+
+          receiptsList.push({
+            id: dbRec?.id || file.id || refNumber,
+            document_type: 'receipt',
+            ref_number: refNumber,
+            amount: dbRec?.amount || 0,
+            created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
+            drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
+          });
+        });
+      }
+
+      setBillingRecords([...invoicesList, ...receiptsList]);
+    } catch (err) {
+      console.error('Error loading billing documents:', err);
+    }
+  };
+
+  const handleViewDocument = async (e: React.MouseEvent, url: string) => {
+    e.preventDefault();
+    if (!url) return;
+
+    try {
+      let bucket = 'company_drive';
+      let path = '';
+
+      const decodedUrl = decodeURIComponent(decodeURIComponent(url));
+
+      if (decodedUrl.includes('company_drive/')) {
+        bucket = 'company_drive';
+        const idx = decodedUrl.indexOf('company_drive/');
+        path = decodedUrl.substring(idx + 'company_drive/'.length);
+      } else if (decodedUrl.includes('billing_documents/')) {
+        bucket = 'billing_documents';
+        const idx = decodedUrl.indexOf('billing_documents/');
+        path = decodedUrl.substring(idx + 'billing_documents/'.length);
+      } else {
+        path = decodedUrl;
+      }
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(path, 300);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (err: any) {
+      console.error('Error generating signed URL:', err);
+      alert('Error opening document: ' + (err.message || err));
+    }
+  };
+
+  const handleDeleteBillingRecord = async (record: any) => {
+    if (!window.confirm(lang === 'bm'
+      ? `Adakah anda pasti mahu memadam "${record.ref_number}" ke tong sampah?`
+      : `Are you sure you want to move "${record.ref_number}" to trash?`
+    )) {
+      return;
+    }
+
+    try {
+      let bucket = 'company_drive';
+      let oldPath = '';
+      const url = record.drive_url;
+
+      const decodedUrl = decodeURIComponent(decodeURIComponent(url));
+
+      if (decodedUrl.includes('company_drive/')) {
+        bucket = 'company_drive';
+        const idx = decodedUrl.indexOf('company_drive/');
+        oldPath = decodedUrl.substring(idx + 'company_drive/'.length);
+      } else if (decodedUrl.includes('billing_documents/')) {
+        bucket = 'billing_documents';
+        const idx = decodedUrl.indexOf('billing_documents/');
+        oldPath = decodedUrl.substring(idx + 'billing_documents/'.length);
+      } else {
+        oldPath = decodedUrl;
+      }
+
+      let trashPath = '';
+      const pathParts = oldPath.split('/');
+      const fileName = pathParts.pop();
+      let uniqueFileName = fileName;
+      if (fileName && fileName.endsWith('.pdf')) {
+        const baseName = fileName.substring(0, fileName.length - 4);
+        uniqueFileName = `${baseName}_deleted_${Date.now()}.pdf`;
+      } else if (fileName) {
+        uniqueFileName = `${fileName}_deleted_${Date.now()}`;
+      }
+      const newPathWithUniqueName = [...pathParts, uniqueFileName].join('/');
+
+      if (newPathWithUniqueName.includes('Finance/billing_documents/')) {
+        trashPath = newPathWithUniqueName.replace('Finance/billing_documents/', 'Finance/billing_documents/Trash/');
+      } else {
+        trashPath = `Finance/billing_documents/Trash/${newPathWithUniqueName}`;
+      }
+
+      // Move file in storage
+      const { error: moveError } = await supabase.storage
+        .from(bucket)
+        .move(oldPath, trashPath);
+
+      if (moveError) {
+        throw new Error(`Storage move failed: ${moveError.message}`);
+      }
+
+      // Generate the new public URL for the trash path
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(trashPath);
+      const trashUrl = publicUrlData?.publicUrl || '';
+
+      const deletedRef = `${record.ref_number}_deleted_${Date.now()}`;
+
+      // Soft delete in database by updating deleted_at, drive_url and ref_number
+      const { error: dbError } = await supabase
+        .from('billing_records')
+        .update({
+          deleted_at: new Date().toISOString(),
+          drive_url: trashUrl,
+          ref_number: deletedRef
+        })
+        .eq('id', record.id);
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // Reload records
+      if (viewingClient?.id) {
+        loadBillingRecords(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
+      }
+    } catch (err: any) {
+      console.error('Error deleting billing record:', err);
+      alert('Error deleting billing record: ' + (err.message || err));
     }
   };
 
   useEffect(() => {
     if (viewingClient?.id) {
-      loadBillingRecords(viewingClient.id);
+      loadBillingRecords(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
     } else {
       setBillingRecords([]);
     }
@@ -71,6 +270,50 @@ export default function ClientDataView() {
   const [dateFilter, setDateFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [storageFolders, setStorageFolders] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStorageFolders() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      try {
+        const { data: invoiceFoldersData } = await supabase.storage
+          .from('company_drive')
+          .list('Finance/billing_documents/Invoices', { limit: 1000 });
+        
+        const { data: receiptFoldersData } = await supabase.storage
+          .from('company_drive')
+          .list('Finance/billing_documents/Receipts', { limit: 1000 });
+
+        const folderNames = new Set<string>();
+        if (invoiceFoldersData) {
+          invoiceFoldersData.forEach(f => {
+            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+              folderNames.add(f.name);
+            }
+          });
+        }
+        if (receiptFoldersData) {
+          receiptFoldersData.forEach(f => {
+            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+              folderNames.add(f.name);
+            }
+          });
+        }
+        if (isMounted) {
+          setStorageFolders(Array.from(folderNames));
+        }
+      } catch (e) {
+        console.error('Error listing storage folders:', e);
+      }
+    }
+    loadStorageFolders();
+    return () => {
+      isMounted = false;
+    };
+  }, [permissions]);
 
   useEffect(() => {
     let isMounted = true;
@@ -143,8 +386,72 @@ export default function ClientDataView() {
           // No pagination on the server-side anymore - fetch all to allow global sorting
           const { data: clientsData, error } = await query;
 
+          // Storage folders are already loaded in state, so we do not list them again on search/filter changes.
+
+          const parsedFolders = storageFolders.map(folderName => {
+            const match = folderName.match(/^(\d+)\s+(.+)$/);
+            if (match) {
+              return {
+                folderName,
+                No: parseInt(match[1], 10),
+                NAME: match[2].trim()
+              };
+            }
+            return {
+              folderName,
+              No: null,
+              NAME: folderName.trim()
+            };
+          });
+
+          const dbClientsList = clientsData || [];
+          const virtualClients: any[] = [];
+          
+          parsedFolders.forEach(pf => {
+            const match = dbClientsList.find(c => {
+              const dbNo = c.No ?? c.NO;
+              const dbName = c.NAME;
+              
+              const noMatch = dbNo !== null && dbNo !== undefined && pf.No !== null && pf.No !== undefined && Number(dbNo) === Number(pf.No);
+              const nameMatch = dbName && pf.NAME && dbName.toLowerCase().trim() === pf.NAME.toLowerCase().trim();
+              
+              return noMatch || nameMatch;
+            });
+
+            if (!match) {
+              virtualClients.push({
+                id: `virtual-${pf.folderName}`,
+                No: pf.No,
+                NAME: pf.NAME,
+                "PHONE NUMBER": '-',
+                "IC NUMBER": '-',
+                "CASE CATEGORY": '-',
+                "TOTAL PAID (RM)": '0',
+                "PENDING (RM)": '0',
+                "PACKAGE (RM)": '0',
+                "CASE STATUS": 'PENDING',
+                "Investigation Paper": '-',
+                Report: '-',
+                "Action Taken by police": '-',
+                DATE: '-',
+                isVirtual: true,
+                folderName: pf.folderName
+              });
+            }
+          });
+
+          let filteredVirtuals = virtualClients;
+          if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filteredVirtuals = virtualClients.filter(vc => 
+              vc.NAME.toLowerCase().includes(q) || 
+              (vc.No && String(vc.No).includes(q))
+            );
+          }
+
           if (clientsData && isMounted) {
-            const safeData = clientsData.map((c, idx) => ({
+            const combined = [...clientsData, ...filteredVirtuals];
+            const safeData = combined.map((c, idx) => ({
               ...c,
               _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
             }));
@@ -164,13 +471,13 @@ export default function ClientDataView() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [permissions, searchQuery, dateFilter, viewMode]);
+  }, [permissions, searchQuery, dateFilter, viewMode, storageFolders]);
 
   const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
   const handleOpenEditModal = async (client: any) => {
     setEditingClient(client);
     setIsModalOpen(true);
-    if (client?.id) {
+    if (client?.id && !client.isVirtual) {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
       if (data) setEditingClient({ ...data, _stableKey: client._stableKey });
     }
@@ -181,7 +488,7 @@ export default function ClientDataView() {
   const handleOpenViewModal = async (client: any) => {
     setViewingClient(client);
     setIsViewModalOpen(true);
-    if (client?.id) {
+    if (client?.id && !client.isVirtual) {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
       if (data) setViewingClient({ ...data, _stableKey: client._stableKey });
     }
@@ -226,6 +533,72 @@ export default function ClientDataView() {
     }
   };
 
+  const moveFolderToTrash = async (oldFolderPath: string) => {
+    try {
+      const allFiles: string[] = [];
+      async function traverse(current: string) {
+        const { data, error } = await supabase.storage.from('company_drive').list(current, { limit: 1000 });
+        if (error) return;
+        if (!data) return;
+        for (const item of data) {
+          const fullItemPath = current ? `${current}/${item.name}` : item.name;
+          if (item.id === null) {
+            await traverse(fullItemPath);
+          } else {
+            allFiles.push(fullItemPath);
+          }
+        }
+      }
+      
+      await traverse(oldFolderPath);
+
+      if (allFiles.length > 0) {
+        for (const file of allFiles) {
+          const pathParts = file.split('/');
+          const fileName = pathParts.pop();
+          let uniqueFileName = fileName;
+          if (fileName && fileName.endsWith('.pdf')) {
+            const baseName = fileName.substring(0, fileName.length - 4);
+            uniqueFileName = `${baseName}_deleted_${Date.now()}.pdf`;
+          } else if (fileName) {
+            uniqueFileName = `${fileName}_deleted_${Date.now()}`;
+          }
+          const newPathWithUniqueName = [...pathParts, uniqueFileName].join('/');
+
+          let trashPath = '';
+          if (newPathWithUniqueName.includes('Finance/billing_documents/')) {
+            trashPath = newPathWithUniqueName.replace('Finance/billing_documents/', 'Finance/billing_documents/Trash/');
+          } else {
+            trashPath = `Finance/billing_documents/Trash/${newPathWithUniqueName}`;
+          }
+
+          await supabase.storage.from('company_drive').move(file, trashPath);
+
+          const refNumber = file.split('/').pop()?.replace('.pdf', '');
+          if (refNumber) {
+            const { data: publicUrlData } = supabase.storage
+              .from('company_drive')
+              .getPublicUrl(trashPath);
+            const trashUrl = publicUrlData?.publicUrl || '';
+
+            const deletedRefNumber = `${refNumber}_deleted_${Date.now()}`;
+
+            await supabase
+              .from('billing_records')
+              .update({
+                deleted_at: new Date().toISOString(),
+                drive_url: trashUrl,
+                ref_number: deletedRefNumber
+              })
+              .eq('ref_number', refNumber);
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to move folder ${oldFolderPath} to trash:`, err);
+    }
+  };
+
   const handleDeleteClient = async () => {
     if (!editingClient) return;
 
@@ -235,23 +608,38 @@ export default function ClientDataView() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', editingClient.id);
+      const clientNoVal = editingClient.No ?? editingClient.NO ?? '';
+      const safeClientName = (editingClient.NAME || '').replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+      const clientFolder = `${clientNoVal} ${safeClientName}`;
 
-      if (error) {
-        alert(lang === 'bm' ? 'Gagal memadam klien. Sila cuba lagi.' : 'Failed to delete client. Please try again.');
-      } else {
+      const invoicesFolderPath = `Finance/billing_documents/Invoices/${clientFolder}`;
+      const receiptsFolderPath = `Finance/billing_documents/Receipts/${clientFolder}`;
+      
+      await moveFolderToTrash(invoicesFolderPath);
+      await moveFolderToTrash(receiptsFolderPath);
+
+      if (!editingClient.isVirtual) {
+        const { error } = await supabase
+          .from('clients')
+          .delete()
+          .eq('id', editingClient.id);
+
+        if (error) {
+          alert(lang === 'bm' ? 'Gagal memadam klien. Sila cuba lagi.' : 'Failed to delete client. Please try again.');
+          setLoading(false);
+          return;
+        }
+
         await writeAuditLog('DELETE', editingClient.id, {
           NAME: editingClient.NAME,
           'IC NUMBER': editingClient['IC NUMBER'],
           'PHONE NUMBER': editingClient['PHONE NUMBER'],
           'CASE STATUS': editingClient['CASE STATUS']
         });
-        handleCloseModal();
-        window.location.reload();
       }
+
+      handleCloseModal();
+      window.location.reload();
     } catch (err) {
       console.error('Error deleting client:', err);
       alert(lang === 'bm' ? 'Ralat semasa memadam klien. Sila cuba lagi.' : 'Error deleting client. Please try again.');
@@ -312,7 +700,7 @@ export default function ClientDataView() {
     }
 
     try {
-      if (editingClient) {
+      if (editingClient && !editingClient.isVirtual) {
         const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
         if (error) throw error;
       } else {
@@ -389,7 +777,7 @@ export default function ClientDataView() {
           ============================================== */}
       {isViewModalOpen && viewingClient && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
 
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
@@ -492,13 +880,30 @@ export default function ClientDataView() {
                               <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
                               <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
                             </div>
-                            {record.drive_url ? (
-                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
-                                {t('clients', 'viewDoc', lang)}
-                              </a>
-                            ) : (
-                              <span className="text-xs text-slate-400">Processing...</span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {record.drive_url ? (
+                                <a
+                                  href="#"
+                                  onClick={(e) => handleViewDocument(e, record.drive_url)}
+                                  className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors"
+                                >
+                                  {t('clients', 'viewDoc', lang)}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-slate-400">Processing...</span>
+                              )}
+                              {canEdit && (
+                                <button
+                                  onClick={() => handleDeleteBillingRecord(record)}
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -518,13 +923,30 @@ export default function ClientDataView() {
                               <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
                               <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
                             </div>
-                            {record.drive_url ? (
-                              <a href={record.drive_url} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-805 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors">
-                                {t('clients', 'viewDoc', lang)}
-                              </a>
-                            ) : (
-                              <span className="text-xs text-slate-400">Processing...</span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {record.drive_url ? (
+                                <a
+                                  href="#"
+                                  onClick={(e) => handleViewDocument(e, record.drive_url)}
+                                  className="text-emerald-600 hover:text-emerald-805 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors"
+                                >
+                                  {t('clients', 'viewDoc', lang)}
+                                </a>
+                              ) : (
+                                <span className="text-xs text-slate-400">Processing...</span>
+                              )}
+                              {canEdit && (
+                                <button
+                                  onClick={() => handleDeleteBillingRecord(record)}
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -576,6 +998,7 @@ export default function ClientDataView() {
             <BillingGenerator
               clientData={{
                 id: viewingClient.id,
+                clientNo: viewingClient.No ?? viewingClient.NO ?? '',
                 name: viewingClient.NAME || 'N/A',
                 ic: viewingClient['IC NUMBER'] || 'N/A',
                 address: viewingClient.ADDRESS || 'N/A',
@@ -605,7 +1028,7 @@ export default function ClientDataView() {
           ============================================== */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-205 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
 
             <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
@@ -625,35 +1048,35 @@ export default function ClientDataView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1 sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
-                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Full Name</label>
-                  <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">IC Number</label>
-                  <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Phone Number</label>
-                  <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Email</label>
-                  <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Address</label>
-                  <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Date (DD/MM/YY)</label>
-                  <input type="text" name="DATE" defaultValue={editingClient?.DATE || ''} placeholder="DD/MM/YY" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  <input type="text" name="DATE" defaultValue={editingClient?.DATE || ''} placeholder="DD/MM/YY" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Category</label>
-                  <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Case Status</label>
@@ -666,7 +1089,7 @@ export default function ClientDataView() {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
-                  <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
@@ -675,65 +1098,65 @@ export default function ClientDataView() {
 
                 <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Package Value (RM)</label>
-                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Total Paid (RM)</label>
-                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Pending (RM)</label>
-                  <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 {/* PAYMENTS */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
-                  <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment Date</label>
-                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
-                  <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment Date</label>
-                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
-                  <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment Date</label>
-                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
-                  <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment Date</label>
-                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
-                  <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment Date</label>
-                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
-                  <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment Date</label>
-                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
@@ -742,19 +1165,19 @@ export default function ClientDataView() {
 
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Investigation Paper</label>
-                  <input type="text" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Report</label>
-                  <input type="text" name="Report" defaultValue={editingClient?.Report || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Report" defaultValue={editingClient?.Report || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Action Taken by police</label>
-                  <input type="text" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="text" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="sm:col-span-2 space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Remark</label>
-                  <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-205 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+                  <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-905 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
                 <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
                 <div className="w-full sm:w-auto">
                   {editingClient && ['CEO', 'CFO', 'IT Admin'].includes(profile?.role) && (

@@ -215,6 +215,7 @@ export default function AttendanceView() {
                   <select
                     value={selectedEmployeeId}
                     onChange={(e) => handleEmployeeChange(e.target.value)}
+                    data-custom-select
                     className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] appearance-none pr-10 cursor-pointer"
                   >
                     <option value="">{t('attendanceAdmin', 'pleaseSelectEmployee', lang)}</option>

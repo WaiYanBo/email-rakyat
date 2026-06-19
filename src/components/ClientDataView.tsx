@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
@@ -7,6 +7,89 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { ErrorBoundary } from './ErrorBoundary';
+
+const DateInput = ({ name, label, defaultValue, lang, required }: { name: string; label: string; defaultValue: string; lang: 'en' | 'bm'; required?: boolean }) => {
+  const [val, setVal] = useState(defaultValue || '');
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setVal(defaultValue || '');
+  }, [defaultValue]);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawDate = e.target.value;
+    if (!rawDate) return;
+    const parts = rawDate.split('-');
+    if (parts.length === 3) {
+      const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      setVal(formatted);
+    }
+  };
+
+  const getPickerValue = () => {
+    if (!val) return '';
+    const parts = val.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      const fullYear = year.length === 2 ? `20${year}` : year;
+      return `${fullYear}-${month}-${day}`;
+    }
+    return '';
+  };
+
+  return (
+    <div className="space-y-1 relative">
+      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          name={name}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onClick={() => {
+            if (dateRef.current) {
+              if (typeof dateRef.current.showPicker === 'function') {
+                dateRef.current.showPicker();
+              } else {
+                dateRef.current.click();
+              }
+            }
+          }}
+          placeholder="DD/MM/YYYY"
+          required={required}
+          className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            if (dateRef.current) {
+              if (typeof dateRef.current.showPicker === 'function') {
+                dateRef.current.showPicker();
+              } else {
+                dateRef.current.click();
+              }
+            }
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-600 dark:hover:text-yellow-500 cursor-pointer p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center"
+          title={lang === 'bm' ? 'Pilih Tarikh' : 'Choose Date'}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+        <input
+          type="date"
+          ref={dateRef}
+          value={getPickerValue()}
+          onChange={handleDateChange}
+          className="absolute opacity-0 pointer-events-none w-0 h-0 right-0 bottom-0"
+        />
+      </div>
+    </div>
+  );
+};
 
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
@@ -373,13 +456,20 @@ export default function ClientDataView() {
 
           if (dateFilter !== 'all') {
              const now = new Date();
-             const yearStr = String(now.getFullYear()).slice(-2);
-             const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+             const yearFull = String(now.getFullYear()); // '2026'
+             const monthNum = now.getMonth() + 1; // 1-12
+             const monthPadded = String(monthNum).padStart(2, '0'); // '06'
+             const monthUnpadded = String(monthNum); // '6'
 
              if (dateFilter === 'year') {
-                query = query.like('DATE', `%/${yearStr}`);
+                query = query.like('DATE', `%/${yearFull}`);
              } else if (dateFilter === 'month') {
-                query = query.like('DATE', `%/${monthStr}/${yearStr}`);
+                // Handle both '6' and '06' month format: e.g. "19/06/2026" or "9/6/2026"
+                if (monthPadded !== monthUnpadded) {
+                  query = query.or(`DATE.like.%/${monthPadded}/${yearFull},DATE.like.%/${monthUnpadded}/${yearFull}`);
+                } else {
+                  query = query.like('DATE', `%/${monthPadded}/${yearFull}`);
+                }
              }
           }
 
@@ -645,6 +735,19 @@ export default function ClientDataView() {
       alert(lang === 'bm' ? 'Ralat semasa memadam klien. Sila cuba lagi.' : 'Error deleting client. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFinancialChange = () => {
+    const pkgInput = document.querySelector('input[name="PACKAGE (RM)"]') as HTMLInputElement;
+    const paidInput = document.querySelector('input[name="TOTAL PAID (RM)"]') as HTMLInputElement;
+    const pendingInput = document.querySelector('input[name="PENDING (RM)"]') as HTMLInputElement;
+
+    if (pkgInput && paidInput && pendingInput) {
+      const pkgVal = parseFloat(pkgInput.value) || 0;
+      const paidVal = parseFloat(paidInput.value) || 0;
+      const pendingVal = Math.max(0, pkgVal - paidVal);
+      pendingInput.value = pendingVal % 1 === 0 ? pendingVal.toString() : pendingVal.toFixed(2);
     }
   };
 
@@ -1070,22 +1173,32 @@ export default function ClientDataView() {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Address</label>
                   <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Date (DD/MM/YY)</label>
-                  <input type="text" name="DATE" defaultValue={editingClient?.DATE || ''} placeholder="DD/MM/YY" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                </div>
+                <DateInput
+                  name="DATE"
+                  label={lang === 'bm' ? 'Tarikh (DD/MM/YYYY)' : 'Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.DATE || ''}
+                  lang={lang}
+                  required
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Category</label>
                   <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Case Status</label>
-                  <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer">
-                    <option value="PENDING">PENDING</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="DROPPED">DROPPED</option>
-                    <option value="KIV">KIV</option>
-                  </select>
+                  <div className="relative">
+                    <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} data-custom-select className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
+                      <option value="PENDING">PENDING</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                      <option value="DROPPED">DROPPED</option>
+                      <option value="KIV">KIV</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
@@ -1098,11 +1211,11 @@ export default function ClientDataView() {
 
                 <div className="space-y-1 sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Package Value (RM)</label>
-                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Total Paid (RM)</label>
-                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Pending (RM)</label>
@@ -1114,50 +1227,62 @@ export default function ClientDataView() {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
                   <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment Date</label>
-                  <input type="text" name="1st PAYMENT DATE" defaultValue={editingClient?.["1st PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="1st PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Pertama (DD/MM/YYYY)' : '1st Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["1st PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
                   <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment Date</label>
-                  <input type="text" name="2nd PAYMENT DATE" defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="2nd PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Kedua (DD/MM/YYYY)' : '2nd Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
                   <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment Date</label>
-                  <input type="text" name="3rd PAYMENT DATE" defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="3rd PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Ketiga (DD/MM/YYYY)' : '3rd Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
                   <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment Date</label>
-                  <input type="text" name="4th PAYMENT DATE" defaultValue={editingClient?.["4th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="4th PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Keempat (DD/MM/YYYY)' : '4th Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["4th PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
                   <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment Date</label>
-                  <input type="text" name="5th PAYMENT DATE" defaultValue={editingClient?.["5th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="5th PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Kelima (DD/MM/YYYY)' : '5th Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["5th PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
                   <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment Date</label>
-                  <input type="text" name="6th PAYMENT DATE" defaultValue={editingClient?.["6th PAYMENT DATE"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
+                <DateInput
+                  name="6th PAYMENT DATE"
+                  label={lang === 'bm' ? 'Tarikh Bayaran Keenam (DD/MM/YYYY)' : '6th Payment Date (DD/MM/YYYY)'}
+                  defaultValue={editingClient?.["6th PAYMENT DATE"] || ''}
+                  lang={lang}
+                />
 
                 <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white">Additional Notes</h3>

@@ -29,3 +29,6 @@ pnpm-debug.log*
 # Environment files
 .env.*
 public/models/
+
+# scratch/temporary files
+scratch/

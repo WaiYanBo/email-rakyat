@@ -169,3 +169,27 @@ html.dark .portal-layout {
     color: #f4f4f5 !important; /* zinc-100 */
   }
 }
+
+/* =========================================
+   Custom Select Arrow Override
+   Fully removes native browser dropdown arrows
+   across Chrome, Edge, Firefox, Safari, IE.
+   Applied via [data-custom-select] attribute.
+   ========================================= */
+select[data-custom-select] {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: none !important;
+}
+
+/* IE/old Edge – remove the native arrow pseudo */
+select[data-custom-select]::-ms-expand {
+  display: none !important;
+}
+
+/* Firefox – remove dotted focus ring artifact */
+select[data-custom-select]:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 currentColor;
+}

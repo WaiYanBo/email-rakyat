@@ -132,6 +132,27 @@ export default function FileDriveView() {
   const [isOverTrash, setIsOverTrash] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clickTrackerRef = useRef<{ id: string; time: number } | null>(null);
+
+  const handleItemClickWithDoubleClick = (
+    e: React.MouseEvent,
+    item: any,
+    onDoubleClickAction: () => void
+  ) => {
+    e.stopPropagation();
+    setSelectedItem(item);
+    
+    const now = Date.now();
+    const tracker = clickTrackerRef.current;
+    const itemId = item.id ? `file-${item.name}` : `folder-${item.name}`;
+
+    if (tracker && tracker.id === itemId && (now - tracker.time) < 350) {
+      clickTrackerRef.current = null;
+      onDoubleClickAction();
+    } else {
+      clickTrackerRef.current = { id: itemId, time: now };
+    }
+  };
 
   // Google Drive layout and sorting states
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
@@ -866,15 +887,14 @@ export default function FileDriveView() {
     return (
       <div
         key={item.name}
-        onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}
-        onDoubleClick={() => navigateToFolder(item)}
+        onClick={(e) => handleItemClickWithDoubleClick(e, item, () => navigateToFolder(item))}
         draggable={true}
         onDragStart={(e) => handleItemDragStart(e, item)}
         onDragEnd={() => setDraggedItem(null)}
         onDragOver={(e) => handleFolderDragOver(e, item.name)}
         onDragLeave={(e) => handleFolderDragLeave(e)}
         onDrop={(e) => handleFolderDrop(e, item.name)}
-        className={`group cursor-pointer bg-white dark:bg-gray-900 border rounded-xl px-4 h-16 flex items-center gap-3 transition-all relative select-none ${
+        className={`group cursor-pointer bg-white dark:bg-gray-900 border rounded-xl px-4 h-16 flex items-center gap-3 transition-all relative select-none touch-manipulation ${
           isBeingDragged ? 'opacity-40 scale-95 border-dashed border-indigo-400 dark:border-yellow-500/50' : ''
         } ${
           isSelected 
@@ -964,17 +984,16 @@ export default function FileDriveView() {
     return (
       <div
         key={item.name}
-        onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}
-        onDoubleClick={() => handlePreview(item)}
+        onClick={(e) => handleItemClickWithDoubleClick(e, item, () => handlePreview(item))}
         draggable={true}
         onDragStart={(e) => handleItemDragStart(e, item)}
         onDragEnd={() => setDraggedItem(null)}
-        className={`group cursor-pointer bg-white dark:bg-gray-900 border rounded-2xl flex flex-col justify-between transition-all h-60 relative select-none ${
+        className={`group cursor-pointer bg-white dark:bg-gray-900 border rounded-2xl flex flex-col justify-between transition-all h-60 relative select-none touch-manipulation ${
           isBeingDragged ? 'opacity-40 scale-95 border-dashed border-indigo-400 dark:border-yellow-500/50' : ''
         } ${
           isSelected 
             ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-yellow-500 dark:ring-yellow-500/20 shadow-md bg-indigo-50/10 dark:bg-yellow-500/5' 
-            : 'border-slate-200 dark:border-gray-800 hover:border-indigo-350 dark:hover:border-gray-700 hover:shadow-md'
+            : 'border-slate-200 dark:border-gray-800 hover:border-indigo-355 dark:hover:border-gray-700 hover:shadow-md'
         }`}
       >
         <div className="w-full px-3 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-gray-850/80 bg-slate-50/40 dark:bg-black/10 flex-shrink-0">
@@ -1108,19 +1127,18 @@ export default function FileDriveView() {
     return (
       <tr
         key={item.name}
-        onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}
-        onDoubleClick={() => navigateToFolder(item)}
+        onClick={(e) => handleItemClickWithDoubleClick(e, item, () => navigateToFolder(item))}
         draggable={true}
         onDragStart={(e) => handleItemDragStart(e, item)}
         onDragEnd={() => setDraggedItem(null)}
         onDragOver={(e) => handleFolderDragOver(e, item.name)}
         onDragLeave={(e) => handleFolderDragLeave(e)}
         onDrop={(e) => handleFolderDrop(e, item.name)}
-        className={`group cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors select-none ${
+        className={`group cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors select-none touch-manipulation ${
           isBeingDragged ? 'opacity-40 bg-indigo-50/20 dark:bg-yellow-500/5' : ''
         } ${
           isSelected 
-            ? 'bg-indigo-50/40 dark:bg-yellow-500/5 font-semibold text-indigo-900 dark:text-yellow-550' 
+            ? 'bg-indigo-50/40 dark:bg-yellow-500/5 font-semibold text-indigo-900 dark:text-yellow-555' 
             : activeOverFolder === item.name
               ? 'bg-indigo-50 dark:bg-yellow-500/10 border-2 border-dashed border-indigo-650'
               : ''
@@ -1193,12 +1211,11 @@ export default function FileDriveView() {
     return (
       <tr
         key={item.name}
-        onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}
-        onDoubleClick={() => handlePreview(item)}
+        onClick={(e) => handleItemClickWithDoubleClick(e, item, () => handlePreview(item))}
         draggable={true}
         onDragStart={(e) => handleItemDragStart(e, item)}
         onDragEnd={() => setDraggedItem(null)}
-        className={`group cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors select-none ${
+        className={`group cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors select-none touch-manipulation ${
           isBeingDragged ? 'opacity-40 bg-indigo-50/20 dark:bg-yellow-500/5' : ''
         } ${
           isSelected ? 'bg-indigo-50/40 dark:bg-yellow-500/5 font-semibold text-indigo-900 dark:text-yellow-500' : ''

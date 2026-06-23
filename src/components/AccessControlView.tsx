@@ -200,6 +200,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           await supabase.from('access_permissions').insert({
             target_type: entry.target_type,
             target_id: entry.target_id,
+            permissions: entry.permissions
           });
         }
       }

@@ -9,8 +9,8 @@
 - Shows results instantly
 
 ### 2. 📅 Filter by Date
-- Select a specific date to view check-in/check-out records for that day
-- Shows all employees who checked in/out on that date
+- Select a specific date to view clock-in/clock-out records for that day
+- Shows all employees who clocked in/out on that date
 - Default shows today's date
 
 ### 3. 📆 Filter by Month
@@ -23,12 +23,12 @@
 - Automatically formatted with:
   - Employee Name
   - Date
-  - Check In Time
-  - Check In Location (distance)
-  - Check In Status (In Zone / Outside Zone)
-  - Check Out Time
-  - Check Out Location (distance)
-  - Check Out Status (In Zone / Outside Zone)
+  - Clock In Time
+  - Clock In Location (distance)
+  - Clock In Status (In Zone / Outside Zone)
+  - Clock Out Time
+  - Clock Out Location (distance)
+  - Clock Out Status (In Zone / Outside Zone)
 - Optimized column widths for readability
 - Filename includes filter type and current date
   - Example: `Attendance_2026-05-26_2026-05-26.xlsx`
@@ -76,7 +76,7 @@ You can combine multiple filters:
 
 ## Example Export Format
 
-| Employee Name | Date       | Check In Time | Check In Location | Check In Status | Check Out Time | Check Out Location | Check Out Status |
+| Employee Name | Date       | Clock In Time | Clock In Location | Clock In Status | Clock Out Time | Clock Out Location | Clock Out Status |
 |---------------|------------|---------------|-------------------|-----------------|----------------|--------------------|------------------|
 | John Doe      | 2026-05-26 | 09:00:15      | 150m              | In Zone         | 17:30:45       | 160m               | In Zone          |
 | Jane Smith    | 2026-05-26 | 08:55:30      | 120m              | In Zone         | 17:45:20       | 140m               | In Zone          |

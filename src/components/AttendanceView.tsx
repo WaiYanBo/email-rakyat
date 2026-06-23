@@ -84,7 +84,7 @@ export default function AttendanceView() {
     try {
       let query = supabase
         .from('attendance')
-        .select('id,user_id,date,check_in_time,check_in_distance,check_in_within_zone,check_out_time,check_out_distance,check_out_within_zone,is_late_checkout');
+        .select('id,user_id,date,clock_in_time,clock_in_distance,clock_in_within_zone,clock_out_time,clock_out_distance,clock_out_within_zone,is_late_clockout');
 
       if (employeeId !== 'all') {
         query = query.eq('user_id', employeeId);
@@ -92,7 +92,7 @@ export default function AttendanceView() {
 
       query = query
         .order('date', { ascending: false })
-        .order('check_in_time', { ascending: false });
+        .order('clock_in_time', { ascending: false });
 
       if (mode === 'date' && date) {
         query = query.eq('date', date);
@@ -335,13 +335,13 @@ export default function AttendanceView() {
                             )}
                           </td>
                           <td className="px-5 py-4">
-                            {record.check_in_time ? (
+                            {record.clock_in_time ? (
                               <div>
                                 <p className="font-semibold text-slate-800 dark:text-zinc-155 text-sm">
-                                  {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.check_in_distance}{t('attendance', 'away', lang)}
+                                  {record.clock_in_distance}{t('attendance', 'away', lang)}
                                 </p>
                               </div>
                             ) : (
@@ -349,45 +349,45 @@ export default function AttendanceView() {
                             )}
                           </td>
                           <td className="px-5 py-4 text-center">
-                            {record.check_in_time && (
+                            {record.clock_in_time && (
                               <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                record.check_in_within_zone
+                                record.clock_in_within_zone
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
-                                {record.check_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
                             )}
                           </td>
                           <td className="px-5 py-4">
-                            {record.check_out_time ? (
+                            {record.clock_out_time ? (
                               <div>
                                 <p className="font-semibold text-slate-800 dark:text-zinc-155 text-sm">
-                                  {new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.check_out_distance !== null ? `${record.check_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
+                                  {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
                                 </p>
-                                {record.is_late_checkout && (
-                                  <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50">
+                                {record.is_late_clockout && (
+                                  <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
                                     {t('attendanceAdmin', 'flaggedLate', lang)}
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
+                              <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
                                 {t('attendanceAdmin', 'pending', lang)}
                               </span>
                             )}
                           </td>
                           <td className="px-5 py-4 text-center">
-                            {record.check_out_time && (
+                            {record.clock_out_time && (
                               <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                record.check_out_within_zone
+                                record.clock_out_within_zone
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
                               }`}>
-                                {record.check_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                               </span>
                             )}
                           </td>
@@ -406,7 +406,7 @@ export default function AttendanceView() {
                 <div className="p-5 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/20 dark:bg-gray-900/40 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-500">{t('attendanceAdmin', 'statTotalIn', lang)}</p>
                   <p className="text-3xl font-bold text-slate-800 dark:text-white mt-2">
-                    {filteredRecords.filter((r) => r.check_in_time).length}
+                    {filteredRecords.filter((r) => r.clock_in_time).length}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">{t('common', 'of', lang)} {filteredRecords.length} {t('attendanceAdmin', 'statEmployees', lang)}</p>
                 </div>
@@ -415,16 +415,16 @@ export default function AttendanceView() {
                 <div className="p-5 rounded-2xl border border-emerald-100 dark:border-yellow-500/30 bg-emerald-50/30 dark:bg-black/10 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-yellow-500">{t('attendanceAdmin', 'statInZone', lang)}</p>
                   <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-300 mt-2">
-                    {filteredRecords.filter((r) => r.check_in_within_zone).length}
+                    {filteredRecords.filter((r) => r.clock_in_within_zone).length}
                   </p>
                   <p className="text-xs text-emerald-500 dark:text-yellow-500/80 mt-1">{t('attendanceAdmin', 'statOnSite', lang)}</p>
                 </div>
 
 
-                <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-950/10 shadow-sm">
+                <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-955/10 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">{t('attendanceAdmin', 'statOutside', lang)}</p>
                   <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">
-                    {filteredRecords.filter((r) => r.check_in_time && !r.check_in_within_zone).length}
+                    {filteredRecords.filter((r) => r.clock_in_time && !r.clock_in_within_zone).length}
                   </p>
                   <p className="text-xs text-rose-500 dark:text-rose-500/80 mt-1">{t('attendanceAdmin', 'statFlagged', lang)}</p>
                 </div>

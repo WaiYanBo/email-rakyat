@@ -100,8 +100,8 @@ export const exportAttendanceToExcel = (
       aoa.push(['Metrics', ...DAYS_OF_WEEK]);
 
       const dateRow: any[] = ['Date'];
-      const checkInRow: any[] = ['Check In Time'];
-      const checkOutRow: any[] = ['Check Out Time'];
+      const clockInRow: any[] = ['Clock In Time'];
+      const clockOutRow: any[] = ['Clock Out Time'];
       const totalWorkRow: any[] = ['Total Working Time'];
       const breakRow: any[] = ['Break'];
       const totalHoursRow: any[] = ['Total Hours'];
@@ -128,15 +128,15 @@ export const exportAttendanceToExcel = (
           defaultStatus = holiday.name;
         }
 
-        if (record && record.check_in_time) {
-          checkInRow.push(extractTime(record.check_in_time));
+        if (record && record.clock_in_time) {
+          clockInRow.push(extractTime(record.clock_in_time));
 
-          if (record.check_out_time) {
-            checkOutRow.push(extractTime(record.check_out_time));
+          if (record.clock_out_time) {
+            clockOutRow.push(extractTime(record.clock_out_time));
 
-            const checkIn = new Date(record.check_in_time);
-            const checkOut = new Date(record.check_out_time);
-            const workMs = checkOut.getTime() - checkIn.getTime();
+            const clockIn = new Date(record.clock_in_time);
+            const clockOut = new Date(record.clock_out_time);
+            const workMs = clockOut.getTime() - clockIn.getTime();
             totalWorkRow.push(formatDuration(workMs));
 
             const breakMs = 60 * 60 * 1000; // 1 hour
@@ -151,7 +151,7 @@ export const exportAttendanceToExcel = (
             const overtimeMs = Math.max(0, totalHoursMs - maxWorkMs);
             overtimeRow.push(formatDuration(overtimeMs));
           } else {
-            checkOutRow.push('No Checkout');
+            clockOutRow.push('No Clockout');
             totalWorkRow.push('N/A');
             breakRow.push('01:00:00');
             totalHoursRow.push('N/A');
@@ -159,8 +159,8 @@ export const exportAttendanceToExcel = (
             overtimeRow.push('N/A');
           }
         } else {
-          checkInRow.push(defaultStatus);
-          checkOutRow.push(defaultStatus);
+          clockInRow.push(defaultStatus);
+          clockOutRow.push(defaultStatus);
           totalWorkRow.push('N/A');
           breakRow.push('N/A');
           totalHoursRow.push('N/A');
@@ -170,8 +170,8 @@ export const exportAttendanceToExcel = (
       });
 
       aoa.push(dateRow);
-      aoa.push(checkInRow);
-      aoa.push(checkOutRow);
+      aoa.push(clockInRow);
+      aoa.push(clockOutRow);
       aoa.push(totalWorkRow);
       aoa.push(breakRow);
       aoa.push(totalHoursRow);
@@ -197,7 +197,7 @@ export const exportAttendanceToExcel = (
 
       const isDaysRow = ["Metrics", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].includes(val);
       const isWeekCount = val.startsWith("Week ");
-      const isNA = val === "N/A" || val === "No Checkout" || val === "Rest Day" || val === "Off Day";
+      const isNA = val === "N/A" || val === "No Clockout" || val === "Rest Day" || val === "Off Day";
       const isTitle = val.startsWith("Attendance Report:");
       const isDate = /^\d{2}\/\d{2}\/\d{4}$/.test(val);
 

@@ -1,4 +1,4 @@
-# Check-In/Check-Out System Setup Guide
+# Clock-In/Clock-Out System Setup Guide
 
 ## Step 1: Create the `attendance` Table in Supabase
 
@@ -12,24 +12,29 @@ CREATE TABLE IF NOT EXISTS public.attendance (
   user_name VARCHAR(255),
   date DATE NOT NULL,
   
-  -- Check In Data
-  check_in_time TIMESTAMP WITH TIME ZONE,
-  check_in_latitude DECIMAL(10, 8),
-  check_in_longitude DECIMAL(11, 8),
-  check_in_distance INTEGER, -- Distance in meters from office
-  check_in_within_zone BOOLEAN DEFAULT false,
-  check_in_accuracy INTEGER, -- GPS accuracy in meters
+  -- Clock In Data
+  clock_in_time TIMESTAMP WITH TIME ZONE,
+  clock_in_latitude DECIMAL(10, 8),
+  clock_in_longitude DECIMAL(11, 8),
+  clock_in_distance INTEGER, -- Distance in meters from office
+  clock_in_within_zone BOOLEAN DEFAULT false,
+  clock_in_accuracy INTEGER, -- GPS accuracy in meters
   
-  -- Check Out Data
-  check_out_time TIMESTAMP WITH TIME ZONE,
-  check_out_latitude DECIMAL(10, 8),
-  check_out_longitude DECIMAL(11, 8),
-  check_out_distance INTEGER,
-  check_out_within_zone BOOLEAN DEFAULT false,
-  check_out_accuracy INTEGER,
+  -- Clock Out Data
+  clock_out_time TIMESTAMP WITH TIME ZONE,
+  clock_out_latitude DECIMAL(10, 8),
+  clock_out_longitude DECIMAL(11, 8),
+  clock_out_distance INTEGER,
+  clock_out_within_zone BOOLEAN DEFAULT false,
+  clock_out_accuracy INTEGER,
   
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
+  -- Late clockout flags
+  is_late_clockout BOOLEAN DEFAULT false,
+  late_clockout_flagged BOOLEAN DEFAULT false,
+  late_clockout_reported_at TIMESTAMP WITH TIME ZONE,
   
   UNIQUE(user_id, date)
 );
@@ -55,7 +60,7 @@ CREATE POLICY "Users can view their own attendance"
   );
 
 -- Policy: Users can insert/update their own records
-CREATE POLICY "Users can record their check-in/check-out"
+CREATE POLICY "Users can record their clock-in/clock-out"
   ON public.attendance FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
@@ -67,7 +72,7 @@ CREATE POLICY "Users can update their own attendance"
 ## Step 2: Add Components to Dashboard
 
 The components are already created:
-- **CheckInCheckOut.tsx** - For employees to check in/out
+- **ClockInClockOut.tsx** - For employees to clock in/out
 - **AttendanceView.tsx** - For HR/CFO to view attendance records
 
 Add them to your dashboard page (`src/pages/portal/dashboard.astro` or index):
@@ -75,12 +80,12 @@ Add them to your dashboard page (`src/pages/portal/dashboard.astro` or index):
 ```astro
 ---
 // In your dashboard page:
-import CheckInCheckOut from '../components/CheckInCheckOut.tsx';
+import ClockInClockOut from '../components/ClockInClockOut.tsx';
 import AttendanceView from '../components/AttendanceView.tsx';
 ---
 
 <client:load>
-  <CheckInCheckOut client:load />
+  <ClockInClockOut client:load />
   <AttendanceView client:load />
 </client:load>
 ```
@@ -88,13 +93,13 @@ import AttendanceView from '../components/AttendanceView.tsx';
 Or in a React component:
 
 ```tsx
-import CheckInCheckOut from './CheckInCheckOut';
+import ClockInClockOut from './ClockInClockOut';
 import AttendanceView from './AttendanceView';
 
 export default function Dashboard() {
   return (
     <>
-      <CheckInCheckOut />
+      <ClockInClockOut />
       <AttendanceView />
     </>
   );
@@ -103,19 +108,19 @@ export default function Dashboard() {
 
 ## How It Works
 
-### Check-In/Check-Out Component
-1. ✅ **Location Permission** - Requests user permission once per check-in/out
+### Clock-In/Clock-Out Component
+1. ✅ **Location Permission** - Requests user permission once per clock-in/out
 2. ✅ **GPS Coordinates** - Records latitude, longitude, and accuracy
 3. ✅ **Distance Calculation** - Uses Haversine formula to calculate distance from office
 4. ✅ **Zone Detection** - Flags if within 200m (green) or outside (red)
-5. ✅ **Real-Time Status** - Shows check-in/out time and location status
+5. ✅ **Real-Time Status** - Shows clock-in/out time and location status
 
 ### Attendance View Component (HR/CFO Only)
 1. ✅ **Date Filtering** - View records for any date
-2. ✅ **Employee Records** - See all employees' check-in/check-out
+2. ✅ **Employee Records** - See all employees' clock-in/clock-out
 3. ✅ **Location Verification** - Green badge for in-zone, red warning for outside
 4. ✅ **Distance Display** - Shows distance in meters
-5. ✅ **Statistics** - Counts of checked-in, in-zone, outside zone
+5. ✅ **Statistics** - Counts of clocked-in, in-zone, outside zone
 
 ## Office Location Configuration
 
@@ -124,7 +129,7 @@ export default function Dashboard() {
 - Longitude: 101.61250689446412
 - Zone Radius: 200 meters
 
-**To change location:** Edit the constants in `CheckInCheckOut.tsx`:
+**To change location:** Edit the constants in `ClockInClockOut.tsx`:
 ```tsx
 const OFFICE_LAT = 3.0750624396122763;
 const OFFICE_LNG = 101.61250689446412;
@@ -135,36 +140,36 @@ const ZONE_RADIUS_METERS = 200;
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| Check-in button | ✅ | Records time + location |
-| Check-out button | ✅ | Records time + location |
+| Clock-in button | ✅ | Records time + location |
+| Clock-out button | ✅ | Records time + location |
 | Location permission | ✅ | One-time request per action |
 | GPS coordinates | ✅ | Latitude, longitude, accuracy |
 | Distance calculation | ✅ | Haversine formula (meters) |
 | Zone detection | ✅ | 200m radius from office |
 | In-zone badge | ✅ | Green when within zone |
 | Outside zone flag | ✅ | Red when outside zone |
-| Daily status | ✅ | Shows today's check-in/out |
+| Daily status | ✅ | Shows today's clock-in/out |
 | Attendance view | ✅ | HR/CFO only |
 | Date filtering | ✅ | View any date's records |
 | Statistics | ✅ | Total, in-zone, outside |
-| User restrictions | ✅ | No check-in for Chairman/CEO |
+| User restrictions | ✅ | No clock-in for Chairman/CEO |
 | Data privacy | ✅ | Users see own, HR/CFO see all |
 
 ## Testing
 
 ### Employee Test
 1. Log in as an employee (not Chairman/CEO)
-2. Click **Check In** button
+2. Click **Clock In** button
 3. Allow location access when prompted
-4. See check-in time with location status (green/red)
-5. Click **Check Out** to finish
+4. See clock-in time with location status (green/red)
+5. Click **Clock Out** to finish
 
 ### HR/CFO Test
 1. Log in as HR or CFO
 2. View **Attendance Records** section
 3. Filter by date
-4. See all employees' check-in/out with location badges
-5. Identify those who checked in outside the zone
+4. See all employees' clock-in/out with location badges
+5. Identify those who clocked in outside the zone
 
 ## Distance Calculation
 

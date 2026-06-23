@@ -1,12 +1,12 @@
 ---
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import ExecutiveOverview from '../../components/ExecutiveOverview';
-import CheckInCheckOut from '../../components/CheckInCheckOut';
+import ClockInClockOut from '../../components/ClockInClockOut';
 ---
 
 <DashboardLayout title="Overview - Staff Portal">
   <div class="space-y-12">
     <ExecutiveOverview client:only="react" />
-    <CheckInCheckOut client:only="react" />
+    <ClockInClockOut client:only="react" />
   </div>
 </DashboardLayout>

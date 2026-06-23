@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 
-export default function CheckInCheckOut() {
+export default function ClockInClockOut() {
   const { lang } = usePortalLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [todayRecord, setTodayRecord] = useState<any>(null);
@@ -13,13 +13,13 @@ export default function CheckInCheckOut() {
   const [locationStatus, setLocationStatus] = useState<string>('');
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [allRecords, setAllRecords] = useState<any[]>([]);
-  const [forgotCheckoutRecords, setForgotCheckoutRecords] = useState<any[]>([]);
+  const [forgotClockoutRecords, setForgotClockoutRecords] = useState<any[]>([]);
   const [showDetails, setShowDetails] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLateCheckoutModalOpen, setIsLateCheckoutModalOpen] = useState(false);
-  const [lateCheckoutRecord, setLateCheckoutRecord] = useState<any>(null);
-  const [lateCheckoutTime, setLateCheckoutTime] = useState('');
-  const [isSubmittingLateCheckout, setIsSubmittingLateCheckout] = useState(false);
+  const [isLateClockoutModalOpen, setIsLateClockoutModalOpen] = useState(false);
+  const [lateClockoutRecord, setLateClockoutRecord] = useState<any>(null);
+  const [lateClockoutTime, setLateClockoutTime] = useState('');
+  const [isSubmittingLateClockout, setIsSubmittingLateClockout] = useState(false);
   const [detailFilterEmployee, setDetailFilterEmployee] = useState('');
   const [detailFilterMode, setDetailFilterMode] = useState<'all' | 'day' | 'month'>('all');
   const [detailFilterDay, setDetailFilterDay] = useState('');
@@ -43,13 +43,13 @@ export default function CheckInCheckOut() {
     return R * c;
   };
 
-  // Calculate working hours between check in and check out
-  const calculateWorkingHours = (checkInTime: string, checkOutTime: string | null): { hours: number; minutes: number } | null => {
-    if (!checkInTime || !checkOutTime) return null;
+  // Calculate working hours between clock in and clock out
+  const calculateWorkingHours = (clockInTime: string, clockOutTime: string | null): { hours: number; minutes: number } | null => {
+    if (!clockInTime || !clockOutTime) return null;
 
-    const checkIn = new Date(checkInTime);
-    const checkOut = new Date(checkOutTime);
-    const diffMs = checkOut.getTime() - checkIn.getTime();
+    const clockIn = new Date(clockInTime);
+    const clockOut = new Date(clockOutTime);
+    const diffMs = clockOut.getTime() - clockIn.getTime();
 
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -58,23 +58,23 @@ export default function CheckInCheckOut() {
   };
 
   // Fetch attendance records efficiently
-  const fetchForgotCheckoutRecords = async () => {
+  const fetchForgotClockoutRecords = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. Fetch forgot checkouts specifically (server-side filtering)
+      // 1. Fetch forgot clockouts specifically (server-side filtering)
       const { data: forgotRecords, error: forgotError } = await supabase
         .from('attendance')
         .select('*')
         .not('date', 'eq', today)
-        .not('check_in_time', 'is', null)
-        .is('check_out_time', null)
+        .not('clock_in_time', 'is', null)
+        .is('clock_out_time', null)
         .order('date', { ascending: false });
 
       if (forgotError) {
-        console.error('Error fetching forgot checkout records:', forgotError);
+        console.error('Error fetching forgot clockout records:', forgotError);
       } else if (forgotRecords) {
-        setForgotCheckoutRecords(forgotRecords);
+        setForgotClockoutRecords(forgotRecords);
       }
 
       // 2. Fetch a limited set of recent records for general view/export
@@ -94,9 +94,9 @@ export default function CheckInCheckOut() {
     }
   };
 
-  // Memoized filtered forgot checkout records
+  // Memoized filtered forgot clockout records
   const filteredForgotRecords = useMemo(() => {
-    let result = [...forgotCheckoutRecords];
+    let result = [...forgotClockoutRecords];
 
     if (detailFilterEmployee) {
       result = result.filter(r => r.user_name?.toLowerCase().includes(detailFilterEmployee.toLowerCase()));
@@ -109,7 +109,7 @@ export default function CheckInCheckOut() {
     }
 
     return result;
-  }, [forgotCheckoutRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
+  }, [forgotClockoutRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
 
   // Memoized filtered all records
   const filteredAllRecords = useMemo(() => {
@@ -128,7 +128,7 @@ export default function CheckInCheckOut() {
     return result;
   }, [allRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
 
-  const exportForgotCheckoutsToExcel = () => {
+  const exportForgotClockoutsToExcel = () => {
     if (filteredForgotRecords.length === 0) {
       alert(t('attendance', 'noRecordsToExport', lang));
       return;
@@ -137,18 +137,18 @@ export default function CheckInCheckOut() {
     const exportData = filteredForgotRecords.map(record => ({
       'Employee Name': record.user_name || '-',
       'Date': record.date || '-',
-      'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
-      'Status': 'Forgot Checkout (No Checkout)'
+      'Clock In Time': record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString() : '-',
+      'Status': 'Forgot Clockout (No Clockout)'
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Forgot Checkouts');
+    XLSX.utils.book_append_sheet(wb, ws, 'Forgot Clockouts');
 
     const colWidths = [20, 15, 15, 25];
     ws['!cols'] = colWidths.map(width => ({ wch: width }));
 
-    const filename = `Forgot_Checkouts_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `Forgot_Clockouts_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -159,20 +159,20 @@ export default function CheckInCheckOut() {
     }
 
     const exportData = filteredAllRecords.map(record => {
-      const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
+      const workingHours = calculateWorkingHours(record.clock_in_time, record.clock_out_time);
       const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
-      const isForgot = record.check_in_time && !record.check_out_time;
+      const isForgot = record.clock_in_time && !record.clock_out_time;
 
       let flagStatus = 'Full';
-      if (isForgot) flagStatus = 'No Checkout';
-      else if (record.is_late_checkout) flagStatus = 'Late Checkout (Flagged)';
+      if (isForgot) flagStatus = 'No Clockout';
+      else if (record.is_late_clockout) flagStatus = 'Late Clockout (Flagged)';
       else if (isShortDay) flagStatus = 'Short Day (<9h)';
 
       return {
         'Employee Name': record.user_name || '-',
         'Date': record.date || '-',
-        'Check In Time': record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '-',
-        'Check Out Time': record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '-',
+        'Clock In Time': record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString() : '-',
+        'Clock Out Time': record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString() : '-',
         'Hours Worked': workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-',
         'Status Flag': flagStatus
       };
@@ -214,7 +214,7 @@ export default function CheckInCheckOut() {
     });
   };
 
-  const getLocationAndCheckIn = async (type: 'check_in' | 'check_out') => {
+  const getLocationAndClockIn = async (type: 'clock_in' | 'clock_out') => {
     setIsProcessing(true);
 
     try {
@@ -251,12 +251,12 @@ export default function CheckInCheckOut() {
             user_id: session.user.id,
             user_name: profile?.name,
             date: today,
-            [type === 'check_in' ? 'check_in_time' : 'check_out_time']: new Date().toISOString(),
-            [type === 'check_in' ? 'check_in_latitude' : 'check_out_latitude']: latitude,
-            [type === 'check_in' ? 'check_in_longitude' : 'check_out_longitude']: longitude,
-            [type === 'check_in' ? 'check_in_distance' : 'check_out_distance']: Math.round(distance),
-            [type === 'check_in' ? 'check_in_within_zone' : 'check_out_within_zone']: isWithinZone,
-            [type === 'check_in' ? 'check_in_accuracy' : 'check_out_accuracy']: Math.round(accuracy)
+            [type === 'clock_in' ? 'clock_in_time' : 'clock_out_time']: new Date().toISOString(),
+            [type === 'clock_in' ? 'clock_in_latitude' : 'clock_out_latitude']: latitude,
+            [type === 'clock_in' ? 'clock_in_longitude' : 'clock_out_longitude']: longitude,
+            [type === 'clock_in' ? 'clock_in_distance' : 'clock_out_distance']: Math.round(distance),
+            [type === 'clock_in' ? 'clock_in_within_zone' : 'clock_out_within_zone']: isWithinZone,
+            [type === 'clock_in' ? 'clock_in_accuracy' : 'clock_out_accuracy']: Math.round(accuracy)
           };
 
           let error;
@@ -277,9 +277,9 @@ export default function CheckInCheckOut() {
 
           if (error) {
             console.error(`Error recording ${type}:`, error);
-            alert(`${t('attendance', 'failedToRecord', lang)} ${type === 'check_in' ? (lang === 'bm' ? 'daftar masuk' : 'check in') : (lang === 'bm' ? 'daftar keluar' : 'check out')}`);
+            alert(`${t('attendance', 'failedToRecord', lang)} ${type === 'clock_in' ? (lang === 'bm' ? 'daftar masuk' : 'clock in') : (lang === 'bm' ? 'daftar keluar' : 'clock out')}`);
           } else {
-            const typeStr = type === 'check_in' ? t('attendance', 'checkedIn', lang) : t('attendance', 'checkedOut', lang);
+            const typeStr = type === 'clock_in' ? t('attendance', 'checkedIn', lang) : t('attendance', 'checkedOut', lang);
             const zoneStr = isWithinZone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang);
             const awayStr = lang === 'bm' ? `${Math.round(distance)}m dari pejabat` : `${Math.round(distance)}m away`;
             setLocationStatus(`${typeStr} - ${zoneStr} (${awayStr})`);
@@ -301,17 +301,17 @@ export default function CheckInCheckOut() {
     }
   };
 
-  const handleOpenLateCheckoutModal = (record: any) => {
-    setLateCheckoutRecord(record);
-    setLateCheckoutTime('18:00');
-    setIsLateCheckoutModalOpen(true);
+  const handleOpenLateClockoutModal = (record: any) => {
+    setLateClockoutRecord(record);
+    setLateClockoutTime('18:00');
+    setIsLateClockoutModalOpen(true);
   };
 
-  const handleLateCheckoutSubmit = async (e: React.FormEvent) => {
+  const handleLateClockoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lateCheckoutRecord || !lateCheckoutTime) return;
+    if (!lateClockoutRecord || !lateClockoutTime) return;
 
-    setIsSubmittingLateCheckout(true);
+    setIsSubmittingLateClockout(true);
 
     try {
       // Get location coordinates if possible (non-blocking)
@@ -336,50 +336,50 @@ export default function CheckInCheckOut() {
           distance = Math.round(calculateDistance(OFFICE_LAT, OFFICE_LNG, latitude, longitude));
           withinZone = distance <= ZONE_RADIUS_METERS;
         } catch (err) {
-          console.warn('Geolocation failed or timed out for late checkout submission:', err);
+          console.warn('Geolocation failed or timed out for late clockout submission:', err);
         }
       }
 
-      // Construct checkout timestamp from the record date and input time
-      const [year, month, day] = lateCheckoutRecord.date.split('-').map(Number);
-      const [hours, minutes] = lateCheckoutTime.split(':').map(Number);
-      const actualCheckoutDate = new Date(year, month - 1, day, hours, minutes);
-      const checkoutTimeISO = actualCheckoutDate.toISOString();
+      // Construct clockout timestamp from the record date and input time
+      const [year, month, day] = lateClockoutRecord.date.split('-').map(Number);
+      const [hours, minutes] = lateClockoutTime.split(':').map(Number);
+      const actualClockoutDate = new Date(year, month - 1, day, hours, minutes);
+      const clockoutTimeISO = actualClockoutDate.toISOString();
 
-      // Check if checkout time is after checkin time
-      const checkInTime = new Date(lateCheckoutRecord.check_in_time);
-      if (actualCheckoutDate <= checkInTime) {
-        const timeFormatted = checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const checkOutAfterCheckInMsg = lang === 'bm'
+      // Check if clockout time is after clockin time
+      const clockInTime = new Date(lateClockoutRecord.clock_in_time);
+      if (actualClockoutDate <= clockInTime) {
+        const timeFormatted = clockInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const clockOutAfterClockInMsg = lang === 'bm'
           ? `Waktu daftar keluar sebenar mestilah selepas waktu daftar masuk (${timeFormatted}).`
-          : `Actual check-out time must be after check-in time (${timeFormatted}).`;
-        alert(checkOutAfterCheckInMsg);
-        setIsSubmittingLateCheckout(false);
+          : `Actual clock-out time must be after clock-in time (${timeFormatted}).`;
+        alert(clockOutAfterClockInMsg);
+        setIsSubmittingLateClockout(false);
         return;
       }
 
       // Update attendance record
       const updateData = {
-        check_out_time: checkoutTimeISO,
-        check_out_latitude: latitude,
-        check_out_longitude: longitude,
-        check_out_distance: distance,
-        check_out_within_zone: withinZone,
-        check_out_accuracy: accuracy,
-        is_late_checkout: true,
-        late_checkout_flagged: true,
-        late_checkout_reported_at: new Date().toISOString()
+        clock_out_time: clockoutTimeISO,
+        clock_out_latitude: latitude,
+        clock_out_longitude: longitude,
+        clock_out_distance: distance,
+        clock_out_within_zone: withinZone,
+        clock_out_accuracy: accuracy,
+        is_late_clockout: true,
+        late_clockout_flagged: true,
+        late_clockout_reported_at: new Date().toISOString()
       };
 
       const { error: updateError } = await supabase
         .from('attendance')
         .update(updateData)
-        .eq('id', lateCheckoutRecord.id);
+        .eq('id', lateClockoutRecord.id);
 
       if (updateError) {
-        console.error('Error updating late checkout:', updateError);
+        console.error('Error updating late clockout:', updateError);
         alert(t('attendance', 'failedSubmitLateCheckout', lang));
-        setIsSubmittingLateCheckout(false);
+        setIsSubmittingLateClockout(false);
         return;
       }
 
@@ -392,12 +392,12 @@ export default function CheckInCheckOut() {
           user_role: profile?.role || 'No Role',
           table_name: 'attendance',
           action: 'UPDATE',
-          record_id: lateCheckoutRecord.id,
+          record_id: lateClockoutRecord.id,
           changes: {
-            note: `Late checkout resolved for date ${lateCheckoutRecord.date}. Stated actual checkout time: ${lateCheckoutTime}`,
-            check_out_time: checkoutTimeISO,
-            is_late_checkout: true,
-            late_checkout_reported_at: new Date().toISOString(),
+            note: `Late clockout resolved for date ${lateClockoutRecord.date}. Stated actual clockout time: ${lateClockoutTime}`,
+            clock_out_time: clockoutTimeISO,
+            is_late_clockout: true,
+            late_clockout_reported_at: new Date().toISOString(),
             submission_distance: distance !== null ? `${distance}m` : 'Unknown'
           },
           created_at: new Date().toISOString()
@@ -407,18 +407,18 @@ export default function CheckInCheckOut() {
       }
 
       alert(t('attendance', 'lateCheckoutSuccess', lang));
-      setIsLateCheckoutModalOpen(false);
-      setLateCheckoutRecord(null);
-      setLateCheckoutTime('');
+      setIsLateClockoutModalOpen(false);
+      setLateClockoutRecord(null);
+      setLateClockoutTime('');
 
       // Refresh lists
       await fetchTodayRecord();
-      await fetchForgotCheckoutRecords();
+      await fetchForgotClockoutRecords();
     } catch (err) {
-      console.error('Exception during late checkout submit:', err);
+      console.error('Exception during late clockout submit:', err);
       alert(t('attendance', 'errorSubmission', lang));
     } finally {
-      setIsSubmittingLateCheckout(false);
+      setIsSubmittingLateClockout(false);
     }
   };
 
@@ -464,7 +464,7 @@ export default function CheckInCheckOut() {
       }
 
       await fetchTodayRecord();
-      await fetchForgotCheckoutRecords();
+      await fetchForgotClockoutRecords();
       setLoading(false);
     };
 
@@ -515,7 +515,7 @@ export default function CheckInCheckOut() {
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{t('attendanceAdmin', 'colCheckIn', lang)}</p>
-                        {todayRecord.check_in_time && (
+                        {todayRecord.clock_in_time && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
@@ -524,21 +524,21 @@ export default function CheckInCheckOut() {
                           </span>
                         )}
                       </div>
-                      {todayRecord.check_in_time ? (
+                      {todayRecord.clock_in_time ? (
                         <div className="space-y-3">
                           <p className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            {new Date(todayRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(todayRecord.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
-                              todayRecord.check_in_within_zone
+                              todayRecord.clock_in_within_zone
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
                                 : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30'
                             }`}>
-                              {todayRecord.check_in_within_zone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang)}
+                              {todayRecord.clock_in_within_zone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang)}
                             </span>
                             <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-gray-800 px-3 py-1 rounded-md border border-slate-200 dark:border-gray-700">
-                              {todayRecord.check_in_distance}{t('attendance', 'away', lang)}
+                              {todayRecord.clock_in_distance}{t('attendance', 'away', lang)}
                             </span>
                           </div>
                         </div>
@@ -553,7 +553,7 @@ export default function CheckInCheckOut() {
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{t('attendanceAdmin', 'colCheckOut', lang)}</p>
-                        {todayRecord.check_out_time && (
+                        {todayRecord.clock_out_time && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
@@ -562,21 +562,21 @@ export default function CheckInCheckOut() {
                           </span>
                         )}
                       </div>
-                      {todayRecord.check_out_time ? (
+                      {todayRecord.clock_out_time ? (
                         <div className="space-y-3">
                           <p className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            {new Date(todayRecord.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(todayRecord.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex items-center text-xs font-semibold px-3 py-1 rounded-md border ${
-                              todayRecord.check_out_within_zone
+                              todayRecord.clock_out_within_zone
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
                                 : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30'
                             }`}>
-                              {todayRecord.check_out_within_zone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang)}
+                              {todayRecord.clock_out_within_zone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang)}
                             </span>
                             <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-gray-800 px-3 py-1 rounded-md border border-slate-200 dark:border-gray-700">
-                              {todayRecord.check_out_distance}{t('attendance', 'away', lang)}
+                              {todayRecord.clock_out_distance}{t('attendance', 'away', lang)}
                             </span>
                           </div>
                         </div>
@@ -592,8 +592,8 @@ export default function CheckInCheckOut() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               <button
-                onClick={() => getLocationAndCheckIn('check_in')}
-                disabled={isProcessing || (todayRecord?.check_in_time && !todayRecord?.check_out_time)}
+                onClick={() => getLocationAndClockIn('clock_in')}
+                disabled={isProcessing || (todayRecord?.clock_in_time && !todayRecord?.clock_out_time)}
                 className="px-5 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
                 <div className="flex items-center justify-center gap-2">
@@ -609,8 +609,8 @@ export default function CheckInCheckOut() {
               </button>
 
               <button
-                onClick={() => getLocationAndCheckIn('check_out')}
-                disabled={isProcessing || !todayRecord?.check_in_time || todayRecord?.check_out_time}
+                onClick={() => getLocationAndClockIn('clock_out')}
+                disabled={isProcessing || !todayRecord?.clock_in_time || todayRecord?.clock_out_time}
                 className="px-5 py-3 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
                 <div className="flex items-center justify-center gap-2">
@@ -635,16 +635,16 @@ export default function CheckInCheckOut() {
               </div>
             )}
 
-            {/* Forgot Checkout & Working Hours Section */}
+            {/* Forgot Clockout & Working Hours Section */}
             <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-gray-800">
 
-              {(forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
+              {(forgotClockoutRecords.length > 0 || isPrivilegedRole) && (
                 <button
                   onClick={() => setShowDetails(!showDetails)}
                   className="w-full px-5 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-gray-900/40 dark:hover:bg-zinc-900/80 border border-slate-200 dark:border-gray-800 transition-all font-semibold text-slate-700 dark:text-zinc-200 flex items-center justify-between min-h-[48px]"
                 >
                   <span className="text-sm">
-                    {showDetails ? t('attendance', 'hideDetailedOverview', lang) : `${t('attendance', 'showDetailedOverview', lang)} (${forgotCheckoutRecords.length} ${t('attendance', 'unresolvedCheckouts', lang)})`}
+                    {showDetails ? t('attendance', 'hideDetailedOverview', lang) : `${t('attendance', 'showDetailedOverview', lang)} (${forgotClockoutRecords.length} ${t('attendance', 'unresolvedCheckouts', lang)})`}
                   </span>
                   <span className="text-xs transition-transform duration-200">{showDetails ? '▲' : '▼'}</span>
                 </button>
@@ -746,8 +746,10 @@ export default function CheckInCheckOut() {
                     </button>
                   )}
                 </div>
-              )}              {/* Forgot Checkout Alert - Only shown when details are expanded */}
-              {showDetails && (forgotCheckoutRecords.length > 0 || isPrivilegedRole) && (
+              )}
+
+              {/* Forgot Clockout Alert - Only shown when details are expanded */}
+              {showDetails && (forgotClockoutRecords.length > 0 || isPrivilegedRole) && (
                 <div className="p-5 rounded-2xl bg-rose-50/10 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/20">
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -757,7 +759,7 @@ export default function CheckInCheckOut() {
                       </div>
                       {isPrivilegedRole && filteredForgotRecords.length > 0 && (
                         <button
-                          onClick={exportForgotCheckoutsToExcel}
+                          onClick={exportForgotClockoutsToExcel}
                           className="px-4 py-2 bg-white hover:bg-rose-50 dark:bg-gray-800 dark:hover:bg-zinc-700 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 h-9"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -771,7 +773,7 @@ export default function CheckInCheckOut() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs md:text-sm">
                           <thead>
-                            <tr className="bg-rose-50/30 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-900/30">
+                            <tr className="bg-rose-50/30 dark:bg-rose-955/20 border-b border-rose-100 dark:border-rose-900/30">
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendance', 'employee', lang)}</th>
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendance', 'date', lang)}</th>
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
@@ -792,7 +794,7 @@ export default function CheckInCheckOut() {
                                   <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
                                   <td className="px-4 py-3.5 font-mono">{record.date}</td>
                                   <td className="px-4 py-3.5">
-                                    {new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </td>
                                   <td className="px-4 py-3.5">
                                     <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400">
@@ -802,7 +804,7 @@ export default function CheckInCheckOut() {
                                   <td className="px-4 py-3.5 text-right">
                                     {record.user_id === currentUserId ? (
                                       <button
-                                        onClick={() => handleOpenLateCheckoutModal(record)}
+                                        onClick={() => handleOpenLateClockoutModal(record)}
                                         className="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white text-xs font-semibold rounded-lg shadow transition-all h-9 flex items-center justify-center inline-flex"
                                       >
                                         {t('attendance', 'checkOutBtn', lang).replace('✗ ', '')}
@@ -867,9 +869,9 @@ export default function CheckInCheckOut() {
                                </tr>
                             ) : (
                                (isPrivilegedRole ? filteredAllRecords : filteredAllRecords.slice(0, 20)).map((record) => {
-                                 const workingHours = calculateWorkingHours(record.check_in_time, record.check_out_time);
+                                 const workingHours = calculateWorkingHours(record.clock_in_time, record.clock_out_time);
                                  const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
-                                 const isForgotCheckout = record.check_in_time && !record.check_out_time;
+                                 const isForgotCheckout = record.clock_in_time && !record.clock_out_time;
 
                                  return (
                                    <tr
@@ -881,10 +883,10 @@ export default function CheckInCheckOut() {
                                      <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
                                      <td className="px-4 py-3.5 font-mono">{record.date}</td>
                                      <td className="px-4 py-3.5 text-center">
-                                       {record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                       {record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                                      </td>
                                      <td className="px-4 py-3.5 text-center">
-                                       {record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                       {record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
                                      </td>
                                      <td className="px-4 py-3.5 text-center font-semibold text-slate-900 dark:text-white">
                                        {workingHours ? `${workingHours.hours}${lang === 'bm' ? 'j' : 'h'} ${workingHours.minutes}m` : '-'}
@@ -894,9 +896,9 @@ export default function CheckInCheckOut() {
                                          <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400">
                                            {t('attendance', 'noCheckout', lang).replace('⚠️ ', '')}
                                          </span>
-                                       ) : record.is_late_checkout ? (
+                                       ) : record.is_late_clockout ? (
                                          <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400" title="Flagged warning to CFO, HR, IT">
-                                           {lang === 'bm' ? 'Keluar Lewat' : 'Late Checkout'}
+                                           {lang === 'bm' ? 'Keluar Lewat' : 'Late Clockout'}
                                          </span>
                                        ) : isShortDay ? (
                                          <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400">
@@ -928,7 +930,7 @@ export default function CheckInCheckOut() {
             </div>
 
 
-            {isLateCheckoutModalOpen && lateCheckoutRecord && (
+            {isLateClockoutModalOpen && lateClockoutRecord && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
                 <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
 
@@ -940,28 +942,28 @@ export default function CheckInCheckOut() {
                   </div>
 
 
-                  <form onSubmit={handleLateCheckoutSubmit} className="p-6 space-y-4 bg-white dark:bg-black">
+                  <form onSubmit={handleLateClockoutSubmit} className="p-6 space-y-4 bg-white dark:bg-black">
                     <div className="space-y-1">
-                      <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">{t('attendance', 'date', lang)}</p>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-200 dark:border-gray-800">{lateCheckoutRecord.date}</p>
+                      <p className="text-xs text-slate-400 dark:text-zinc-550 font-semibold uppercase tracking-wider">{t('attendance', 'date', lang)}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-200 dark:border-gray-800">{lateClockoutRecord.date}</p>
                     </div>
 
                     <div className="space-y-1">
-                      <p className="text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">{t('attendanceAdmin', 'colCheckIn', lang)}</p>
+                      <p className="text-xs text-slate-400 dark:text-zinc-550 font-semibold uppercase tracking-wider">{t('attendanceAdmin', 'colCheckIn', lang)}</p>
                       <p className="text-sm font-semibold text-slate-800 dark:text-white bg-slate-50 dark:bg-black p-2.5 rounded-xl border border-slate-200 dark:border-gray-800">
-                        {new Date(lateCheckoutRecord.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(lateClockoutRecord.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <label htmlFor="lateCheckoutTime" className="block text-xs text-slate-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">
+                      <label htmlFor="lateClockoutTime" className="block text-xs text-slate-400 dark:text-zinc-550 font-semibold uppercase tracking-wider">
                         {t('attendance', 'statedActualCheckout', lang)}
                       </label>
                       <input
                         type="time"
-                        id="lateCheckoutTime"
-                        value={lateCheckoutTime}
-                        onChange={(e) => setLateCheckoutTime(e.target.value)}
+                        id="lateClockoutTime"
+                        value={lateClockoutTime}
+                        onChange={(e) => setLateClockoutTime(e.target.value)}
                         required
                         className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
                       />
@@ -975,20 +977,20 @@ export default function CheckInCheckOut() {
                       <button
                         type="button"
                         onClick={() => {
-                          setIsLateCheckoutModalOpen(false);
-                          setLateCheckoutRecord(null);
+                          setIsLateClockoutModalOpen(false);
+                          setLateClockoutRecord(null);
                         }}
-                        disabled={isSubmittingLateCheckout}
+                        disabled={isSubmittingLateClockout}
                         className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold rounded-xl transition-all min-h-[48px] shadow-sm"
                       >
                         {t('attendance', 'cancel', lang)}
                       </button>
                       <button
                         type="submit"
-                        disabled={isSubmittingLateCheckout}
+                        disabled={isSubmittingLateClockout}
                         className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black font-semibold text-xs rounded-xl shadow transition-all min-h-[48px] flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
-                        {isSubmittingLateCheckout ? (
+                        {isSubmittingLateClockout ? (
                           <>
                             <svg className="w-4 h-4 animate-spin text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>{t('attendance', 'submitting', lang)}</span>

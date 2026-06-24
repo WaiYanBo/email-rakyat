@@ -52,7 +52,13 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       if (profError) throw profError;
 
-      const depts = Array.from(new Set(profiles?.map(p => p.department).filter(Boolean))) as string[];
+      const EXCLUDED_DEPT_KEYWORDS = [
+        'part time', 'part-time', 'contract', 'contract worker', 'intern', 'intern hr',
+        'top management', 'tm', 'executive', 'board', 'bod', 'board of directors'
+      ];
+
+      const depts = Array.from(new Set(profiles?.map(p => p.department).filter(Boolean)))
+        .filter(d => !EXCLUDED_DEPT_KEYWORDS.includes(d.trim().toLowerCase())) as string[];
       setDepartments(depts);
       setUsers(profiles || []);
 

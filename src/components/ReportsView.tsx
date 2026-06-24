@@ -492,8 +492,12 @@ export default function ReportsView() {
             {(() => {
               const standardDepartments = ['Human Resources', 'Finance', 'Accounting', 'Marketing', 'Media', 'IT', 'Operations', 'Sales'];
               const dynamicDepartments = staffRecords.map(s => s.department).filter(Boolean) as string[];
-              const excludedDepartments = ['Top Management', 'TM', 'Executive', 'Board'];
-              const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments])).filter(d => !excludedDepartments.includes(d));
+              const EXCLUDED_DEPT_KEYWORDS = [
+                'part time', 'part-time', 'contract', 'contract worker', 'intern', 'intern hr',
+                'top management', 'tm', 'executive', 'board', 'bod', 'board of directors'
+              ];
+              const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments]))
+                .filter(d => !EXCLUDED_DEPT_KEYWORDS.includes(d.trim().toLowerCase()));
               return (
                 <form onSubmit={saveStaffRecord} className="p-6 space-y-4 overflow-y-auto scrollbar-thin bg-white dark:bg-black">
                   {!editingStaff && (

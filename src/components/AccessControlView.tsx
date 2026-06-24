@@ -54,7 +54,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       const EXCLUDED_DEPT_KEYWORDS = [
         'part time', 'part-time', 'contract', 'contract worker', 'intern', 'intern hr',
-        'top management', 'tm', 'executive', 'board', 'bod', 'board of directors'
+        'top management', 'tm', 'executive'
       ];
 
       const depts = Array.from(new Set(profiles?.map(p => p.department).filter(Boolean)))

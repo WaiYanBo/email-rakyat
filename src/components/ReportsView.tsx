@@ -494,7 +494,7 @@ export default function ReportsView() {
               const dynamicDepartments = staffRecords.map(s => s.department).filter(Boolean) as string[];
               const EXCLUDED_DEPT_KEYWORDS = [
                 'part time', 'part-time', 'contract', 'contract worker', 'intern', 'intern hr',
-                'top management', 'tm', 'executive', 'board', 'bod', 'board of directors'
+                'top management', 'tm', 'executive'
               ];
               const uniqueDepartments = Array.from(new Set([...standardDepartments, ...dynamicDepartments]))
                 .filter(d => !EXCLUDED_DEPT_KEYWORDS.includes(d.trim().toLowerCase()));

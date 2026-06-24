@@ -36,11 +36,7 @@ const isPortal = currentPath.startsWith('/portal');
         {/* Removed generator tag — avoids leaking framework version to attackers */}
         <meta name="google-site-verification" content="pL6VVDBvT7AFJsF-iNber0pk7W-Sm1ooRfdVehPlAy8" />
 
-        {/* ── Security meta headers ─────────────────────────────────────── */}
-        <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-        <meta http-equiv="X-Frame-Options" content="DENY" />
-        <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-        <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), payment=()" />
+
         {isPortal && (
             <>
               {/* Portal-only CSP: tighten to only needed sources */}

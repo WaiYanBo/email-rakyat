@@ -54,12 +54,34 @@ import Features from '../components/Features.astro';
 
       </div>
 
-      <script async src="https://www.tiktok.com/embed.js"></script>
+      <script is:inline>
+        document.addEventListener("DOMContentLoaded", () => {
+          const section = document.getElementById("section-tiktok-embed");
+          if (!section) return;
+
+          const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const script = document.createElement("script");
+                script.async = true;
+                script.src = "https://www.tiktok.com/embed.js";
+                document.body.appendChild(script);
+                obs.unobserve(entry.target);
+              }
+            });
+          }, { rootMargin: "200px" });
+
+          observer.observe(section);
+        });
+      </script>
     </section>
 
 </Layout>
 <style is:global>
   /* Force the dynamically injected TikTok iframe to be transparent and borderless */
+  .tiktok-embed {
+      min-height: 572px;
+  }
   .tiktok-embed,
   .tiktok-embed iframe {
       background-color: transparent !important;
@@ -69,4 +91,3 @@ import Features from '../components/Features.astro';
       max-width: 100% !important;
   }
 </style>
-

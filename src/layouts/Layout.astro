@@ -31,8 +31,7 @@ const isPortal = currentPath.startsWith('/portal');
         <link rel="icon" type="image/svg+xml" href="/logo-v2.svg" />
         <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#111827" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Removed generator tag — avoids leaking framework version to attackers */}
         <meta name="google-site-verification" content="pL6VVDBvT7AFJsF-iNber0pk7W-Sm1ooRfdVehPlAy8" />
 
@@ -84,14 +83,34 @@ const isPortal = currentPath.startsWith('/portal');
         </script>
         {!isPortal && (
           <>
-            <!-- Google tag (gtag.js) -->
-            <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18262341649" is:inline></script>
             <script is:inline>
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
+              window.loadGtag = function() {
+                if (window.gtagLoaded) return;
+                window.gtagLoaded = true;
 
-              gtag('config', 'AW-18262341649');
+                const script = document.createElement('script');
+                script.async = true;
+                script.src = "https://www.googletagmanager.com/gtag/js?id=AW-18262341649";
+                document.head.appendChild(script);
+
+                window.dataLayer = window.dataLayer || [];
+                window.gtag = function(){dataLayer.push(arguments);}
+                window.gtag('js', new Date());
+                window.gtag('config', 'AW-18262341649');
+              };
+
+              // Immediately load if user already consented
+              try {
+                const prefsString = localStorage.getItem("cookie_preferences");
+                if (prefsString) {
+                  const prefs = JSON.parse(prefsString);
+                  if (prefs.device) {
+                    window.loadGtag();
+                  }
+                }
+              } catch (e) {
+                console.error("Failed checking consent:", e);
+              }
             </script>
           </>
         )}

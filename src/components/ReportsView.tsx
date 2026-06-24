@@ -27,7 +27,7 @@ export default function ReportsView() {
     try {
       const { data: staffData, error } = await supabase
         .from('profiles')
-        .select(`id, full_name, department, salary, status, remarks, roles ( role_name )`);
+        .select(`id, full_name, department, salary, status, remarks, email, roles ( role_name )`);
 
       if (error) {
         console.error('Error fetching staff records:', error);
@@ -167,7 +167,8 @@ export default function ReportsView() {
             role_id: roleObj.id,
             salary: cleanSalary,
             status: cleanStatus,
-            remarks: cleanRemarks
+            remarks: cleanRemarks,
+            email: editingStaff.email
           });
 
         if (upsertError) throw new Error(`Update failed: ${upsertError.message}`);
@@ -211,7 +212,8 @@ export default function ReportsView() {
             role_id: roleObj.id,
             salary: cleanSalary,
             status: cleanStatus,
-            remarks: cleanRemarks
+            remarks: cleanRemarks,
+            email: rawEmail
           });
 
         if (profileError) throw new Error(`Profile creation failed: ${profileError.message}`);
@@ -351,7 +353,10 @@ export default function ReportsView() {
                     <tr key={staff.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                       <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white text-left">
                         {staff.full_name}
-                        <span className="block text-[10px] font-semibold text-slate-450 dark:text-zinc-500 mt-0.5">{staff.roles?.role_name || 'N/A'}</span>
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          <span className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider">{staff.roles?.role_name || 'N/A'}</span>
+                          <span className="text-[11px] font-medium text-indigo-650 dark:text-indigo-400 font-mono tracking-tight lowercase">{staff.email || '-'}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 text-left hidden md:table-cell">{staff.department}</td>
                       <td className="px-4 py-3.5 text-left hidden lg:table-cell max-w-[150px] truncate" title={staff.remarks || ''}>{staff.remarks || '-'}</td>
@@ -393,11 +398,6 @@ export default function ReportsView() {
         </div>
       )}
 
-
-
-
-
-
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -420,27 +420,32 @@ export default function ReportsView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Full Name</p>
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Full Name</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.full_name || 'N/A'}</p>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Department</p>
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Email Address</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white break-words lowercase font-mono">{viewingStaff.email || 'N/A'}</p>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Department</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.department || 'N/A'}</p>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Role</p>
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Role</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.roles?.role_name || 'N/A'}</p>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Status</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.status || 'Active'}</p>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                  <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">Salary</p>
+                  <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Salary</p>
                   <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">RM {viewingStaff.salary || '0'}</p>
                 </div>
 

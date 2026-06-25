@@ -162,7 +162,7 @@ export default function ExecutiveOverview() {
           console.log('✅ Final roleName for access check:', roleName);
         }
 
-        if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Manager'].includes(roleName)) {
+        if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Head of Department', 'Manager'].includes(roleName)) {
           // Run lightweight count-only queries using HTTP HEAD (0 rows fetched, 0 bytes row egress)
           const [totalRes, completedRes, droppedRes] = await Promise.all([
             supabase.from('clients').select('*', { count: 'exact', head: true }),

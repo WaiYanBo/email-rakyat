@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
+import InteractiveBarChart, { type BarChartItem } from './InteractiveBarChart';
 
 interface DayData {
   dayLabel: string;
@@ -45,62 +46,13 @@ export default function AttendanceAnalyticsSample() {
   const [profile, setProfile] = useState<any>(null);
   const [chartData, setChartData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [activeWeekId, setActiveWeekId] = useState<string>('');
 
-  // Drag to scroll refs and state variables
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // Drag scroll sensitivity speed
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
-
-  const paddingLeft = 15;
-  const paddingRight = 15;
-  const axisOffset = 25;
-  const dayWidth = 65;
-
-  const handleScroll = () => {
-    if (!scrollContainerRef.current || chartData.length === 0) return;
-    const container = scrollContainerRef.current;
-    const sLeft = container.scrollLeft;
-    const width = container.clientWidth;
-
-    const scrollWidthVal = paddingLeft + paddingRight + 2 * axisOffset + (chartData.length - 1) * dayWidth;
-    const step = (scrollWidthVal - paddingLeft - paddingRight - 2 * axisOffset) / (chartData.length - 1);
-
-    const visibleDays = chartData.filter((d, index) => {
-      const x = paddingLeft + axisOffset + index * step;
-      return x >= sLeft && x <= sLeft + width;
-    });
-
-    if (visibleDays.length === 0) return;
-
+  const handleScrollChange = (visibleItems: BarChartItem[]) => {
+    if (visibleItems.length === 0) return;
     const weekCounts: Record<string, number> = {};
-    visibleDays.forEach(d => {
-      const wId = getMonday(d.dateStr);
+    visibleItems.forEach(item => {
+      const wId = getMonday(item.key); // item.key contains the YYYY-MM-DD date string
       weekCounts[wId] = (weekCounts[wId] || 0) + 1;
     });
 
@@ -117,17 +69,6 @@ export default function AttendanceAnalyticsSample() {
       setActiveWeekId(maxWeekId);
     }
   };
-
-  useEffect(() => {
-    if (!loading && scrollContainerRef.current) {
-      // Scroll to the far right so users see their most recent hours first
-      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
-      // Trigger scroll sync after layout rendering
-      setTimeout(() => {
-        handleScroll();
-      }, 50);
-    }
-  }, [loading, chartData]);
 
   // Localized text strings to keep the component fully self-contained for easy removal
   const translations = {
@@ -165,7 +106,10 @@ export default function AttendanceAnalyticsSample() {
       try {
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session) {
+          setLoading(false);
+          return;
+        }
 
         // Fetch user profile
         const { data: profileData } = await supabase
@@ -397,10 +341,7 @@ export default function AttendanceAnalyticsSample() {
   const progressPercent = Math.min(Math.round((totalWeeklyHours / weeklyTargetHours) * 100), 100);
 
   // SVG Bar Chart configurations
-  const maxVal = Math.max(...chartData.map(d => d.workHours), 12);
   const chartHeight = 160;
-  const scrollWidth = paddingLeft + paddingRight + 2 * axisOffset + (chartData.length - 1) * dayWidth;
-  const paddingY = 20;
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm space-y-6 p-6 md:p-8 animate-page-transition">
@@ -474,155 +415,29 @@ export default function AttendanceAnalyticsSample() {
           </h3>
           
           <div className="flex items-stretch min-h-[180px]">
-            {/* Y Axis Labels (Static on the Left) */}
-            <svg 
-              width="40" 
-              height={chartHeight} 
-              className="flex-shrink-0 text-[10px] fill-slate-400 dark:fill-zinc-500 font-semibold select-none mr-2"
-            >
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                const y = paddingY + ratio * (chartHeight - 2 * paddingY);
-                const hrs = Math.round((maxVal - ratio * maxVal) * 10) / 10;
-                return (
-                  <text key={idx} x="35" y={y + 4} textAnchor="end">
-                    {hrs}h
-                  </text>
-                );
-              })}
-            </svg>
-
-            {/* Scrollable Container (Grid & Bars) */}
-            <div 
-              ref={scrollContainerRef}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onScroll={handleScroll}
-              className="flex-1 overflow-x-auto scrollbar-none cursor-grab active:cursor-grabbing select-none relative"
-            >
-              <svg 
-                width={scrollWidth} 
-                height={chartHeight}
-                viewBox={`0 0 ${scrollWidth} ${chartHeight}`} 
-                className="text-slate-305 dark:text-zinc-700"
-              >
-                {/* Y Axis Grid lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
-                  const y = paddingY + ratio * (chartHeight - 2 * paddingY);
-                  return (
-                    <line 
-                      key={idx}
-                      x1="0" 
-                      y1={y} 
-                      x2={scrollWidth} 
-                      y2={y} 
-                      stroke="currentColor" 
-                      strokeWidth="1" 
-                      strokeDasharray="4,4" 
-                      className="opacity-20 dark:opacity-10" 
-                    />
-                  );
-                })}
-
-                {/* Bars */}
-                {chartData.map((d, index) => {
-                  const step = (scrollWidth - paddingLeft - paddingRight - 2 * axisOffset) / (chartData.length - 1);
-                  const x = paddingLeft + axisOffset + index * step;
-                  const barWidth = 32;
-                  
-                  // Height calculations
-                  const activeHeight = d.workHours > 0 ? (d.workHours / maxVal) * (chartHeight - 2 * paddingY) : 4;
-                  const y = chartHeight - paddingY - activeHeight;
-                  
-                  const isHovered = hoveredBar === index;
-
-                  return (
-                    <g 
-                      key={index} 
-                      className="cursor-pointer"
-                      onMouseEnter={() => setHoveredBar(index)}
-                      onMouseLeave={() => setHoveredBar(null)}
-                    >
-                      {/* Background interactive area */}
-                      <rect 
-                        x={x - barWidth/2 - 10} 
-                        y={paddingY} 
-                        width={barWidth + 20} 
-                        height={chartHeight - 2 * paddingY} 
-                        fill="transparent" 
-                      />
-
-                      {/* Gradient Bar */}
-                      <defs>
-                        <linearGradient id={`barGrad-${index}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#818cf8" />
-                          <stop offset="100%" stopColor="#4f46e5" />
-                        </linearGradient>
-                        <linearGradient id={`barGradHover-${index}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#fbbf24" />
-                          <stop offset="100%" stopColor="#f59e0b" />
-                        </linearGradient>
-                      </defs>
-
-                      <rect 
-                        x={x - barWidth / 2} 
-                        y={y} 
-                        width={barWidth} 
-                        height={Math.max(activeHeight, 4)} 
-                        rx={6} 
-                        ry={6}
-                        fill={isHovered ? `url(#barGradHover-${index})` : `url(#barGrad-${index})`}
-                        className="transition-all duration-300 ease-out shadow-sm opacity-90 hover:opacity-100" 
-                      />
-
-                      {/* X Axis Labels */}
-                      <text 
-                        x={x} 
-                        y={chartHeight - 4} 
-                        textAnchor="middle" 
-                        className={`text-[10px] font-bold ${isHovered ? 'fill-indigo-600 dark:fill-yellow-500' : 'fill-slate-500 dark:fill-zinc-400'}`}
-                      >
-                        {d.dayLabel}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {/* Custom Tooltip */}
-              {hoveredBar !== null && (
-                <div 
-                  className="absolute z-20 p-3 rounded-xl bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 shadow-xl backdrop-blur-sm pointer-events-none flex flex-col gap-1 transition-all text-xs"
-                  style={{
-                    left: `${Math.min(
-                      Math.max(20, (paddingLeft + axisOffset + hoveredBar * ((scrollWidth - paddingLeft - paddingRight - 2 * axisOffset) / (chartData.length - 1))) - 65),
-                      scrollWidth - 140
-                    )}px`,
-                    bottom: '50px',
-                    width: '130px',
-                  }}
-                >
-                  <div className="font-extrabold text-slate-700 dark:text-zinc-200 border-b border-slate-100 dark:border-zinc-800 pb-1">
-                    {chartData[hoveredBar].dayLabel}
-                  </div>
-                  <div className="flex justify-between pt-1">
-                    <span className="text-slate-500 dark:text-zinc-400 font-medium">Work:</span>
-                    <span className="font-bold text-slate-700 dark:text-zinc-200">{chartData[hoveredBar].workHours}h</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-zinc-400 font-medium">Break:</span>
-                    <span className="font-bold text-slate-700 dark:text-zinc-200">{chartData[hoveredBar].breakHours}h</span>
-                  </div>
-                  {chartData[hoveredBar].totalCount > 0 && (
-                    <div className="mt-1 flex items-center gap-1.5 text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                      {chartData[hoveredBar].inZoneCount} / {chartData[hoveredBar].totalCount} In Zone
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <InteractiveBarChart
+              data={chartData.map(d => ({
+                key: d.dateStr,
+                label: d.dayLabel,
+                value: d.workHours,
+                tooltipData: {
+                  title: d.dayLabel,
+                  items: [
+                    { label: 'Work:', value: `${d.workHours}h` },
+                    { 
+                      label: 'Break:', 
+                      value: `${d.breakHours}h`,
+                      badge: d.totalCount > 0 ? {
+                        text: `${d.inZoneCount} / ${d.totalCount} In Zone`,
+                        type: 'success'
+                      } : undefined
+                    }
+                  ]
+                }
+              }))}
+              yAxisSuffix="h"
+              onScrollChange={handleScrollChange}
+            />
           </div>
         </div>
 

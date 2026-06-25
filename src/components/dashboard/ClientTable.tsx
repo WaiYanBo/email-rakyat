@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePortalLanguage } from '../../hooks/usePortalLanguage';
 import { t } from '../../lib/portalI18n';
+import InteractiveBarChart, { type BarChartItem } from '../InteractiveBarChart';
 
 const getSortValue = (obj: any, key: string) => {
   if (key === 'DATE') {
@@ -220,6 +221,89 @@ export default function ClientTable({
   }, [sortedClients, lang]);
 
   const monthlyCount = summaryClients.length;
+
+  const clientChartData = useMemo(() => {
+    if (selectedMonth === 'all') {
+      const monthsAsc = [...uniqueMonths].sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
+
+      if (monthsAsc.length === 0) return [];
+
+      return monthsAsc.map(m => {
+        const monthClients = sortedClients.filter(client => {
+          const parsed = parseMonthYear(client.DATE);
+          return parsed && parsed.key === m.value;
+        });
+
+        const totalPaidMonth = monthClients.reduce((acc, c) => acc + parseAmount(c["TOTAL PAID (RM)"]), 0);
+        const totalPendingMonth = monthClients.reduce((acc, c) => acc + parseAmount(c["PENDING (RM)"]), 0);
+
+        const monthNameShortEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthNameShortBm = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogos", "Sep", "Okt", "Nov", "Dis"];
+        const shortName = lang === 'bm' ? monthNameShortBm[m.month - 1] : monthNameShortEn[m.month - 1];
+        const shortLabel = `${shortName} ${String(m.year).slice(-2)}`;
+
+        return {
+          key: m.value,
+          label: shortLabel,
+          value: monthClients.length,
+          tooltipData: {
+            title: m.label,
+            items: [
+              { label: lang === 'bm' ? 'Klien:' : 'Clients:', value: monthClients.length },
+              { label: lang === 'bm' ? 'Dibayar:' : 'Paid:', value: `RM ${formatCurrency(totalPaidMonth)}` },
+              { label: lang === 'bm' ? 'Belum Bayar:' : 'Pending:', value: `RM ${formatCurrency(totalPendingMonth)}` }
+            ]
+          }
+        } as BarChartItem;
+      });
+    } else {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      
+      const daysList: BarChartItem[] = [];
+      const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthNamesBm = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+      const name = lang === 'bm' ? monthNamesBm[month - 1] : monthNamesEn[month - 1];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayClients = sortedClients.filter(client => {
+          const parsed = parseMonthYear(client.DATE);
+          if (!parsed || parsed.key !== selectedMonth) return false;
+          
+          const s = String(client.DATE).trim().toUpperCase();
+          const parts = s.replace(/-/g, '/').split('/');
+          if (parts.length === 3) {
+            return parseInt(parts[0], 10) === day;
+          }
+          return false;
+        });
+
+        const totalPaidDay = dayClients.reduce((acc, c) => acc + parseAmount(c["TOTAL PAID (RM)"]), 0);
+        const totalPendingDay = dayClients.reduce((acc, c) => acc + parseAmount(c["PENDING (RM)"]), 0);
+
+        const dateStr = `${day} ${name} ${year}`;
+
+        daysList.push({
+          key: `${selectedMonth}-${String(day).padStart(2, '0')}`,
+          label: String(day),
+          value: dayClients.length,
+          tooltipData: {
+            title: dateStr,
+            items: [
+              { label: lang === 'bm' ? 'Klien:' : 'Clients:', value: dayClients.length },
+              { label: lang === 'bm' ? 'Dibayar:' : 'Paid:', value: `RM ${formatCurrency(totalPaidDay)}` },
+              { label: lang === 'bm' ? 'Belum Bayar:' : 'Pending:', value: `RM ${formatCurrency(totalPendingDay)}` }
+            ]
+          }
+        });
+      }
+
+      return daysList;
+    }
+  }, [sortedClients, selectedMonth, lang, uniqueMonths]);
 
   const getExportDate = () => new Date().toISOString().split('T')[0];
 
@@ -639,49 +723,67 @@ export default function ClientTable({
         <div className="border-t border-slate-100 dark:border-gray-800" />
 
         {/* Month Registry Count Filter Sub-section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <h5 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-              {t('clients', 'monthlyRegistration', lang)}
-            </h5>
-            <p className="text-xs text-slate-400 dark:text-zinc-500">
-              {t('clients', 'monthlyRegistrationSub', lang)}
-            </p>
-          </div>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <h5 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                {t('clients', 'monthlyRegistration', lang)}
+              </h5>
+              <p className="text-xs text-slate-400 dark:text-zinc-550">
+                {t('clients', 'monthlyRegistrationSub', lang)}
+              </p>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                data-custom-select
-                className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer min-h-[40px] shadow-sm min-w-[160px] appearance-none"
-              >
-                <option value="all">
-                  {t('clients', 'allMonthsOption', lang)}
-                </option>
-                {uniqueMonths.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  data-custom-select
+                  className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer min-h-[40px] shadow-sm min-w-[160px] appearance-none"
+                >
+                  <option value="all">
+                    {t('clients', 'allMonthsOption', lang)}
                   </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+                  {uniqueMonths.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="bg-cyan-50 dark:bg-yellow-500/10 border border-cyan-100 dark:border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-2 min-h-[40px]">
+                <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                  {lang === 'bm' ? 'Klien:' : 'Clients:'}
+                </span>
+                <span className="text-sm font-extrabold text-cyan-600 dark:text-yellow-500">
+                  {monthlyCount}
+                </span>
               </div>
             </div>
-
-            <div className="bg-cyan-50 dark:bg-yellow-500/10 border border-cyan-100 dark:border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-2 min-h-[40px]">
-              <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
-                {lang === 'bm' ? 'Klien:' : 'Clients:'}
-              </span>
-              <span className="text-sm font-extrabold text-cyan-600 dark:text-yellow-500">
-                {monthlyCount}
-              </span>
-            </div>
           </div>
+
+          {/* Registration Trend Chart */}
+          {clientChartData.length > 0 && (
+            <div className="p-5 border border-slate-100 dark:border-gray-800/80 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col space-y-4">
+              <InteractiveBarChart
+                data={clientChartData}
+                maxOverride={5}
+                yAxisSuffix=""
+                barColorGradStart="#22d3ee"
+                barColorGradEnd="#0891b2"
+                barColorHoverStart="#fbbf24"
+                barColorHoverEnd="#f59e0b"
+                onBarClick={selectedMonth === 'all' ? (item) => setSelectedMonth(item.key) : undefined}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

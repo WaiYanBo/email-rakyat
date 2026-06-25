@@ -47,7 +47,7 @@ export default function InteractiveBarChart({
   const paddingLeft = 15;
   const paddingRight = 15;
   const axisOffset = 25;
-  const paddingY = 20;
+  const paddingY = 28;
 
   // Calculate coordinates and grid constraints
   const scrollWidth = paddingLeft + paddingRight + 2 * axisOffset + (data.length - 1) * dayWidth;
@@ -129,8 +129,19 @@ export default function InteractiveBarChart({
 
   // Auto-scroll-to-right on mount is completely disabled to prevent any possible snapping behavior.
 
+  const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const lastDateStr = data.length > 0 ? data[data.length - 1].key : '';
+  const lastMonthNum = lastDateStr ? parseInt(lastDateStr.split('-')[1], 10) : 0;
+  const displayMonth = lastMonthNum > 0 ? monthNamesEn[lastMonthNum - 1] : '';
+
   return (
-    <div className="flex items-stretch min-h-[180px] w-full">
+    <div className="flex items-stretch min-h-[180px] w-full relative">
+      {/* Month Display */}
+      {displayMonth && (
+        <div className="absolute top-2 right-4 text-sm font-black uppercase tracking-widest text-slate-200 dark:text-zinc-800/50 select-none pointer-events-none z-0">
+          {displayMonth}
+        </div>
+      )}
       {/* Y Axis Labels (Static on the Left) */}
       <svg 
         width="40" 
@@ -239,11 +250,19 @@ export default function InteractiveBarChart({
                 {/* X Axis Labels */}
                 <text 
                   x={x} 
-                  y={chartHeight - 4} 
+                  y={chartHeight - 14} 
                   textAnchor="middle" 
                   className={`text-[10px] font-bold ${isHovered ? 'fill-indigo-600 dark:fill-yellow-500' : 'fill-slate-500 dark:fill-zinc-400'}`}
                 >
                   {d.label}
+                </text>
+                <text 
+                  x={x} 
+                  y={chartHeight - 2} 
+                  textAnchor="middle" 
+                  className={`text-[9px] font-semibold ${isHovered ? 'fill-indigo-400 dark:fill-yellow-600/70' : 'fill-slate-400 dark:fill-zinc-500'}`}
+                >
+                  {d.key.split('-')[2]}
                 </text>
               </g>
             );

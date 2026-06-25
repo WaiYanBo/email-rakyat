@@ -170,13 +170,13 @@ export default function ClientTable({
 
   const summaryClients = useMemo(() => {
     if (selectedMonth === 'all') {
-      return sortedClients;
+      return clients;
     }
-    return sortedClients.filter(client => {
+    return clients.filter(client => {
       const parsed = parseMonthYear(client.DATE);
       return parsed && parsed.key === selectedMonth;
     });
-  }, [sortedClients, selectedMonth]);
+  }, [clients, selectedMonth]);
 
   const totalClients = summaryClients.length;
 
@@ -194,7 +194,7 @@ export default function ClientTable({
 
   const uniqueMonths = useMemo(() => {
     const monthsMap = new Map<string, { month: number; year: number }>();
-    sortedClients.forEach(client => {
+    clients.forEach(client => {
       const parsed = parseMonthYear(client.DATE);
       if (parsed) {
         monthsMap.set(parsed.key, { month: parsed.month, year: parsed.year });
@@ -218,7 +218,7 @@ export default function ClientTable({
         if (a.year !== b.year) return b.year - a.year;
         return b.month - a.month;
       });
-  }, [sortedClients, lang]);
+  }, [clients, lang]);
 
   const monthlyCount = summaryClients.length;
 
@@ -232,7 +232,7 @@ export default function ClientTable({
       if (monthsAsc.length === 0) return [];
 
       return monthsAsc.map(m => {
-        const monthClients = sortedClients.filter(client => {
+        const monthClients = clients.filter(client => {
           const parsed = parseMonthYear(client.DATE);
           return parsed && parsed.key === m.value;
         });
@@ -269,7 +269,7 @@ export default function ClientTable({
       const name = lang === 'bm' ? monthNamesBm[month - 1] : monthNamesEn[month - 1];
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const dayClients = sortedClients.filter(client => {
+        const dayClients = clients.filter(client => {
           const parsed = parseMonthYear(client.DATE);
           if (!parsed || parsed.key !== selectedMonth) return false;
           
@@ -303,7 +303,7 @@ export default function ClientTable({
 
       return daysList;
     }
-  }, [sortedClients, selectedMonth, lang, uniqueMonths]);
+  }, [clients, selectedMonth, lang, uniqueMonths]);
 
   const getExportDate = () => new Date().toISOString().split('T')[0];
 

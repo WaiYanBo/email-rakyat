@@ -12,6 +12,9 @@ export interface Permissions {
   manage_drive: boolean;
 }
 
+// In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
+const permissionsCache: Record<string, Permissions> = {};
+
 export function usePermissions(profile: any) {
   const [permissions, setPermissions] = useState<Permissions>({
     view_clients: false,
@@ -26,6 +29,8 @@ export function usePermissions(profile: any) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchPermissions = async () => {
       try {
         let userId = profile?.id;
@@ -39,7 +44,35 @@ export function usePermissions(profile: any) {
           }
         }
 
-        // Caching disabled to ensure real-time permission updates and prevent stale role lockouts
+        if (!userId) {
+          if (isMounted) setLoading(false);
+          return;
+        }
+
+        // 1. Check in-memory cache
+        if (permissionsCache[userId]) {
+          if (isMounted) {
+            setPermissions(permissionsCache[userId]);
+            setLoading(false);
+          }
+          return;
+        }
+
+        // 2. Check sessionStorage cache
+        try {
+          const cached = sessionStorage.getItem(`portal_perms_${userId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            permissionsCache[userId] = parsed;
+            if (isMounted) {
+              setPermissions(parsed);
+              setLoading(false);
+            }
+            return;
+          }
+        } catch (e) {
+          // ignore
+        }
 
         if (userId && (!department || !role)) {
           const { data: profData } = await supabase
@@ -72,7 +105,7 @@ export function usePermissions(profile: any) {
         }
 
         if (!userId && !role) {
-          setLoading(false);
+          if (isMounted) setLoading(false);
           return;
         }
 
@@ -129,8 +162,12 @@ export function usePermissions(profile: any) {
           };
         }
 
-        setPermissions(finalPerms);
+        if (isMounted) {
+          setPermissions(finalPerms);
+        }
+
         if (userId) {
+          permissionsCache[userId] = finalPerms;
           try {
             sessionStorage.setItem(`portal_perms_${userId}`, JSON.stringify(finalPerms));
           } catch (e) {
@@ -140,11 +177,15 @@ export function usePermissions(profile: any) {
       } catch (err) {
         console.error('Error fetching permissions:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchPermissions();
+
+    return () => {
+      isMounted = false;
+    };
   }, [profile]);
 
   return { permissions, loading };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import InteractiveBarChart, { type BarChartItem } from './InteractiveBarChart';
@@ -12,33 +12,53 @@ interface DayData {
   totalCount: number;
 }
 
-function getMonday(dateStr: string): string {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  const dayOfWeek = d.getDay(); // 0 is Sunday, 1 is Monday, etc.
-  const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  const monday = new Date(year, month - 1, diff);
-  
-  const yyyy = monday.getFullYear();
-  const mm = String(monday.getMonth() + 1).padStart(2, '0');
-  const dd = String(monday.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+function getMonday(dateStr: any): string {
+  try {
+    if (!dateStr || typeof dateStr !== 'string') return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return '';
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return '';
+
+    const d = new Date(year, month - 1, day);
+    if (isNaN(d.getTime())) return '';
+    const dayOfWeek = d.getDay(); // 0 is Sunday, 1 is Monday, etc.
+    const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const monday = new Date(year, month - 1, diff);
+    if (isNaN(monday.getTime())) return '';
+    
+    const yyyy = monday.getFullYear();
+    const mm = String(monday.getMonth() + 1).padStart(2, '0');
+    const dd = String(monday.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  } catch (e) {
+    console.error('Error in getMonday:', e);
+    return '';
+  }
 }
 
-function getWeekRangeLabel(mondayStr: string, lang: 'en' | 'bm'): string {
-  if (!mondayStr) return '';
-  const [year, month, day] = mondayStr.split('-').map(Number);
-  
-  const monDate = new Date(year, month - 1, day);
-  const friDate = new Date(year, month - 1, day + 4); // Monday + 4 days is Friday
-  
-  const formatOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-  const locale = lang === 'bm' ? 'ms-MY' : 'en-US';
-  const startStr = monDate.toLocaleDateString(locale, formatOptions);
-  const endStr = friDate.toLocaleDateString(locale, formatOptions);
-  
-  return `${startStr} - ${endStr}`;
+function getWeekRangeLabel(mondayStr: any, lang: 'en' | 'bm'): string {
+  try {
+    if (!mondayStr || typeof mondayStr !== 'string') return '';
+    const parts = mondayStr.split('-');
+    if (parts.length !== 3) return mondayStr;
+    const [year, month, day] = parts.map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return mondayStr;
+    
+    const monDate = new Date(year, month - 1, day);
+    const friDate = new Date(year, month - 1, day + 4);
+    if (isNaN(monDate.getTime()) || isNaN(friDate.getTime())) return mondayStr;
+    
+    const formatOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    const locale = lang === 'bm' ? 'ms-MY' : 'en-US';
+    const startStr = monDate.toLocaleDateString(locale, formatOptions);
+    const endStr = friDate.toLocaleDateString(locale, formatOptions);
+    
+    return `${startStr} - ${endStr}`;
+  } catch (e) {
+    console.error('Error in getWeekRangeLabel:', e);
+    return mondayStr || '';
+  }
 }
 
 export default function AttendanceAnalyticsSample() {
@@ -238,11 +258,12 @@ export default function AttendanceAnalyticsSample() {
             });
 
             parsedWorkHours = Math.round((totalActiveMs / (1000 * 60 * 60)) * 10) / 10;
+            if (isNaN(parsedWorkHours)) parsedWorkHours = 0;
             
             // Standard break of 1 hour if they did a shift, plus any gap breaks
             if (parsedWorkHours > 0) {
               const gapHours = totalGapMs / (1000 * 60 * 60);
-              parsedBreakHours = Math.round((1.0 + gapHours) * 10) / 10;
+              parsedBreakHours = Math.round((1.0 + (isNaN(gapHours) ? 0 : gapHours)) * 10) / 10;
             }
           }
 
@@ -304,6 +325,28 @@ export default function AttendanceAnalyticsSample() {
     loadAnalytics();
   }, [lang]);
 
+  const mappedChartData = useMemo(() => {
+    return chartData.map(d => ({
+      key: d.dateStr,
+      label: d.dayLabel,
+      value: d.workHours,
+      tooltipData: {
+        title: d.dayLabel,
+        items: [
+          { label: 'Work:', value: `${d.workHours}h` },
+          { 
+            label: 'Break:', 
+            value: `${d.breakHours}h`,
+            badge: d.totalCount > 0 ? {
+              text: `${d.inZoneCount} / ${d.totalCount} In Zone`,
+              type: 'success' as const
+            } : undefined
+          }
+        ]
+      }
+    }));
+  }, [chartData]);
+
   if (loading) {
     return (
       <div className="p-8 text-center text-slate-500 animate-pulse bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl">
@@ -314,13 +357,15 @@ export default function AttendanceAnalyticsSample() {
 
   // Calculate high-level summary KPIs
   const loggedDays = chartData.filter(d => d.workHours > 0);
-  const avgWorkHours = loggedDays.length > 0 
-    ? Math.round((loggedDays.reduce((acc, curr) => acc + curr.workHours, 0) / loggedDays.length) * 10) / 10 
+  let avgWorkHours = loggedDays.length > 0 
+    ? Math.round((loggedDays.reduce((acc, curr) => acc + (curr.workHours || 0), 0) / loggedDays.length) * 10) / 10 
     : 0;
+  if (isNaN(avgWorkHours)) avgWorkHours = 0;
 
-  const avgBreakHours = loggedDays.length > 0 
-    ? Math.round((loggedDays.reduce((acc, curr) => acc + curr.breakHours, 0) / loggedDays.length) * 10) / 10 
+  let avgBreakHours = loggedDays.length > 0 
+    ? Math.round((loggedDays.reduce((acc, curr) => acc + (curr.breakHours || 0), 0) / loggedDays.length) * 10) / 10 
     : 0;
+  if (isNaN(avgBreakHours)) avgBreakHours = 0;
 
   const totalCheckins = chartData.reduce((acc, curr) => acc + curr.totalCount, 0);
   const totalInZone = chartData.reduce((acc, curr) => acc + curr.inZoneCount, 0);
@@ -336,9 +381,13 @@ export default function AttendanceAnalyticsSample() {
     return dayOfWeek >= 1 && dayOfWeek <= 5;
   });
 
-  const totalWeeklyHours = Math.round(activeWeekDays.reduce((acc, curr) => acc + curr.workHours, 0) * 10) / 10;
+  let totalWeeklyHours = Math.round(activeWeekDays.reduce((acc, curr) => acc + (curr.workHours || 0), 0) * 10) / 10;
+  if (isNaN(totalWeeklyHours)) totalWeeklyHours = 0;
   const weeklyTargetHours = 40;
-  const progressPercent = Math.min(Math.round((totalWeeklyHours / weeklyTargetHours) * 100), 100);
+  let progressPercent = Math.min(Math.round((totalWeeklyHours / weeklyTargetHours) * 100), 100);
+  if (isNaN(progressPercent)) progressPercent = 0;
+
+  // mappedChartData has been moved above the early return to comply with React Hooks rules.
 
   // SVG Bar Chart configurations
   const chartHeight = 160;
@@ -366,7 +415,7 @@ export default function AttendanceAnalyticsSample() {
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/40 to-slate-50/20 dark:from-indigo-950/10 dark:to-zinc-900/20 border border-indigo-100/50 dark:border-indigo-950/30 flex items-center justify-between hover:shadow-md transition-all duration-300">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550">{t('avgHours')}</p>
-            <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{avgWorkHours} <span className="text-lg font-bold text-slate-500">h</span></p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{isNaN(avgWorkHours) ? 0 : avgWorkHours} <span className="text-lg font-bold text-slate-500">h</span></p>
             <p className="text-[11px] font-medium text-indigo-600 dark:text-yellow-500">{t('avgHoursSub')}</p>
           </div>
           <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-yellow-500 rounded-xl">
@@ -380,7 +429,7 @@ export default function AttendanceAnalyticsSample() {
         <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50/40 to-slate-50/20 dark:from-emerald-950/10 dark:to-zinc-900/20 border border-emerald-100/50 dark:border-emerald-950/30 flex items-center justify-between hover:shadow-md transition-all duration-300">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550">{t('breakCompliance')}</p>
-            <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{avgBreakHours} <span className="text-lg font-bold text-slate-500">h</span></p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{isNaN(avgBreakHours) ? 0 : avgBreakHours} <span className="text-lg font-bold text-slate-500">h</span></p>
             <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{t('breakComplianceSub')}</p>
           </div>
           <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
@@ -416,25 +465,7 @@ export default function AttendanceAnalyticsSample() {
           
           <div className="flex items-stretch min-h-[180px]">
             <InteractiveBarChart
-              data={chartData.map(d => ({
-                key: d.dateStr,
-                label: d.dayLabel,
-                value: d.workHours,
-                tooltipData: {
-                  title: d.dayLabel,
-                  items: [
-                    { label: 'Work:', value: `${d.workHours}h` },
-                    { 
-                      label: 'Break:', 
-                      value: `${d.breakHours}h`,
-                      badge: d.totalCount > 0 ? {
-                        text: `${d.inZoneCount} / ${d.totalCount} In Zone`,
-                        type: 'success'
-                      } : undefined
-                    }
-                  ]
-                }
-              }))}
+              data={mappedChartData}
               yAxisSuffix="h"
               onScrollChange={handleScrollChange}
             />

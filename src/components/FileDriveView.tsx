@@ -1576,7 +1576,17 @@ export default function FileDriveView() {
   );
 
   return (
-    <div className="animate-fade-in relative w-full h-[calc(100vh-140px)] flex flex-col bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-3xl shadow-sm">
+    <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 h-full flex flex-col">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
+          {t('drive', 'pageTitle', lang)}
+        </h1>
+        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
+          {t('drive', 'pageSubtitle', lang)}
+        </p>
+      </div>
+
+      <div className="animate-fade-in relative w-full h-[calc(100vh-220px)] flex flex-col bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-3xl shadow-sm">
       {/* Top action header containing breadcrumbs and upload controls */}
       <div className="px-6 py-4 border-b border-slate-200 dark:border-gray-800 bg-white/50 dark:bg-zinc-950/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
         
@@ -1589,7 +1599,7 @@ export default function FileDriveView() {
                 onClick={() => setCurrentPath('')}
                 className={`px-2.5 py-1 rounded-l-lg transition-colors whitespace-nowrap ${currentPath === '' ? 'text-indigo-750 bg-indigo-50 dark:text-yellow-500 dark:bg-yellow-500/10' : 'text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-gray-800'}`}
               >
-                Drive
+                {t('drive', 'breadcrumbRoot', lang)}
               </button>
               <button
                 onClick={(e) => {
@@ -1679,7 +1689,7 @@ export default function FileDriveView() {
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
-              Company Drive
+              {t('drive', 'pageTitle', lang)}
             </div>
           )}
 
@@ -2196,5 +2206,6 @@ export default function FileDriveView() {
       {renderPreviewModal()}
 
     </div>
+  </div>
   );
 }

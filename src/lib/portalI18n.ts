@@ -203,6 +203,8 @@ export const translations = {
   attendanceAdmin: {
     title: { en: 'Attendance Records', bm: 'Rekod Kehadiran' },
     subtitle: { en: 'View employee clock-in/clock-out with location verification', bm: 'Lihat rekod daftar masuk/keluar kakitangan dengan pengesahan lokasi' },
+    myTitle: { en: 'My Attendance History', bm: 'Sejarah Kehadiran Saya' },
+    mySubtitle: { en: 'Track and export your personal clock-in and clock-out records', bm: 'Jejak dan eksport rekod daftar masuk dan daftar keluar peribadi anda' },
     searchByName: { en: '🔍 Search by Employee Name', bm: '🔍 Cari Mengikut Nama Kakitangan' },
     typeName: { en: 'Type employee name...', bm: 'Taip nama kakitangan...' },
     filterBy: { en: '📋 Filter By', bm: '📋 Tapis Mengikut' },
@@ -341,6 +343,8 @@ export const translations = {
 
   // ─── Settings ─────────────────────────────────────────────────────────────
   settings: {
+    pageTitle: { en: 'Account Settings', bm: 'Tetapan Akaun' },
+    pageSubtitle: { en: 'Manage your profile settings and account security', bm: 'Urus tetapan profil dan keselamatan akaun anda' },
     userLabel: { en: 'User', bm: 'Pengguna' },
     statusBadge: { en: 'Active', bm: 'Aktif' },
     emailLabel: { en: 'Email', bm: 'E-mel' },
@@ -395,6 +399,7 @@ export const translations = {
   drive: {
     pageTitle: { en: 'Company Drive', bm: 'Pemacu Syarikat' },
     pageSubtitle: { en: 'Secure cloud storage for company files and documents', bm: 'Storan awan selamat untuk fail dan dokumen syarikat' },
+    breadcrumbRoot: { en: 'Drive', bm: 'Pemacu' },
     uploadFile: { en: 'Upload File', bm: 'Muat Naik Fail' },
     newFolder: { en: 'New Folder', bm: 'Folder Baharu' },
     folderName: { en: 'Folder Name', bm: 'Nama Folder' },

@@ -5,7 +5,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { exportAttendanceToExcel } from '../utils/excelExport';
-export default function AttendanceView() {
+export default function AttendanceView({ personalOnly = false }: { personalOnly?: boolean }) {
   const [profile, setProfile] = useState<any>(null);
   const { permissions, loading: permsLoading } = usePermissions(profile);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
@@ -19,61 +19,13 @@ export default function AttendanceView() {
   const [publicHolidays, setPublicHolidays] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
 
-  useEffect(() => {
-    const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/portal/login';
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select(`id, department, full_name, roles ( role_name )`)
-        .eq('id', session.user.id)
-        .single();
-
-      let roleName = 'No Role';
-      if (profileData) {
-        if (profileData.roles) {
-          const rolesVar = profileData.roles as any;
-          if (Array.isArray(rolesVar)) {
-            roleName = rolesVar[0]?.role_name || 'No Role';
-          } else {
-            roleName = rolesVar?.role_name || 'No Role';
-          }
-        }
-        setProfile({ id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName });
-      }
-
-      // Fetch all profiles to populate employee search dropdown
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .order('full_name', { ascending: true });
-      if (profilesData) {
-        setUniqueEmployees(profilesData);
-      }
-
-      // Fetch public holidays
-      try {
-        const { data: holidaysData } = await supabase
-          .from('public_holidays')
-          .select('*');
-        if (holidaysData) {
-          setPublicHolidays(holidaysData);
-        }
-      } catch (err) {
-        console.warn('Could not fetch public holidays', err);
-      }
-
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
-
-  const fetchAttendanceRecords = async (date: string, month: string, mode: 'date' | 'month', employeeId: string) => {
+  const fetchAttendanceRecords = async (
+    date: string,
+    month: string,
+    mode: 'date' | 'month',
+    employeeId: string,
+    overrideEmployees?: any[]
+  ) => {
     if (!employeeId) {
       setAttendanceRecords([]);
       setFilteredRecords([]);
@@ -117,11 +69,12 @@ export default function AttendanceView() {
       }
 
       if (records) {
+        const listToSearch = overrideEmployees || uniqueEmployees;
         const enrichedRecords = records.map((r: any) => {
-          const employee = uniqueEmployees.find((e: any) => e.id === r.user_id);
+          const employee = listToSearch.find((e: any) => e.id === r.user_id) || profile;
           return {
             ...r,
-            user_name: employee ? employee.full_name : 'Unknown'
+            user_name: employee ? (employee.full_name || employee.name) : 'Unknown'
           };
         });
 
@@ -134,6 +87,72 @@ export default function AttendanceView() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/portal/login';
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select(`id, department, full_name, roles ( role_name )`)
+        .eq('id', session.user.id)
+        .single();
+
+      let roleName = 'No Role';
+      let userProfile: any = null;
+      if (profileData) {
+        if (profileData.roles) {
+          const rolesVar = profileData.roles as any;
+          if (Array.isArray(rolesVar)) {
+            roleName = rolesVar[0]?.role_name || 'No Role';
+          } else {
+            roleName = rolesVar?.role_name || 'No Role';
+          }
+        }
+        userProfile = { id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName };
+        setProfile(userProfile);
+      }
+
+      // Fetch all profiles to populate employee search dropdown
+      let allEmployees: any[] = [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name', { ascending: true });
+      if (profilesData) {
+        setUniqueEmployees(profilesData);
+        allEmployees = profilesData;
+      } else if (profileData) {
+        setUniqueEmployees([profileData]);
+        allEmployees = [profileData];
+      }
+
+      // Fetch public holidays
+      try {
+        const { data: holidaysData } = await supabase
+          .from('public_holidays')
+          .select('*');
+        if (holidaysData) {
+          setPublicHolidays(holidaysData);
+        }
+      } catch (err) {
+        console.warn('Could not fetch public holidays', err);
+      }
+
+      if (personalOnly && profileData) {
+        setSelectedEmployeeId(profileData.id);
+        await fetchAttendanceRecords(selectedDate, selectedMonth, filterMode, profileData.id, allEmployees.length > 0 ? allEmployees : [profileData]);
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
 
   const handleFilterModeChange = (mode: 'date' | 'month') => {
     setFilterMode(mode);
@@ -165,7 +184,7 @@ export default function AttendanceView() {
     exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth, publicHolidays);
   };
 
-  const hasAccess = permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
+  const hasAccess = personalOnly || permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
 
   if (loading || permsLoading) {
     return (
@@ -180,15 +199,15 @@ export default function AttendanceView() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden mb-8 shadow-sm">
+    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
 
       <div className="p-6 md:p-8 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
-            {t('attendanceAdmin', 'title', lang)}
+            {personalOnly ? t('attendanceAdmin', 'myTitle', lang) : t('attendanceAdmin', 'title', lang)}
           </h2>
           <p className="text-xs md:text-sm text-indigo-100 mt-1.5 font-medium">
-            {t('attendanceAdmin', 'subtitle', lang)}
+            {personalOnly ? t('attendanceAdmin', 'mySubtitle', lang) : t('attendanceAdmin', 'subtitle', lang)}
           </p>
         </div>
       </div>
@@ -207,32 +226,34 @@ export default function AttendanceView() {
 
             <div className="space-y-4">
 
-              <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550 mb-2">
-                  {t('attendanceAdmin', 'selectEmployee', lang)}
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedEmployeeId}
-                    onChange={(e) => handleEmployeeChange(e.target.value)}
-                    data-custom-select
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] appearance-none pr-10 cursor-pointer"
-                  >
-                    <option value="">{t('attendanceAdmin', 'pleaseSelectEmployee', lang)}</option>
-                    <option value="all">{t('attendanceAdmin', 'allEmployees', lang)}</option>
-                    {uniqueEmployees.map((emp: any) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.full_name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 dark:text-zinc-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+              {!personalOnly && (
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550 mb-2">
+                    {t('attendanceAdmin', 'selectEmployee', lang)}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedEmployeeId}
+                      onChange={(e) => handleEmployeeChange(e.target.value)}
+                      data-custom-select
+                      className="w-full px-4 py-3 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[48px] appearance-none pr-10 cursor-pointer"
+                    >
+                      <option value="">{t('attendanceAdmin', 'pleaseSelectEmployee', lang)}</option>
+                      <option value="all">{t('attendanceAdmin', 'allEmployees', lang)}</option>
+                      {uniqueEmployees.map((emp: any) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.full_name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 dark:text-zinc-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Filter Mode Toggle & Date/Month Selector */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +318,9 @@ export default function AttendanceView() {
                 <table className="w-full text-left border-collapse text-xs md:text-sm">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
-                      <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colEmployee', lang)}</th>
+                      <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">
+                        {personalOnly ? t('attendance', 'date', lang) : t('attendanceAdmin', 'colEmployee', lang)}
+                      </th>
                       <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
                       <th className="px-5 py-3.5 text-center font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colStatus', lang)}</th>
                       <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">{t('attendanceAdmin', 'colCheckOut', lang)}</th>
@@ -321,23 +344,35 @@ export default function AttendanceView() {
                       filteredRecords.map((record, idx) => (
                         <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                           <td className="px-5 py-4">
-                            <p className="font-semibold text-slate-900 dark:text-white">
-                              {record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name}
-                            </p>
-                            {filterMode === 'month' && record.date && (
-                              <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
-                                {new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
+                            {personalOnly ? (
+                              <p className="font-semibold text-slate-900 dark:text-white">
+                                {record.date ? new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
                                   day: 'numeric',
                                   month: 'short',
                                   year: 'numeric'
-                                })}
+                                }) : '-'}
                               </p>
+                            ) : (
+                              <>
+                                <p className="font-semibold text-slate-900 dark:text-white">
+                                  {record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name}
+                                </p>
+                                {filterMode === 'month' && record.date && (
+                                  <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
+                                    {new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                  </p>
+                                )}
+                              </>
                             )}
                           </td>
                           <td className="px-5 py-4">
                             {record.clock_in_time ? (
                               <div>
-                                <p className="font-semibold text-slate-800 dark:text-zinc-155 text-sm">
+                                <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
                                   {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
@@ -362,7 +397,7 @@ export default function AttendanceView() {
                           <td className="px-5 py-4">
                             {record.clock_out_time ? (
                               <div>
-                                <p className="font-semibold text-slate-800 dark:text-zinc-155 text-sm">
+                                <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
                                   {new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                                 <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">

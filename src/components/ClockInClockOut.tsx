@@ -158,22 +158,55 @@ export default function ClockInClockOut() {
       return;
     }
 
-    const exportData = filteredAllRecords.map(record => {
-      const workingHours = calculateWorkingHours(record.clock_in_time, record.clock_out_time);
-      const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
-      const isForgot = record.clock_in_time && !record.clock_out_time;
+    // Group by employee name + date to support multiple daily shifts
+    const grouped: Record<string, any[]> = {};
+    filteredAllRecords.forEach(record => {
+      const key = `${record.user_name || 'Unknown'}_${record.date || 'NoDate'}`;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(record);
+    });
+
+    const exportData = Object.values(grouped).map(dayRecords => {
+      // Sort by clock_in_time ascending
+      dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
+
+      const firstRecord = dayRecords[0];
+      const lastRecord = dayRecords[dayRecords.length - 1];
+      const isCompleted = dayRecords.every(r => r.clock_out_time);
+      const isForgot = dayRecords.some(r => r.clock_in_time && !r.clock_out_time);
+      const isLateClockout = dayRecords.some(r => r.is_late_clockout);
+
+      // Sum of working times of all completed shifts
+      let totalWorkMs = 0;
+      dayRecords.forEach(r => {
+        if (r.clock_in_time && r.clock_out_time) {
+          totalWorkMs += new Date(r.clock_out_time).getTime() - new Date(r.clock_in_time).getTime();
+        }
+      });
+
+      const totalHours = totalWorkMs / (1000 * 60 * 60);
+      const workingHours = {
+        hours: Math.floor(totalHours),
+        minutes: Math.round((totalHours % 1) * 60)
+      };
+
+      // Subtract 1 hour default break for short day check
+      const adjustedHours = Math.max(0, totalHours - 1);
+      const isShortDay = isCompleted && adjustedHours < MINIMUM_WORK_HOURS;
 
       let flagStatus = 'Full';
       if (isForgot) flagStatus = 'No Clockout';
-      else if (record.is_late_clockout) flagStatus = 'Late Clockout (Flagged)';
-      else if (isShortDay) flagStatus = 'Short Day (<9h)';
+      else if (isLateClockout) flagStatus = 'Late Clockout (Flagged)';
+      else if (isShortDay) flagStatus = `Short Day (<${MINIMUM_WORK_HOURS}h)`;
 
       return {
-        'Employee Name': record.user_name || '-',
-        'Date': record.date || '-',
-        'Clock In Time': record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString() : '-',
-        'Clock Out Time': record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString() : '-',
-        'Hours Worked': workingHours ? `${workingHours.hours}h ${workingHours.minutes}m` : '-',
+        'Employee Name': firstRecord.user_name || '-',
+        'Date': firstRecord.date || '-',
+        'Clock In Time': firstRecord.clock_in_time ? new Date(firstRecord.clock_in_time).toLocaleTimeString() : '-',
+        'Clock Out Time': isCompleted ? new Date(lastRecord.clock_out_time).toLocaleTimeString() : (isForgot ? 'No Clockout' : '-'),
+        'Hours Worked': isCompleted ? `${workingHours.hours}h ${workingHours.minutes}m` : '-',
         'Status Flag': flagStatus
       };
     });
@@ -238,41 +271,65 @@ export default function ClockInClockOut() {
             return;
           }
 
-          // Get today's record
           const today = new Date().toISOString().split('T')[0];
-          const { data: existingRecord } = await supabase
+
+          // Get today's active record (where clock_out_time is null)
+          const { data: activeRecord } = await supabase
             .from('attendance')
             .select('*')
             .eq('user_id', session.user.id)
             .eq('date', today)
-            .single();
-
-          const attendanceData = {
-            user_id: session.user.id,
-            user_name: profile?.name,
-            date: today,
-            [type === 'clock_in' ? 'clock_in_time' : 'clock_out_time']: new Date().toISOString(),
-            [type === 'clock_in' ? 'clock_in_latitude' : 'clock_out_latitude']: latitude,
-            [type === 'clock_in' ? 'clock_in_longitude' : 'clock_out_longitude']: longitude,
-            [type === 'clock_in' ? 'clock_in_distance' : 'clock_out_distance']: Math.round(distance),
-            [type === 'clock_in' ? 'clock_in_within_zone' : 'clock_out_within_zone']: isWithinZone,
-            [type === 'clock_in' ? 'clock_in_accuracy' : 'clock_out_accuracy']: Math.round(accuracy)
-          };
+            .is('clock_out_time', null)
+            .order('clock_in_time', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
           let error;
-          if (existingRecord) {
-            // Update existing record
-            const { error: updateError } = await supabase
-              .from('attendance')
-              .update(attendanceData)
-              .eq('id', existingRecord.id);
-            error = updateError;
-          } else {
-            // Create new record
+
+          if (type === 'clock_in') {
+            if (activeRecord) {
+              alert(lang === 'bm' ? 'Anda sudah daftar masuk. Sila daftar keluar dahulu.' : 'You are already clocked in. Please clock out first.');
+              setIsProcessing(false);
+              return;
+            }
+
+            const attendanceData = {
+              user_id: session.user.id,
+              user_name: profile?.name,
+              date: today,
+              clock_in_time: new Date().toISOString(),
+              clock_in_latitude: latitude,
+              clock_in_longitude: longitude,
+              clock_in_distance: Math.round(distance),
+              clock_in_within_zone: isWithinZone,
+              clock_in_accuracy: Math.round(accuracy)
+            };
+
             const { error: insertError } = await supabase
               .from('attendance')
               .insert([attendanceData]);
             error = insertError;
+          } else {
+            if (!activeRecord) {
+              alert(lang === 'bm' ? 'Tiada rekod daftar masuk aktif ditemui untuk daftar keluar.' : 'No active clock-in session found to clock out from.');
+              setIsProcessing(false);
+              return;
+            }
+
+            const attendanceData = {
+              clock_out_time: new Date().toISOString(),
+              clock_out_latitude: latitude,
+              clock_out_longitude: longitude,
+              clock_out_distance: Math.round(distance),
+              clock_out_within_zone: isWithinZone,
+              clock_out_accuracy: Math.round(accuracy)
+            };
+
+            const { error: updateError } = await supabase
+              .from('attendance')
+              .update(attendanceData)
+              .eq('id', activeRecord.id);
+            error = updateError;
           }
 
           if (error) {
@@ -428,15 +485,29 @@ export default function ClockInClockOut() {
       if (!session) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const { data: record } = await supabase
+      const { data: records, error } = await supabase
         .from('attendance')
         .select('*')
         .eq('user_id', session.user.id)
         .eq('date', today)
-        .single();
+        .order('clock_in_time', { ascending: false });
 
-      if (record) {
-        setTodayRecord(record);
+      if (error) {
+        console.error('Error fetching today records:', error);
+        return;
+      }
+
+      if (records && records.length > 0) {
+        // Find if there's any active clock-in (where clock_out_time is null)
+        const activeRecord = records.find(r => !r.clock_out_time);
+        if (activeRecord) {
+          setTodayRecord(activeRecord);
+        } else {
+          // If no active session, set the latest completed session
+          setTodayRecord(records[0]);
+        }
+      } else {
+        setTodayRecord(null);
       }
     } catch (err) {
       console.error('Error fetching today record:', err);
@@ -478,7 +549,7 @@ export default function ClockInClockOut() {
   const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin'].includes(profile.role);
 
   return (
-    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8">
+    <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
 
       <div className="p-6 md:p-8 border-b border-indigo-950 dark:border-gray-800 bg-indigo-950 dark:bg-gray-900">
         <div>

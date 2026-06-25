@@ -185,6 +185,15 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-teal-900 dark:text-white">
+          {t('settings', 'pageTitle', lang)}
+        </h1>
+        <p className="text-xs md:text-sm text-teal-700 dark:text-gray-400">
+          {t('settings', 'pageSubtitle', lang)}
+        </p>
+      </div>
+
       {(isITAdmin || permissions?.manage_access_control) && (
         <div className="flex bg-slate-100/50 dark:bg-gray-900/40 p-1 rounded-xl border border-slate-200 dark:border-gray-800 w-full sm:w-fit mx-auto mt-4 md:mt-0">
           <button

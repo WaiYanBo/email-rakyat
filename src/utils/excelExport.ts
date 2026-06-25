@@ -83,10 +83,15 @@ export const exportAttendanceToExcel = (
   const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   Object.entries(recordsByEmployee).forEach(([empName, empRecords]) => {
-    // Map records by date string 'YYYY-MM-DD' for easy lookup
-    const recordsByDate: Record<string, any> = {};
+    // Map records by date string 'YYYY-MM-DD' for easy lookup (supporting multiple records per day)
+    const recordsByDate: Record<string, any[]> = {};
     empRecords.forEach(r => {
-      if (r.date) recordsByDate[r.date] = r;
+      if (r.date) {
+        if (!recordsByDate[r.date]) {
+          recordsByDate[r.date] = [];
+        }
+        recordsByDate[r.date].push(r);
+      }
     });
 
     const aoa: any[][] = [];
@@ -116,7 +121,7 @@ export const exportAttendanceToExcel = (
 
         dateRow.push(`${d}/${m}/${y}`);
 
-        const record = recordsByDate[dateStr];
+        const dayRecords = recordsByDate[dateStr] || [];
         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
         // Check for public holiday
@@ -128,36 +133,60 @@ export const exportAttendanceToExcel = (
           defaultStatus = holiday.name;
         }
 
-        if (record && record.clock_in_time) {
-          clockInRow.push(extractTime(record.clock_in_time));
+        if (dayRecords.length > 0) {
+          // Sort by clock_in_time ascending
+          dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
 
-          if (record.clock_out_time) {
-            clockOutRow.push(extractTime(record.clock_out_time));
+          const firstRecord = dayRecords[0];
+          const lastRecord = dayRecords[dayRecords.length - 1];
+          const isCompleted = dayRecords.every(r => r.clock_out_time);
 
-            const clockIn = new Date(record.clock_in_time);
-            const clockOut = new Date(record.clock_out_time);
-            const workMs = clockOut.getTime() - clockIn.getTime();
-            totalWorkRow.push(formatDuration(workMs));
+          // 1. Clock In Time (first clock-in of the day)
+          clockInRow.push(firstRecord.clock_in_time ? extractTime(firstRecord.clock_in_time) : 'N/A');
 
-            const breakMs = 60 * 60 * 1000; // 1 hour
-            breakRow.push('01:00:00');
+          // 2. Clock Out Time (last clock-out of the day, or 'No Clockout' if incomplete)
+          clockOutRow.push(isCompleted ? extractTime(lastRecord.clock_out_time) : 'No Clockout');
 
-            const totalHoursMs = Math.max(0, workMs - breakMs);
+          // 3. Sum of durations of all completed sessions on this day
+          let totalWorkMs = 0;
+          dayRecords.forEach(r => {
+            if (r.clock_in_time && r.clock_out_time) {
+              totalWorkMs += new Date(r.clock_out_time).getTime() - new Date(r.clock_in_time).getTime();
+            }
+          });
+          totalWorkRow.push(formatDuration(totalWorkMs));
+
+          // 4. Calculate gaps between shifts as part of break time
+          let gapMs = 0;
+          for (let i = 0; i < dayRecords.length - 1; i++) {
+            const prevOut = dayRecords[i].clock_out_time;
+            const nextIn = dayRecords[i + 1].clock_in_time;
+            if (prevOut && nextIn) {
+              const gap = new Date(nextIn).getTime() - new Date(prevOut).getTime();
+              if (gap > 0) gapMs += gap;
+            }
+          }
+
+          // 5. Total break time: 1 hour default + gaps
+          const originalBreakMs = 60 * 60 * 1000; // 1 hour
+          const totalBreakMs = originalBreakMs + gapMs;
+          breakRow.push(formatDuration(totalBreakMs));
+
+          // 6. Total Hours: totalWorkMs - originalBreakMs (only if completed)
+          if (isCompleted) {
+            const totalHoursMs = Math.max(0, totalWorkMs - originalBreakMs);
             totalHoursRow.push(formatDuration(totalHoursMs));
 
+            // 7. Overtime: totalHoursMs - 8 hours
             const maxWorkMs = 8 * 60 * 60 * 1000; // 8 hours
-            maxWorkRow.push('08:00:00');
-
             const overtimeMs = Math.max(0, totalHoursMs - maxWorkMs);
             overtimeRow.push(formatDuration(overtimeMs));
           } else {
-            clockOutRow.push('No Clockout');
-            totalWorkRow.push('N/A');
-            breakRow.push('01:00:00');
             totalHoursRow.push('N/A');
-            maxWorkRow.push('08:00:00');
             overtimeRow.push('N/A');
           }
+
+          maxWorkRow.push('08:00:00');
         } else {
           clockInRow.push(defaultStatus);
           clockOutRow.push(defaultStatus);

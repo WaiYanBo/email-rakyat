@@ -221,7 +221,7 @@ const isPortal = currentPath.startsWith('/portal');
                 const btnManage = document.getElementById("btn-manage");
                 const btnBack = document.getElementById("btn-back");
                 const btnSavePrefs = document.getElementById("btn-save-prefs");
-                const toggleDevice = document.getElementById("toggle-device");
+                const toggleDevice = document.getElementById("toggle-device") as HTMLInputElement;
 
                 if (!overlay || !step1 || !step2 || !btnAcceptAll || !btnDecline || !btnManage || !btnBack || !btnSavePrefs || !toggleDevice) return;
 
@@ -248,7 +248,7 @@ const isPortal = currentPath.startsWith('/portal');
 
                 btnAcceptAll.addEventListener("click", () => {
                     localStorage.setItem("cookie_preferences", JSON.stringify({ essential: true, device: true }));
-                    if (typeof window.loadGtag === 'function') window.loadGtag();
+                    if (typeof (window as any).loadGtag === 'function') (window as any).loadGtag();
                     closeAndReload();
                 });
 

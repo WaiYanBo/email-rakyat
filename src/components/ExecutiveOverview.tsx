@@ -482,7 +482,7 @@ export default function ExecutiveOverview() {
   const displayedAnnouncements = getDisplayedAnnouncements();
 
   return (
-    <div className="space-y-8 animate-page-transition pt-12 md:pt-0 relative mb-8">
+    <div className="space-y-8 animate-page-transition pt-12 md:pt-0 relative">
       <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-yellow-500 tracking-tight">
           {t('overview', 'pageTitle', lang)}{' '}

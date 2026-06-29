@@ -94,8 +94,8 @@ export default function HRControlPanel() {
         <button
           onClick={() => setActiveTab('attendance')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'attendance'
-              ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -107,8 +107,8 @@ export default function HRControlPanel() {
         <button
           onClick={() => setActiveTab('holidays')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'holidays'
-              ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -117,7 +117,6 @@ export default function HRControlPanel() {
           {t('hr', 'tabHolidays', lang)}
         </button>
 
-        {/*
         <button
           onClick={() => setActiveTab('leave')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'leave'
@@ -130,13 +129,12 @@ export default function HRControlPanel() {
           </svg>
           {t('hr', 'tabLeave', lang)}
         </button>
-        */}
 
         <button
           onClick={() => setActiveTab('claims')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'claims'
-              ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -160,13 +158,11 @@ export default function HRControlPanel() {
           </div>
         )}
 
-        {/*
         {activeTab === 'leave' && (
           <div className="animate-fade-in">
             <LeaveSystemView profile={profile} />
           </div>
         )}
-        */}
 
         {activeTab === 'claims' && (
           <div className="animate-fade-in bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-8 md:p-16 text-center space-y-6 max-w-4xl mx-auto shadow-sm">

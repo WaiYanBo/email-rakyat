@@ -14,7 +14,10 @@ export default defineConfig({
       tailwindcss({
         config: './tailwind.config.mjs', // Tell Astro to use YOUR config
       })
-    ]
+    ],
+    optimizeDeps: {
+      exclude: ['@supabase/supabase-js']
+    }
   },
   integrations: [sitemap(), react()]
 });

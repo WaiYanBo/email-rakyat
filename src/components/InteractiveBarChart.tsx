@@ -4,6 +4,7 @@ export interface BarChartItem {
   key: string;
   label: string;
   value: number;
+  isLeave?: boolean;
   tooltipData: {
     title: string;
     items: { label: string; value: string | number; badge?: { text: string; type: 'success' | 'warning' | 'info' } }[];
@@ -227,12 +228,12 @@ export default function InteractiveBarChart({
                 {/* Gradient Bar */}
                 <defs>
                   <linearGradient id={`barGrad-${index}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={barColorGradStart} />
-                    <stop offset="100%" stopColor={barColorGradEnd} />
+                    <stop offset="0%" stopColor={d.isLeave ? '#c084fc' : barColorGradStart} />
+                    <stop offset="100%" stopColor={d.isLeave ? '#9333ea' : barColorGradEnd} />
                   </linearGradient>
                   <linearGradient id={`barGradHover-${index}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={barColorHoverStart} />
-                    <stop offset="100%" stopColor={barColorHoverEnd} />
+                    <stop offset="0%" stopColor={d.isLeave ? '#d8b4fe' : barColorHoverStart} />
+                    <stop offset="100%" stopColor={d.isLeave ? '#a855f7' : barColorHoverEnd} />
                   </linearGradient>
                 </defs>
 

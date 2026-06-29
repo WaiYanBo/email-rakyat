@@ -8,6 +8,7 @@ export default function ClockInClockOut() {
   const { lang } = usePortalLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [todayRecord, setTodayRecord] = useState<any>(null);
+  const [todayLeave, setTodayLeave] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string>('');
@@ -58,18 +59,25 @@ export default function ClockInClockOut() {
   };
 
   // Fetch attendance records efficiently
-  const fetchForgotClockoutRecords = async () => {
+  const fetchForgotClockoutRecords = async (userId?: string, role?: string) => {
     try {
       const today = new Date().toISOString().split('T')[0];
+      const privileged = role && ['HR', 'CFO', 'IT Admin'].includes(role);
 
       // 1. Fetch forgot clockouts specifically (server-side filtering)
-      const { data: forgotRecords, error: forgotError } = await supabase
+      let forgotQuery = supabase
         .from('attendance')
         .select('*')
         .not('date', 'eq', today)
         .not('clock_in_time', 'is', null)
         .is('clock_out_time', null)
         .order('date', { ascending: false });
+
+      if (!privileged && userId) {
+        forgotQuery = forgotQuery.eq('user_id', userId);
+      }
+
+      const { data: forgotRecords, error: forgotError } = await forgotQuery;
 
       if (forgotError) {
         console.error('Error fetching forgot clockout records:', forgotError);
@@ -78,11 +86,17 @@ export default function ClockInClockOut() {
       }
 
       // 2. Fetch a limited set of recent records for general view/export
-      const { data: recentRecords, error: allErr } = await supabase
+      let allQuery = supabase
         .from('attendance')
         .select('*')
         .order('date', { ascending: false })
         .limit(300);
+
+      if (!privileged && userId) {
+        allQuery = allQuery.eq('user_id', userId);
+      }
+
+      const { data: recentRecords, error: allErr } = await allQuery;
 
       if (allErr) {
          console.error('Error fetching recent attendance records:', allErr);
@@ -509,6 +523,23 @@ export default function ClockInClockOut() {
       } else {
         setTodayRecord(null);
       }
+
+      // Check if user is on leave today
+      const { data: leaves, error: leaveError } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('profile_id', session.user.id)
+        .eq('status', 'Approved')
+        .lte('start_date', today)
+        .gte('end_date', today);
+
+      if (leaveError) {
+        console.error('Error fetching today leave:', leaveError);
+      } else if (leaves && leaves.length > 0) {
+        setTodayLeave(leaves[0]);
+      } else {
+        setTodayLeave(null);
+      }
     } catch (err) {
       console.error('Error fetching today record:', err);
     }
@@ -530,12 +561,14 @@ export default function ClockInClockOut() {
         .eq('id', session.user.id)
         .single();
 
+      let currentRole = '';
       if (profileData) {
-        setProfile({ name: profileData.full_name, role: profileData.roles?.role_name });
+        currentRole = profileData.roles?.role_name || '';
+        setProfile({ name: profileData.full_name, role: currentRole });
       }
 
       await fetchTodayRecord();
-      await fetchForgotClockoutRecords();
+      await fetchForgotClockoutRecords(session.user.id, currentRole);
       setLoading(false);
     };
 
@@ -660,11 +693,28 @@ export default function ClockInClockOut() {
               </div>
             )}
 
+            {todayLeave && (
+              <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-200 dark:bg-yellow-500/10 dark:border-yellow-500/20 mb-6 flex items-start gap-4 shadow-sm">
+                <div className="p-2.5 bg-indigo-100 rounded-xl dark:bg-yellow-500/20 text-indigo-700 dark:text-yellow-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-indigo-900 dark:text-yellow-500 mb-1">
+                    You have an approved leave today ({todayLeave.leave_type || 'Leave'}).
+                  </h3>
+                  <p className="text-xs text-indigo-700 dark:text-yellow-500/80 font-medium">
+                    Enjoy your time off! Clock-in functions have been disabled to prevent accidental time logs.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               <button
                 onClick={() => getLocationAndClockIn('clock_in')}
-                disabled={isProcessing || (todayRecord?.clock_in_time && !todayRecord?.clock_out_time)}
+                disabled={isProcessing || (todayRecord?.clock_in_time && !todayRecord?.clock_out_time) || !!todayLeave}
                 className="px-5 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
                 <div className="flex items-center justify-center gap-2">
@@ -681,7 +731,7 @@ export default function ClockInClockOut() {
 
               <button
                 onClick={() => getLocationAndClockIn('clock_out')}
-                disabled={isProcessing || !todayRecord?.clock_in_time || todayRecord?.clock_out_time}
+                disabled={isProcessing || !todayRecord?.clock_in_time || todayRecord?.clock_out_time || !!todayLeave}
                 className="px-5 py-3 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[48px] shadow-sm flex items-center justify-center"
               >
                 <div className="flex items-center justify-center gap-2">

@@ -34,9 +34,24 @@ export default function ReportsView() {
         return;
       }
 
+      // Fetch approved leave requests for today
+      const todayStr = new Date().toISOString().split('T')[0];
+      const { data: leavesData, error: leavesError } = await supabase
+        .from('leave_requests')
+        .select('profile_id')
+        .eq('status', 'Approved')
+        .lte('start_date', todayStr)
+        .gte('end_date', todayStr);
+
+      const staffOnLeave = new Set(leavesData?.map(l => l.profile_id) || []);
+
       if (staffData) {
-        setStaffRecords(staffData);
-        console.log('Staff records updated:', staffData.length, 'records');
+        const enhancedStaffData = staffData.map(staff => ({
+          ...staff,
+          is_on_leave_today: staffOnLeave.has(staff.id)
+        }));
+        setStaffRecords(enhancedStaffData);
+        console.log('Staff records updated:', enhancedStaffData.length, 'records');
       }
     } catch (err) {
       console.error('Exception fetching staff records:', err);
@@ -362,13 +377,15 @@ export default function ReportsView() {
                       <td className="px-4 py-3.5 text-left hidden lg:table-cell max-w-[150px] truncate" title={staff.remarks || ''}>{staff.remarks || '-'}</td>
                       <td className="px-4 py-3.5 text-right hidden lg:table-cell font-mono text-slate-800 dark:text-zinc-200">{staff.salary || '0'}</td>
                       <td className="px-4 py-3.5 text-center">
-                        <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${staff.status === 'Active' || !staff.status
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                          : staff.status === 'On Leave'
-                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-955/20 dark:text-yellow-500 dark:border-amber-900/30'
-                            : 'bg-rose-50 text-rose-800 border-rose-105 dark:bg-rose-955/20 dark:text-rose-455 dark:border-rose-900/30'
+                        <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${staff.is_on_leave_today
+                          ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                          : (staff.status === 'Active' || !staff.status)
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                            : staff.status === 'On Leave'
+                              ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                              : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                           }`}>
-                          {staff.status || 'Active'}
+                          {staff.is_on_leave_today ? 'On Leave' : (staff.status || 'Active')}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-right">
@@ -441,7 +458,7 @@ export default function ReportsView() {
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
                   <p className="text-[10px] font-semibold text-slate-450 dark:text-zinc-550 uppercase tracking-wider mb-1">Status</p>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.status || 'Active'}</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">{viewingStaff.is_on_leave_today ? 'On Leave' : (viewingStaff.status || 'Active')}</p>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">

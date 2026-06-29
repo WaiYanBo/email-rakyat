@@ -68,6 +68,39 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         return;
       }
 
+      // Fetch approved leave requests to inject into the attendance view
+      let leaveQuery = supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('status', 'Approved');
+
+      if (employeeId !== 'all') {
+        leaveQuery = leaveQuery.eq('profile_id', employeeId);
+      }
+
+      let filterStartDate = date;
+      let filterEndDate = date;
+
+      if (mode === 'date' && date) {
+        leaveQuery = leaveQuery.lte('start_date', date).gte('end_date', date);
+      } else if (mode === 'month' && month) {
+        const startDate = `${month}-01`;
+        const [yearStr, monthStr] = month.split('-');
+        let year = parseInt(yearStr);
+        let nextMonth = parseInt(monthStr) + 1;
+        if (nextMonth > 12) {
+          nextMonth = 1;
+          year += 1;
+        }
+        const endDate = `${year}-${String(nextMonth).padStart(2, '0')}-01`;
+        filterStartDate = startDate;
+        filterEndDate = endDate;
+        // Leave must overlap with the month
+        leaveQuery = leaveQuery.lt('start_date', endDate).gte('end_date', startDate);
+      }
+
+      const { data: leavesData } = await leaveQuery;
+
       if (records) {
         const listToSearch = overrideEmployees || uniqueEmployees;
         const enrichedRecords = records.map((r: any) => {
@@ -76,6 +109,58 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
             ...r,
             user_name: employee ? (employee.full_name || employee.name) : 'Unknown'
           };
+        });
+
+        // Inject mock "On Leave" records for days that have approved leaves but no clock-in
+        if (leavesData && leavesData.length > 0) {
+          leavesData.forEach((leave: any) => {
+            const startDate = new Date(leave.start_date);
+            const endDate = new Date(leave.end_date);
+            
+            // Generate a record for each day in the leave period
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+              const dayOfWeek = currentDate.getDay();
+              // Only inject for weekdays (Mon-Fri)
+              if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                
+                // Only add if it falls within the current filter range
+                let isWithinFilter = false;
+                if (mode === 'date' && dateStr === date) {
+                  isWithinFilter = true;
+                } else if (mode === 'month' && dateStr >= filterStartDate && dateStr < filterEndDate) {
+                  isWithinFilter = true;
+                }
+
+                if (isWithinFilter) {
+                  // Check if a real attendance record already exists for this user on this day
+                  const existingRecord = enrichedRecords.find(r => r.user_id === leave.profile_id && r.date === dateStr);
+                  
+                  if (!existingRecord) {
+                    const employee = listToSearch.find((e: any) => e.id === leave.profile_id) || profile;
+                    enrichedRecords.push({
+                      id: `leave-${leave.id}-${dateStr}`,
+                      user_id: leave.profile_id,
+                      user_name: employee ? (employee.full_name || employee.name) : 'Unknown',
+                      date: dateStr,
+                      clock_in_time: null,
+                      clock_out_time: null,
+                      is_leave: true,
+                      leave_type: leave.leave_type
+                    });
+                  }
+                }
+              }
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+          });
+        }
+
+        // Re-sort the enriched records by date descending, then name
+        enrichedRecords.sort((a, b) => {
+          if (a.date !== b.date) return b.date.localeCompare(a.date);
+          return a.user_name.localeCompare(b.user_name);
         });
 
         setAttendanceRecords(enrichedRecords);
@@ -369,63 +454,76 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                               </>
                             )}
                           </td>
-                          <td className="px-5 py-4">
-                            {record.clock_in_time ? (
-                              <div>
-                                <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
-                                  {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.clock_in_distance}{t('attendance', 'away', lang)}
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 font-medium">-</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            {record.clock_in_time && (
-                              <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                record.clock_in_within_zone
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
-                              }`}>
-                                {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                          {record.is_leave ? (
+                            <td colSpan={4} className="px-5 py-4 text-center">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 font-semibold text-sm">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
+                                </svg>
+                                On Leave {record.leave_type ? `(${record.leave_type})` : ''}
                               </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4">
-                            {record.clock_out_time ? (
-                              <div>
-                                <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
-                                  {new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                  {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
-                                </p>
-                                {record.is_late_clockout && (
-                                  <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
-                                    {t('attendanceAdmin', 'flaggedLate', lang)}
+                            </td>
+                          ) : (
+                            <>
+                              <td className="px-5 py-4">
+                                {record.clock_in_time ? (
+                                  <div>
+                                    <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
+                                      {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                      {record.clock_in_distance}{t('attendance', 'away', lang)}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 font-medium">-</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                {record.clock_in_time && (
+                                  <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                                    record.clock_in_within_zone
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  }`}>
+                                    {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                                   </span>
                                 )}
-                              </div>
-                            ) : (
-                              <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
-                                {t('attendanceAdmin', 'pending', lang)}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            {record.clock_out_time && (
-                              <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                record.clock_out_within_zone
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                  : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
-                              }`}>
-                                {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
-                              </span>
-                            )}
-                          </td>
+                              </td>
+                              <td className="px-5 py-4">
+                                {record.clock_out_time ? (
+                                  <div>
+                                    <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
+                                      {new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                      {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
+                                    </p>
+                                    {record.is_late_clockout && (
+                                      <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
+                                        {t('attendanceAdmin', 'flaggedLate', lang)}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                    {t('attendanceAdmin', 'pending', lang)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-5 py-4 text-center">
+                                {record.clock_out_time && (
+                                  <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                                    record.clock_out_within_zone
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  }`}>
+                                    {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                  </span>
+                                )}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))
                     )}

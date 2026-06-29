@@ -10,6 +10,8 @@ interface DayData {
   breakHours: number;
   inZoneCount: number;
   totalCount: number;
+  isLeave?: boolean;
+  leaveType?: string;
 }
 
 function getMonday(dateStr: any): string {
@@ -273,29 +275,18 @@ export default function AttendanceAnalyticsSample() {
           day.totalCount = totalCount;
         });
 
-        // Count how many days actually have logged hours in the database
-        const activeDbDaysCount = last21Days.filter(d => grouped[d.dateStr] && grouped[d.dateStr].length > 0).length;
 
-        // If less than 3 days have records, load a high-quality mock trend so the charts look gorgeous
-        if (activeDbDaysCount < 3) {
-          const mockWorkHours = [8.5, 9.0, 7.8, 9.2, 8.0, 0.0, 0.0];
-          const mockBreakHours = [1.2, 1.5, 1.0, 1.1, 1.0, 0.0, 0.0];
-          const mockInZone = [1, 2, 1, 2, 1, 0, 0];
-          const mockTotal = [1, 2, 1, 2, 1, 0, 0];
-
-          last21Days.forEach((day) => {
-            if (day.workHours === 0) {
-              const [y, m, d] = day.dateStr.split('-').map(Number);
-              const dateObj = new Date(y, m - 1, d);
-              const dayIndex = dateObj.getDay(); // 0 is Sun, 1 is Mon...
-              const mockIdx = dayIndex === 0 ? 6 : dayIndex - 1;
-
-              day.workHours = mockWorkHours[mockIdx];
-              day.breakHours = mockBreakHours[mockIdx];
-              day.inZoneCount = mockInZone[mockIdx];
-              day.totalCount = mockTotal[mockIdx];
-            }
-          });
+        // Fetch approved leave requests in the same 21-day range
+        const { data: approvedLeaves, error: leavesError } = await supabase
+          .from('leave_requests')
+          .select('*')
+          .eq('profile_id', session.user.id)
+          .eq('status', 'Approved')
+          .lte('start_date', endDateStr)
+          .gte('end_date', startDateStr);
+          
+        if (leavesError) {
+          console.error('Error fetching leaves:', leavesError);
         }
 
         // Apply Public Holiday overrides (MUST run after mock data fallback so holidays apply in all cases)
@@ -309,6 +300,32 @@ export default function AttendanceAnalyticsSample() {
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
               day.workHours = Math.max(day.workHours, 8.0);
               day.breakHours = Math.max(day.breakHours, 1.0);
+            }
+          }
+        });
+
+        // Apply Leave overrides
+        last21Days.forEach(day => {
+          if (approvedLeaves && approvedLeaves.length > 0) {
+            const [y, m, d] = day.dateStr.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const dayOfWeek = dateObj.getDay();
+            // Only count weekdays
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+               // Check if day is within any approved leave
+               const matchingLeave = approvedLeaves.find(req => {
+                 const start = new Date(req.start_date);
+                 const end = new Date(req.end_date);
+                 return dateObj >= start && dateObj <= end;
+               });
+               if (matchingLeave) {
+                 day.isLeave = true;
+                 day.leaveType = matchingLeave.leave_type;
+                 // If they have less than standard hours, fill it up so the chart looks consistent
+                 if (day.workHours < 8.0) {
+                    day.workHours = matchingLeave.session_type === 'Half Day' ? 4.0 : 8.0;
+                 }
+               }
             }
           }
         });
@@ -330,10 +347,11 @@ export default function AttendanceAnalyticsSample() {
       key: d.dateStr,
       label: d.dayLabel,
       value: d.workHours,
+      isLeave: d.isLeave,
       tooltipData: {
-        title: d.dayLabel,
+        title: d.dayLabel + (d.isLeave ? ` (${d.leaveType} Leave)` : ''),
         items: [
-          { label: 'Work:', value: `${d.workHours}h` },
+          { label: d.isLeave ? 'Leave/Work:' : 'Work:', value: `${d.workHours}h` },
           { 
             label: 'Break:', 
             value: `${d.breakHours}h`,

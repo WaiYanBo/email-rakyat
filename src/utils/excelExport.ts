@@ -134,12 +134,25 @@ export const exportAttendanceToExcel = (
         }
 
         if (dayRecords.length > 0) {
-          // Sort by clock_in_time ascending
-          dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
+          // Check if this day is a leave day
+          const leaveRecord = dayRecords.find(r => r.is_leave);
+          
+          if (leaveRecord) {
+            const leaveMsg = `On Leave (${leaveRecord.leave_type || 'Approved'})`;
+            clockInRow.push(leaveMsg);
+            clockOutRow.push(leaveMsg);
+            totalWorkRow.push('N/A');
+            breakRow.push('N/A');
+            totalHoursRow.push('N/A');
+            maxWorkRow.push('N/A');
+            overtimeRow.push('N/A');
+          } else {
+            // Sort by clock_in_time ascending
+            dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
 
-          const firstRecord = dayRecords[0];
-          const lastRecord = dayRecords[dayRecords.length - 1];
-          const isCompleted = dayRecords.every(r => r.clock_out_time);
+            const firstRecord = dayRecords[0];
+            const lastRecord = dayRecords[dayRecords.length - 1];
+            const isCompleted = dayRecords.every(r => r.clock_out_time);
 
           // 1. Clock In Time (first clock-in of the day)
           clockInRow.push(firstRecord.clock_in_time ? extractTime(firstRecord.clock_in_time) : 'N/A');
@@ -187,6 +200,7 @@ export const exportAttendanceToExcel = (
           }
 
           maxWorkRow.push('08:00:00');
+          }
         } else {
           clockInRow.push(defaultStatus);
           clockOutRow.push(defaultStatus);

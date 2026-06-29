@@ -22,6 +22,7 @@ export const translations = {
     navDrive: { en: 'File Drive', bm: 'Pemacu Fail' },
     navSettings: { en: 'Settings', bm: 'Tetapan' },
     navHR: { en: 'Human Resources', bm: 'Sumber Manusia' },
+    navLeave: { en: 'My Leave', bm: 'Cuti Saya' },
     darkMode: { en: 'Dark Mode', bm: 'Mod Gelap' },
     lightMode: { en: 'Light Mode', bm: 'Mod Cerah' },
     logout: { en: 'Logout', bm: 'Log Keluar' },

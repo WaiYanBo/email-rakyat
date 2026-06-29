@@ -1,0 +1,8 @@
+---
+import LeaveControlPanel from '../../components/LeaveControlPanel';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="My Leave - Staff Portal">
+  <LeaveControlPanel client:only="react" />
+</DashboardLayout>

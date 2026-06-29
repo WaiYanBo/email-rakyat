@@ -12,6 +12,7 @@ export default function ExecutiveOverview() {
   const [profile, setProfile] = useState<any>(null);
   const [highPriorityCases, setHighPriorityCases] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [staffOnLeaveCount, setStaffOnLeaveCount] = useState<number>(0);
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
 
@@ -187,6 +188,19 @@ export default function ExecutiveOverview() {
 
         // 1. Initial Load of Announcements
         await fetchAnnouncements();
+
+        // Fetch staff on leave today
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { count: leaveCount, error: leaveErr } = await supabase
+          .from('leave_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'Approved')
+          .lte('start_date', todayStr)
+          .gte('end_date', todayStr);
+          
+        if (!leaveErr) {
+          setStaffOnLeaveCount(leaveCount || 0);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -483,18 +497,32 @@ export default function ExecutiveOverview() {
 
   return (
     <div className="space-y-8 animate-page-transition pt-12 md:pt-0 relative">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-yellow-500 tracking-tight">
-          {t('overview', 'pageTitle', lang)}{' '}
-          <span className="text-slate-500 dark:text-slate-400 font-medium">
-            {t('overview', 'pageHighlight', lang)}
-          </span>
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
-          {t('overview', 'welcomeBack', lang)}{' '}
-          <span className="font-semibold text-slate-800 dark:text-zinc-200">{profile?.name}</span>{' '}
-          ({profile?.role})
-        </p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-2xl md:text-3xl font-bold text-indigo-900 dark:text-yellow-500 tracking-tight">
+            {t('overview', 'pageTitle', lang)}{' '}
+            <span className="text-slate-500 dark:text-slate-400 font-medium">
+              {t('overview', 'pageHighlight', lang)}
+            </span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
+            {t('overview', 'welcomeBack', lang)}{' '}
+            <span className="font-semibold text-slate-800 dark:text-zinc-200">{profile?.name}</span>{' '}
+            ({profile?.role})
+          </p>
+        </div>
+        
+        {staffOnLeaveCount > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 dark:bg-yellow-500/10 dark:border-yellow-500/20 rounded-xl shadow-sm">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 dark:bg-yellow-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500 dark:bg-yellow-500"></span>
+            </span>
+            <span className="text-sm font-semibold text-indigo-700 dark:text-yellow-500">
+              {staffOnLeaveCount} Staff on Leave Today
+            </span>
+          </div>
+        )}
       </div>
 
 

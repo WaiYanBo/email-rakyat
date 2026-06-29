@@ -11,6 +11,7 @@ interface DayData {
   inZoneCount: number;
   totalCount: number;
   isLeave?: boolean;
+  isHoliday?: boolean;
   leaveType?: string;
 }
 
@@ -133,14 +134,23 @@ export default function AttendanceAnalyticsSample() {
           return;
         }
 
-        // Fetch user profile
+        // Fetch user profile and role
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('id, full_name')
+          .select(`id, full_name, roles(role_name)`)
           .eq('id', session.user.id)
           .single();
+          
+        let hasPaidLeave = true;
         if (profileData) {
           setProfile(profileData);
+          let roleName = 'No Role';
+          if (profileData.roles) {
+            const rolesVar = profileData.roles as any;
+            roleName = Array.isArray(rolesVar) ? rolesVar[0]?.role_name : rolesVar?.role_name;
+          }
+          const noPaidLeaveRoles = ['Intern', 'Intern HR', 'Contract Worker', 'Contract', 'Part-Time Worker', 'Part Time'];
+          hasPaidLeave = !noPaidLeaveRoles.includes(roleName || '');
         }
 
         // Generate baseline of last 21 calendar days (aligned to 3 full calendar weeks)
@@ -296,10 +306,13 @@ export default function AttendanceAnalyticsSample() {
             const [y, m, d] = day.dateStr.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
             const dayOfWeek = dateObj.getDay();
-            // Only count weekdays (Mon-Fri)
+            // Only flag weekdays (Mon-Fri)
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-              day.workHours = Math.max(day.workHours, 8.0);
-              day.breakHours = Math.max(day.breakHours, 1.0);
+              day.isHoliday = true;
+              if (hasPaidLeave) {
+                day.workHours = Math.max(day.workHours, 8.0);
+                day.breakHours = Math.max(day.breakHours, 1.0);
+              }
             }
           }
         });
@@ -318,14 +331,15 @@ export default function AttendanceAnalyticsSample() {
                  const end = new Date(req.end_date);
                  return dateObj >= start && dateObj <= end;
                });
-               if (matchingLeave) {
-                 day.isLeave = true;
-                 day.leaveType = matchingLeave.leave_type;
-                 // If they have less than standard hours, fill it up so the chart looks consistent
-                 if (day.workHours < 8.0) {
-                    day.workHours = matchingLeave.session_type === 'Half Day' ? 4.0 : 8.0;
+                 if (matchingLeave) {
+                   day.isLeave = true;
+                   day.leaveType = matchingLeave.leave_type;
+                   if (hasPaidLeave) {
+                     if (day.workHours < 8.0) {
+                        day.workHours = matchingLeave.session_type === 'Half Day' ? 4.0 : 8.0;
+                     }
+                   }
                  }
-               }
             }
           }
         });
@@ -347,11 +361,11 @@ export default function AttendanceAnalyticsSample() {
       key: d.dateStr,
       label: d.dayLabel,
       value: d.workHours,
-      isLeave: d.isLeave,
+      isLeave: d.isLeave || d.isHoliday,
       tooltipData: {
-        title: d.dayLabel + (d.isLeave ? ` (${d.leaveType} Leave)` : ''),
+        title: d.dayLabel + (d.isHoliday ? ' (Public Holiday)' : (d.isLeave ? ` (${d.leaveType} Leave)` : '')),
         items: [
-          { label: d.isLeave ? 'Leave/Work:' : 'Work:', value: `${d.workHours}h` },
+          { label: (d.isLeave || d.isHoliday) ? 'Actual Work:' : 'Work:', value: `${d.workHours}h` },
           { 
             label: 'Break:', 
             value: `${d.breakHours}h`,

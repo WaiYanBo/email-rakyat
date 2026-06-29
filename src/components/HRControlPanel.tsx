@@ -63,7 +63,7 @@ export default function HRControlPanel() {
     );
   }
 
-  const hasAccess = permissions?.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
+  const hasAccess = profile?.department === 'Human Resources' || ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(profile?.role || '');
 
   if (!hasAccess) {
     return (

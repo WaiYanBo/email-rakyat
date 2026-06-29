@@ -99,7 +99,7 @@ export default function PortalSidebar() {
     const canViewClients = permissions?.view_clients || false;
     const canViewReports = permissions?.view_staff || false;
     const canViewAttendance = permissions?.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
-    const isHRMenuAccess = profile?.department === 'Human Resources' || ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO'].includes(profile?.role || '');
+    const isHRMenuAccess = profile?.department === 'Human Resources' || ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(profile?.role || '');
 
     const activeClass = 'bg-indigo-50/70 text-indigo-750 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500';
 

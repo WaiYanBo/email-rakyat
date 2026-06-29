@@ -59,6 +59,8 @@ export default function ReportsView() {
   };
 
   useEffect(() => {
+    let subscription: any = null;
+
     async function loadData() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -86,39 +88,46 @@ export default function ReportsView() {
         });
       }
 
-      // 2. Initial Load of Staff Data
-      await fetchStaffRecords();
+      const accessRoles = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'];
+      const hasAccess = accessRoles.includes(roleName);
+
+      // 2. Initial Load of Staff Data - ONLY if authorized
+      if (hasAccess) {
+        await fetchStaffRecords();
+        
+        // 3. Setup Realtime Listener for instant updates
+        console.log('Setting up realtime listener...');
+        subscription = supabase
+          .channel('public:profiles')
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // Listen for INSERT, UPDATE, DELETE
+              schema: 'public',
+              table: 'profiles'
+            },
+            async (payload) => {
+              console.log('Real-time change detected:', payload.eventType, payload);
+              // Re-fetch all staff records when changes occur
+              await fetchStaffRecords();
+            }
+          )
+          .subscribe((status) => {
+            console.log('Subscription status:', status);
+          });
+      }
 
       setLoading(false);
     }
 
     loadData();
 
-    // 3. Setup Realtime Listener for instant updates
-    console.log('Setting up realtime listener...');
-    const subscription = supabase
-      .channel('public:profiles')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen for INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'profiles'
-        },
-        async (payload) => {
-          console.log('Real-time change detected:', payload.eventType, payload);
-          // Re-fetch all staff records when changes occur
-          await fetchStaffRecords();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
-
     // Cleanup: Remove listener on component unmount
     return () => {
-      console.log('Unsubscribing from realtime listener');
-      subscription.unsubscribe();
+      if (subscription) {
+        console.log('Unsubscribing from realtime listener');
+        subscription.unsubscribe();
+      }
     };
   }, []);
 

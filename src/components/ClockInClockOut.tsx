@@ -62,7 +62,7 @@ export default function ClockInClockOut() {
   const fetchForgotClockoutRecords = async (userId?: string, role?: string) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const privileged = role && ['HR', 'CFO', 'IT Admin'].includes(role);
+      const privileged = role && ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(role);
 
       // 1. Fetch forgot clockouts specifically (server-side filtering)
       let forgotQuery = supabase
@@ -579,7 +579,7 @@ export default function ClockInClockOut() {
   if (profile?.role && ['Chairman', 'CEO'].includes(profile.role)) {
     return null;
   }
-  const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin'].includes(profile.role);
+  const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(profile.role);
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">

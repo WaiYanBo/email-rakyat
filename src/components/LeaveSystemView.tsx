@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import type { Language } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface LeaveBalance {
   annual_total: number;
@@ -62,6 +63,7 @@ interface LeaveSystemViewProps {
 
 export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const { lang } = usePortalLanguage() as { lang: Language };
+  const { permissions } = usePermissions(profile);
   const [activeSubTab, setActiveSubTab] = useState<'myleaves' | 'dashboard'>('myleaves');
   const [dashboardSubTab, setDashboardSubTab] = useState<'pending' | 'balances' | 'calendar'>('pending');
 
@@ -97,7 +99,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   // Calendar navigation states
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
-  const isApprover = ['IT Admin', 'HR', 'CFO', 'CEO', 'Chairman', 'COO', 'General Manager', 'Head of Department'].includes(profile?.role);
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const isApprover = profile?.department === 'Human Resources' || permissions.edit_staff || isIT;
 
   useEffect(() => {
     fetchEmployeeData();

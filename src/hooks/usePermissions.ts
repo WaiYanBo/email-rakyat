@@ -118,19 +118,15 @@ export function usePermissions(profile: any) {
           console.warn('access_permissions table query failed', error);
         }
 
-        const defaultHasFullAccess = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'].includes(role || '');
-        const defaultHasViewAccess = ['Intern', 'Contract Worker', 'Part-Time Worker', 'Senior Executive', 'Executive', 'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant', 'Finance', 'Marketing', 'Accounting', 'Creative', 'HR', 'Intern HR'].includes(role || '');
-        const defaultHasHRAccess = ['Chairman', 'CEO', 'CFO', 'IT Admin', 'HR'].includes(role || '');
-
         let finalPerms: Permissions = {
-          view_clients: defaultHasFullAccess || defaultHasViewAccess,
-          edit_clients: defaultHasFullAccess,
-          view_staff: defaultHasFullAccess,
-          edit_staff: defaultHasFullAccess,
-          view_attendance: defaultHasHRAccess,
-          view_snapshot: defaultHasFullAccess,
+          view_clients: false,
+          edit_clients: false,
+          view_staff: false,
+          edit_staff: false,
+          view_attendance: false,
+          view_snapshot: false,
           manage_access_control: false,
-          manage_drive: defaultHasFullAccess,
+          manage_drive: false,
         };
 
         if (data && data.length > 0) {
@@ -149,7 +145,12 @@ export function usePermissions(profile: any) {
           };
         }
 
-        if (role === 'IT Admin') {
+        const isITAdmin = 
+          role?.toLowerCase() === 'it' || 
+          role?.toLowerCase() === 'it admin' || 
+          department?.toLowerCase() === 'it';
+
+        if (isITAdmin) {
           finalPerms = {
             view_clients: true,
             edit_clients: true,
@@ -188,5 +189,23 @@ export function usePermissions(profile: any) {
     };
   }, [profile]);
 
-  return { permissions, loading };
+  const isITAdmin = 
+    profile?.role?.toLowerCase() === 'it' || 
+    profile?.role?.toLowerCase() === 'it admin' || 
+    profile?.department?.toLowerCase() === 'it' ||
+    profile?.roles?.role_name?.toLowerCase() === 'it admin' ||
+    profile?.roles?.role_name?.toLowerCase() === 'it';
+
+  const finalPermissions = isITAdmin ? {
+    view_clients: true,
+    edit_clients: true,
+    view_staff: true,
+    edit_staff: true,
+    view_attendance: true,
+    view_snapshot: true,
+    manage_access_control: true,
+    manage_drive: true,
+  } : permissions;
+
+  return { permissions: finalPermissions, loading };
 }

@@ -829,8 +829,9 @@ export default function ClientDataView() {
     );
   }
 
-  const canEdit = permissions?.edit_clients || false;
-  const canView = permissions?.view_clients || false;
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const canEdit = permissions?.edit_clients || isIT;
+  const canView = permissions?.view_clients || isIT;
 
   if (!canView) {
     return (
@@ -1305,7 +1306,7 @@ export default function ClientDataView() {
                   <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
                 <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
                 <div className="w-full sm:w-auto">
-                  {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || permissions?.manage_access_control) && (
+                  {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (
                     <button
                       type="button"
                       onClick={handleDeleteClient}

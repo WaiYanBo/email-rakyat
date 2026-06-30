@@ -3,10 +3,12 @@ import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function ClockInClockOut() {
   const { lang } = usePortalLanguage();
   const [profile, setProfile] = useState<any>(null);
+  const { permissions, loading: permsLoading } = usePermissions(profile);
   const [todayRecord, setTodayRecord] = useState<any>(null);
   const [todayLeave, setTodayLeave] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -59,10 +61,10 @@ export default function ClockInClockOut() {
   };
 
   // Fetch attendance records efficiently
-  const fetchForgotClockoutRecords = async (userId?: string, role?: string) => {
+  const fetchForgotClockoutRecords = async (userId?: string, isPrivileged?: boolean) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const privileged = role && ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(role);
+      const privileged = isPrivileged;
 
       // 1. Fetch forgot clockouts specifically (server-side filtering)
       let forgotQuery = supabase
@@ -557,29 +559,47 @@ export default function ClockInClockOut() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`full_name, roles ( role_name )`)
+        .select(`full_name, department, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
       let currentRole = '';
       if (profileData) {
-        currentRole = profileData.roles?.role_name || '';
-        setProfile({ name: profileData.full_name, role: currentRole });
+        const rolesVar = profileData.roles as any;
+        currentRole = rolesVar ? (Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || '') : (rolesVar?.role_name || '')) : '';
+        setProfile({ id: session.user.id, name: profileData.full_name, role: currentRole, department: profileData.department });
       }
 
       await fetchTodayRecord();
-      await fetchForgotClockoutRecords(session.user.id, currentRole);
       setLoading(false);
     };
 
     loadData();
   }, []);
 
-  // Don't show for Chairman, CEO
-  if (profile?.role && ['Chairman', 'CEO'].includes(profile.role)) {
-    return null;
+  useEffect(() => {
+    if (profile?.id && !permsLoading) {
+      const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+      const isPrivileged = permissions.view_attendance || isIT;
+      fetchForgotClockoutRecords(profile.id, isPrivileged);
+    }
+  }, [profile, permsLoading, permissions]);
+
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const isPrivilegedRole = permissions.view_attendance || isIT;
+
+  if (loading || permsLoading) {
+    return (
+      <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden p-6 md:p-8">
+        <div className="text-center py-16">
+          <div className="inline-block">
+            <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3"></div>
+            <div className="text-indigo-600 font-semibold text-sm">{t('attendance', 'loadingAttendance', lang)}</div>
+          </div>
+        </div>
+      </div>
+    );
   }
-  const isPrivilegedRole = profile?.role && ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(profile.role);
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
@@ -597,16 +617,8 @@ export default function ClockInClockOut() {
 
 
       <div className="p-6 md:p-8">
-        {loading ? (
-          <div className="text-center py-16">
-            <div className="inline-block">
-              <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-3"></div>
-              <div className="text-indigo-600 font-semibold text-sm">{t('attendance', 'loadingAttendance', lang)}</div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Today's Status Card */}
+        <div className="space-y-8">
+          {/* Today's Status Card */}
             {todayRecord && (
               <div className="p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/30 dark:bg-gray-900/20">
                 <div className="flex items-center gap-2 mb-4">
@@ -1125,8 +1137,7 @@ export default function ClockInClockOut() {
                 </div>
               </div>
             )}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

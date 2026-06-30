@@ -54,12 +54,17 @@ export default function PortalSidebar() {
         .single();
 
       if (profileData) {
+        let roleName = 'No Role';
+        if (profileData.roles) {
+          const rolesVar = profileData.roles as any;
+          roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || 'No Role') : (rolesVar?.role_name || 'No Role');
+        }
         setProfile({
           id: profileData.id,
           name: profileData.full_name,
           department: profileData.department,
           avatar_url: profileData.avatar_url,
-          role: profileData.roles?.role_name || 'No Role',
+          role: roleName,
         });
       }
       setLoading(false);
@@ -98,8 +103,9 @@ export default function PortalSidebar() {
 
     const canViewClients = permissions?.view_clients || false;
     const canViewReports = permissions?.view_staff || false;
-    const canViewAttendance = permissions?.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
-    const isHRMenuAccess = profile?.department === 'Human Resources' || ['HR', 'CFO', 'IT Admin', 'Chairman', 'CEO', 'COO', 'General Manager', 'Head of Department'].includes(profile?.role || '');
+    const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+    const canViewAttendance = permissions?.view_attendance || isIT;
+    const isHRMenuAccess = (profile?.department && profile.department.toLowerCase() === 'human resources') || isIT;
 
     const activeClass = 'bg-indigo-50/70 text-indigo-750 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500';
 

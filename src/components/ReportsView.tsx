@@ -59,8 +59,6 @@ export default function ReportsView() {
   };
 
   useEffect(() => {
-    let subscription: any = null;
-
     async function loadData() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -68,7 +66,6 @@ export default function ReportsView() {
         return;
       }
 
-      // 1. Verify User Access
       const { data: profileData } = await supabase.from('profiles').select(`id, department, full_name, roles ( role_name )`).eq('id', session.user.id).single();
       if (profileData) {
         let roleName = 'No Role';
@@ -87,49 +84,50 @@ export default function ReportsView() {
           role: roleName
         });
       }
-
-      const accessRoles = ['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Head of Department'];
-      const hasAccess = accessRoles.includes(roleName);
-
-      // 2. Initial Load of Staff Data - ONLY if authorized
-      if (hasAccess) {
-        await fetchStaffRecords();
-        
-        // 3. Setup Realtime Listener for instant updates
-        console.log('Setting up realtime listener...');
-        subscription = supabase
-          .channel('public:profiles')
-          .on(
-            'postgres_changes',
-            {
-              event: '*', // Listen for INSERT, UPDATE, DELETE
-              schema: 'public',
-              table: 'profiles'
-            },
-            async (payload) => {
-              console.log('Real-time change detected:', payload.eventType, payload);
-              // Re-fetch all staff records when changes occur
-              await fetchStaffRecords();
-            }
-          )
-          .subscribe((status) => {
-            console.log('Subscription status:', status);
-          });
-      }
-
       setLoading(false);
     }
-
     loadData();
+  }, []);
 
-    // Cleanup: Remove listener on component unmount
+  useEffect(() => {
+    let subscription: any = null;
+
+    const setupRealtime = async () => {
+      if (profile?.id && !permsLoading) {
+        const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+        const hasAccess = permissions.view_snapshot || isIT;
+        if (hasAccess) {
+          await fetchStaffRecords();
+          
+          console.log('Setting up realtime listener...');
+          subscription = supabase
+            .channel('public:profiles')
+            .on(
+              'postgres_changes',
+              {
+                event: '*', // Listen for INSERT, UPDATE, DELETE
+                schema: 'public',
+                table: 'profiles'
+              },
+              async (payload) => {
+                console.log('Real-time change detected:', payload.eventType, payload);
+                await fetchStaffRecords();
+              }
+            )
+            .subscribe();
+        }
+      }
+    };
+
+    setupRealtime();
+
     return () => {
       if (subscription) {
         console.log('Unsubscribing from realtime listener');
         subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [profile, permsLoading, permissions]);
 
   const saveStaffRecord = async (e: React.FormEvent) => {
     e.preventDefault();

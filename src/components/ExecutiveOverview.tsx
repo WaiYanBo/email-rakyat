@@ -163,29 +163,6 @@ export default function ExecutiveOverview() {
           console.log('✅ Final roleName for access check:', roleName);
         }
 
-        if (['Chairman', 'CEO', 'COO', 'CFO', 'General Manager', 'IT Admin', 'Department Head', 'Head of Department', 'Manager'].includes(roleName)) {
-          // Run lightweight count-only queries using HTTP HEAD (0 rows fetched, 0 bytes row egress)
-          const [totalRes, completedRes, droppedRes] = await Promise.all([
-            supabase.from('clients').select('*', { count: 'exact', head: true }),
-            supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%COMPLETED%'),
-            supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%DROPPED%')
-          ]);
-
-          const totalClients = totalRes.count || 0;
-          const completed = completedRes.count || 0;
-          const dropped = droppedRes.count || 0;
-          const pending = totalClients - completed - dropped;
-
-          setStats({
-            totalClients,
-            completed,
-            dropped,
-            pending,
-            totalPending: 0
-          });
-          setHighPriorityCases([]);
-        }
-
         // 1. Initial Load of Announcements
         await fetchAnnouncements();
 
@@ -233,10 +210,46 @@ export default function ExecutiveOverview() {
 
     // Cleanup: Remove listener on component unmount
     return () => {
-      console.log('Unsubscribing from announcements listener');
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, []);
+
+  useEffect(() => {
+    async function loadStats() {
+      if (profile?.id && !permsLoading) {
+        const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+        if (permissions.view_snapshot || isIT) {
+          try {
+            const [totalRes, completedRes, droppedRes] = await Promise.all([
+              supabase.from('clients').select('*', { count: 'exact', head: true }),
+              supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%COMPLETED%'),
+              supabase.from('clients').select('*', { count: 'exact', head: true }).ilike('CASE STATUS', '%DROPPED%')
+            ]);
+
+            const totalClients = totalRes.count || 0;
+            const completed = completedRes.count || 0;
+            const dropped = droppedRes.count || 0;
+            const pending = totalClients - completed - dropped;
+
+            setStats({
+              totalClients,
+              completed,
+              dropped,
+              pending,
+              totalPending: 0
+            });
+            setHighPriorityCases([]);
+          } catch (err) {
+            console.error('Error fetching stats:', err);
+          }
+        }
+      }
+    }
+    loadStats();
+  }, [profile, permsLoading, permissions]);
+
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const hasAccess = permissions.view_snapshot || isIT;
 
   const writeAuditLog = async (action: 'INSERT' | 'UPDATE' | 'DELETE', recordId: string, changes: any) => {
     try {
@@ -489,7 +502,6 @@ export default function ExecutiveOverview() {
     return filtered;
   };
 
-  const isIT = profile?.role?.toLowerCase() === 'it admin';
   const hasFullAccess = permissions?.view_snapshot || false;
   const todayCount = getTodayAnnouncements().length;
   const pastCount = getPastAnnouncements().length;

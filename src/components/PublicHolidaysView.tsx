@@ -138,7 +138,8 @@ export default function PublicHolidaysView() {
     setIsEditing(false);
   };
 
-  const hasAccess = permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const hasAccess = permissions.view_attendance || isIT;
 
   if (loading || permsLoading) {
     return (

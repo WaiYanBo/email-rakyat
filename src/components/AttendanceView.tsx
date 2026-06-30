@@ -269,7 +269,8 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
     exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth, publicHolidays);
   };
 
-  const hasAccess = personalOnly || permissions.view_attendance || ['HR', 'CFO', 'IT Admin'].includes(profile?.role || '');
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const hasAccess = personalOnly || permissions.view_attendance || isIT;
 
   if (loading || permsLoading) {
     return (

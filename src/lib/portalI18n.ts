@@ -327,14 +327,10 @@ export const translations = {
     caseStatusLabel: { en: 'Case Status', bm: 'Status Kes' },
     caseCategoryLabel: { en: 'Case Category', bm: 'Kategori Kes' },
     remarkCatatan: { en: 'Remark / Catatan', bm: 'Catatan / Remark' },
-    resolutionStatusLabel: { en: 'Resolution Status', bm: 'Status Penyelesaian' },
     lodTitle: { en: 'Letter of Demand (LoD)', bm: 'Surat Tuntutan (LoD)' },
     lodDate: { en: 'LoD Date', bm: 'Tarikh LoD' },
     lodClaimAmount: { en: 'Claim Amount', bm: 'Jumlah Tuntutan' },
     lodRemark: { en: 'LoD Remark', bm: 'Remark LoD' },
-    selesai: { en: 'Completed', bm: 'Selesai' },
-    tindakan: { en: 'Active', bm: 'Tindakan' },
-    tertangguh: { en: 'Deferred', bm: 'Tertangguh' },
   },
 
   // ─── Reports ──────────────────────────────────────────────────────────────

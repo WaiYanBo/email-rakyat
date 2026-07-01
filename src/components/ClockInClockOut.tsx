@@ -840,6 +840,7 @@ export default function ClockInClockOut() {
                             type="date"
                             value={detailFilterDay}
                             onChange={(e) => setDetailFilterDay(e.target.value)}
+                            onClick={(e) => {}}
                             className="w-full px-3 py-2 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
                           />
                         </>
@@ -851,6 +852,7 @@ export default function ClockInClockOut() {
                             type="month"
                             value={detailFilterMonth}
                             onChange={(e) => setDetailFilterMonth(e.target.value)}
+                            onClick={(e) => {}}
                             className="w-full px-3 py-2 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[44px]"
                           />
                         </>

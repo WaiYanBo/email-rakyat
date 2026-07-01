@@ -106,10 +106,10 @@ export default function SettingsView() {
 
       setProfileMessage({ type: 'success', text: t('settings', 'profileUpdateSuccess', lang) });
 
-      // Reload page to propagate profile changes to sidebar immediately
+      // Dispatch custom event to update sidebar instead of reloading
       setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+        window.dispatchEvent(new Event('profileUpdated'));
+      }, 500);
     } catch (err: any) {
       setProfileMessage({ type: 'error', text: t('settings', 'profileUpdateError', lang) });
       setIsSavingProfile(false);

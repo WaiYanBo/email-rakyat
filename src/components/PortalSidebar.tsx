@@ -39,37 +39,47 @@ export default function PortalSidebar() {
     } catch (error) {}
   }, [theme]);
 
-  useEffect(() => {
-    async function loadProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/portal/login';
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select(`id, full_name, department, avatar_url, roles ( role_name )`)
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileData) {
-        let roleName = 'No Role';
-        if (profileData.roles) {
-          const rolesVar = profileData.roles as any;
-          roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || 'No Role') : (rolesVar?.role_name || 'No Role');
-        }
-        setProfile({
-          id: profileData.id,
-          name: profileData.full_name,
-          department: profileData.department,
-          avatar_url: profileData.avatar_url,
-          role: roleName,
-        });
-      }
-      setLoading(false);
+  const loadProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/portal/login';
+      return;
     }
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select(`id, full_name, department, avatar_url, roles ( role_name )`)
+      .eq('id', session.user.id)
+      .single();
+
+    if (profileData) {
+      let roleName = 'No Role';
+      if (profileData.roles) {
+        const rolesVar = profileData.roles as any;
+        roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || 'No Role') : (rolesVar?.role_name || 'No Role');
+      }
+      setProfile({
+        id: profileData.id,
+        name: profileData.full_name,
+        department: profileData.department,
+        avatar_url: profileData.avatar_url,
+        role: roleName,
+      });
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadProfile();
+
+    const handleProfileUpdate = () => {
+      loadProfile();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   useEffect(() => {

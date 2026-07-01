@@ -243,7 +243,7 @@ export default function ReportsView() {
         alert('✓ New staff account created! Email: ' + rawEmail + '\nChanges will sync automatically.');
         setIsStaffModalOpen(false);
       }
-      window.location.reload();
+      await fetchStaffRecords();
     } catch (err: any) {
       alert('❌ Error: ' + err.message);
     } finally {

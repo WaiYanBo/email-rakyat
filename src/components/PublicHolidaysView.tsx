@@ -189,6 +189,7 @@ export default function PublicHolidaysView() {
                   type="date"
                   value={newDate}
                   onChange={e => setNewDate(e.target.value)}
+                  onClick={(e) => {}}
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-slate-800 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500"
                 />
               </div>

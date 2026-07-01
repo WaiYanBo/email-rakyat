@@ -20,7 +20,7 @@ interface BillingGeneratorProps {
 
 export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, onSuccess }) => {
   const [documentType, setDocumentType] = useState<'invoice' | 'receipt'>('invoice');
-  const [items, setItems] = useState<{ description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([{ description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+  const [items, setItems] = useState<{ id: string; description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([{ id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
   const [deposit, setDeposit] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -41,6 +41,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const pastPayments = clientData.payments ? clientData.payments.filter(p => p !== null && p !== '' && p !== undefined && p !== 0 && p !== '0') : [];
 
       const populatedItems = pastPayments.map((amt, index) => ({
+        id: crypto.randomUUID(),
         description: '',
         qty: '',
         unitPrice: '',
@@ -51,6 +52,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       // Add one blank item for the new payment
       populatedItems.push({
+        id: crypto.randomUUID(),
         description: '',
         qty: '',
         unitPrice: '',
@@ -61,14 +63,14 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       setItems(populatedItems);
     } else {
-      setItems([{ description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+      setItems([{ id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
     }
   }, [documentType, clientData.payments]);
 
   const addItem = () => {
     if (items.length < 6) {
       const nextPayment = getPaymentOrdinalString(items.length, 0);
-      setItems([...items, { description: '', qty: '', unitPrice: '', paymentDetails: documentType === 'receipt' ? nextPayment : '', date: '', amount: '' }]);
+      setItems([...items, { id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: documentType === 'receipt' ? nextPayment : '', date: '', amount: '' }]);
     }
   };
 
@@ -450,7 +452,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
           <div className="space-y-3">
             {items.map((item, index) => (
-              <div key={index} className="flex flex-col sm:flex-row gap-2 items-start w-full bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-slate-100 sm:border-none mb-2 sm:mb-0">
+              <div key={item.id} className="flex flex-col sm:flex-row gap-2 items-start w-full bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-slate-100 sm:border-none mb-2 sm:mb-0">
                 {documentType === 'invoice' ? (
                   <div className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-2 sm:flex-[4.5]">
                     <div className="col-span-2 sm:flex-[2]">
@@ -509,6 +511,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
                         placeholder="Date"
                         value={item.date}
                         onChange={(e) => updateItem(index, 'date', e.target.value)}
+                        onClick={(e) => {}}
                       />
                     </div>
                   </div>

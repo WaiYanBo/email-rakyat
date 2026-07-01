@@ -951,6 +951,7 @@ export default function ExecutiveOverview() {
                   type="date"
                   name="scheduled_date"
                   defaultValue={editingNotice ? editingNotice.scheduled_at.split('T')[0] : new Date().toISOString().split('T')[0]}
+                  onClick={(e) => {}}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 />

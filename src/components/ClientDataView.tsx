@@ -7,7 +7,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { ErrorBoundary } from './ErrorBoundary';
-
+import { policeLocations } from '../utils/policeLocations';
 const DateInput = ({ name, label, defaultValue, lang, required }: { name: string; label: string; defaultValue: string; lang: 'en' | 'bm'; required?: boolean }) => {
   const [val, setVal] = useState(defaultValue || '');
   const dateRef = useRef<HTMLInputElement>(null);
@@ -50,11 +50,13 @@ const DateInput = ({ name, label, defaultValue, lang, required }: { name: string
           onChange={(e) => setVal(e.target.value)}
           onClick={() => {
             if (dateRef.current) {
-              if (typeof dateRef.current.showPicker === 'function') {
-                dateRef.current.showPicker();
-              } else {
-                dateRef.current.click();
-              }
+              try {
+                if (typeof dateRef.current.showPicker === 'function') {
+                  dateRef.current.showPicker();
+                } else {
+                  dateRef.current.click();
+                }
+              } catch (err) {}
             }
           }}
           placeholder="DD/MM/YYYY"
@@ -65,11 +67,13 @@ const DateInput = ({ name, label, defaultValue, lang, required }: { name: string
           type="button"
           onClick={() => {
             if (dateRef.current) {
-              if (typeof dateRef.current.showPicker === 'function') {
-                dateRef.current.showPicker();
-              } else {
-                dateRef.current.click();
-              }
+              try {
+                if (typeof dateRef.current.showPicker === 'function') {
+                  dateRef.current.showPicker();
+                } else {
+                  dateRef.current.click();
+                }
+              } catch (err) {}
             }
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-600 dark:hover:text-yellow-500 cursor-pointer p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center"
@@ -147,7 +151,11 @@ export default function ClientDataView() {
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
-
+  const [policeReportsList, setPoliceReportsList] = useState<{date: string, no: string}[]>([{date: '', no: ''}]);
+  const [ipList, setIpList] = useState<{date: string, no: string, pem: string, officer: string}[]>([{date: '', no: '', pem: '', officer: ''}]);
+  const [selectedIpk, setSelectedIpk] = useState('');
+  const [selectedIpd, setSelectedIpd] = useState('');
+  const [paymentList, setPaymentList] = useState<{amount: string, date: string}[]>([]);
   // MODAL STATE - VIEW (NEW)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
@@ -378,6 +386,7 @@ export default function ClientDataView() {
   const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [storageFolders, setStorageFolders] = useState<string[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -585,18 +594,67 @@ export default function ClientDataView() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [permissions, searchQuery, dateFilter, viewMode, storageFolders]);
+  }, [permissions, searchQuery, dateFilter, viewMode, storageFolders, refreshTrigger]);
 
-  const handleOpenAddModal = () => { setEditingClient(null); setIsModalOpen(true); };
+  const handleOpenAddModal = () => { 
+    setEditingClient(null); 
+    setPoliceReportsList([{date: '', no: ''}]);
+    setIpList([{date: '', no: '', pem: '', officer: ''}]);
+    setSelectedIpk('');
+    setSelectedIpd('');
+    setPaymentList([]);
+    setIsModalOpen(true); 
+  };
   const handleOpenEditModal = async (client: any) => {
     setEditingClient(client);
     setIsModalOpen(true);
+    let currentData = client;
     if (client?.id && !client.isVirtual) {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
-      if (data) setEditingClient({ ...data, _stableKey: client._stableKey });
+      if (data) {
+        currentData = { ...data, _stableKey: client._stableKey };
+        setEditingClient(currentData);
+      }
     }
+    
+    let parsedReports = [];
+    if (currentData?.police_report_no && currentData.police_report_no.trim().startsWith('[')) {
+       try { parsedReports = JSON.parse(currentData.police_report_no); } catch(e){}
+    } else if (currentData?.police_report_no || currentData?.police_report_date) {
+       parsedReports = [{ date: currentData.police_report_date || '', no: currentData.police_report_no || '' }];
+    }
+    if (parsedReports.length === 0) parsedReports = [{ date: '', no: '' }];
+    setPoliceReportsList(parsedReports);
+
+    let parsedIps = [];
+    if (currentData?.ip_no && currentData.ip_no.trim().startsWith('[')) {
+       try { parsedIps = JSON.parse(currentData.ip_no); } catch(e){}
+    } else if (currentData?.ip_no || currentData?.ip_date || currentData?.ip_pem1 || currentData?.ip_officer) {
+       parsedIps = [{ 
+         date: currentData.ip_date || '', 
+         no: currentData.ip_no || '',
+         pem: currentData.ip_pem1 || '',
+         officer: currentData.ip_officer || ''
+       }];
+    }
+    if (parsedIps.length === 0) parsedIps = [{ date: '', no: '', pem: '', officer: '' }];
+    setIpList(parsedIps);
+    
+    setSelectedIpk(currentData?.report_location_ipk || '');
+    setSelectedIpd(currentData?.report_location_ipd || '');
+
+    const payments = [];
+    for (let i = 1; i <= 6; i++) {
+      const prefix = i === 1 ? '1st' : i === 2 ? '2nd' : i === 3 ? '3rd' : `${i}th`;
+      const amt = currentData?.[`${prefix} PAYMENT`];
+      const dt = currentData?.[`${prefix} PAYMENT DATE`];
+      if (amt || dt) {
+        payments.push({ amount: amt?.toString() || '', date: dt || '' });
+      }
+    }
+    setPaymentList(payments);
   };
-  const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); };
+  const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); setSelectedIpk(''); setSelectedIpd(''); setPaymentList([]); };
 
   // New Handlers for the View Detail Box
   const handleOpenViewModal = async (client: any) => {
@@ -753,7 +811,7 @@ export default function ClientDataView() {
       }
 
       handleCloseModal();
-      window.location.reload();
+      setRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error deleting client:', err);
       alert(lang === 'bm' ? 'Ralat semasa memadam klien. Sila cuba lagi.' : 'Error deleting client. Please try again.');
@@ -764,13 +822,21 @@ export default function ClientDataView() {
 
   const handleFinancialChange = () => {
     const pkgInput = document.querySelector('input[name="PACKAGE (RM)"]') as HTMLInputElement;
-    const paidInput = document.querySelector('input[name="TOTAL PAID (RM)"]') as HTMLInputElement;
     const pendingInput = document.querySelector('input[name="PENDING (RM)"]') as HTMLInputElement;
+    const paidInput = document.querySelector('input[name="TOTAL PAID (RM)"]') as HTMLInputElement;
 
-    if (pkgInput && paidInput && pendingInput) {
+    let totalPaid = 0;
+    document.querySelectorAll('input[name^="payment_amt_"]').forEach((input) => {
+      totalPaid += parseFloat((input as HTMLInputElement).value) || 0;
+    });
+
+    if (paidInput) {
+       paidInput.value = totalPaid % 1 === 0 ? totalPaid.toString() : totalPaid.toFixed(2);
+    }
+
+    if (pkgInput && pendingInput) {
       const pkgVal = parseFloat(pkgInput.value) || 0;
-      const paidVal = parseFloat(paidInput.value) || 0;
-      const pendingVal = Math.max(0, pkgVal - paidVal);
+      const pendingVal = Math.max(0, pkgVal - totalPaid);
       pendingInput.value = pendingVal % 1 === 0 ? pendingVal.toString() : pendingVal.toFixed(2);
     }
   };
@@ -781,6 +847,44 @@ export default function ClientDataView() {
 
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
+
+    const gatheredReports = [];
+    let idx = 0;
+    while (true) {
+       const dKey = `report_date_${idx}`;
+       const nKey = `report_no_${idx}`;
+       if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey)) {
+         break;
+       }
+       const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+       const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+       if (dVal || nVal) {
+         gatheredReports.push({ date: dVal, no: nVal });
+       }
+       idx++;
+    }
+    const reportsJson = JSON.stringify(gatheredReports);
+
+    const gatheredIps = [];
+    let ipIdx = 0;
+    while (true) {
+       const dKey = `ip_date_${ipIdx}`;
+       const nKey = `ip_no_${ipIdx}`;
+       const pKey = `ip_pem_${ipIdx}`;
+       const oKey = `ip_officer_${ipIdx}`;
+       if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey) && !data.hasOwnProperty(pKey) && !data.hasOwnProperty(oKey)) {
+         break;
+       }
+       const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+       const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+       const pVal = sanitizeInput((data[pKey] as string) || '', 100);
+       const oVal = sanitizeInput((data[oKey] as string) || '', 200);
+       if (dVal || nVal || pVal || oVal) {
+         gatheredIps.push({ date: dVal, no: nVal, pem: pVal, officer: oVal });
+       }
+       ipIdx++;
+    }
+    const ipsJson = JSON.stringify(gatheredIps);
 
     // ── Sanitize every field before touching the database ────────────────────
     const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
@@ -801,32 +905,31 @@ export default function ClientDataView() {
       ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
       EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
       REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
-      '1st PAYMENT': parseSafeAmount(data['1st PAYMENT']),
-      '1st PAYMENT DATE': sanitizeInput((data['1st PAYMENT DATE'] as string) || '', 20),
-      '2nd PAYMENT': parseSafeAmount(data['2nd PAYMENT']),
-      '2nd PAYMENT DATE': sanitizeInput((data['2nd PAYMENT DATE'] as string) || '', 20),
-      '3rd PAYMENT': parseSafeAmount(data['3rd PAYMENT']),
-      '3rd PAYMENT DATE': sanitizeInput((data['3rd PAYMENT DATE'] as string) || '', 20),
-      '4th PAYMENT': parseSafeAmount(data['4th PAYMENT']),
-      '4th PAYMENT DATE': sanitizeInput((data['4th PAYMENT DATE'] as string) || '', 20),
-      '5th PAYMENT': parseSafeAmount(data['5th PAYMENT']),
-      '5th PAYMENT DATE': sanitizeInput((data['5th PAYMENT DATE'] as string) || '', 20),
-      '6th PAYMENT': parseSafeAmount(data['6th PAYMENT']),
-      '6th PAYMENT DATE': sanitizeInput((data['6th PAYMENT DATE'] as string) || '', 20),
+      '1st PAYMENT': parseSafeAmount(data['payment_amt_0']),
+      '1st PAYMENT DATE': sanitizeInput((data['payment_date_0'] as string) || '', 20),
+      '2nd PAYMENT': parseSafeAmount(data['payment_amt_1']),
+      '2nd PAYMENT DATE': sanitizeInput((data['payment_date_1'] as string) || '', 20),
+      '3rd PAYMENT': parseSafeAmount(data['payment_amt_2']),
+      '3rd PAYMENT DATE': sanitizeInput((data['payment_date_2'] as string) || '', 20),
+      '4th PAYMENT': parseSafeAmount(data['payment_amt_3']),
+      '4th PAYMENT DATE': sanitizeInput((data['payment_date_3'] as string) || '', 20),
+      '5th PAYMENT': parseSafeAmount(data['payment_amt_4']),
+      '5th PAYMENT DATE': sanitizeInput((data['payment_date_4'] as string) || '', 20),
+      '6th PAYMENT': parseSafeAmount(data['payment_amt_5']),
+      '6th PAYMENT DATE': sanitizeInput((data['payment_date_5'] as string) || '', 20),
       'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
       'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
       'Report': sanitizeInput((data.Report as string) || '', 500),
       'Action Taken by police': sanitizeInput((data['Action Taken by police'] as string) || '', 500),
-      police_report_date: sanitizeInput((data.police_report_date as string) || '', 20),
-      police_report_no: sanitizeInput((data.police_report_no as string) || '', 100),
-      ip_date: sanitizeInput((data.ip_date as string) || '', 20),
-      ip_no: sanitizeInput((data.ip_no as string) || '', 100),
-      ip_pem1: sanitizeInput((data.ip_pem1 as string) || '', 100),
-      ip_officer: sanitizeInput((data.ip_officer as string) || '', 200),
+      police_report_date: gatheredReports.length > 0 ? gatheredReports[0].date : '',
+      police_report_no: reportsJson,
+      ip_date: gatheredIps.length > 0 ? gatheredIps[0].date : '',
+      ip_no: ipsJson,
+      ip_pem1: gatheredIps.length > 0 ? gatheredIps[0].pem : '',
+      ip_officer: gatheredIps.length > 0 ? gatheredIps[0].officer : '',
       report_location_balai: sanitizeInput((data.report_location_balai as string) || '', 200),
       report_location_ipd: sanitizeInput((data.report_location_ipd as string) || '', 200),
       report_location_ipk: sanitizeInput((data.report_location_ipk as string) || '', 200),
-      resolution_status: sanitizeInput((data.resolution_status as string) || 'Tindakan', 50),
       lod_date: sanitizeInput((data.lod_date as string) || '', 20),
       lod_claim_amount: sanitizeInput((data.lod_claim_amount as string) || '', 50),
       lod_remark: sanitizeInput((data.lod_remark as string) || '', 1000),
@@ -847,7 +950,7 @@ export default function ClientDataView() {
         const { error } = await supabase.from('clients').insert([clientPayload]);
         if (error) throw error;
       }
-      window.location.reload();
+      setRefreshTrigger(prev => prev + 1);
     } catch (_err) {
       alert(t('clients', 'failedToSave', lang));
     } finally {
@@ -951,6 +1054,7 @@ export default function ClientDataView() {
                     <ViewField label={t('clients', 'icNumberLabel', lang)} value={viewingClient['IC NUMBER']} lang={lang} />
                     <ViewField label={t('clients', 'phoneNumberLabel', lang)} value={viewingClient['PHONE NUMBER']} lang={lang} />
                     <ViewField label={t('clients', 'emailLabel', lang)} value={viewingClient.EMAIL} lang={lang} />
+                    <ViewField label={t('clients', 'dateLabel', lang) || (lang === 'bm' ? 'Tarikh' : 'Date')} value={viewingClient.DATE} lang={lang} />
                   </div>
                 </div>
 
@@ -964,9 +1068,33 @@ export default function ClientDataView() {
                     }
                     title={t('clients', 'policeReport', lang)}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <ViewField label={`${t('clients', 'reportDate', lang)}`} value={viewingClient.police_report_date} lang={lang} />
-                    <ViewField label={`${t('clients', 'reportNo', lang)}`} value={viewingClient.police_report_no} lang={lang} />
+                  <div className="flex flex-col gap-3">
+                     {(() => {
+                        let parsedReports = [];
+                        if (viewingClient.police_report_no && String(viewingClient.police_report_no).trim().startsWith('[')) {
+                           try { parsedReports = JSON.parse(viewingClient.police_report_no); } catch(e){}
+                        } else if (viewingClient.police_report_no || viewingClient.police_report_date) {
+                           parsedReports = [{ date: viewingClient.police_report_date || '', no: viewingClient.police_report_no || '' }];
+                        }
+                        
+                        if (parsedReports.length === 0) {
+                           return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
+                        }
+
+                        return parsedReports.map((rp: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                             {parsedReports.length > 1 && (
+                               <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
+                                 Report #{idx + 1}
+                               </div>
+                             )}
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                               <ViewField label={t('clients', 'reportDate', lang)} value={rp.date} lang={lang} />
+                               <ViewField label={t('clients', 'reportNo', lang)} value={rp.no} lang={lang} />
+                             </div>
+                          </div>
+                        ));
+                     })()}
                   </div>
                 </div>
 
@@ -980,11 +1108,40 @@ export default function ClientDataView() {
                     }
                     title={t('clients', 'investigationPaper', lang)}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <ViewField label={`${t('clients', 'ipDate', lang)}`} value={viewingClient.ip_date} lang={lang} />
-                    <ViewField label={`${t('clients', 'ipNo', lang)}`} value={viewingClient.ip_no} lang={lang} />
-                    <ViewField label={`${t('clients', 'ipPem1', lang)}`} value={viewingClient.ip_pem1} lang={lang} />
-                    <ViewField label={`${t('clients', 'ipOfficer', lang)}`} value={viewingClient.ip_officer} lang={lang} />
+                  <div className="flex flex-col gap-3">
+                     {(() => {
+                        let parsedIps = [];
+                        if (viewingClient.ip_no && String(viewingClient.ip_no).trim().startsWith('[')) {
+                           try { parsedIps = JSON.parse(viewingClient.ip_no); } catch(e){}
+                        } else if (viewingClient.ip_no || viewingClient.ip_date || viewingClient.ip_pem1 || viewingClient.ip_officer) {
+                           parsedIps = [{ 
+                             date: viewingClient.ip_date || '', 
+                             no: viewingClient.ip_no || '',
+                             pem: viewingClient.ip_pem1 || '',
+                             officer: viewingClient.ip_officer || ''
+                           }];
+                        }
+                        
+                        if (parsedIps.length === 0) {
+                           return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
+                        }
+
+                        return parsedIps.map((ip: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                             {parsedIps.length > 1 && (
+                               <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
+                                 IP #{idx + 1}
+                               </div>
+                             )}
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                               <ViewField label={t('clients', 'ipDate', lang)} value={ip.date} lang={lang} />
+                               <ViewField label={t('clients', 'ipNo', lang)} value={ip.no} lang={lang} />
+                               <ViewField label={t('clients', 'ipPem1', lang)} value={ip.pem} lang={lang} />
+                               <ViewField label={t('clients', 'ipOfficer', lang)} value={ip.officer} lang={lang} />
+                             </div>
+                          </div>
+                        ));
+                     })()}
                   </div>
                 </div>
 
@@ -1211,22 +1368,9 @@ export default function ClientDataView() {
                     }
                     title={lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <ViewField label={t('clients', 'caseStatusLabel', lang)} value={viewingClient['CASE STATUS']} lang={lang} />
                     <ViewField label={t('clients', 'caseCategoryLabel', lang)} value={viewingClient['CASE CATEGORY']} lang={lang} />
-                    <ViewField
-                      label={t('clients', 'resolutionStatusLabel', lang)}
-                      value={
-                        viewingClient.resolution_status === 'Selesai'
-                          ? t('clients', 'selesai', lang)
-                          : viewingClient.resolution_status === 'Tindakan'
-                            ? t('clients', 'tindakan', lang)
-                            : viewingClient.resolution_status === 'tertangguh' || viewingClient.resolution_status === 'Tertangguh'
-                              ? t('clients', 'tertangguh', lang)
-                              : viewingClient.resolution_status
-                      }
-                      lang={lang}
-                    />
                     <ViewField label={t('clients', 'remarkCatatan', lang)} value={viewingClient.REMARK} lang={lang} />
                   </div>
                 </div>
@@ -1244,11 +1388,11 @@ export default function ClientDataView() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <ViewField label={`${t('clients', 'lodDate', lang)}`} value={viewingClient.lod_date} lang={lang} />
                     <ViewField
-                      label={`(ii) ${t('clients', 'lodClaimAmount', lang)}`}
+                      label={`${t('clients', 'lodClaimAmount', lang)}`}
                       value={viewingClient.lod_claim_amount !== null && viewingClient.lod_claim_amount !== '' && !isNaN(Number(viewingClient.lod_claim_amount)) ? `RM ${viewingClient.lod_claim_amount}` : viewingClient.lod_claim_amount}
                       lang={lang}
                     />
-                    <ViewField label={`(iii) ${t('clients', 'lodRemark', lang)}`} value={viewingClient.lod_remark} lang={lang} />
+                    <ViewField label={`${t('clients', 'lodRemark', lang)}`} value={viewingClient.lod_remark} lang={lang} />
                   </div>
                 </div>
               </div>
@@ -1368,64 +1512,151 @@ export default function ClientDataView() {
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'phoneNumberLabel', lang)}</label>
                     <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                   </div>
-                  <div className="sm:col-span-2 space-y-1">
+                  <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'emailLabel', lang)}</label>
                     <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
+                  <DateInput
+                    name="DATE"
+                    label={`${t('clients', 'dateLabel', lang) || (lang === 'bm' ? 'Tarikh' : 'Date')} (DD/MM/YYYY)`}
+                    defaultValue={editingClient?.DATE || ''}
+                    lang={lang}
+                  />
 
                   {/* 2. Laporan Polis */}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const lastIdx = policeReportsList.length - 1;
+                        if (lastIdx >= 0) {
+                          const lastDate = (document.querySelector(`input[name="report_date_${lastIdx}"]`) as HTMLInputElement)?.value;
+                          const lastNo = (document.querySelector(`input[name="report_no_${lastIdx}"]`) as HTMLInputElement)?.value;
+                          if (!lastDate?.trim() && !lastNo?.trim()) {
+                            alert(lang === 'bm' ? 'Sila isikan laporan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous report first before adding a new one.');
+                            return;
+                          }
+                        }
+                        setPoliceReportsList([...policeReportsList, {date:'', no:''}]);
+                      }} 
+                      className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                    >
+                       + Add Report
+                    </button>
                   </div>
-                  <DateInput
-                    name="police_report_date"
-                    label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
-                    defaultValue={editingClient?.police_report_date || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'reportNo', lang)}`}</label>
-                    <input type="text" name="police_report_no" defaultValue={editingClient?.police_report_no || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
+                  
+                  {policeReportsList.map((rp, idx) => (
+                    <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
+                       <div className="absolute top-2 right-2">
+                         {policeReportsList.length > 1 && (
+                           <button type="button" onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 p-1.5 rounded-lg transition-colors">
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                           </button>
+                         )}
+                       </div>
+                       <DateInput
+                         name={`report_date_${idx}`}
+                         label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
+                         defaultValue={rp.date}
+                         lang={lang}
+                       />
+                       <div className="space-y-1">
+                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'reportNo', lang)}</label>
+                         <input type="text" name={`report_no_${idx}`} defaultValue={rp.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                       </div>
+                    </div>
+                  ))}
 
                   {/* 3. Kertas Siasatan (IP) */}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const lastIdx = ipList.length - 1;
+                        if (lastIdx >= 0) {
+                          const lastNo = (document.querySelector(`input[name="ip_no_${lastIdx}"]`) as HTMLInputElement)?.value;
+                          const lastPem = (document.querySelector(`select[name="ip_pem_${lastIdx}"]`) as HTMLSelectElement)?.value;
+                          if (!lastNo?.trim() && !lastPem?.trim()) {
+                            alert(lang === 'bm' ? 'Sila isikan kertas siasatan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous investigation paper first before adding a new one.');
+                            return;
+                          }
+                        }
+                        setIpList([...ipList, {date:'', no:'', pem:'', officer:''}]);
+                      }} 
+                      className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                    >
+                       + Add IP
+                    </button>
                   </div>
-                  <DateInput
-                    name="ip_date"
-                    label={`{t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
-                    defaultValue={editingClient?.ip_date || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'ipNo', lang)}`}</label>
-                    <input type="text" name="ip_no" defaultValue={editingClient?.ip_no || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iii) ${t('clients', 'ipPem1', lang)}`}</label>
-                    <input type="text" name="ip_pem1" defaultValue={editingClient?.ip_pem1 || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iv) ${t('clients', 'ipOfficer', lang)}`}</label>
-                    <input type="text" name="ip_officer" defaultValue={editingClient?.ip_officer || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
+                  
+                  {ipList.map((ip, idx) => (
+                    <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
+                       <div className="absolute top-2 right-2">
+                         {ipList.length > 1 && (
+                           <button type="button" onClick={() => setIpList(ipList.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 p-1.5 rounded-lg transition-colors">
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                           </button>
+                         )}
+                       </div>
+                       <DateInput
+                         name={`ip_date_${idx}`}
+                         label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
+                         defaultValue={ip.date}
+                         lang={lang}
+                       />
+                       <div className="space-y-1">
+                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipNo', lang)}</label>
+                         <input type="text" name={`ip_no_${idx}`} defaultValue={ip.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                       </div>
+                       <div className="space-y-1">
+                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipPem1', lang)}</label>
+                         <select name={`ip_pem_${idx}`} defaultValue={ip.pem} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]">
+                           <option value="">{lang === 'bm' ? 'Pilih PEM' : 'Select PEM'}</option>
+                           <option value="PEM 1">PEM 1</option>
+                           <option value="PEM 2">PEM 2</option>
+                           <option value="PEM 3">PEM 3</option>
+                           <option value="PEM 4">PEM 4</option>
+                         </select>
+                       </div>
+                       <div className="space-y-1">
+                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipOfficer', lang)}</label>
+                         <input type="text" name={`ip_officer_${idx}`} defaultValue={ip.officer} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                       </div>
+                    </div>
+                  ))}
 
                   {/* 4. Lokasi Laporan */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'reportLocation', lang)}</h3>
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
-                    <input type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
+                    <input list="ipk-list" type="text" name="report_location_ipk" value={selectedIpk} onChange={(e) => { setSelectedIpk(e.target.value); setSelectedIpd(''); }} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPK' : 'Select or type IPK'} />
+                    <datalist id="ipk-list">
+                      {Object.keys(policeLocations).map(ipk => (
+                        <option key={ipk} value={ipk} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'districtPolice', lang)}`}</label>
-                    <input type="text" name="report_location_ipd" defaultValue={editingClient?.report_location_ipd || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    <input list="ipd-list" type="text" name="report_location_ipd" value={selectedIpd} onChange={(e) => setSelectedIpd(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPD' : 'Select or type IPD'} />
+                    <datalist id="ipd-list">
+                      {selectedIpk && policeLocations[selectedIpk] ? Object.keys(policeLocations[selectedIpk]).map(ipd => (
+                        <option key={ipd} value={ipd} />
+                      )) : null}
+                    </datalist>
                   </div>
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
-                    <input type="text" name="report_location_ipk" defaultValue={editingClient?.report_location_ipk || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
+                    <input list="balai-list" type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip Balai' : 'Select or type Balai'} />
+                    <datalist id="balai-list">
+                      {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? policeLocations[selectedIpk][selectedIpd].map(balai => (
+                        <option key={balai} value={balai} />
+                      )) : null}
+                    </datalist>
                   </div>
 
                   {/* 5. Financial Details */}
@@ -1438,7 +1669,7 @@ export default function ClientDataView() {
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
-                    <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    <input type="number" name="TOTAL PAID (RM)" step="0.01" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
@@ -1449,71 +1680,60 @@ export default function ClientDataView() {
                     <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
 
-                  {/* Date Input for standard 6 payments Scheduler */}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-1 mt-2 mb-1">
+                  {/* Dynamic payments Scheduler */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h4 className="text-xs font-bold text-slate-550 dark:text-zinc-550 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
+                    {paymentList.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentTotal = paymentList.length;
+                          // Find first unfilled payment block if user didn't fill previous ones
+                          const isPreviousFilled = paymentList.every(p => {
+                            const amt = document.querySelector(`input[name="payment_amt_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
+                            const dt = document.querySelector(`input[name="payment_date_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
+                            return (amt && amt.value) || (dt && dt.value);
+                          });
+                          if (!isPreviousFilled && currentTotal > 0) {
+                            alert(lang === 'bm' ? 'Sila isikan maklumat bayaran sebelumnya dahulu.' : 'Please fill in the previous payment details first.');
+                            return;
+                          }
+                          setPaymentList([...paymentList, { amount: '', date: '' }]);
+                        }}
+                        className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                      >
+                        + {lang === 'bm' ? 'Tambah Bayaran' : 'Add Payment'}
+                      </button>
+                    )}
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
-                    <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="1st PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Pertama (DD/MM/YYYY)' : '1st Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["1st PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
-                    <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="2nd PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Kedua (DD/MM/YYYY)' : '2nd Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
-                    <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="3rd PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Ketiga (DD/MM/YYYY)' : '3rd Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
-                    <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="4th PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Keempat (DD/MM/YYYY)' : '4th Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["4th PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
-                    <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="5th PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Kelima (DD/MM/YYYY)' : '5th Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["5th PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
-                    <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="6th PAYMENT DATE"
-                    label={lang === 'bm' ? 'Tarikh Bayaran Keenam (DD/MM/YYYY)' : '6th Payment Date (DD/MM/YYYY)'}
-                    defaultValue={editingClient?.["6th PAYMENT DATE"] || ''}
-                    lang={lang}
-                  />
-
+                  {paymentList.map((pay, idx) => (
+                    <div key={`pay-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            const newList = [...paymentList];
+                            newList.splice(idx, 1);
+                            setPaymentList(newList);
+                            setTimeout(handleFinancialChange, 100);
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors"
+                        >
+                           ×
+                        </button>
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                            {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
+                          </label>
+                          <input type="number" name={`payment_amt_${idx}`} step="0.01" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                        <DateInput
+                          name={`payment_date_${idx}`}
+                          label={lang === 'bm' ? `Tarikh Bayaran ${idx + 1} (DD/MM/YYYY)` : `Payment Date ${idx + 1} (DD/MM/YYYY)`}
+                          defaultValue={pay.date}
+                          lang={lang}
+                        />
+                    </div>
+                  ))}
                   {/* 6. Case & Resolution Details */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}</h3>
@@ -1559,22 +1779,6 @@ export default function ClientDataView() {
                     );
                   })()}
 
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'resolutionStatusLabel', lang)}</label>
-                    <div className="relative">
-                      <select name="resolution_status" defaultValue={editingClient?.resolution_status || 'Tindakan'} className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
-                        <option value="Selesai">{lang === 'bm' ? 'Selesai' : 'Completed'}</option>
-                        <option value="Tindakan">{lang === 'bm' ? 'Tindakan' : 'Active'}</option>
-                        <option value="Tertangguh">{lang === 'bm' ? 'Tertangguh' : 'Deferred'}</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="sm:col-span-2 space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'remarkCatatan', lang)}</label>
                     <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none min-h-[100px]"></textarea>
@@ -1586,16 +1790,16 @@ export default function ClientDataView() {
                   </div>
                   <DateInput
                     name="lod_date"
-                    label={`(i) ${t('clients', 'lodDate', lang)} (DD/MM/YYYY)`}
+                    label={`${t('clients', 'lodDate', lang)} (DD/MM/YYYY)`}
                     defaultValue={editingClient?.lod_date || ''}
                     lang={lang}
                   />
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'lodClaimAmount', lang)}`}</label>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodClaimAmount', lang)}`}</label>
                     <input type="text" name="lod_claim_amount" defaultValue={editingClient?.lod_claim_amount || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
                   <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iii) ${t('clients', 'lodRemark', lang)}`}</label>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodRemark', lang)}`}</label>
                     <input type="text" name="lod_remark" defaultValue={editingClient?.lod_remark || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
 

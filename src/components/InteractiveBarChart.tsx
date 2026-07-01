@@ -209,7 +209,7 @@ export default function InteractiveBarChart({
 
             return (
               <g 
-                key={index} 
+                key={d.label} 
                 className={onBarClick ? 'cursor-pointer' : 'cursor-default'}
                 onMouseEnter={() => setHoveredBar(index)}
                 onMouseLeave={() => setHoveredBar(null)}
@@ -227,11 +227,11 @@ export default function InteractiveBarChart({
 
                 {/* Gradient Bar */}
                 <defs>
-                  <linearGradient id={`barGrad-${index}`} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={`barGrad-${d.label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={d.isLeave ? '#c084fc' : barColorGradStart} />
                     <stop offset="100%" stopColor={d.isLeave ? '#9333ea' : barColorGradEnd} />
                   </linearGradient>
-                  <linearGradient id={`barGradHover-${index}`} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={`barGradHover-${d.label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={d.isLeave ? '#d8b4fe' : barColorHoverStart} />
                     <stop offset="100%" stopColor={d.isLeave ? '#a855f7' : barColorHoverEnd} />
                   </linearGradient>
@@ -244,7 +244,7 @@ export default function InteractiveBarChart({
                   height={Math.max(activeHeight, 4)} 
                   rx={6} 
                   ry={6}
-                  fill={isHovered ? `url(#barGradHover-${index})` : `url(#barGrad-${index})`}
+                  fill={isHovered ? `url(#barGradHover-${d.label.replace(/\s+/g, '-')})` : `url(#barGrad-${d.label.replace(/\s+/g, '-')})`}
                   className="transition-all duration-300 ease-out shadow-sm opacity-90 hover:opacity-100" 
                 />
 

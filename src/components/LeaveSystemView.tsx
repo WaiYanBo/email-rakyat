@@ -812,6 +812,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  onClick={(e) => {}}
                   className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -825,6 +826,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  onClick={(e) => {}}
                   className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>

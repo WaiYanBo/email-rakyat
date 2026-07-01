@@ -193,3 +193,21 @@ select[data-custom-select]:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 currentColor;
 }
+/* Make native date and month pickers open when clicking anywhere in the input */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="date"],
+input[type="month"] {
+  position: relative;
+}

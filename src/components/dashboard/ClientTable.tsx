@@ -79,6 +79,26 @@ const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
   </th>
 );
 
+const EXPANDED_COLUMNS_ORDER = [
+  'No', 'NAME', 'IC NUMBER', 'PHONE NUMBER', 'EMAIL', 'ADDRESS', 'DATE',
+  'CASE CATEGORY', 'CASE STATUS', 'lod_date', 'lod_claim_amount', 'lod_remark',
+  'police_report_date', 'police_report_no', 'ip_date', 'ip_no', 'ip_pem1', 'ip_officer',
+  'report_location_ipk', 'report_location_ipd', 'report_location_balai',
+  'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
+  '1st PAYMENT', '1st PAYMENT DATE', '2nd PAYMENT', '2nd PAYMENT DATE', '3rd PAYMENT', '3rd PAYMENT DATE',
+  '4th PAYMENT', '4th PAYMENT DATE', '5th PAYMENT', '5th PAYMENT DATE', '6th PAYMENT', '6th PAYMENT DATE',
+  'Invoice Ref No', 'REMARK'
+];
+
+const IGNORED_KEYS = ['id', '_stableKey', 'updated_at', 'created_at', 'deleted_at', 'isVirtual', 'folderName', 'Investigation Paper', 'Report', 'Action Taken by police'];
+
+const getOrderedKeys = (clientObj: any) => {
+  const availableKeys = Object.keys(clientObj || {});
+  const orderedKeys = EXPANDED_COLUMNS_ORDER.filter(k => availableKeys.includes(k));
+  const extraKeys = availableKeys.filter(k => !EXPANDED_COLUMNS_ORDER.includes(k) && !IGNORED_KEYS.includes(k));
+  return [...orderedKeys, ...extraKeys];
+};
+
 export default function ClientTable({
   clients,
   canEdit,
@@ -505,16 +525,13 @@ export default function ClientTable({
                   <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("PAID")} sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("PACKAGE")} sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("INVESTIGATION PAPER")} sortKey="Investigation Paper" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("REPORT")} sortKey="Report" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("ACTION TAKEN")} sortKey="Action Taken by police" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("CATEGORY")} sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("DATE")} sortKey="DATE" currentSort={sort} onClick={handleSort} />
                   <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               ) : (
                 <tr>
-                  {Object.keys(clients[0] || {}).filter(k => !['id', '_stableKey', 'updated_at', 'isVirtual', 'folderName'].includes(k)).map(key => (
+                  {getOrderedKeys(clients[0] || {}).map(key => (
                     <SortHeader key={key} label={getLabel(key)} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
                   <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
@@ -551,15 +568,14 @@ export default function ClientTable({
                         <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
-                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Investigation Paper"] || ''}>{client["Investigation Paper"] || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client.Report || ''}>{client.Report || '-'}</td>
-                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300 max-w-[150px] truncate" title={client["Action Taken by police"] || ''}>{client["Action Taken by police"] || '-'}</td>
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
                       </>
                     ) : (
                       <>
-                        {Object.entries(client).filter(([k]) => !['id', '_stableKey', 'updated_at', 'isVirtual', 'folderName'].includes(k)).map(([k, v]) => (
+                        {getOrderedKeys(client).map((k) => {
+                          const v = client[k];
+                          return (
                           <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={String(v || '')}>
                             {k === 'NAME' && client.isVirtual ? (
                               <div className="flex items-center gap-1.5">
@@ -568,11 +584,29 @@ export default function ClientTable({
                                 </span>
                                 <span>{String(v || '-')}</span>
                               </div>
-                            ) : (
-                              String(v || '-')
-                            )}
+                            ) : String(v || '-').startsWith('[') ? (
+                                (() => {
+                                  try {
+                                    const parsed = JSON.parse(String(v));
+                                    if (Array.isArray(parsed)) {
+                                      const validItems = parsed.filter(item => Object.values(item).some(val => val !== '' && val !== null));
+                                      return validItems.length > 0 ? `${validItems.length} Items` : '-';
+                                    }
+                                  } catch (e) {
+                                    const strV = String(v).replace(/\s/g, '');
+                                    if (strV === '[{date:,no:}]' || strV === '[{date:,no:,pem:,officer:}]') return '-';
+                                    if (strV.includes('[{') && strV.includes('}]')) {
+                                      return `${strV.split('},{').length} Items`;
+                                    }
+                                  }
+                                  return String(v);
+                                })()
+                              ) : (
+                                String(v || '-')
+                              )}
                           </td>
-                        ))}
+                        );
+                        })}
                       </>
                     )}
 

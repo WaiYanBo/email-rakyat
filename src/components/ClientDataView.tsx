@@ -91,6 +91,30 @@ const DateInput = ({ name, label, defaultValue, lang, required }: { name: string
   );
 };
 
+const ViewField = ({ label, value, lang }: { label: string; value: any; lang: 'en' | 'bm' }) => (
+  <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
+    <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{label}</p>
+    <p className="text-sm font-semibold text-slate-805 dark:text-white break-words">
+      {value !== null && value !== undefined && String(value).trim() !== '' ? (
+        String(value)
+      ) : (
+        <span className="text-slate-400 dark:text-zinc-650 italic font-normal">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</span>
+      )}
+    </p>
+  </div>
+);
+
+const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
+  <div className="flex items-center gap-2 mb-4 mt-6 first:mt-0">
+    <div className="p-1.5 bg-indigo-50 dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 rounded-lg">
+      {icon}
+    </div>
+    <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+      {title}
+    </h3>
+  </div>
+);
+
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -135,7 +159,7 @@ export default function ClientDataView() {
     try {
       const actualNo = clientNo !== undefined ? clientNo : (viewingClient?.No ?? viewingClient?.NO ?? '');
       const actualName = clientName !== undefined ? clientName : (viewingClient?.NAME ?? '');
-      
+
       const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
       const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
       const clientFolder = `${clientNoVal} ${safeClientName}`;
@@ -170,7 +194,7 @@ export default function ClientDataView() {
           if (file.name === '.keep') return;
           const refNumber = file.name.replace('.pdf', '');
           const dbRec = dbMap.get(refNumber);
-          
+
           const filePath = `Finance/billing_documents/Invoices/${clientFolder}/${file.name}`;
           const { data: publicUrlData } = supabase.storage
             .from('company_drive')
@@ -360,12 +384,12 @@ export default function ClientDataView() {
     async function loadStorageFolders() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      
+
       try {
         const { data: invoiceFoldersData } = await supabase.storage
           .from('company_drive')
           .list('Finance/billing_documents/Invoices', { limit: 1000 });
-        
+
         const { data: receiptFoldersData } = await supabase.storage
           .from('company_drive')
           .list('Finance/billing_documents/Receipts', { limit: 1000 });
@@ -455,22 +479,22 @@ export default function ClientDataView() {
           }
 
           if (dateFilter !== 'all') {
-             const now = new Date();
-             const yearFull = String(now.getFullYear()); // '2026'
-             const monthNum = now.getMonth() + 1; // 1-12
-             const monthPadded = String(monthNum).padStart(2, '0'); // '06'
-             const monthUnpadded = String(monthNum); // '6'
+            const now = new Date();
+            const yearFull = String(now.getFullYear()); // '2026'
+            const monthNum = now.getMonth() + 1; // 1-12
+            const monthPadded = String(monthNum).padStart(2, '0'); // '06'
+            const monthUnpadded = String(monthNum); // '6'
 
-             if (dateFilter === 'year') {
-                query = query.like('DATE', `%/${yearFull}`);
-             } else if (dateFilter === 'month') {
-                // Handle both '6' and '06' month format: e.g. "19/06/2026" or "9/6/2026"
-                if (monthPadded !== monthUnpadded) {
-                  query = query.or(`DATE.like.%/${monthPadded}/${yearFull},DATE.like.%/${monthUnpadded}/${yearFull}`);
-                } else {
-                  query = query.like('DATE', `%/${monthPadded}/${yearFull}`);
-                }
-             }
+            if (dateFilter === 'year') {
+              query = query.like('DATE', `%/${yearFull}`);
+            } else if (dateFilter === 'month') {
+              // Handle both '6' and '06' month format: e.g. "19/06/2026" or "9/6/2026"
+              if (monthPadded !== monthUnpadded) {
+                query = query.or(`DATE.like.%/${monthPadded}/${yearFull},DATE.like.%/${monthUnpadded}/${yearFull}`);
+              } else {
+                query = query.like('DATE', `%/${monthPadded}/${yearFull}`);
+              }
+            }
           }
 
           // No pagination on the server-side anymore - fetch all to allow global sorting
@@ -496,15 +520,15 @@ export default function ClientDataView() {
 
           const dbClientsList = clientsData || [];
           const virtualClients: any[] = [];
-          
+
           parsedFolders.forEach(pf => {
             const match = dbClientsList.find(c => {
               const dbNo = c.No ?? c.NO;
               const dbName = c.NAME;
-              
+
               const noMatch = dbNo !== null && dbNo !== undefined && pf.No !== null && pf.No !== undefined && Number(dbNo) === Number(pf.No);
               const nameMatch = dbName && pf.NAME && dbName.toLowerCase().trim() === pf.NAME.toLowerCase().trim();
-              
+
               return noMatch || nameMatch;
             });
 
@@ -533,8 +557,8 @@ export default function ClientDataView() {
           let filteredVirtuals = virtualClients;
           if (searchQuery) {
             const q = searchQuery.toLowerCase();
-            filteredVirtuals = virtualClients.filter(vc => 
-              vc.NAME.toLowerCase().includes(q) || 
+            filteredVirtuals = virtualClients.filter(vc =>
+              vc.NAME.toLowerCase().includes(q) ||
               (vc.No && String(vc.No).includes(q))
             );
           }
@@ -639,7 +663,7 @@ export default function ClientDataView() {
           }
         }
       }
-      
+
       await traverse(oldFolderPath);
 
       if (allFiles.length > 0) {
@@ -704,7 +728,7 @@ export default function ClientDataView() {
 
       const invoicesFolderPath = `Finance/billing_documents/Invoices/${clientFolder}`;
       const receiptsFolderPath = `Finance/billing_documents/Receipts/${clientFolder}`;
-      
+
       await moveFolderToTrash(invoicesFolderPath);
       await moveFolderToTrash(receiptsFolderPath);
 
@@ -793,6 +817,19 @@ export default function ClientDataView() {
       'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
       'Report': sanitizeInput((data.Report as string) || '', 500),
       'Action Taken by police': sanitizeInput((data['Action Taken by police'] as string) || '', 500),
+      police_report_date: sanitizeInput((data.police_report_date as string) || '', 20),
+      police_report_no: sanitizeInput((data.police_report_no as string) || '', 100),
+      ip_date: sanitizeInput((data.ip_date as string) || '', 20),
+      ip_no: sanitizeInput((data.ip_no as string) || '', 100),
+      ip_pem1: sanitizeInput((data.ip_pem1 as string) || '', 100),
+      ip_officer: sanitizeInput((data.ip_officer as string) || '', 200),
+      report_location_balai: sanitizeInput((data.report_location_balai as string) || '', 200),
+      report_location_ipd: sanitizeInput((data.report_location_ipd as string) || '', 200),
+      report_location_ipk: sanitizeInput((data.report_location_ipk as string) || '', 200),
+      resolution_status: sanitizeInput((data.resolution_status as string) || 'Tindakan', 50),
+      lod_date: sanitizeInput((data.lod_date as string) || '', 20),
+      lod_claim_amount: sanitizeInput((data.lod_claim_amount as string) || '', 50),
+      lod_remark: sanitizeInput((data.lod_remark as string) || '', 1000),
     };
 
     // Basic validation
@@ -844,502 +881,764 @@ export default function ClientDataView() {
   return (
     <ErrorBoundary>
       <div className="space-y-6 animate-page-transition pt-12 md:pt-0 relative">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">
-          {t('clients', 'pageTitle', lang)}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
-          {canEdit ? t('clients', 'manageSubtitle', lang) : t('clients', 'viewSubtitle', lang)}
-        </p>
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">
+            {t('clients', 'pageTitle', lang)}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
+            {canEdit ? t('clients', 'manageSubtitle', lang) : t('clients', 'viewSubtitle', lang)}
+          </p>
+        </div>
 
-      <div className="w-full">
-        {fetchError && (
-          <div className="mb-4 p-4 bg-red-100 text-red-900 border border-red-200 rounded-xl">
-            <h3 className="font-bold">Error fetching data from Supabase:</h3>
-            <p className="font-mono text-sm">{fetchError}</p>
-          </div>
-        )}
-        <ClientTable
-          clients={dbClients}
-          canEdit={canEdit}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); }}
-          dateFilter={dateFilter}
-          onDateFilterChange={(df) => { setDateFilter(df); }}
-          viewMode={viewMode}
-          onViewModeChange={(vm) => { setViewMode(vm); }}
-          onExportFull={handleExportFull}
-          onAddClick={handleOpenAddModal}
-          onEditClick={handleOpenEditModal}
-          onViewClick={handleOpenViewModal}
-        />
-      </div>
+        <div className="w-full">
+          {fetchError && (
+            <div className="mb-4 p-4 bg-red-100 text-red-900 border border-red-200 rounded-xl">
+              <h3 className="font-bold">Error fetching data from Supabase:</h3>
+              <p className="font-mono text-sm">{fetchError}</p>
+            </div>
+          )}
+          <ClientTable
+            clients={dbClients}
+            canEdit={canEdit}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => { setSearchQuery(q); }}
+            dateFilter={dateFilter}
+            onDateFilterChange={(df) => { setDateFilter(df); }}
+            viewMode={viewMode}
+            onViewModeChange={(vm) => { setViewMode(vm); }}
+            onExportFull={handleExportFull}
+            onAddClick={handleOpenAddModal}
+            onEditClick={handleOpenEditModal}
+            onViewClick={handleOpenViewModal}
+          />
+        </div>
 
-      {/* ==============================================
+        {/* ==============================================
           1. VIEW CLIENT DETAILS MODAL
           ============================================== */}
-      {isViewModalOpen && viewingClient && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        {isViewModalOpen && viewingClient && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[95vh]">
 
-            <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
-                {t('clients', 'clientCaseProfile', lang)}
-              </h2>
-              <button
-                onClick={handleCloseViewModal}
-                className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
+              <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
+                  {t('clients', 'clientCaseProfile', lang)}
+                </h2>
+                <button
+                  onClick={handleCloseViewModal}
+                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-gray-900/10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(viewingClient).map(([key, value]) => {
-                  if (['id', '_stableKey', 'updated_at'].includes(key)) return null;
-                  if (/(1st|2nd|3rd|4th|5th|6th)\s+payment/i.test(key)) return null;
+              <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-gray-900/10 space-y-6">
+                {/* 1. Personal Information */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    }
+                    title={t('clients', 'personalInfo', lang)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <ViewField label={t('clients', 'nama', lang)} value={viewingClient.NAME} lang={lang} />
+                    <ViewField label={t('clients', 'alamat', lang)} value={viewingClient.ADDRESS} lang={lang} />
+                    <ViewField label={t('clients', 'icNumberLabel', lang)} value={viewingClient['IC NUMBER']} lang={lang} />
+                    <ViewField label={t('clients', 'phoneNumberLabel', lang)} value={viewingClient['PHONE NUMBER']} lang={lang} />
+                    <ViewField label={t('clients', 'emailLabel', lang)} value={viewingClient.EMAIL} lang={lang} />
+                  </div>
+                </div>
+
+                {/* 2. Laporan polis */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    }
+                    title={t('clients', 'policeReport', lang)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ViewField label={`${t('clients', 'reportDate', lang)}`} value={viewingClient.police_report_date} lang={lang} />
+                    <ViewField label={`${t('clients', 'reportNo', lang)}`} value={viewingClient.police_report_no} lang={lang} />
+                  </div>
+                </div>
+
+                {/* 3. Kertas Siasatan (IP) */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    }
+                    title={t('clients', 'investigationPaper', lang)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <ViewField label={`${t('clients', 'ipDate', lang)}`} value={viewingClient.ip_date} lang={lang} />
+                    <ViewField label={`${t('clients', 'ipNo', lang)}`} value={viewingClient.ip_no} lang={lang} />
+                    <ViewField label={`${t('clients', 'ipPem1', lang)}`} value={viewingClient.ip_pem1} lang={lang} />
+                    <ViewField label={`${t('clients', 'ipOfficer', lang)}`} value={viewingClient.ip_officer} lang={lang} />
+                  </div>
+                </div>
+
+                {/* 4. lokasi laporan */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    }
+                    title={t('clients', 'reportLocation', lang)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <ViewField label={`${t('clients', 'policeStation', lang)}`} value={viewingClient.report_location_balai} lang={lang} />
+                    <ViewField label={`${t('clients', 'districtPolice', lang)}`} value={viewingClient.report_location_ipd} lang={lang} />
+                    <ViewField label={`${t('clients', 'statePolice', lang)}`} value={viewingClient.report_location_ipk} lang={lang} />
+                  </div>
+                </div>
+
+                {/* 5. Financial Overview & Case Categories */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    }
+                    title={lang === 'bm' ? 'Maklumat Kewangan' : 'Financial Information'}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <ViewField
+                      label={t('clients', 'servicePackage', lang)}
+                      value={viewingClient['PACKAGE (RM)'] !== null && viewingClient['PACKAGE (RM)'] !== '' ? `RM ${viewingClient['PACKAGE (RM)']}` : ''}
+                      lang={lang}
+                    />
+                    <ViewField
+                      label={t('clients', 'pendingBalance', lang)}
+                      value={viewingClient['PENDING (RM)'] !== null && viewingClient['PENDING (RM)'] !== '' ? `RM ${viewingClient['PENDING (RM)']}` : ''}
+                      lang={lang}
+                    />
+                    <ViewField
+                      label={t('clients', 'totalPaidReceived', lang)}
+                      value={viewingClient['TOTAL PAID (RM)'] !== null && viewingClient['TOTAL PAID (RM)'] !== '' ? `RM ${viewingClient['TOTAL PAID (RM)']}` : ''}
+                      lang={lang}
+                    />
+                  </div>
+                </div>
+
+                {/* Installment Payment Schedule */}
+                {(() => {
+                  const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+                  const payments = paymentIndices.map(prefix => {
+                    const amountKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment`);
+                    const dateKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment date`);
+
+                    const amount = amountKey ? viewingClient[amountKey] : null;
+                    const date = dateKey ? viewingClient[dateKey] : null;
+
+                    return { prefix, amount, date };
+                  }).filter(p => p.amount !== null && p.amount !== '' && p.amount !== 0 && p.amount !== '0');
+
+                  if (payments.length === 0) return null;
 
                   return (
-                    <div key={key} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800/80 flex flex-col justify-center shadow-sm">
-                      <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">{getLabel(key)}</p>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white break-words">
-                        {value !== null && value !== '' ? String(value) : <span className="text-slate-400 dark:text-zinc-600 italic font-normal">{t('clients', 'notProvided', lang)}</span>}
-                      </p>
+                    <div>
+                      <SectionHeader
+                        icon={
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        }
+                        title={t('clients', 'paymentSchedule', lang)}
+                      />
+                      <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl p-4 shadow-sm divide-y divide-slate-100 dark:divide-gray-800">
+                        {payments.map(p => {
+                          const ordinalLabel = lang === 'bm'
+                            ? `Bayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}`
+                            : `${p.prefix} Payment`;
+                          const formattedAmt = String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`;
+                          return (
+                            <div key={p.prefix} className="flex justify-between items-center py-3 first:pt-0 last:pb-0 text-sm font-semibold">
+                              <div className="flex flex-col">
+                                <span className="text-slate-800 dark:text-white">{ordinalLabel}</span>
+                                {p.date && <span className="text-xs text-slate-450 dark:text-zinc-500 font-mono font-medium">{p.date}</span>}
+                              </div>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formattedAmt}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
-                })}
-              </div>
+                })()}
 
-              {/* PAYMENTS SECTION */}
-              {(() => {
-                const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
-                const payments = paymentIndices.map(prefix => {
-                  const amountKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment`);
-                  const dateKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment date`);
-                  
-                  const amount = amountKey ? viewingClient[amountKey] : null;
-                  const date = dateKey ? viewingClient[dateKey] : null;
-                  
-                  return { prefix, amount, date };
-                }).filter(p => (p.amount !== null && p.amount !== '') || (p.date !== null && p.date !== ''));
+                {/* 6. rekod pembayaran */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <SectionHeader
+                      icon={
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 112-2h2a2 2 0 012 2" />
+                        </svg>
+                      }
+                      title={t('clients', 'paymentRecord', lang)}
+                    />
+                    <button
+                      onClick={() => setIsBillingModalOpen(true)}
+                      className="px-3.5 py-1.5 bg-blue-650 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm cursor-pointer"
+                    >
+                      {t('clients', 'generateDoc', lang)}
+                    </button>
+                  </div>
 
-                if (payments.length === 0) return null;
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Invoices Column */}
+                    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800/80 shadow-sm">
+                      <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">
+                        {lang === 'bm' ? 'Invois (Invoices)' : 'Invoices'}
+                      </h4>
+                      {billingRecords.filter(r => r.document_type === 'invoice').length === 0 ? (
+                        <p className="text-sm text-slate-400 dark:text-zinc-650 italic">
+                          {lang === 'bm' ? 'Tiada invois dijana lagi.' : 'No invoices generated yet.'}
+                        </p>
+                      ) : (
+                        <ul className="space-y-3">
+                          {billingRecords.filter(r => r.document_type === 'invoice').map(record => (
+                            <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
+                              <div>
+                                <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                                  {new Date(record.created_at).toLocaleDateString()} &middot; RM {Number(record.amount).toFixed(2)}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {record.drive_url ? (
+                                  <a
+                                    href="#"
+                                    onClick={(e) => handleViewDocument(e, record.drive_url)}
+                                    className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-2.5 py-1.5 rounded-md font-semibold text-xs transition-colors"
+                                  >
+                                    {t('clients', 'viewDoc', lang)}
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400">Processing...</span>
+                                )}
+                                {canEdit && (
+                                  <button
+                                    onClick={() => handleDeleteBillingRecord(record)}
+                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-955/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                    title="Delete"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
 
-                return (
-                  <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">{t('clients', 'paymentSchedule', lang)}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {payments.map(p => (
-                         <div key={p.prefix} className="flex w-full bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800/80 shadow-sm overflow-hidden">
-                            <div className="flex-1 p-4 border-r border-slate-100 dark:border-gray-800/80 w-1/2">
-                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">
-                                 {lang === 'bm' ? `Amaun Pembayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}` : `${p.prefix} Payment Amount`}
-                               </p>
-                               <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 break-words">
-                                 {p.amount !== null && p.amount !== '' ? (String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
-                               </p>
-                            </div>
-                            <div className="flex-1 p-4 w-1/2">
-                               <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-550 uppercase tracking-wider mb-1">
-                                 {lang === 'bm' ? `Tarikh Pembayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}` : `${p.prefix} Payment Date`}
-                               </p>
-                               <p className="text-sm font-semibold text-slate-805 dark:text-white break-words">
-                                 {p.date !== null && p.date !== '' ? String(p.date) : <span className="text-slate-400 italic font-normal text-xs">-</span>}
-                               </p>
-                            </div>
-                         </div>
-                      ))}
+                    {/* Receipts Column */}
+                    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800/80 shadow-sm">
+                      <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">
+                        {lang === 'bm' ? 'Resit (Receipts)' : 'Receipts'}
+                      </h4>
+                      {billingRecords.filter(r => r.document_type === 'receipt').length === 0 ? (
+                        <p className="text-sm text-slate-400 dark:text-zinc-650 italic">
+                          {lang === 'bm' ? 'Tiada resit dijana lagi.' : 'No receipts generated yet.'}
+                        </p>
+                      ) : (
+                        <ul className="space-y-3">
+                          {billingRecords.filter(r => r.document_type === 'receipt').map(record => (
+                            <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
+                              <div>
+                                <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                                  {new Date(record.created_at).toLocaleDateString()} &middot; RM {Number(record.amount).toFixed(2)}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {record.drive_url ? (
+                                  <a
+                                    href="#"
+                                    onClick={(e) => handleViewDocument(e, record.drive_url)}
+                                    className="text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-2.5 py-1.5 rounded-md font-semibold text-xs transition-colors"
+                                  >
+                                    {t('clients', 'viewDoc', lang)}
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400">Processing...</span>
+                                )}
+                                {canEdit && (
+                                  <button
+                                    onClick={() => handleDeleteBillingRecord(record)}
+                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-955/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                    title="Delete"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
-                );
-              })()}
-
-              {/* BILLING & DOCUMENTS SECTION */}
-              <div className="mt-8 border-t border-slate-200 dark:border-gray-800 pt-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t('clients', 'billingDocs', lang)}</h3>
-                  <button
-                    onClick={() => setIsBillingModalOpen(true)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-                  >
-                    {t('clients', 'generateDoc', lang)}
-                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
-                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">{t('clients', 'invoices', lang)}</h4>
-                    {billingRecords.filter(r => r.document_type === 'invoice').length === 0 ? (
-                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">{t('clients', 'noInvoices', lang)}</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {billingRecords.filter(r => r.document_type === 'invoice').map(record => (
-                          <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
-                            <div>
-                              <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
-                              <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {record.drive_url ? (
-                                <a
-                                  href="#"
-                                  onClick={(e) => handleViewDocument(e, record.drive_url)}
-                                  className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors"
-                                >
-                                  {t('clients', 'viewDoc', lang)}
-                                </a>
-                              ) : (
-                                <span className="text-xs text-slate-400">Processing...</span>
-                              )}
-                              {canEdit && (
-                                <button
-                                  onClick={() => handleDeleteBillingRecord(record)}
-                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                                  title="Delete"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                {/* 7. Status & Kategori Kes */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 112-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                    }
+                    title={lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <ViewField label={t('clients', 'caseStatusLabel', lang)} value={viewingClient['CASE STATUS']} lang={lang} />
+                    <ViewField label={t('clients', 'caseCategoryLabel', lang)} value={viewingClient['CASE CATEGORY']} lang={lang} />
+                    <ViewField
+                      label={t('clients', 'resolutionStatusLabel', lang)}
+                      value={
+                        viewingClient.resolution_status === 'Selesai'
+                          ? t('clients', 'selesai', lang)
+                          : viewingClient.resolution_status === 'Tindakan'
+                            ? t('clients', 'tindakan', lang)
+                            : viewingClient.resolution_status === 'tertangguh' || viewingClient.resolution_status === 'Tertangguh'
+                              ? t('clients', 'tertangguh', lang)
+                              : viewingClient.resolution_status
+                      }
+                      lang={lang}
+                    />
+                    <ViewField label={t('clients', 'remarkCatatan', lang)} value={viewingClient.REMARK} lang={lang} />
                   </div>
+                </div>
 
-
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800 shadow-sm">
-                    <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">{t('clients', 'receipts', lang)}</h4>
-                    {billingRecords.filter(r => r.document_type === 'receipt').length === 0 ? (
-                      <p className="text-sm text-slate-400 dark:text-zinc-600 italic">{t('clients', 'noReceipts', lang)}</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {billingRecords.filter(r => r.document_type === 'receipt').map(record => (
-                          <li key={record.id} className="flex justify-between items-center text-sm p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-100 dark:border-gray-800">
-                            <div>
-                              <p className="font-bold text-slate-800 dark:text-white">{record.ref_number}</p>
-                              <p className="text-xs text-slate-500 dark:text-zinc-400">{new Date(record.created_at).toLocaleDateString()} &middot; ${Number(record.amount).toFixed(2)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {record.drive_url ? (
-                                <a
-                                  href="#"
-                                  onClick={(e) => handleViewDocument(e, record.drive_url)}
-                                  className="text-emerald-600 hover:text-emerald-805 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors"
-                                >
-                                  {t('clients', 'viewDoc', lang)}
-                                </a>
-                              ) : (
-                                <span className="text-xs text-slate-400">Processing...</span>
-                              )}
-                              {canEdit && (
-                                <button
-                                  onClick={() => handleDeleteBillingRecord(record)}
-                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-55 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                                  title="Delete"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                {/* 8. Letter of Demand (LoD) */}
+                <div>
+                  <SectionHeader
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    }
+                    title={t('clients', 'lodTitle', lang)}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <ViewField label={`${t('clients', 'lodDate', lang)}`} value={viewingClient.lod_date} lang={lang} />
+                    <ViewField
+                      label={`(ii) ${t('clients', 'lodClaimAmount', lang)}`}
+                      value={viewingClient.lod_claim_amount !== null && viewingClient.lod_claim_amount !== '' && !isNaN(Number(viewingClient.lod_claim_amount)) ? `RM ${viewingClient.lod_claim_amount}` : viewingClient.lod_claim_amount}
+                      lang={lang}
+                    />
+                    <ViewField label={`(iii) ${t('clients', 'lodRemark', lang)}`} value={viewingClient.lod_remark} lang={lang} />
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
-              {canEdit && (
+              <div className="p-5 border-t border-slate-100 dark:border-gray-800/80 bg-white dark:bg-black flex justify-end gap-3">
+                {canEdit && (
+                  <button
+                    onClick={() => {
+                      handleCloseViewModal();
+                      handleOpenEditModal(viewingClient);
+                    }}
+                    className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
+                  >
+                    {t('clients', 'editData', lang)}
+                  </button>
+                )}
                 <button
-                  onClick={() => {
-                    handleCloseViewModal();
-                    handleOpenEditModal(viewingClient);
-                  }}
-                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors min-h-[48px]"
+                  onClick={handleCloseViewModal}
+                  className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-colors min-h-[48px]"
                 >
-                  {t('clients', 'editData', lang)}
+                  {t('clients', 'close', lang)}
                 </button>
-              )}
-              <button
-                onClick={handleCloseViewModal}
-                className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-colors min-h-[48px]"
-              >
-                {t('clients', 'close', lang)}
-              </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
 
-      {isBillingModalOpen && viewingClient && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="relative w-full max-w-xl max-h-[95vh] flex flex-col">
-            <div className="flex justify-end mb-2">
-              <button
-                onClick={() => setIsBillingModalOpen(false)}
-                className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
-              >
-                <span className="text-sm font-semibold">{t('clients', 'close', lang)}</span>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <div className="overflow-y-auto rounded-xl shadow-2xl bg-white">
-            <BillingGenerator
-              clientData={{
-                id: viewingClient.id,
-                clientNo: viewingClient.No ?? viewingClient.NO ?? '',
-                name: viewingClient.NAME || 'N/A',
-                ic: viewingClient['IC NUMBER'] || 'N/A',
-                address: viewingClient.ADDRESS || 'N/A',
-                payments: [
-                  viewingClient['1ST PAYMENT'] ?? viewingClient['1st PAYMENT'] ?? viewingClient['1st payment'],
-                  viewingClient['2ND PAYMENT'] ?? viewingClient['2nd PAYMENT'] ?? viewingClient['2nd payment'],
-                  viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
-                  viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
-                  viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
-                  viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment']
-                ]
-              }}
-              onSuccess={() => {
-                setTimeout(() => {
-                  setIsBillingModalOpen(false);
-                  loadBillingRecords(viewingClient.id);
-                }, 1500);
-              }}
-            />
+        {isBillingModalOpen && viewingClient && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+            <div className="relative w-full max-w-xl max-h-[95vh] flex flex-col">
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => setIsBillingModalOpen(false)}
+                  className="text-white/70 hover:text-white transition-colors flex items-center gap-2"
+                >
+                  <span className="text-sm font-semibold">{t('clients', 'close', lang)}</span>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              <div className="overflow-y-auto rounded-xl shadow-2xl bg-white">
+                <BillingGenerator
+                  clientData={{
+                    id: viewingClient.id,
+                    clientNo: viewingClient.No ?? viewingClient.NO ?? '',
+                    name: viewingClient.NAME || 'N/A',
+                    ic: viewingClient['IC NUMBER'] || 'N/A',
+                    address: viewingClient.ADDRESS || 'N/A',
+                    payments: [
+                      viewingClient['1ST PAYMENT'] ?? viewingClient['1st PAYMENT'] ?? viewingClient['1st payment'],
+                      viewingClient['2ND PAYMENT'] ?? viewingClient['2nd PAYMENT'] ?? viewingClient['2nd payment'],
+                      viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
+                      viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
+                      viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
+                      viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment']
+                    ]
+                  }}
+                  onSuccess={() => {
+                    setTimeout(() => {
+                      setIsBillingModalOpen(false);
+                      loadBillingRecords(viewingClient.id);
+                    }, 1500);
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ==============================================
+        {/* ==============================================
           2. ADD / EDIT CLIENT MODAL
           ============================================== */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
 
-            <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
-              <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
-                {editingClient ? t('clients', 'editClientRecord', lang) : t('clients', 'addClient', lang)}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
+              <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
+                  {editingClient ? t('clients', 'editClientRecord', lang) : t('clients', 'addClient', lang)}
+                </h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
 
-            <form onSubmit={handleSaveClient} className="flex-1 overflow-y-auto p-6 space-y-4 bg-white dark:bg-black">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1 sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-2">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
-                  <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Full Name</label>
-                  <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">IC Number</label>
-                  <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Phone Number</label>
-                  <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Email</label>
-                  <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Address</label>
-                  <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="DATE"
-                  label={lang === 'bm' ? 'Tarikh (DD/MM/YYYY)' : 'Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.DATE || ''}
-                  lang={lang}
-                  required
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Category</label>
-                  <input type="text" name="CASE CATEGORY" defaultValue={editingClient?.["CASE CATEGORY"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Case Status</label>
-                  <div className="relative">
-                    <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} data-custom-select className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
-                      <option value="PENDING">PENDING</option>
-                      <option value="COMPLETED">COMPLETED</option>
-                      <option value="DROPPED">DROPPED</option>
-                      <option value="KIV">KIV</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
+              <form onSubmit={handleSaveClient} className="flex-1 overflow-y-auto p-6 space-y-4 bg-white dark:bg-black">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* 1. Personal Information */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'personalInfo', lang)}</h3>
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
+                    <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'nama', lang)}</label>
+                    <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'alamat', lang)}</label>
+                    <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'icNumberLabel', lang)}</label>
+                    <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'phoneNumberLabel', lang)}</label>
+                    <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'emailLabel', lang)}</label>
+                    <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* 2. Laporan Polis */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
+                  </div>
+                  <DateInput
+                    name="police_report_date"
+                    label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
+                    defaultValue={editingClient?.police_report_date || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'reportNo', lang)}`}</label>
+                    <input type="text" name="police_report_no" defaultValue={editingClient?.police_report_no || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* 3. Kertas Siasatan (IP) */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
+                  </div>
+                  <DateInput
+                    name="ip_date"
+                    label={`{t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
+                    defaultValue={editingClient?.ip_date || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'ipNo', lang)}`}</label>
+                    <input type="text" name="ip_no" defaultValue={editingClient?.ip_no || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iii) ${t('clients', 'ipPem1', lang)}`}</label>
+                    <input type="text" name="ip_pem1" defaultValue={editingClient?.ip_pem1 || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iv) ${t('clients', 'ipOfficer', lang)}`}</label>
+                    <input type="text" name="ip_officer" defaultValue={editingClient?.ip_officer || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* 4. Lokasi Laporan */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'reportLocation', lang)}</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
+                    <input type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'districtPolice', lang)}`}</label>
+                    <input type="text" name="report_location_ipd" defaultValue={editingClient?.report_location_ipd || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
+                    <input type="text" name="report_location_ipk" defaultValue={editingClient?.report_location_ipk || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* 5. Financial Details */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
+                    <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
+                    <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
+                    <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
+                    <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* Date Input for standard 6 payments Scheduler */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-1 mt-2 mb-1">
+                    <h4 className="text-xs font-bold text-slate-550 dark:text-zinc-550 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
+                    <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="1st PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Pertama (DD/MM/YYYY)' : '1st Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["1st PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
+                    <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="2nd PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Kedua (DD/MM/YYYY)' : '2nd Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
+                    <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="3rd PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Ketiga (DD/MM/YYYY)' : '3rd Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
+                    <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="4th PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Keempat (DD/MM/YYYY)' : '4th Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["4th PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
+                    <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="5th PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Kelima (DD/MM/YYYY)' : '5th Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["5th PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
+                    <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <DateInput
+                    name="6th PAYMENT DATE"
+                    label={lang === 'bm' ? 'Tarikh Bayaran Keenam (DD/MM/YYYY)' : '6th Payment Date (DD/MM/YYYY)'}
+                    defaultValue={editingClient?.["6th PAYMENT DATE"] || ''}
+                    lang={lang}
+                  />
+
+                  {/* 6. Case & Resolution Details */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'caseStatusLabel', lang)}</label>
+                    <div className="relative">
+                      <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} data-custom-select className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
+                        <option value="PENDING">PENDING</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="DROPPED">DROPPED</option>
+                        <option value="KIV">KIV</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const currentVal = editingClient?.["CASE CATEGORY"] || '';
+                    const options = ["Ah Long", "Kredit Komuniti", "Bank"];
+                    const showCustomOption = currentVal && !options.includes(currentVal);
+                    return (
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'caseCategoryLabel', lang)}</label>
+                        <div className="relative">
+                          <select name="CASE CATEGORY" defaultValue={currentVal || 'Ah Long'} className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
+                            <option value="Ah Long">Ah Long</option>
+                            <option value="Kredit Komuniti">Kredit Komuniti</option>
+                            <option value="Bank">Bank</option>
+                            {showCustomOption && <option value={currentVal}>{currentVal}</option>}
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'resolutionStatusLabel', lang)}</label>
+                    <div className="relative">
+                      <select name="resolution_status" defaultValue={editingClient?.resolution_status || 'Tindakan'} className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
+                        <option value="Selesai">{lang === 'bm' ? 'Selesai' : 'Completed'}</option>
+                        <option value="Tindakan">{lang === 'bm' ? 'Tindakan' : 'Active'}</option>
+                        <option value="Tertangguh">{lang === 'bm' ? 'Tertangguh' : 'Deferred'}</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'remarkCatatan', lang)}</label>
+                    <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none min-h-[100px]"></textarea>
+                  </div>
+
+                  {/* 7. Letter of Demand (LoD) */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'lodTitle', lang)}</h3>
+                  </div>
+                  <DateInput
+                    name="lod_date"
+                    label={`(i) ${t('clients', 'lodDate', lang)} (DD/MM/YYYY)`}
+                    defaultValue={editingClient?.lod_date || ''}
+                    lang={lang}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(ii) ${t('clients', 'lodClaimAmount', lang)}`}</label>
+                    <input type="text" name="lod_claim_amount" defaultValue={editingClient?.lod_claim_amount || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`(iii) ${t('clients', 'lodRemark', lang)}`}</label>
+                    <input type="text" name="lod_remark" defaultValue={editingClient?.lod_remark || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                  </div>
+
+                  {/* Legacy Fields Kept in background for compatibility, hidden */}
+                  <input type="hidden" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} />
+                  <input type="hidden" name="Report" defaultValue={editingClient?.Report || ''} />
+                  <input type="hidden" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} />
+
+                  <div className="sm:col-span-2 mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
+                    <div className="w-full sm:w-auto">
+                      {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteClient}
+                          className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-955/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
+                        >
+                          {t('clients', 'deleteClient', lang)}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-3 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={handleCloseModal}
+                        className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[48px]"
+                      >
+                        {t('clients', 'cancel', lang)}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
+                      >
+                        {loading ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
+                      </button>
                     </div>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
-                  <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-
-                <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Financial Details</h3>
-                </div>
-
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Package Value (RM)</label>
-                  <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Total Paid (RM)</label>
-                  <input type="number" name="TOTAL PAID (RM)" step="0.01" defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Pending (RM)</label>
-                  <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-
-                {/* PAYMENTS */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">1st Payment</label>
-                  <input type="number" name="1st PAYMENT" step="0.01" defaultValue={editingClient?.["1st PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="1st PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Pertama (DD/MM/YYYY)' : '1st Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["1st PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">2nd Payment</label>
-                  <input type="number" name="2nd PAYMENT" step="0.01" defaultValue={editingClient?.["2nd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="2nd PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Kedua (DD/MM/YYYY)' : '2nd Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["2nd PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">3rd Payment</label>
-                  <input type="number" name="3rd PAYMENT" step="0.01" defaultValue={editingClient?.["3rd PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="3rd PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Ketiga (DD/MM/YYYY)' : '3rd Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["3rd PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">4th Payment</label>
-                  <input type="number" name="4th PAYMENT" step="0.01" defaultValue={editingClient?.["4th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="4th PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Keempat (DD/MM/YYYY)' : '4th Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["4th PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">5th Payment</label>
-                  <input type="number" name="5th PAYMENT" step="0.01" defaultValue={editingClient?.["5th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="5th PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Kelima (DD/MM/YYYY)' : '5th Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["5th PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">6th Payment</label>
-                  <input type="number" name="6th PAYMENT" step="0.01" defaultValue={editingClient?.["6th PAYMENT"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <DateInput
-                  name="6th PAYMENT DATE"
-                  label={lang === 'bm' ? 'Tarikh Bayaran Keenam (DD/MM/YYYY)' : '6th Payment Date (DD/MM/YYYY)'}
-                  defaultValue={editingClient?.["6th PAYMENT DATE"] || ''}
-                  lang={lang}
-                />
-
-                <div className="sm:col-span-2 mt-4 pb-2 border-b border-slate-200 dark:border-gray-800">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">Additional Notes</h3>
-                </div>
-
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Investigation Paper</label>
-                  <input type="text" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Report</label>
-                  <input type="text" name="Report" defaultValue={editingClient?.Report || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Action Taken by police</label>
-                  <input type="text" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                </div>
-                <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Remark</label>
-                  <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
-                <div className="mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
-                <div className="w-full sm:w-auto">
-                  {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (
-                    <button
-                      type="button"
-                      onClick={handleDeleteClient}
-                      className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-955/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
-                    >
-                      {t('clients', 'deleteClient', lang)}
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-3 w-full sm:w-auto justify-end">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[48px]"
-                  >
-                    {t('clients', 'cancel', lang)}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
-                  >
-                    {loading ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
-                  </button>
-                </div>
-              </div>
-                </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

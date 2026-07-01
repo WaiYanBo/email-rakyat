@@ -10,7 +10,20 @@ export interface Permissions {
   view_snapshot: boolean;
   manage_access_control: boolean;
   manage_drive: boolean;
+  manage_hr: boolean;
 }
+
+const IT_ADMIN_PERMISSIONS: Permissions = {
+  view_clients: true,
+  edit_clients: true,
+  view_staff: true,
+  edit_staff: true,
+  view_attendance: true,
+  view_snapshot: true,
+  manage_access_control: true,
+  manage_drive: true,
+  manage_hr: true,
+};
 
 // In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
 const permissionsCache: Record<string, Permissions> = {};
@@ -25,6 +38,7 @@ export function usePermissions(profile: any) {
     view_snapshot: false,
     manage_access_control: false,
     manage_drive: false,
+    manage_hr: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -127,6 +141,7 @@ export function usePermissions(profile: any) {
           view_snapshot: false,
           manage_access_control: false,
           manage_drive: false,
+          manage_hr: false,
         };
 
         if (data && data.length > 0) {
@@ -142,6 +157,7 @@ export function usePermissions(profile: any) {
             view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? finalPerms.view_snapshot,
             manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? finalPerms.manage_access_control,
             manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? finalPerms.manage_drive,
+            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? finalPerms.manage_hr,
           };
         }
 
@@ -151,16 +167,7 @@ export function usePermissions(profile: any) {
           department?.toLowerCase() === 'it';
 
         if (isITAdmin) {
-          finalPerms = {
-            view_clients: true,
-            edit_clients: true,
-            view_staff: true,
-            edit_staff: true,
-            view_attendance: true,
-            view_snapshot: true,
-            manage_access_control: true,
-            manage_drive: true,
-          };
+          finalPerms = IT_ADMIN_PERMISSIONS;
         }
 
         if (isMounted) {
@@ -196,16 +203,7 @@ export function usePermissions(profile: any) {
     profile?.roles?.role_name?.toLowerCase() === 'it admin' ||
     profile?.roles?.role_name?.toLowerCase() === 'it';
 
-  const finalPermissions = isITAdmin ? {
-    view_clients: true,
-    edit_clients: true,
-    view_staff: true,
-    edit_staff: true,
-    view_attendance: true,
-    view_snapshot: true,
-    manage_access_control: true,
-    manage_drive: true,
-  } : permissions;
+  const finalPermissions = isITAdmin ? IT_ADMIN_PERMISSIONS : permissions;
 
   return { permissions: finalPermissions, loading };
 }

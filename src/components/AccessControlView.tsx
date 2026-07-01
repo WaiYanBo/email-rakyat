@@ -16,6 +16,7 @@ interface PermissionEntry {
     view_snapshot: boolean;
     manage_access_control: boolean;
     manage_drive: boolean;
+    manage_hr: boolean;
   };
 }
 
@@ -75,7 +76,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'department',
           target_id: dept,
           permissions: {
-            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false
+            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false, manage_hr: false
           }
         };
       });
@@ -85,7 +86,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'user',
           target_id: user.id,
           permissions: {
-            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any
+            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any, manage_hr: null as any
           } // null defaults to inherited department settings
         };
       });
@@ -107,7 +108,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           const deptUsers = profiles?.filter(p => p.department === deptName) || [];
           if (deptUsers.length > 0) {
             const modules: (keyof PermissionEntry['permissions'])[] = [
-              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive'
+              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive', 'manage_hr'
             ];
             modules.forEach(module => {
               const allChecked = deptUsers.every(u => {
@@ -234,52 +235,89 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     }
   };
 
+  const [filterType, setFilterType] = useState<'staff' | 'department' | 'feature'>('staff');
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('');
+  const [selectedDept, setSelectedDept] = useState<string>('');
+  const [selectedFeature, setSelectedFeature] = useState<keyof PermissionEntry['permissions']>('view_clients');
+
+  useEffect(() => {
+    if (users.length > 0 && !selectedStaffId) {
+      setSelectedStaffId(users[0].id);
+    }
+  }, [users, selectedStaffId]);
+
+  useEffect(() => {
+    if (departments.length > 0 && !selectedDept) {
+      setSelectedDept(departments[0]);
+    }
+  }, [departments, selectedDept]);
+
   if (loading) {
     return <div className="p-8 text-center text-slate-500 animate-pulse">{t('accessControl', 'loading', lang)}</div>;
   }
 
-  const renderMatrixRow = (title: string, subtitle: string, key: string, isDepartment: boolean) => {
-    const entry = permissionsMatrix[key];
+  const allFeatures: (keyof PermissionEntry['permissions'])[] = [
+    'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 
+    'view_attendance', 'view_snapshot', 'manage_drive', 'manage_hr',
+    ...(isITAdmin ? ['manage_access_control' as keyof PermissionEntry['permissions']] : [])
+  ];
+
+  const getFeatureLabel = (f: string) => {
+    switch(f) {
+      case 'view_clients': return t('accessControl', 'colViewClients', lang);
+      case 'edit_clients': return t('accessControl', 'colEditClients', lang);
+      case 'view_staff': return t('accessControl', 'colViewStaff', lang);
+      case 'edit_staff': return t('accessControl', 'colEditStaff', lang);
+      case 'view_attendance': return t('accessControl', 'colAttendance', lang);
+      case 'view_snapshot': return t('accessControl', 'colSnapshot', lang);
+      case 'manage_drive': return t('accessControl', 'colDrive', lang);
+      case 'manage_hr': return t('accessControl', 'colHR', lang) || 'Human Resources';
+      case 'manage_access_control': return t('accessControl', 'colManageAccess', lang);
+      default: return f;
+    }
+  };
+
+  const getFeatureDesc = (f: string) => {
+    switch(f) {
+      case 'view_clients': return t('accessControl', 'colViewClientsDesc', lang);
+      case 'edit_clients': return t('accessControl', 'colEditClientsDesc', lang);
+      case 'view_staff': return t('accessControl', 'colViewStaffDesc', lang);
+      case 'edit_staff': return t('accessControl', 'colEditStaffDesc', lang);
+      case 'view_attendance': return t('accessControl', 'colAttendanceDesc', lang);
+      case 'view_snapshot': return t('accessControl', 'colSnapshotDesc', lang);
+      case 'manage_drive': return t('accessControl', 'colDriveDesc', lang);
+      case 'manage_hr': return t('accessControl', 'colHRDesc', lang) || 'Manage HR settings';
+      case 'manage_access_control': return t('accessControl', 'colManageAccessDesc', lang);
+      default: return f;
+    }
+  };
+
+  const renderFeatureRow = (featureKey: keyof PermissionEntry['permissions'], targetKey: string) => {
+    const entry = permissionsMatrix[targetKey];
     if (!entry) return null;
-
-    const p = entry.permissions;
-
     return (
-      <tr key={key} className={`border-b border-slate-100 dark:border-gray-800 transition-colors ${isDepartment ? 'bg-slate-50 dark:bg-gray-900/50' : 'bg-white dark:bg-black hover:bg-indigo-50/30 dark:hover:bg-zinc-900/50'}`}>
-        <td className="px-4 py-4 relative">
-          {isDepartment && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 dark:bg-yellow-500 rounded-r-md"></div>}
-          <div className={isDepartment ? '' : 'pl-4 border-l-2 border-slate-200 dark:border-gray-800'}>
-            <p className={`font-semibold ${isDepartment ? 'text-indigo-700 dark:text-yellow-500 text-sm' : 'text-slate-800 dark:text-zinc-200 text-sm'}`}>{title}</p>
-            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-500 mt-0.5">{subtitle}</p>
-          </div>
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.view_clients} onChange={() => togglePermission(key, 'view_clients')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.edit_clients} onChange={() => togglePermission(key, 'edit_clients')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.view_staff} onChange={() => togglePermission(key, 'view_staff')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.edit_staff} onChange={() => togglePermission(key, 'edit_staff')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.view_attendance} onChange={() => togglePermission(key, 'view_attendance')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.view_snapshot} onChange={() => togglePermission(key, 'view_snapshot')} />
-        </td>
-        <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-          <Toggle checked={!!p.manage_drive} onChange={() => togglePermission(key, 'manage_drive')} />
-        </td>
-        {isITAdmin && (
-          <td className="px-4 py-4 text-center border-l border-slate-100 dark:border-gray-800/50 hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors">
-            <Toggle checked={!!p.manage_access_control} onChange={() => togglePermission(key, 'manage_access_control')} />
-          </td>
-        )}
-      </tr>
+      <div key={featureKey} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-gray-800 last:border-0">
+        <div>
+          <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{getFeatureLabel(featureKey)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">{getFeatureDesc(featureKey)}</p>
+        </div>
+        <Toggle checked={!!entry.permissions[featureKey]} onChange={() => togglePermission(targetKey, featureKey)} />
+      </div>
+    );
+  };
+
+  const renderUserFeatureRow = (user: any, featureKey: keyof PermissionEntry['permissions']) => {
+    const userKey = `user_${user.id}`;
+    const entry = permissionsMatrix[userKey];
+    if (!entry) return null;
+    return (
+      <div key={user.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-gray-800 last:border-0 hover:bg-slate-50 dark:hover:bg-zinc-900/40 px-4 -mx-4 rounded-lg transition-colors">
+        <div>
+          <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{user.full_name}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-500">{user.roles?.role_name || t('common', 'noRole', lang)} {user.department ? `· ${user.department}` : ''}</p>
+        </div>
+        <Toggle checked={!!entry.permissions[featureKey]} onChange={() => togglePermission(userKey, featureKey)} />
+      </div>
     );
   };
 
@@ -301,89 +339,163 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         </button>
       </div>
 
-      <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-slate-100/80 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs w-64 uppercase tracking-wider">
-                  {t('accessControl', 'colTarget', lang)}
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colViewClients', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colViewClientsDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colEditClients', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colEditClientsDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colViewStaff', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colViewStaffDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colEditStaff', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colEditStaffDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colAttendance', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colAttendanceDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider">{t('accessControl', 'colSnapshot', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colSnapshotDesc', lang)}</span>
-                  </div>
-                </th>
-                <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t('accessControl', 'colDrive', lang)}</span>
-                    <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colDriveDesc', lang)}</span>
-                  </div>
-                </th>
-                {isITAdmin && (
-                  <th className="px-4 py-4 font-bold text-slate-700 dark:text-zinc-300 text-xs text-center border-l border-slate-200 dark:border-gray-800">
-                    <div className="flex flex-col items-center">
-                      <span className="uppercase tracking-wider text-rose-600 dark:text-rose-400">{t('accessControl', 'colManageAccess', lang)}</span>
-                      <span className="text-[10px] font-normal text-slate-505 mt-1 capitalize normal-case leading-tight max-w-[90px]">{t('accessControl', 'colManageAccessDesc', lang)}</span>
-                    </div>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {departments.map(dept => (
-                <React.Fragment key={`group_${dept}`}>
-                  {renderMatrixRow(dept, t('accessControl', 'deptWideAccess', lang), `dept_${dept}`, true)}
-                  {users.filter(u => u.department === dept).map(user => (
-                    renderMatrixRow(user.full_name, user.roles?.role_name || t('common', 'noRole', lang), `user_${user.id}`, false)
-                  ))}
-                </React.Fragment>
-              ))}
-
-              {users.filter(u => !u.department).length > 0 && (
-                <>
-                  <tr className="bg-slate-50 dark:bg-gray-900/50 border-b border-slate-100 dark:border-gray-800">
-                    <td colSpan={isITAdmin ? 9 : 8} className="px-4 py-2 font-semibold text-slate-500 dark:text-zinc-550 text-xs uppercase tracking-wider">{t('accessControl', 'unassignedDept', lang)}</td>
-                  </tr>
-                  {users.filter(u => !u.department).map(user => (
-                    renderMatrixRow(user.full_name, user.roles?.role_name || t('common', 'noRole', lang), `user_${user.id}`, false)
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
+      <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm p-6">
+        
+        {/* Primary Filter Tabs */}
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-gray-800 pb-4 mb-6">
+          <button 
+            onClick={() => setFilterType('staff')} 
+            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex-1 sm:flex-none text-center ${filterType === 'staff' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'}`}>
+            Name of Staff
+          </button>
+          <button 
+            onClick={() => setFilterType('department')} 
+            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex-1 sm:flex-none text-center ${filterType === 'department' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'}`}>
+            Department Wide
+          </button>
+          <button 
+            onClick={() => setFilterType('feature')} 
+            className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex-1 sm:flex-none text-center ${filterType === 'feature' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'}`}>
+            Features
+          </button>
         </div>
+
+        {/* Dynamic Content Based on Filter */}
+        
+        {filterType === 'staff' && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Select Staff Member</label>
+              <select 
+                value={selectedStaffId}
+                onChange={(e) => setSelectedStaffId(e.target.value)}
+                className="w-full sm:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 transition-shadow"
+              >
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.full_name} {u.department ? `(${u.department})` : ''}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedStaffId && (
+              <div className="bg-slate-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-slate-100 dark:border-gray-800">
+                <div className="mb-6 pb-4 border-b border-slate-200 dark:border-gray-800">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{users.find(u => u.id === selectedStaffId)?.full_name}</h3>
+                  <p className="text-sm text-slate-500 dark:text-zinc-400">Manage individual feature access for this staff member.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                  {allFeatures.map(f => renderFeatureRow(f, `user_${selectedStaffId}`))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {filterType === 'department' && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Select Department</label>
+              <select 
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+                className="w-full sm:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 transition-shadow"
+              >
+                {departments.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedDept && (
+              <div className="space-y-6">
+                <div className="bg-indigo-50/50 dark:bg-gray-900/80 p-6 rounded-2xl border border-indigo-100 dark:border-gray-800 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-500 dark:bg-yellow-500"></div>
+                  <div className="mb-6 pb-4 border-b border-indigo-100 dark:border-gray-800">
+                    <h3 className="text-xl font-bold text-indigo-900 dark:text-yellow-500">{selectedDept} - Department Wide Access</h3>
+                    <p className="text-sm text-indigo-700/70 dark:text-zinc-400">Toggling these will automatically apply to all staff in {selectedDept}.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                    {allFeatures.map(f => renderFeatureRow(f, `dept_${selectedDept}`))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm">
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-4">Staff in {selectedDept}</h4>
+                  <div className="space-y-6">
+                    {users.filter(u => u.department === selectedDept).map(user => (
+                      <div key={user.id} className="bg-white dark:bg-gray-900 p-5 rounded-xl border border-slate-200 dark:border-gray-800">
+                        <div className="mb-4">
+                          <p className="font-semibold text-slate-800 dark:text-zinc-200">{user.full_name}</p>
+                          <p className="text-xs text-slate-500 dark:text-zinc-500">{user.roles?.role_name || t('common', 'noRole', lang)}</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1">
+                          {allFeatures.map(f => (
+                            <div key={f} className="flex items-center justify-between py-2 border-b border-slate-50 dark:border-gray-800 last:border-0">
+                              <span className="text-xs font-medium text-slate-600 dark:text-zinc-400">{getFeatureLabel(f)}</span>
+                              <Toggle checked={!!permissionsMatrix[`user_${user.id}`]?.permissions[f]} onChange={() => togglePermission(`user_${user.id}`, f)} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {filterType === 'feature' && (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-2">Select Feature</label>
+              <select 
+                value={selectedFeature}
+                onChange={(e) => setSelectedFeature(e.target.value as keyof PermissionEntry['permissions'])}
+                className="w-full sm:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 transition-shadow"
+              >
+                {allFeatures.map(f => (
+                  <option key={f} value={f}>{getFeatureLabel(f)}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedFeature && (
+              <div className="bg-slate-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-slate-100 dark:border-gray-800">
+                <div className="mb-6 pb-4 border-b border-slate-200 dark:border-gray-800">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{getFeatureLabel(selectedFeature)}</h3>
+                  <p className="text-sm text-slate-500 dark:text-zinc-400">{getFeatureDesc(selectedFeature)}</p>
+                </div>
+                
+                <div className="space-y-8">
+                  {departments.map(dept => (
+                    <div key={dept}>
+                      <div className="flex items-center justify-between bg-indigo-50 dark:bg-gray-900 px-4 py-3 rounded-lg border border-indigo-100 dark:border-gray-800 mb-2">
+                        <span className="font-bold text-indigo-900 dark:text-yellow-500">{dept} (Department Wide)</span>
+                        <Toggle checked={!!permissionsMatrix[`dept_${dept}`]?.permissions[selectedFeature]} onChange={() => togglePermission(`dept_${dept}`, selectedFeature)} />
+                      </div>
+                      <div className="pl-4 border-l-2 border-indigo-100 dark:border-gray-800 ml-2 space-y-1">
+                        {users.filter(u => u.department === dept).map(user => renderUserFeatureRow(user, selectedFeature))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {users.filter(u => !u.department).length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between bg-slate-100 dark:bg-gray-800 px-4 py-3 rounded-lg border border-slate-200 dark:border-gray-700 mb-2">
+                        <span className="font-bold text-slate-700 dark:text-zinc-300">{t('accessControl', 'unassignedDept', lang)}</span>
+                      </div>
+                      <div className="pl-4 border-l-2 border-slate-200 dark:border-gray-800 ml-2 space-y-1">
+                        {users.filter(u => !u.department).map(user => renderUserFeatureRow(user, selectedFeature))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

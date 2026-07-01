@@ -105,7 +105,8 @@ export default function PortalSidebar() {
     const canViewReports = permissions?.view_staff || false;
     const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
     const canViewAttendance = permissions?.view_attendance || isIT;
-    const isHRMenuAccess = (profile?.department && profile.department.toLowerCase() === 'human resources') || isIT;
+    const canManageHR = permissions?.manage_hr || isIT;
+    const canManageDrive = permissions?.manage_drive || isIT;
 
     const activeClass = 'bg-indigo-50/70 text-indigo-750 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500';
 
@@ -162,8 +163,8 @@ export default function PortalSidebar() {
       )
     });
 
-    // Only HR can access Human Resources
-    if (isHRMenuAccess) {
+    // Only users with HR manage permission can access Human Resources
+    if (canManageHR) {
       items.push({
         label: t('sidebar', 'navHR', lang),
         path: '/portal/hr',
@@ -176,16 +177,18 @@ export default function PortalSidebar() {
       });
     }
 
-    items.push({
-      label: t('sidebar', 'navDrive', lang),
-      path: '/portal/pemacu',
-      activeClass,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-        </svg>
-      )
-    });
+    if (canManageDrive) {
+      items.push({
+        label: t('sidebar', 'navDrive', lang),
+        path: '/portal/pemacu',
+        activeClass,
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+        )
+      });
+    }
 
     items.push({
       label: t('sidebar', 'navSettings', lang),

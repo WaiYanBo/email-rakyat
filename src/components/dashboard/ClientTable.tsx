@@ -134,11 +134,10 @@ export default function ClientTable({
     return key;
   };
 
-  // Reset to first page and month filter when data (or search/filters) changes
+  // Reset to first page when data (or search/filters) changes
   useEffect(() => {
     setCurrentPage(1);
-    setSelectedMonth('all');
-  }, [clients, sort]);
+  }, [clients, sort, selectedMonth]);
 
   const handleSort = (key: string) => {
     setSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));

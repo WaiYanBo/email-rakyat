@@ -13,6 +13,7 @@ export default function ExecutiveOverview() {
   const [highPriorityCases, setHighPriorityCases] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [staffOnLeaveCount, setStaffOnLeaveCount] = useState<number>(0);
+  const [authorOptions, setAuthorOptions] = useState<string[]>([]);
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
 
@@ -165,6 +166,27 @@ export default function ExecutiveOverview() {
 
         // 1. Initial Load of Announcements
         await fetchAnnouncements();
+
+        // Fetch HoDs and BODs for author options
+        try {
+          const { data: authorsData } = await supabase
+            .from('profiles')
+            .select(`full_name, department, roles(role_name)`);
+            
+          if (authorsData) {
+            const names = authorsData
+              .filter((p: any) => {
+                const roleName = Array.isArray(p.roles) ? p.roles[0]?.role_name : p.roles?.role_name;
+                return ['Head of Department', 'CEO', 'CFO', 'COO', 'Chairman', 'General Manager'].includes(roleName) || p.department === 'BOD';
+              })
+              .map((p: any) => p.full_name)
+              .filter(Boolean);
+            
+            setAuthorOptions(Array.from(new Set(names)).sort());
+          }
+        } catch (err) {
+          console.error('Error fetching authors:', err);
+        }
 
         // Fetch staff on leave today
         const todayStr = new Date().toISOString().split('T')[0];
@@ -330,9 +352,11 @@ export default function ExecutiveOverview() {
     const rawTitle = (formData.get('title') as string) || '';
     const rawContent = (formData.get('content') as string) || '';
     const rawType = (formData.get('type') as string) || 'Info';
+    const rawAuthor = (formData.get('author_name') as string) || profile?.name || 'Unknown';
 
     const cleanTitle = sanitizeInput(rawTitle, 200);
     const cleanContent = sanitizeLongText(rawContent);
+    const cleanAuthor = sanitizeInput(rawAuthor, 100);
     // Whitelist announcement types — reject anything not in list
     const allowedTypes = ['Info', 'Memo', 'Urgent'];
     const cleanType = allowedTypes.includes(rawType) ? rawType : 'Info';
@@ -361,6 +385,7 @@ export default function ExecutiveOverview() {
             title: cleanTitle,
             content: cleanContent,
             type: cleanType,
+            author_name: cleanAuthor,
             scheduled_at: scheduledDateTime
           })
           .eq('id', editingNotice.id)
@@ -395,7 +420,7 @@ export default function ExecutiveOverview() {
               title: cleanTitle,
               content: cleanContent,
               type: cleanType,
-              author_name: sanitizeInput(profile?.name || 'Unknown', 100),
+              author_name: cleanAuthor,
               author_id: profile?.id,
               scheduled_at: scheduledDateTime,
               created_at: new Date().toISOString()
@@ -927,6 +952,27 @@ export default function ExecutiveOverview() {
                   placeholder={t('overview', 'titlePlaceholder', lang)}
                   disabled={isPostingNotice}
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">{lang === 'bm' ? 'Nama Pengarang / Jawatan' : 'Author Name / Position'}</label>
+                <select
+                  name="author_name"
+                  required
+                  defaultValue={editingNotice ? editingNotice.author : (profile?.name || '')}
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 min-h-[48px]"
+                  disabled={isPostingNotice}
+                >
+                  {profile?.name && <option value={profile.name}>{profile.name} {lang === 'bm' ? '(Anda)' : '(You)'}</option>}
+                  {editingNotice && 
+                   editingNotice.author !== profile?.name && 
+                   !authorOptions.includes(editingNotice.author) && (
+                    <option value={editingNotice.author}>{editingNotice.author}</option>
+                  )}
+                  {authorOptions.map((name) => (
+                    name !== profile?.name && <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
 
 

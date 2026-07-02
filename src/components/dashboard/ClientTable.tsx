@@ -154,10 +154,18 @@ export default function ClientTable({
     return key;
   };
 
-  // Reset to first page when data (or search/filters) changes
+  // Reset to first page when search/filters/sort changes, but not when clients data updates (like on edit)
   useEffect(() => {
     setCurrentPage(1);
-  }, [clients, sort, selectedMonth]);
+  }, [searchQuery, dateFilter, sort, selectedMonth]);
+
+  // Clamp page if records decrease (e.g. on delete)
+  useEffect(() => {
+    const totalPages = Math.ceil(clients.length / 25) || 1;
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [clients.length, currentPage]);
 
   const handleSort = (key: string) => {
     setSort(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));

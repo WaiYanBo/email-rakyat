@@ -121,6 +121,7 @@ const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }
 
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [dbClients, setDbClients] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
@@ -653,6 +654,9 @@ export default function ClientDataView() {
       }
     }
     setPaymentList(payments);
+
+    // Ensure DOM input calculations match the exact data mathematically on mount
+    setTimeout(handleFinancialChange, 150);
   };
   const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); setSelectedIpk(''); setSelectedIpd(''); setPaymentList([]); };
 
@@ -778,7 +782,7 @@ export default function ClientDataView() {
       return;
     }
 
-    setLoading(true);
+    setIsSaving(true);
     try {
       const clientNoVal = editingClient.No ?? editingClient.NO ?? '';
       const safeClientName = (editingClient.NAME || '').replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
@@ -798,7 +802,7 @@ export default function ClientDataView() {
 
         if (error) {
           alert(lang === 'bm' ? 'Gagal memadam klien. Sila cuba lagi.' : 'Failed to delete client. Please try again.');
-          setLoading(false);
+          setIsSaving(false);
           return;
         }
 
@@ -816,7 +820,7 @@ export default function ClientDataView() {
       console.error('Error deleting client:', err);
       alert(lang === 'bm' ? 'Ralat semasa memadam klien. Sila cuba lagi.' : 'Error deleting client. Please try again.');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -843,7 +847,7 @@ export default function ClientDataView() {
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSaving(true);
 
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData.entries());
@@ -890,6 +894,16 @@ export default function ClientDataView() {
     const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
     const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
 
+    const p1 = parseSafeAmount(data['payment_amt_0']);
+    const p2 = parseSafeAmount(data['payment_amt_1']);
+    const p3 = parseSafeAmount(data['payment_amt_2']);
+    const p4 = parseSafeAmount(data['payment_amt_3']);
+    const p5 = parseSafeAmount(data['payment_amt_4']);
+    const p6 = parseSafeAmount(data['payment_amt_5']);
+    const autoTotalPaid = p1 + p2 + p3 + p4 + p5 + p6;
+    const pkg = parseSafeAmount(data['PACKAGE (RM)']);
+    const autoPending = Math.max(0, pkg - autoTotalPaid);
+
     const clientPayload = {
       No: data.No ? parseInt(data.No as string, 10) : null,
       NAME: sanitizeInput((data.NAME as string) || '', 100),
@@ -899,9 +913,9 @@ export default function ClientDataView() {
       'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
       // Whitelist-based: only accept known status values
       'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
-      'TOTAL PAID (RM)': parseSafeAmount(data['TOTAL PAID (RM)']),
-      'PENDING (RM)': parseSafeAmount(data['PENDING (RM)']),
-      'PACKAGE (RM)': parseSafeAmount(data['PACKAGE (RM)']),
+      'TOTAL PAID (RM)': autoTotalPaid,
+      'PENDING (RM)': autoPending,
+      'PACKAGE (RM)': pkg,
       ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
       EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
       REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
@@ -938,7 +952,7 @@ export default function ClientDataView() {
     // Basic validation
     if (!clientPayload.NAME) {
       alert(lang === 'bm' ? 'Nama klien diperlukan.' : 'Client name is required.');
-      setLoading(false);
+      setIsSaving(false);
       return;
     }
 
@@ -954,7 +968,7 @@ export default function ClientDataView() {
     } catch (_err) {
       alert(t('clients', 'failedToSave', lang));
     } finally {
-      setLoading(false);
+      setIsSaving(false);
       handleCloseModal();
     }
   };
@@ -1830,10 +1844,10 @@ export default function ClientDataView() {
                       </button>
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={isSaving}
                         className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
                       >
-                        {loading ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
+                        {isSaving ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
                       </button>
                     </div>
                   </div>

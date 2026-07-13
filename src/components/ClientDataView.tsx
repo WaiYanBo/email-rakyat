@@ -903,7 +903,12 @@ export default function ClientDataView() {
     const autoTotalPaid = p1 + p2 + p3 + p4 + p5 + p6;
     const pkg = parseSafeAmount(data['PACKAGE (RM)']);
     const autoPending = Math.max(0, pkg - autoTotalPaid);
-
+    
+    const getPaymentValue = (val: any) => {
+      if (val === undefined || val === null || String(val).trim() === '') return null;
+      return parseSafeAmount(val);
+    };
+ 
     const clientPayload = {
       No: data.No ? parseInt(data.No as string, 10) : null,
       NAME: sanitizeInput((data.NAME as string) || '', 100),
@@ -919,17 +924,17 @@ export default function ClientDataView() {
       ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
       EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
       REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
-      '1st PAYMENT': parseSafeAmount(data['payment_amt_0']),
+      '1st PAYMENT': getPaymentValue(data['payment_amt_0']),
       '1st PAYMENT DATE': sanitizeInput((data['payment_date_0'] as string) || '', 20),
-      '2nd PAYMENT': parseSafeAmount(data['payment_amt_1']),
+      '2nd PAYMENT': getPaymentValue(data['payment_amt_1']),
       '2nd PAYMENT DATE': sanitizeInput((data['payment_date_1'] as string) || '', 20),
-      '3rd PAYMENT': parseSafeAmount(data['payment_amt_2']),
+      '3rd PAYMENT': getPaymentValue(data['payment_amt_2']),
       '3rd PAYMENT DATE': sanitizeInput((data['payment_date_2'] as string) || '', 20),
-      '4th PAYMENT': parseSafeAmount(data['payment_amt_3']),
+      '4th PAYMENT': getPaymentValue(data['payment_amt_3']),
       '4th PAYMENT DATE': sanitizeInput((data['payment_date_3'] as string) || '', 20),
-      '5th PAYMENT': parseSafeAmount(data['payment_amt_4']),
+      '5th PAYMENT': getPaymentValue(data['payment_amt_4']),
       '5th PAYMENT DATE': sanitizeInput((data['payment_date_4'] as string) || '', 20),
-      '6th PAYMENT': parseSafeAmount(data['payment_amt_5']),
+      '6th PAYMENT': getPaymentValue(data['payment_amt_5']),
       '6th PAYMENT DATE': sanitizeInput((data['payment_date_5'] as string) || '', 20),
       'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
       'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),

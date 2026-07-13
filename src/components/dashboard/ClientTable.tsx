@@ -221,12 +221,20 @@ const EXPANDED_COLUMNS_ORDER = [
   'resolution_status'
 ];
 
-const IGNORED_KEYS = ['id', '_stableKey', 'updated_at', 'created_at', 'deleted_at', 'isVirtual', 'folderName', 'Investigation Paper', 'Report', 'Action Taken by police'];
+const IGNORED_KEYS = [
+  'id', '_stableKey', 'updated_at', 'created_at', 'deleted_at', 
+  'isVirtual', 'folderName', 'Investigation Paper', 'Report', 'Action Taken by police',
+  'lastPaymentStage', 'lastPaymentDate', 'lastPaymentDateStr', 'overdueDays', 'overdue_days'
+];
 
 const getOrderedKeys = (clientObj: any) => {
   const availableKeys = Object.keys(clientObj || {});
   const orderedKeys = EXPANDED_COLUMNS_ORDER.filter(k => availableKeys.includes(k));
-  const extraKeys = availableKeys.filter(k => !EXPANDED_COLUMNS_ORDER.includes(k) && !IGNORED_KEYS.includes(k));
+  const extraKeys = availableKeys.filter(k => 
+    !EXPANDED_COLUMNS_ORDER.includes(k) && 
+    !IGNORED_KEYS.includes(k) &&
+    !k.startsWith('_')
+  );
   return [...orderedKeys, ...extraKeys];
 };
 
@@ -1045,7 +1053,7 @@ export default function ClientTable({
                       <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white min-w-[180px] whitespace-normal leading-snug">{client.NAME}</td>
                       <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client["PHONE NUMBER"] || '-'}</td>
                       <td className="px-4 py-3.5 text-slate-500 dark:text-zinc-400">{client["CASE STATUS"] || '-'}</td>
-                      <td className="px-4 py-3.5 font-mono text-rose-600 dark:text-rose-500 font-bold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
+                      <td className="px-4 py-3.5 font-mono text-slate-700 dark:text-zinc-300 font-semibold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
                       <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{getStageLabel(client.lastPaymentStage, lang)}</td>
                       <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lastPaymentDateStr}</td>
                       <td className="px-4 py-3.5">
@@ -1110,34 +1118,51 @@ export default function ClientTable({
                       <>
                         {getOrderedKeys(client).map((k) => {
                           const v = client[k];
+                          
+                          let displayVal = v;
+                          if (['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'].includes(k)) {
+                            const dateKey = `${k} DATE`;
+                            const dateVal = client[dateKey];
+                            const parsedAmt = parseAmount(v);
+                            if (parsedAmt === 0) {
+                              const isDateEmpty = !dateVal || String(dateVal).trim() === '' || String(dateVal).trim() === '-';
+                              if (isDateEmpty) {
+                                displayVal = null;
+                              }
+                            }
+                          }
+
+                          const hasValue = displayVal !== null && displayVal !== undefined && String(displayVal).trim() !== '';
+                          const textRepresentation = hasValue ? String(displayVal) : '-';
+
                           return (
-                          <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={String(v || '')}>
+                          <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={hasValue ? String(displayVal) : ''}>
                             {k === 'NAME' && client.isVirtual ? (
                               <div className="flex items-center gap-1.5">
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
                                   Storage
                                 </span>
-                                <span>{String(v || '-')}</span>
+                                <span>{textRepresentation}</span>
                               </div>
-                            ) : String(v || '-').startsWith('[') ? (
+                            ) : textRepresentation.startsWith('[') ? (
                                 (() => {
                                   try {
-                                    const parsed = JSON.parse(String(v));
+                                    const parsed = JSON.parse(textRepresentation);
                                     if (Array.isArray(parsed)) {
                                       const validItems = parsed.filter(item => Object.values(item).some(val => val !== '' && val !== null));
                                       return validItems.length > 0 ? `${validItems.length} Items` : '-';
                                     }
                                   } catch (e) {
-                                    const strV = String(v).replace(/\s/g, '');
+                                    const strV = textRepresentation.replace(/\s/g, '');
                                     if (strV === '[{date:,no:}]' || strV === '[{date:,no:,pem:,officer:}]') return '-';
                                     if (strV.includes('[{') && strV.includes('}]')) {
                                       return `${strV.split('},{').length} Items`;
                                     }
                                   }
-                                  return String(v);
+                                  return textRepresentation;
                                 })()
                               ) : (
-                                String(v || '-')
+                                textRepresentation
                               )}
                           </td>
                         );

@@ -1561,14 +1561,16 @@ export default function ClientDataView() {
                   </div>
                   
                   {policeReportsList.map((rp, idx) => (
-                    <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
-                       <div className="absolute top-2 right-2">
+                    <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
                          {policeReportsList.length > 1 && (
-                           <button type="button" onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 p-1.5 rounded-lg transition-colors">
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                           <button 
+                             type="button" 
+                             onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))} 
+                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm"
+                           >
+                             ×
                            </button>
                          )}
-                       </div>
                        <DateInput
                          name={`report_date_${idx}`}
                          label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
@@ -1606,14 +1608,16 @@ export default function ClientDataView() {
                   </div>
                   
                   {ipList.map((ip, idx) => (
-                    <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
-                       <div className="absolute top-2 right-2">
+                    <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
                          {ipList.length > 1 && (
-                           <button type="button" onClick={() => setIpList(ipList.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 p-1.5 rounded-lg transition-colors">
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                           <button 
+                             type="button" 
+                             onClick={() => setIpList(ipList.filter((_, i) => i !== idx))} 
+                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm z-10"
+                           >
+                             ×
                            </button>
                          )}
-                       </div>
                        <DateInput
                          name={`ip_date_${idx}`}
                          label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}

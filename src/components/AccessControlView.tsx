@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
+import { clearPermissionsCache } from '../hooks/usePermissions';
 
 interface PermissionEntry {
   id?: string;
@@ -212,18 +213,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         }
       }
 
-      // Clear permissions cache in sessionStorage so updates are reflected immediately
-      try {
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          if (key && key.startsWith('portal_perms_')) {
-            sessionStorage.removeItem(key);
-            i--;
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to clear session storage cache:', e);
-      }
+      // Clear local in-memory permissions cache
+      clearPermissionsCache();
 
       alert(t('accessControl', 'savedSuccess', lang));
       fetchData(); // Refresh IDs

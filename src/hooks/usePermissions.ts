@@ -72,22 +72,6 @@ export function usePermissions(profile: any) {
           return;
         }
 
-        // 2. Check sessionStorage cache
-        try {
-          const cached = sessionStorage.getItem(`portal_perms_${userId}`);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            permissionsCache[userId] = parsed;
-            if (isMounted) {
-              setPermissions(parsed);
-              setLoading(false);
-            }
-            return;
-          }
-        } catch (e) {
-          // ignore
-        }
-
         if (userId && (!department || !role)) {
           const { data: profData } = await supabase
             .from('profiles')
@@ -176,11 +160,6 @@ export function usePermissions(profile: any) {
 
         if (userId) {
           permissionsCache[userId] = finalPerms;
-          try {
-            sessionStorage.setItem(`portal_perms_${userId}`, JSON.stringify(finalPerms));
-          } catch (e) {
-            // ignore
-          }
         }
       } catch (err) {
         console.error('Error fetching permissions:', err);
@@ -207,3 +186,14 @@ export function usePermissions(profile: any) {
 
   return { permissions: finalPermissions, loading };
 }
+
+export function clearPermissionsCache(userId?: string) {
+  if (userId) {
+    delete permissionsCache[userId];
+  } else {
+    for (const key in permissionsCache) {
+      delete permissionsCache[key];
+    }
+  }
+}
+

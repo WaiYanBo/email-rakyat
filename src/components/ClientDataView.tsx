@@ -384,7 +384,7 @@ export default function ClientDataView() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'standard' | 'expanded'>('standard');
+  const [viewMode, setViewMode] = useState<'standard' | 'expanded' | 'lod'>('standard');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [storageFolders, setStorageFolders] = useState<string[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

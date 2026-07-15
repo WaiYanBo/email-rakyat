@@ -201,6 +201,8 @@ export default function ExecutiveOverview() {
           setStaffOnLeaveCount(leaveCount || 0);
         }
 
+
+
         setLoading(false);
       } catch (err) {
         console.error('Dashboard load error:', err);
@@ -561,6 +563,7 @@ export default function ExecutiveOverview() {
           </div>
         )}
       </div>
+
 
 
       {!showHistory ? (

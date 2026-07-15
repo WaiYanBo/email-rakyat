@@ -325,21 +325,19 @@ export default function AttendanceAnalyticsSample() {
             const dayOfWeek = dateObj.getDay();
             // Only count weekdays
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-               // Check if day is within any approved leave
+               // Check if day is within any approved leave using timezone-safe string comparison
                const matchingLeave = approvedLeaves.find(req => {
-                 const start = new Date(req.start_date);
-                 const end = new Date(req.end_date);
-                 return dateObj >= start && dateObj <= end;
+                 return day.dateStr >= req.start_date && day.dateStr <= req.end_date;
                });
-                 if (matchingLeave) {
-                   day.isLeave = true;
-                   day.leaveType = matchingLeave.leave_type;
-                   if (hasPaidLeave) {
-                     if (day.workHours < 8.0) {
-                        day.workHours = matchingLeave.session_type === 'Half Day' ? 4.0 : 8.0;
-                     }
+               if (matchingLeave) {
+                 day.isLeave = true;
+                 day.leaveType = matchingLeave.leave_type;
+                 if (hasPaidLeave) {
+                   if (day.workHours < 8.0) {
+                      day.workHours = matchingLeave.session_type === 'Half Day' ? 4.0 : 8.0;
                    }
                  }
+               }
             }
           }
         });
@@ -357,26 +355,46 @@ export default function AttendanceAnalyticsSample() {
   }, [lang]);
 
   const mappedChartData = useMemo(() => {
-    return chartData.map(d => ({
-      key: d.dateStr,
-      label: d.dayLabel,
-      value: d.workHours,
-      isLeave: d.isLeave || d.isHoliday,
-      tooltipData: {
-        title: d.dayLabel + (d.isHoliday ? ' (Public Holiday)' : (d.isLeave ? ` (${d.leaveType} Leave)` : '')),
-        items: [
-          { label: (d.isLeave || d.isHoliday) ? 'Actual Work:' : 'Work:', value: `${d.workHours}h` },
-          { 
-            label: 'Break:', 
-            value: `${d.breakHours}h`,
-            badge: d.totalCount > 0 ? {
-              text: `${d.inZoneCount} / ${d.totalCount} In Zone`,
-              type: 'success' as const
-            } : undefined
-          }
-        ]
+    return chartData.map(d => {
+      let formattedLeaveType = d.leaveType || 'Leave';
+      if (formattedLeaveType.toLowerCase() === 'annual') formattedLeaveType = 'Annual';
+      else if (formattedLeaveType.toLowerCase() === 'sick') formattedLeaveType = 'Sick';
+      else if (formattedLeaveType.toLowerCase() === 'hospitalisation') formattedLeaveType = 'Hospitalisation';
+      else if (formattedLeaveType.toLowerCase() === 'maternity') formattedLeaveType = 'Maternity';
+      else if (formattedLeaveType.toLowerCase() === 'paternity') formattedLeaveType = 'Paternity';
+      else if (formattedLeaveType.toLowerCase() === 'unpaid') formattedLeaveType = 'Unpaid';
+      
+      if (formattedLeaveType && formattedLeaveType.length > 0) {
+        formattedLeaveType = formattedLeaveType.charAt(0).toUpperCase() + formattedLeaveType.slice(1);
       }
-    }));
+
+      // Height values matching standard 9h shift duration
+      const heightValue = d.isLeave
+        ? (d.leaveType?.toLowerCase().includes('half') ? 4.5 : 9.0)
+        : (d.isHoliday ? 9.0 : d.workHours);
+
+      return {
+        key: d.dateStr,
+        label: d.dayLabel,
+        value: heightValue,
+        isLeave: !!d.isLeave,
+        isHoliday: !!d.isHoliday,
+        tooltipData: {
+          title: d.dayLabel + (d.isHoliday ? ' (Public Holiday)' : (d.isLeave ? ` (${formattedLeaveType} Leave)` : '')),
+          items: [
+            { label: (d.isLeave || d.isHoliday) ? 'Actual Work:' : 'Work:', value: `${d.workHours}h` },
+            { 
+              label: 'Break:', 
+              value: `${d.breakHours}h`,
+              badge: d.totalCount > 0 ? {
+                text: `${d.inZoneCount} / ${d.totalCount} In Zone`,
+                type: 'success' as const
+              } : undefined
+            }
+          ]
+        }
+      };
+    });
   }, [chartData]);
 
   if (loading) {

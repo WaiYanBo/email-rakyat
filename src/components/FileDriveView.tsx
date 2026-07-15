@@ -826,7 +826,7 @@ export default function FileDriveView() {
       case 'doc':
       case 'docx':
         return (
-          <div className="w-full h-full bg-slate-100 dark:bg-zinc-955 flex items-center justify-center p-3">
+          <div className="w-full h-full bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-3">
             <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 shadow-sm rounded-sm flex flex-col p-2 select-none">
               <div className="w-full h-1 bg-blue-600 rounded-full mb-1.5" />
               <div className="space-y-1 flex-1">
@@ -1294,7 +1294,7 @@ export default function FileDriveView() {
   const renderListView = () => {
     return (
       <div className="overflow-x-auto w-full">
-        <table className="w-full border-collapse text-left text-sm text-slate-600 dark:text-zinc-350">
+        <table className="w-full min-w-[650px] border-collapse text-left text-sm text-slate-600 dark:text-zinc-350">
           <thead>
             <tr className="border-b border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider select-none">
               <th 

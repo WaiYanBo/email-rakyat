@@ -390,6 +390,14 @@ export default function ClientDataView() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search') || params.get('q');
+    if (searchVal) {
+      setSearchQuery(searchVal);
+    }
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     async function loadStorageFolders() {
       const { data: { session } } = await supabase.auth.getSession();

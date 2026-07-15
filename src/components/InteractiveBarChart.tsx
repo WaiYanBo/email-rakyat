@@ -5,6 +5,7 @@ export interface BarChartItem {
   label: string;
   value: number;
   isLeave?: boolean;
+  isHoliday?: boolean;
   tooltipData: {
     title: string;
     items: { label: string; value: string | number; badge?: { text: string; type: 'success' | 'warning' | 'info' } }[];
@@ -227,13 +228,13 @@ export default function InteractiveBarChart({
 
                 {/* Gradient Bar */}
                 <defs>
-                  <linearGradient id={`barGrad-${d.label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={d.isLeave ? '#c084fc' : barColorGradStart} />
-                    <stop offset="100%" stopColor={d.isLeave ? '#9333ea' : barColorGradEnd} />
+                  <linearGradient id={`barGrad-${d.key}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={d.isLeave ? '#fbbf24' : (d.isHoliday ? '#22d3ee' : barColorGradStart)} />
+                    <stop offset="100%" stopColor={d.isLeave ? '#ea580c' : (d.isHoliday ? '#0891b2' : barColorGradEnd)} />
                   </linearGradient>
-                  <linearGradient id={`barGradHover-${d.label.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={d.isLeave ? '#d8b4fe' : barColorHoverStart} />
-                    <stop offset="100%" stopColor={d.isLeave ? '#a855f7' : barColorHoverEnd} />
+                  <linearGradient id={`barGradHover-${d.key}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={d.isLeave ? '#fde047' : (d.isHoliday ? '#67e8f9' : barColorHoverStart)} />
+                    <stop offset="100%" stopColor={d.isLeave ? '#f97316' : (d.isHoliday ? '#06b6d4' : barColorHoverEnd)} />
                   </linearGradient>
                 </defs>
 
@@ -244,7 +245,7 @@ export default function InteractiveBarChart({
                   height={Math.max(activeHeight, 4)} 
                   rx={6} 
                   ry={6}
-                  fill={isHovered ? `url(#barGradHover-${d.label.replace(/\s+/g, '-')})` : `url(#barGrad-${d.label.replace(/\s+/g, '-')})`}
+                  fill={isHovered ? `url(#barGradHover-${d.key})` : `url(#barGrad-${d.key})`}
                   className="transition-all duration-300 ease-out shadow-sm opacity-90 hover:opacity-100" 
                 />
 

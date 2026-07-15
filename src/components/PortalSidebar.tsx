@@ -10,6 +10,9 @@ export default function PortalSidebar() {
   const [loading, setLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [readNotifications, setReadNotifications] = useState<string[]>([]);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const { lang, setLang } = usePortalLanguage();
   const { permissions } = usePermissions(profile);
@@ -81,6 +84,207 @@ export default function PortalSidebar() {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
     };
   }, []);
+
+  // Load read notifications from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('portal-read-notifications');
+      if (saved) {
+        setReadNotifications(JSON.parse(saved));
+      }
+    } catch (e) {}
+  }, []);
+
+  const saveReadNotifications = (updated: string[]) => {
+    setReadNotifications(updated);
+    try {
+      localStorage.setItem('portal-read-notifications', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const loadNotifications = async () => {
+    if (!profile) return;
+    try {
+      const isApprover = ['CEO', 'CFO', 'COO'].includes(profile.role);
+      const list: any[] = [];
+
+      // 1. Fetch latest announcements
+      const { data: annData } = await supabase
+        .from('announcements')
+        .select('*')
+        .lte('scheduled_at', new Date().toISOString())
+        .order('scheduled_at', { ascending: false })
+        .limit(10);
+
+      if (annData) {
+        annData.forEach((a: any) => {
+          list.push({
+            id: `ann-${a.id}`,
+            title: lang === 'bm' ? 'Pengumuman Baru' : 'New Announcement',
+            message: `${a.author_name}: "${a.title}"`,
+            date: a.scheduled_at,
+            type: 'announcement',
+            link: '/portal',
+            icon: '📢'
+          });
+        });
+      }
+
+      // 2. Fetch leave requests
+      if (isApprover) {
+        // Management: fetch all pending leaves
+        const { data: pendingLeaves } = await supabase
+          .from('leave_requests')
+          .select('*, profiles!profile_id(full_name)')
+          .eq('status', 'Pending');
+        if (pendingLeaves) {
+          pendingLeaves.forEach((l: any) => {
+            list.push({
+              id: `leave-pending-${l.id}`,
+              title: lang === 'bm' ? 'Kelulusan Cuti Menunggu' : 'Pending Leave Request',
+              message: `${l.profiles?.full_name || 'Staff'} memohon ${l.leave_type} (${l.total_days} hari) bermula ${l.start_date}.`,
+              date: l.created_at,
+              type: 'leave_pending',
+              link: '/portal/leave',
+              icon: '📝'
+            });
+          });
+        }
+      }
+
+      // Fetch own processed leaves (Approved / Rejected)
+      const { data: myLeaves } = await supabase
+        .from('leave_requests')
+        .select('*, approver:profiles!approved_by(full_name)')
+        .eq('profile_id', profile.id)
+        .in('status', ['Approved', 'Rejected']);
+      if (myLeaves) {
+        myLeaves.forEach((l: any) => {
+          list.push({
+            id: `leave-processed-${l.id}-${l.status}`,
+            title: lang === 'bm' ? `Cuti ${l.status === 'Approved' ? 'Diluluskan' : 'Ditolak'}` : `Leave Request ${l.status}`,
+            message: lang === 'bm'
+              ? `Permohonan cuti ${l.leave_type} anda pada ${l.start_date} telah ${l.status === 'Approved' ? 'diluluskan' : 'ditolak'} oleh ${l.approver?.full_name || 'Pengurusan'}.`
+              : `Your ${l.leave_type} request for ${l.start_date} was ${l.status.toLowerCase()} by ${l.approver?.full_name || 'Management'}.`,
+            date: l.updated_at || l.created_at,
+            type: `leave_${l.status.toLowerCase()}`,
+            link: '/portal/leave',
+            icon: l.status === 'Approved' ? '✅' : '❌'
+          });
+        });
+      }
+
+      // 3. Fetch designated cases (where ip_pem1 = profile.name)
+      const { data: casesData } = await supabase
+        .from('clients')
+        .select('id, NAME, "CASE CATEGORY", DATE')
+        .ilike('ip_pem1', profile.name);
+      if (casesData) {
+        casesData.forEach((c: any) => {
+          list.push({
+            id: `case-pem1-${c.id}`,
+            title: lang === 'bm' ? 'Kes Ditugaskan' : 'Case Assigned',
+            message: lang === 'bm'
+              ? `Anda telah ditugaskan sebagai PEM 1 untuk klien ${c.NAME} (${c['CASE CATEGORY']}).`
+              : `You are designated as PEM 1 for client ${c.NAME} (${c['CASE CATEGORY']}).`,
+            date: c.DATE ? (c.DATE.includes('/') ? c.DATE.split('/').reverse().join('-') : c.DATE) : new Date().toISOString(),
+            type: 'case_designation',
+            link: `/portal/klien?search=${encodeURIComponent(c.NAME)}`,
+            icon: '💼'
+          });
+        });
+      }
+
+      // Sort notifications by date descending
+      list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setNotifications(list);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (profile) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [profile, lang]);
+
+  useEffect(() => {
+    if (!isNotificationOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.notification-container') && !target.closest('.notification-dropdown')) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isNotificationOpen]);
+
+  const unreadNotifications = notifications.filter(n => !readNotifications.includes(n.id));
+  const unreadCount = unreadNotifications.length;
+
+  const handleMarkAllRead = () => {
+    const allIds = notifications.map(n => n.id);
+    saveReadNotifications(allIds);
+  };
+
+  const handleNotificationClick = (n: any) => {
+    if (!readNotifications.includes(n.id)) {
+      saveReadNotifications([...readNotifications, n.id]);
+    }
+    setIsNotificationOpen(false);
+    window.location.href = n.link;
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const diffMs = new Date().getTime() - d.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return lang === 'bm' ? 'Baru sahaja' : 'Just now';
+      if (diffMins < 60) return `${diffMins}m ${lang === 'bm' ? 'yang lalu' : 'ago'}`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ${lang === 'bm' ? 'yang lalu' : 'ago'}`;
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const renderNotificationItem = (n: any) => {
+    const isUnread = !readNotifications.includes(n.id);
+    return (
+      <button
+        key={n.id}
+        onClick={() => handleNotificationClick(n)}
+        className={`w-full p-3.5 text-left flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-zinc-900 border-b border-slate-100/50 dark:border-gray-900/40 ${
+          isUnread ? 'bg-indigo-50/20 dark:bg-yellow-500/5' : ''
+        }`}
+      >
+        <span className="text-lg flex-shrink-0 mt-0.5">{n.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start gap-1">
+            <span className={`text-xs font-bold truncate ${isUnread ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-zinc-400'}`}>
+              {n.title}
+            </span>
+            {isUnread && (
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-yellow-500 flex-shrink-0 mt-1"></span>
+            )}
+          </div>
+          <p className={`text-[11px] leading-relaxed mt-1 break-words ${isUnread ? 'text-slate-750 dark:text-zinc-200 font-semibold' : 'text-slate-450 dark:text-zinc-550'}`}>
+            {n.message}
+          </p>
+          <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium block mt-1">
+            {formatTime(n.date)}
+          </span>
+        </div>
+      </button>
+    );
+  };
 
   useEffect(() => {
     setIsOpen(false);
@@ -161,17 +365,20 @@ export default function PortalSidebar() {
       });
     }
 
-    // Everyone can access My Leave
-    items.push({
-      label: t('sidebar', 'navLeave', lang),
-      path: '/portal/leave',
-      activeClass,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      )
-    });
+    // Only non-contract/non-freelance staff can access My Leave
+    const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
+    if (!isContractor) {
+      items.push({
+        label: t('sidebar', 'navLeave', lang),
+        path: '/portal/leave',
+        activeClass,
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        )
+      });
+    }
 
     // Only users with HR manage permission can access Human Resources
     if (canManageHR) {
@@ -256,14 +463,35 @@ export default function PortalSidebar() {
                 Staff <span className="text-slate-500 dark:text-slate-400 font-medium">Portal</span>
               </h1>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="md:hidden p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex-shrink-0 min-h-[48px] min-w-[48px] flex items-center justify-center"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
+            
+            <div className="flex items-center gap-1 notification-container">
+              {/* Notification Bell Icon */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  aria-label="Notifications"
+                  className="p-1 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-800 text-slate-600 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-yellow-500 transition-all flex items-center justify-center min-w-[36px] min-h-[36px] relative"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="md:hidden p-1 text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex-shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <a href="/" className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 dark:text-zinc-300 dark:hover:text-white bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-zinc-800 transition-all border border-slate-200 dark:border-gray-800/80 shadow-sm min-h-[48px]">
@@ -383,6 +611,60 @@ export default function PortalSidebar() {
           </button>
         </div>
       </div>
+
+      {isNotificationOpen && (() => {
+        const importantNotifications = notifications.filter(n => ['leave_pending', 'leave_approved', 'leave_rejected', 'case_designation'].includes(n.type));
+        const generalNotifications = notifications.filter(n => n.type === 'announcement');
+        return (
+          <div className="fixed left-4 md:left-[200px] top-[60px] w-[calc(100%-2rem)] md:w-80 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-xl z-[99999] overflow-hidden flex flex-col transition-all duration-300 notification-dropdown">
+            <div className="p-4 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center">
+              <span className="text-sm font-bold text-slate-800 dark:text-zinc-150">
+                {lang === 'bm' ? 'Pusat Notifikasi' : 'Notification Center'}
+              </span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-750 dark:text-yellow-500 dark:hover:text-yellow-400"
+                >
+                  {lang === 'bm' ? 'Tanda semua dibaca' : 'Mark all read'}
+                </button>
+              )}
+            </div>
+            
+            <div className="flex-1 max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-gray-800/80 scrollbar-thin bg-white dark:bg-zinc-950">
+              {/* Section 1: Important & Actions */}
+              <div>
+                <div className="px-4 py-2 bg-rose-50/50 dark:bg-rose-950/10 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-455 border-b border-rose-100/50 dark:border-rose-950/20 flex items-center gap-1.5 select-none">
+                  <span className="text-sm">⚠️</span>
+                  {lang === 'bm' ? 'Tindakan & Arahan Penting' : 'Important & Action Alerts'}
+                </div>
+                {importantNotifications.length === 0 ? (
+                  <div className="p-5 text-center text-[10px] text-slate-400 dark:text-zinc-555 italic font-medium">
+                    {lang === 'bm' ? 'Tiada tindakan penting' : 'No important actions'}
+                  </div>
+                ) : (
+                  importantNotifications.map((n) => renderNotificationItem(n))
+                )}
+              </div>
+
+              {/* Section 2: General Announcements */}
+              <div>
+                <div className="px-4 py-2 bg-slate-50 dark:bg-zinc-900/60 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-gray-800 flex items-center gap-1.5 select-none">
+                  <span className="text-sm">📢</span>
+                  {lang === 'bm' ? 'Pengumuman Am' : 'General Announcements'}
+                </div>
+                {generalNotifications.length === 0 ? (
+                  <div className="p-5 text-center text-[10px] text-slate-450 dark:text-zinc-555 italic font-medium">
+                    {lang === 'bm' ? 'Tiada pengumuman baru' : 'No new announcements'}
+                  </div>
+                ) : (
+                  generalNotifications.map((n) => renderNotificationItem(n))
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }

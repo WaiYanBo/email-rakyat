@@ -225,7 +225,7 @@ export default function PublicHolidaysView() {
         )}
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full min-w-[500px] text-left border-collapse text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                 <th className="px-5 py-3 font-semibold text-slate-500 dark:text-zinc-400 text-xs w-32">{t('holidays', 'colDate', lang)}</th>

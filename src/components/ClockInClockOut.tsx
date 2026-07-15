@@ -100,10 +100,67 @@ export default function ClockInClockOut() {
 
       const { data: recentRecords, error: allErr } = await allQuery;
 
+      // 3. Fetch approved leave requests to inject into the history
+      let leaveQuery = supabase
+        .from('leave_requests')
+        .select('*, profiles!profile_id(full_name)')
+        .eq('status', 'Approved');
+
+      if (!privileged && userId) {
+        leaveQuery = leaveQuery.eq('profile_id', userId);
+      }
+
+      const { data: leavesData } = await leaveQuery;
+
       if (allErr) {
          console.error('Error fetching recent attendance records:', allErr);
       } else if (recentRecords) {
-         setAllRecords(recentRecords);
+         const { data: allProfiles } = await supabase
+           .from('profiles')
+           .select('id, full_name');
+         const profilesMap = new Map((allProfiles || []).map(p => [p.id, p.full_name]));
+
+         const enrichedRecords = recentRecords.map((r: any) => ({
+           ...r,
+           user_name: profilesMap.get(r.user_id) || r.user_name || 'Unknown'
+         }));
+
+         if (leavesData && leavesData.length > 0) {
+           leavesData.forEach((leave: any) => {
+             const startDate = new Date(leave.start_date);
+             const endDate = new Date(leave.end_date);
+             let currentDate = new Date(startDate);
+             while (currentDate <= endDate) {
+               const dayOfWeek = currentDate.getDay();
+               // Mon-Fri only
+               if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                 const dateStr = currentDate.toISOString().split('T')[0];
+                 const existingRecord = enrichedRecords.find(r => r.user_id === leave.profile_id && r.date === dateStr);
+                 if (!existingRecord) {
+                   enrichedRecords.push({
+                     id: `leave-${leave.id}-${dateStr}`,
+                     user_id: leave.profile_id,
+                     user_name: leave.profiles?.full_name || profilesMap.get(leave.profile_id) || 'Unknown',
+                     date: dateStr,
+                     clock_in_time: null,
+                     clock_out_time: null,
+                     is_leave: true,
+                     leave_type: leave.leave_type
+                   });
+                 }
+               }
+               currentDate.setDate(currentDate.getDate() + 1);
+             }
+           });
+         }
+
+         // Sort enriched records by date descending, then user_name ascending
+         enrichedRecords.sort((a: any, b: any) => {
+           if (a.date !== b.date) return b.date.localeCompare(a.date);
+           return (a.user_name || '').localeCompare(b.user_name || '');
+         });
+
+         setAllRecords(enrichedRecords);
       }
     } catch (err) {
       console.error('Exception fetching records:', err);
@@ -193,6 +250,25 @@ export default function ClockInClockOut() {
       const isCompleted = dayRecords.every(r => r.clock_out_time);
       const isForgot = dayRecords.some(r => r.clock_in_time && !r.clock_out_time);
       const isLateClockout = dayRecords.some(r => r.is_late_clockout);
+
+      if (firstRecord.is_leave) {
+        let leaveTypeName = firstRecord.leave_type || 'On Leave';
+        if (leaveTypeName.toLowerCase() === 'sick') leaveTypeName = 'Sick Leave';
+        else if (leaveTypeName.toLowerCase() === 'annual') leaveTypeName = 'Annual Leave';
+        else if (leaveTypeName.toLowerCase() === 'hospitalisation') leaveTypeName = 'Hospitalisation Leave';
+        else if (leaveTypeName.toLowerCase() === 'maternity') leaveTypeName = 'Maternity Leave';
+        else if (leaveTypeName.toLowerCase() === 'paternity') leaveTypeName = 'Paternity Leave';
+        else if (leaveTypeName.toLowerCase() === 'unpaid') leaveTypeName = 'Unpaid Leave';
+
+        return {
+          'Employee Name': firstRecord.user_name || '-',
+          'Date': firstRecord.date || '-',
+          'Clock In Time': leaveTypeName,
+          'Clock Out Time': leaveTypeName,
+          'Hours Worked': '-',
+          'Status Flag': leaveTypeName
+        };
+      }
 
       // Sum of working times of all completed shifts
       let totalWorkMs = 0;
@@ -906,7 +982,7 @@ export default function ClockInClockOut() {
                     </div>
                     <div className="overflow-hidden rounded-xl border border-rose-100 dark:border-rose-900/20">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs md:text-sm">
+                        <table className="w-full min-w-[650px] text-left border-collapse text-xs md:text-sm">
                           <thead>
                             <tr className="bg-rose-50/30 dark:bg-rose-955/20 border-b border-rose-100 dark:border-rose-900/30">
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendance', 'employee', lang)}</th>
@@ -984,7 +1060,7 @@ export default function ClockInClockOut() {
                     </div>
                     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs md:text-sm">
+                        <table className="w-full min-w-[750px] text-left border-collapse text-xs md:text-sm">
                           <thead>
                             <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                               <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">{t('attendance', 'employee', lang)}</th>
@@ -1008,7 +1084,39 @@ export default function ClockInClockOut() {
                                  const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
                                  const isForgotCheckout = record.clock_in_time && !record.clock_out_time;
 
-                                 return (
+                                 if (record.is_leave) {
+                                    let leaveTypeName = record.leave_type || 'Leave';
+                                    if (leaveTypeName.toLowerCase() === 'sick') leaveTypeName = 'Sick Leave';
+                                    else if (leaveTypeName.toLowerCase() === 'annual') leaveTypeName = 'Annual Leave';
+                                    else if (leaveTypeName.toLowerCase() === 'hospitalisation') leaveTypeName = 'Hospitalisation Leave';
+                                    else if (leaveTypeName.toLowerCase() === 'maternity') leaveTypeName = 'Maternity Leave';
+                                    else if (leaveTypeName.toLowerCase() === 'paternity') leaveTypeName = 'Paternity Leave';
+                                    else if (leaveTypeName.toLowerCase() === 'unpaid') leaveTypeName = 'Unpaid Leave';
+                                    
+                                    if (leaveTypeName && leaveTypeName.length > 0) {
+                                      leaveTypeName = leaveTypeName.charAt(0).toUpperCase() + leaveTypeName.slice(1);
+                                    }
+
+                                    return (
+                                      <tr
+                                        key={record.id}
+                                        className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 bg-indigo-50/5 dark:bg-yellow-500/5"
+                                      >
+                                        <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
+                                        <td className="px-4 py-3.5 font-mono">{record.date}</td>
+                                        <td colSpan={4} className="px-4 py-3.5 text-center">
+                                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 font-semibold text-xs">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
+                                            </svg>
+                                            {lang === 'bm' ? 'Cuti Diluluskan' : 'On Leave'} {leaveTypeName ? `(${leaveTypeName})` : ''}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  }
+
+                                  return (
                                    <tr
                                      key={record.id}
                                      className={`hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 ${

@@ -401,7 +401,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
             <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs md:text-sm">
+                <table className="w-full min-w-[700px] text-left border-collapse text-xs md:text-sm">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
                       <th className="px-5 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 text-xs">

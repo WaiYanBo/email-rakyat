@@ -96,11 +96,22 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const [rejectingItem, setRejectingItem] = useState<LeaveRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // Edit balances states
+  const [selectedStaffBalanceId, setSelectedStaffBalanceId] = useState<string>('');
+  const [isEditingBalancesInline, setIsEditingBalancesInline] = useState(false);
+  const [editAnnualTotal, setEditAnnualTotal] = useState<string>('0');
+  const [editSickTotal, setEditSickTotal] = useState<string>('0');
+  const [editHospitalisationTotal, setEditHospitalisationTotal] = useState<string>('0');
+  const [editMaternityTotal, setEditMaternityTotal] = useState<string>('0');
+  const [editPaternityTotal, setEditPaternityTotal] = useState<string>('0');
+  const [isUpdatingBalances, setIsUpdatingBalances] = useState(false);
+
   // Calendar navigation states
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
   const isApprover = profile?.department === 'Human Resources' || permissions.edit_staff || isIT;
+  const isActionAllowed = ['CEO', 'CFO', 'COO'].includes(profile?.role || '');
 
   useEffect(() => {
     fetchEmployeeData();
@@ -109,6 +120,12 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       fetchAdminData();
     }
   }, [profile, isApprover]);
+
+  useEffect(() => {
+    if (staffBalances.length > 0 && !selectedStaffBalanceId) {
+      setSelectedStaffBalanceId(staffBalances[0].id);
+    }
+  }, [staffBalances, selectedStaffBalanceId]);
 
   // Recalculate working days dynamically when inputs change
   useEffect(() => {
@@ -150,10 +167,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         setBalance(balanceData);
       }
 
-      // 2. Fetch requests
+      // 2. Fetch requests (joining approver details)
       const { data: requestData, error: requestError } = await supabase
         .from('leave_requests')
-        .select('*')
+        .select('*, approver:profiles!approved_by(full_name, roles(role_name))')
         .eq('profile_id', profile.id)
         .order('created_at', { ascending: false });
 
@@ -180,12 +197,26 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       if (pendingError) throw pendingError;
       setPendingRequests(pendingData || []);
 
-      // 2. Fetch balances
+      // 2. Fetch balances (joining roles to exclude BOD)
       const { data: balancesData, error: balancesError } = await supabase
         .from('leave_balances')
-        .select('*, profiles(full_name, department)');
+        .select('*, profiles(full_name, department, roles(role_name))');
       if (balancesError) throw balancesError;
-      setStaffBalances(balancesData || []);
+      
+      const filteredBalances = (balancesData || []).filter((sb: any) => {
+        const dept = sb.profiles?.department?.toUpperCase();
+        
+        let roleName = '';
+        if (sb.profiles?.roles) {
+          const rolesVar = sb.profiles.roles as any;
+          roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || '') : (rolesVar?.role_name || '');
+        }
+        roleName = roleName.toUpperCase();
+
+        const isBOD = dept === 'BOD' || dept === 'BOARD' || ['CHAIRMAN', 'CEO', 'COO', 'CFO'].includes(roleName);
+        return !isBOD;
+      });
+      setStaffBalances(filteredBalances);
 
       // 3. Fetch approved leaves for calendar
       const { data: approvedData, error: approvedError } = await supabase
@@ -406,6 +437,37 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       fetchEmployeeData();
     } catch (err) {
       console.error('Error rejecting request:', err);
+    }
+  };
+
+  const handleEditBalancesSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStaffBalanceId) return;
+
+    setIsUpdatingBalances(true);
+    try {
+      const { error } = await supabase
+        .from('leave_balances')
+        .update({
+          annual_total: parseFloat(editAnnualTotal) || 0.0,
+          sick_total: parseFloat(editSickTotal) || 0.0,
+          hospitalisation_total: parseFloat(editHospitalisationTotal) || 0.0,
+          maternity_total: parseFloat(editMaternityTotal) || 0.0,
+          paternity_total: parseFloat(editPaternityTotal) || 0.0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedStaffBalanceId);
+
+      if (error) throw error;
+
+      alert(lang === 'bm' ? 'Baki cuti kakitangan berjaya dikemas kini!' : 'Staff leave balances successfully updated!');
+      setIsEditingBalancesInline(false);
+      fetchAdminData();
+    } catch (err: any) {
+      console.error('Error updating leave balances:', err);
+      alert(lang === 'bm' ? 'Gagal mengemas kini baki cuti: ' + err.message : 'Failed to update leave balances: ' + err.message);
+    } finally {
+      setIsUpdatingBalances(false);
     }
   };
 
@@ -693,7 +755,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 {t('leave', 'myRequests', lang)}
               </h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full min-w-[700px] text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
                       <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colType', lang)}</th>
@@ -734,6 +796,20 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           <td className="py-3">
                             <div className="flex flex-col gap-1 items-start">
                               {getStatusBadge(item.status)}
+                              
+                              {/* Display who approved or rejected the request */}
+                              {(item.status === 'Approved' || item.status === 'Rejected') && (item as any).approver && (
+                                <span className="text-[9px] text-slate-400 dark:text-zinc-550 font-medium leading-tight">
+                                  {item.status === 'Approved' ? 'Approved' : 'Rejected'} by: <br/>
+                                  <strong className="text-slate-600 dark:text-zinc-300">{(item as any).approver.full_name}</strong> {(() => {
+                                    const approver = (item as any).approver;
+                                    const rolesVar = approver.roles;
+                                    const roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || '') : (rolesVar?.role_name || '');
+                                    return roleName ? `(${roleName})` : '';
+                                  })()}
+                                </span>
+                              )}
+
                               {item.status === 'Rejected' && item.rejection_reason && (
                                 <span className="text-[10px] text-rose-500 italic font-medium mt-1">
                                   "{item.rejection_reason}"
@@ -952,7 +1028,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                   </h3>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
+                    <table className="w-full min-w-[900px] text-left text-xs border-collapse">
                       <thead>
                         <tr className="border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
                           <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colEmployee', lang)}</th>
@@ -1014,18 +1090,24 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                 )}
                               </td>
                               <td className="py-3 text-right space-x-2 whitespace-nowrap">
-                                <button
-                                  onClick={() => handleApprove(item)}
-                                  className="px-2.5 py-1 text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md border border-emerald-200 font-bold transition-colors"
-                                >
-                                  {t('leave', 'approveBtn', lang)}
-                                </button>
-                                <button
-                                  onClick={() => handleRejectClick(item)}
-                                  className="px-2.5 py-1 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-md border border-rose-200 font-bold transition-colors"
-                                >
-                                  {t('leave', 'rejectBtn', lang)}
-                                </button>
+                                {isActionAllowed ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleApprove(item)}
+                                      className="px-2.5 py-1 text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md border border-emerald-200 font-bold transition-colors"
+                                    >
+                                      {t('leave', 'approveBtn', lang)}
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectClick(item)}
+                                      className="px-2.5 py-1 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-md border border-rose-200 font-bold transition-colors"
+                                    >
+                                      {t('leave', 'rejectBtn', lang)}
+                                    </button>
+                                  </>
+                                ) : (
+                                  getStatusBadge(item.status)
+                                )}
                               </td>
                             </tr>
                           ))
@@ -1036,66 +1118,307 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Balances Directory tab */}
+              {/* Balances Directory tab (WP / Gov style select & edit) */}
               {dashboardSubTab === 'balances' && (
-                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6">
-                  <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 mb-4">
-                    {t('leave', 'staffBalances', lang)}
-                  </h3>
+                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6 space-y-6">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 mb-2">
+                      {t('leave', 'staffBalances', lang)}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">
+                      {lang === 'bm' 
+                        ? 'Sila pilih seorang kakitangan dari senarai untuk melihat dan melaraskan peruntukan baki cuti mereka.' 
+                        : 'Select a staff member from the dropdown to view and adjust their leave entitlement balances.'}
+                    </p>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colEmployee', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'annual', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'sick', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'hospitalisation', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">Maternity</th>
-                          <th className="py-2.5 pb-3 font-semibold">Paternity</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'unpaid', lang)}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50 dark:divide-zinc-900/50">
-                        {staffBalances.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="py-6 text-center text-slate-400 dark:text-zinc-550 italic">
-                              {lang === 'bm' ? 'Tiada baki kakitangan ditemui.' : 'No staff balances found.'}
-                            </td>
-                          </tr>
-                        ) : (
-                          staffBalances.map((sb) => (
-                            <tr key={sb.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
-                              <td className="py-3 font-bold text-slate-800 dark:text-zinc-200">
-                                {sb.profiles?.full_name || 'System User'}
-                                <span className="block text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
-                                  {sb.profiles?.department || '--'}
-                                </span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {sb.annual_total - sb.annual_used} <span className="text-slate-400 text-[10px]">/ {sb.annual_total}</span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {sb.sick_total - sb.sick_used} <span className="text-slate-400 text-[10px]">/ {sb.sick_total}</span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {sb.hospitalisation_total - sb.hospitalisation_used} <span className="text-slate-400 text-[10px]">/ {sb.hospitalisation_total}</span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {sb.maternity_total - sb.maternity_used} <span className="text-slate-400 text-[10px]">/ {sb.maternity_total}</span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {sb.paternity_total - sb.paternity_used} <span className="text-slate-400 text-[10px]">/ {sb.paternity_total}</span>
-                              </td>
-                              <td className="py-3 text-slate-750 dark:text-zinc-300 font-black">
-                                {sb.unpaid_used} {t('leave', 'days', lang)}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      <label className="text-xs font-black uppercase tracking-wider text-slate-450 dark:text-zinc-500">
+                        {lang === 'bm' ? 'Pilih Kakitangan:' : 'Select Staff:'}
+                      </label>
+                      <select
+                        value={selectedStaffBalanceId}
+                        onChange={(e) => {
+                          setSelectedStaffBalanceId(e.target.value);
+                          setIsEditingBalancesInline(false);
+                        }}
+                        className="w-full sm:w-96 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {staffBalances.map((sb) => (
+                          <option key={sb.id} value={sb.id}>
+                            {sb.profiles?.full_name || 'System User'} {sb.profiles?.department ? `(${sb.profiles.department})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+
+                  {(() => {
+                    const currentRecord = staffBalances.find(sb => sb.id === selectedStaffBalanceId);
+                    if (!currentRecord) {
+                      return (
+                        <div className="p-8 text-center text-slate-400 dark:text-zinc-550 bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                          {lang === 'bm' ? 'Sila pilih kakitangan.' : 'Please select a staff member.'}
+                        </div>
+                      );
+                    }
+
+                    if (isEditingBalancesInline) {
+                      // WORDPRESS / GOVT WP-TABLE STYLE EDIT VIEW!
+                      return (
+                        <form onSubmit={handleEditBalancesSubmit} className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-150 dark:border-zinc-800/85 rounded-2xl p-6 space-y-6">
+                          <div className="pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+                            <div>
+                              <h4 className="text-sm font-black uppercase text-indigo-900 dark:text-yellow-500">
+                                {lang === 'bm' ? 'Ubah Peruntukan Baki Cuti' : 'Adjust Leave Entitlement Settings'}
+                              </h4>
+                              <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider mt-0.5">
+                                {currentRecord.profiles?.full_name} · {currentRecord.profiles?.department || 'No Department'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* wordpress/govt form-table styled rows */}
+                          <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                            
+                            {/* Annual Leave Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
+                              <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
+                                {t('leave', 'annual', lang)}
+                              </label>
+                              <div className="md:col-span-2 space-y-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editAnnualTotal}
+                                  onChange={(e) => setEditAnnualTotal(e.target.value)}
+                                  className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  required
+                                />
+                                <p className="text-[10px] text-slate-400 dark:text-zinc-550 font-medium">
+                                  {lang === 'bm' 
+                                    ? 'Jumlah hari peruntukan Cuti Tahunan. Tetapkan ke 0 jika tidak layak (contohnya freelance atau kontraktor).' 
+                                    : 'Total allocated days for Annual Leave. Set to 0 if not entitled (e.g. freelance or contract worker).'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Sick Leave Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
+                              <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
+                                {t('leave', 'sick', lang)}
+                              </label>
+                              <div className="md:col-span-2 space-y-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editSickTotal}
+                                  onChange={(e) => setEditSickTotal(e.target.value)}
+                                  className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  required
+                                />
+                                <p className="text-[10px] text-slate-400 dark:text-zinc-550 font-medium">
+                                  {lang === 'bm'
+                                    ? 'Jumlah hari peruntukan Cuti Sakit. Tetapkan ke 0 jika tidak layak.'
+                                    : 'Total allocated days for Sick Leave. Set to 0 if not entitled.'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Hospitalisation Leave Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
+                              <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
+                                {t('leave', 'hospitalisation', lang)}
+                              </label>
+                              <div className="md:col-span-2 space-y-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editHospitalisationTotal}
+                                  onChange={(e) => setEditHospitalisationTotal(e.target.value)}
+                                  className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  required
+                                />
+                                <p className="text-[10px] text-slate-450 dark:text-zinc-550 font-medium">
+                                  {lang === 'bm'
+                                    ? 'Peruntukan Cuti Hospitalisasi (Standard: 60 hari).'
+                                    : 'Allocated Hospitalisation Leave days (Standard: 60 days).'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Maternity Leave Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
+                              <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
+                                Maternity Leave
+                              </label>
+                              <div className="md:col-span-2 space-y-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editMaternityTotal}
+                                  onChange={(e) => setEditMaternityTotal(e.target.value)}
+                                  className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  required
+                                />
+                                <p className="text-[10px] text-slate-450 dark:text-zinc-555 font-medium">
+                                  {lang === 'bm'
+                                    ? 'Peruntukan Cuti Bersalin untuk kakitangan wanita (Standard: 98 hari).'
+                                    : 'Maternity Leave days for female employees (Standard: 98 days).'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Paternity Leave Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-slate-100 dark:border-zinc-800/40 items-center gap-2">
+                              <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
+                                Paternity Leave
+                              </label>
+                              <div className="md:col-span-2 space-y-1">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={editPaternityTotal}
+                                  onChange={(e) => setEditPaternityTotal(e.target.value)}
+                                  className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  required
+                                />
+                                <p className="text-[10px] text-slate-450 dark:text-zinc-555 font-medium">
+                                  {lang === 'bm'
+                                    ? 'Peruntukan Cuti Paternity untuk kakitangan lelaki (Standard: 7 hari).'
+                                    : 'Paternity Leave days for male employees (Standard: 7 days).'}
+                                </p>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingBalancesInline(false)}
+                              className="px-5 py-2.5 text-xs font-bold text-slate-500 bg-white hover:bg-slate-100 border border-slate-200 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                            >
+                              {t('leave', 'cancelBtn', lang)}
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={isUpdatingBalances}
+                              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-450 dark:text-black rounded-xl transition-all disabled:opacity-50"
+                            >
+                              {isUpdatingBalances 
+                                ? t('common', 'loading', lang) 
+                                : (lang === 'bm' ? 'Simpan Perubahan' : 'Save Changes')}
+                            </button>
+                          </div>
+                        </form>
+                      );
+                    }
+
+                    // NORMAL VIEW DETAILS PANEL
+                    return (
+                      <div className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-150 dark:border-zinc-800/80 rounded-2xl p-6 space-y-6">
+                        <div className="pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-wide">
+                              {lang === 'bm' ? 'Perincian Kelayakan Cuti' : 'Leave Entitlement Details'}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 dark:text-zinc-550 font-bold uppercase tracking-wider mt-0.5">
+                              {currentRecord.profiles?.full_name} · {currentRecord.profiles?.department || 'No Department'}
+                            </p>
+                          </div>
+                          
+                          {isActionAllowed && (
+                            <button
+                              onClick={() => {
+                                setEditAnnualTotal(currentRecord.annual_total.toString());
+                                setEditSickTotal(currentRecord.sick_total.toString());
+                                setEditHospitalisationTotal(currentRecord.hospitalisation_total.toString());
+                                setEditMaternityTotal(currentRecord.maternity_total.toString());
+                                setEditPaternityTotal(currentRecord.paternity_total.toString());
+                                setIsEditingBalancesInline(true);
+                              }}
+                              className="px-4 py-2 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                              </svg>
+                              <span>{lang === 'bm' ? 'Ubah Entri' : 'Edit Entitlements'}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Large, high contrast detail metrics */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              {t('leave', 'annual', lang)}
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.annual_total - currentRecord.annual_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.annual_total} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki' : 'remaining'}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              {t('leave', 'sick', lang)}
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.sick_total - currentRecord.sick_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.sick_total} {t('leave', 'days', lang)}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.sick_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              {t('leave', 'hospitalisation', lang)}
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.hospitalisation_total - currentRecord.hospitalisation_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.hospitalisation_total} {t('leave', 'days', lang)}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.hospitalisation_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              Maternity Leave
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.maternity_total - currentRecord.maternity_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.maternity_total} {t('leave', 'days', lang)}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.maternity_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              Paternity Leave
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.paternity_total - currentRecord.paternity_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.paternity_total} {t('leave', 'days', lang)}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.paternity_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          </div>
+
+                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
+                              {t('leave', 'unpaid', lang)}
+                            </span>
+                            <p className="text-xl font-black text-slate-800 dark:text-white">
+                              {currentRecord.unpaid_used} <span className="text-xs font-semibold text-slate-400">{t('leave', 'used', lang)}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{lang === 'bm' ? 'Cuti tanpa gaji yang telah diluluskan' : 'Approved unpaid leave days'}</p>
+                          </div>
+
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1169,6 +1492,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }

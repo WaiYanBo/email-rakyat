@@ -973,7 +973,7 @@ export default function ClientTable({
         </div>
 
         <div className="flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative">
-          <table className="w-full text-left border-collapse whitespace-nowrap text-xs md:text-sm">
+          <table className="w-full min-w-[1000px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
             <thead>
               {viewMode === 'standard' ? (
                 <tr>

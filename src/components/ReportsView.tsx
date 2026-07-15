@@ -147,7 +147,7 @@ export default function ReportsView() {
 
     // Whitelist role values from the select
     const allowedRoles = [
-      'Chairman', 'CEO', 'COO', 'CFO',
+      'Chairman', 'CEO', 'COO', 'CFO', 'CPO',
       'General Manager', 'Head of Department', 'Senior Executive', 'Executive',
       'Junior Executive', 'Specialist', 'Analyst', 'Admin Assistant',
       'Intern', 'Contract Worker', 'Part-Time Worker',
@@ -158,7 +158,7 @@ export default function ReportsView() {
     const cleanStatus = allowedStatuses.includes(data.status as string) ? data.status as string : 'Active';
 
     let finalDept = cleanDept;
-    if (['Chairman', 'CEO', 'COO', 'CFO'].includes(cleanRole)) {
+    if (['Chairman', 'CEO', 'COO', 'CFO', 'CPO'].includes(cleanRole)) {
       finalDept = 'BOD';
     }
 
@@ -282,7 +282,8 @@ export default function ReportsView() {
     'CEO': 2,
     'COO': 3,
     'CFO': 4,
-    'General Manager': 5,
+    'CPO': 5,
+    'General Manager': 6,
     'Head of Department': 6,
     'Senior Executive': 7,
     'IT Admin': 8,
@@ -599,6 +600,7 @@ export default function ReportsView() {
                         <option value="CEO">CEO</option>
                         <option value="COO">COO</option>
                         <option value="CFO">CFO</option>
+                        <option value="CPO">CPO</option>
                         <option value="General Manager">General Manager</option>
                         <option value="Head of Department">Head of Department</option>
                         <option value="Senior Executive">Senior Executive</option>

@@ -111,7 +111,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
   const isApprover = profile?.department === 'Human Resources' || permissions.edit_staff || isIT;
-  const isActionAllowed = ['CEO', 'CFO', 'COO'].includes(profile?.role || '');
+  const isActionAllowed = ['CEO', 'CFO', 'COO', 'CPO'].includes(profile?.role || '');
 
   useEffect(() => {
     fetchEmployeeData();
@@ -213,7 +213,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         }
         roleName = roleName.toUpperCase();
 
-        const isBOD = dept === 'BOD' || dept === 'BOARD' || ['CHAIRMAN', 'CEO', 'COO', 'CFO'].includes(roleName);
+        const isBOD = dept === 'BOD' || dept === 'BOARD' || ['CHAIRMAN', 'CEO', 'COO', 'CFO', 'CPO'].includes(roleName);
         return !isBOD;
       });
       setStaffBalances(filteredBalances);

@@ -172,16 +172,16 @@ export default function ExecutiveOverview() {
           const { data: authorsData } = await supabase
             .from('profiles')
             .select(`full_name, department, roles(role_name)`);
-            
+
           if (authorsData) {
             const names = authorsData
               .filter((p: any) => {
                 const roleName = Array.isArray(p.roles) ? p.roles[0]?.role_name : p.roles?.role_name;
-                return ['Head of Department', 'CEO', 'CFO', 'COO', 'Chairman', 'General Manager'].includes(roleName) || p.department === 'BOD';
+                return ['Head of Department', 'CEO', 'CFO', 'COO', 'CPO', 'Chairman', 'General Manager'].includes(roleName) || p.department === 'BOD';
               })
               .map((p: any) => p.full_name)
               .filter(Boolean);
-            
+
             setAuthorOptions(Array.from(new Set(names)).sort());
           }
         } catch (err) {
@@ -196,7 +196,7 @@ export default function ExecutiveOverview() {
           .eq('status', 'Approved')
           .lte('start_date', todayStr)
           .gte('end_date', todayStr);
-          
+
         if (!leaveErr) {
           setStaffOnLeaveCount(leaveCount || 0);
         }
@@ -550,7 +550,7 @@ export default function ExecutiveOverview() {
             ({profile?.role})
           </p>
         </div>
-        
+
         {staffOnLeaveCount > 0 && (
           <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 dark:bg-yellow-500/10 dark:border-yellow-500/20 rounded-xl shadow-sm">
             <span className="relative flex h-3 w-3">
@@ -967,11 +967,11 @@ export default function ExecutiveOverview() {
                   disabled={isPostingNotice}
                 >
                   {profile?.name && <option value={profile.name}>{profile.name} {lang === 'bm' ? '(Anda)' : '(You)'}</option>}
-                  {editingNotice && 
-                   editingNotice.author !== profile?.name && 
-                   !authorOptions.includes(editingNotice.author) && (
-                    <option value={editingNotice.author}>{editingNotice.author}</option>
-                  )}
+                  {editingNotice &&
+                    editingNotice.author !== profile?.name &&
+                    !authorOptions.includes(editingNotice.author) && (
+                      <option value={editingNotice.author}>{editingNotice.author}</option>
+                    )}
                   {authorOptions.map((name) => (
                     name !== profile?.name && <option key={name} value={name}>{name}</option>
                   ))}
@@ -1000,7 +1000,7 @@ export default function ExecutiveOverview() {
                   type="date"
                   name="scheduled_date"
                   defaultValue={editingNotice ? editingNotice.scheduled_at.split('T')[0] : new Date().toISOString().split('T')[0]}
-                  onClick={(e) => {}}
+                  onClick={(e) => { }}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}
                 />

@@ -27,7 +27,7 @@ export default function PortalSidebar() {
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         setTheme(savedTheme);
       }
-    } catch (error) {}
+    } catch (error) { }
   }, []);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function PortalSidebar() {
       } else {
         htmlElement.classList.remove('dark');
       }
-    } catch (error) {}
+    } catch (error) { }
   }, [theme]);
 
   const loadProfile = async () => {
@@ -92,20 +92,20 @@ export default function PortalSidebar() {
       if (saved) {
         setReadNotifications(JSON.parse(saved));
       }
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   const saveReadNotifications = (updated: string[]) => {
     setReadNotifications(updated);
     try {
       localStorage.setItem('portal-read-notifications', JSON.stringify(updated));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const loadNotifications = async () => {
     if (!profile) return;
     try {
-      const isApprover = ['CEO', 'CFO', 'COO'].includes(profile.role);
+      const isApprover = ['CEO', 'CFO', 'COO', 'CPO'].includes(profile.role);
       const list: any[] = [];
 
       // 1. Fetch latest announcements
@@ -261,9 +261,8 @@ export default function PortalSidebar() {
       <button
         key={n.id}
         onClick={() => handleNotificationClick(n)}
-        className={`w-full p-3.5 text-left flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-zinc-900 border-b border-slate-100/50 dark:border-gray-900/40 ${
-          isUnread ? 'bg-indigo-50/20 dark:bg-yellow-500/5' : ''
-        }`}
+        className={`w-full p-3.5 text-left flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-zinc-900 border-b border-slate-100/50 dark:border-gray-900/40 ${isUnread ? 'bg-indigo-50/20 dark:bg-yellow-500/5' : ''
+          }`}
       >
         <span className="text-lg flex-shrink-0 mt-0.5">{n.icon}</span>
         <div className="flex-1 min-w-0">
@@ -331,7 +330,7 @@ export default function PortalSidebar() {
         activeClass,
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
         )
       }
@@ -344,7 +343,7 @@ export default function PortalSidebar() {
         activeClass,
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         )
       });
@@ -359,7 +358,7 @@ export default function PortalSidebar() {
         activeClass,
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         )
       });
@@ -413,8 +412,8 @@ export default function PortalSidebar() {
       activeClass,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       )
     });
@@ -463,7 +462,7 @@ export default function PortalSidebar() {
                 Staff <span className="text-slate-500 dark:text-slate-400 font-medium">Portal</span>
               </h1>
             </div>
-            
+
             <div className="flex items-center gap-1 notification-container">
               {/* Notification Bell Icon */}
               <div className="relative">
@@ -533,11 +532,10 @@ export default function PortalSidebar() {
               <li key={item.path}>
                 <a
                   href={item.path}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all block min-h-[48px] flex items-center gap-3 border-l-4 ${
-                    isActive(item.path)
+                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all block min-h-[48px] flex items-center gap-3 border-l-4 ${isActive(item.path)
                       ? `${item.activeClass} font-semibold shadow-sm`
                       : 'text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-900/65 hover:text-slate-900 dark:hover:text-zinc-200 border-transparent'
-                  }`}
+                    }`}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   <span className="truncate">{item.label}</span>
@@ -557,22 +555,20 @@ export default function PortalSidebar() {
               <button
                 onClick={() => setLang('en')}
                 aria-label="Switch to English"
-                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
-                  lang === 'en'
+                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${lang === 'en'
                     ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                     : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 EN
               </button>
               <button
                 onClick={() => setLang('bm')}
                 aria-label="Tukar ke Bahasa Malaysia"
-                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${
-                  lang === 'bm'
+                className={`px-3 py-1 text-[10px] font-semibold tracking-wider transition-all rounded ${lang === 'bm'
                     ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-zinc-100 shadow-sm'
                     : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 BM
               </button>
@@ -586,14 +582,14 @@ export default function PortalSidebar() {
             {theme === 'light' ? (
               <>
                 <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
                 <span>{t('sidebar', 'darkMode', lang)}</span>
               </>
             ) : (
               <>
                 <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
                 </svg>
                 <span>{t('sidebar', 'lightMode', lang)}</span>
               </>
@@ -605,7 +601,7 @@ export default function PortalSidebar() {
             className="w-full px-4 py-2.5 rounded-xl bg-rose-50/50 hover:bg-rose-50 dark:bg-rose-950/10 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-950/30 text-xs font-semibold transition-all min-h-[48px] flex items-center justify-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span>{t('sidebar', 'logout', lang)}</span>
           </button>
@@ -630,7 +626,7 @@ export default function PortalSidebar() {
                 </button>
               )}
             </div>
-            
+
             <div className="flex-1 max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-gray-800/80 scrollbar-thin bg-white dark:bg-zinc-950">
               {/* Section 1: Important & Actions */}
               <div>

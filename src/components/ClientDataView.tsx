@@ -969,6 +969,25 @@ export default function ClientDataView() {
       return;
     }
 
+    // Installment dependency validation
+    for (let i = 0; i < 6; i++) {
+      const amtVal = data[`payment_amt_${i}`];
+      const dateVal = data[`payment_date_${i}`];
+      const hasAmt = amtVal !== undefined && amtVal !== null && String(amtVal).trim() !== '';
+      const hasDate = dateVal !== undefined && dateVal !== null && String(dateVal).trim() !== '';
+
+      if (hasAmt !== hasDate) {
+        const ordinal = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`;
+        if (lang === 'bm') {
+          alert(`Bagi ansuran ke-${i + 1}, sila pastikan kedua-dua Jumlah Bayaran dan Tarikh diisi.`);
+        } else {
+          alert(`For the ${ordinal} installment payment, both Payment Amount and Payment Date must be filled.`);
+        }
+        setIsSaving(false);
+        return;
+      }
+    }
+
     try {
       if (editingClient && !editingClient.isVirtual) {
         const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
@@ -1085,7 +1104,7 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 2. Laporan polis */}
+                {/* 2. Laporan polis & lokasi laporan */}
                 <div>
                   <SectionHeader
                     icon={
@@ -1095,33 +1114,41 @@ export default function ClientDataView() {
                     }
                     title={t('clients', 'policeReport', lang)}
                   />
-                  <div className="flex flex-col gap-3">
-                     {(() => {
-                        let parsedReports = [];
-                        if (viewingClient.police_report_no && String(viewingClient.police_report_no).trim().startsWith('[')) {
-                           try { parsedReports = JSON.parse(viewingClient.police_report_no); } catch(e){}
-                        } else if (viewingClient.police_report_no || viewingClient.police_report_date) {
-                           parsedReports = [{ date: viewingClient.police_report_date || '', no: viewingClient.police_report_no || '' }];
-                        }
-                        
-                        if (parsedReports.length === 0) {
-                           return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
-                        }
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-3">
+                       {(() => {
+                          let parsedReports = [];
+                          if (viewingClient.police_report_no && String(viewingClient.police_report_no).trim().startsWith('[')) {
+                             try { parsedReports = JSON.parse(viewingClient.police_report_no); } catch(e){}
+                          } else if (viewingClient.police_report_no || viewingClient.police_report_date) {
+                             parsedReports = [{ date: viewingClient.police_report_date || '', no: viewingClient.police_report_no || '' }];
+                          }
+                          
+                          if (parsedReports.length === 0) {
+                             return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
+                          }
 
-                        return parsedReports.map((rp: any, idx: number) => (
-                          <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                             {parsedReports.length > 1 && (
-                               <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
-                                 Report #{idx + 1}
+                          return parsedReports.map((rp: any, idx: number) => (
+                            <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                               {parsedReports.length > 1 && (
+                                 <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
+                                   Report #{idx + 1}
+                                 </div>
+                               )}
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                                 <ViewField label={t('clients', 'reportDate', lang)} value={rp.date} lang={lang} />
+                                 <ViewField label={t('clients', 'reportNo', lang)} value={rp.no} lang={lang} />
                                </div>
-                             )}
-                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                               <ViewField label={t('clients', 'reportDate', lang)} value={rp.date} lang={lang} />
-                               <ViewField label={t('clients', 'reportNo', lang)} value={rp.no} lang={lang} />
-                             </div>
-                          </div>
-                        ));
-                     })()}
+                            </div>
+                          ));
+                       })()}
+                    </div>
+                    {/* Lokasi Laporan */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-gray-800">
+                      <ViewField label={`${t('clients', 'policeStation', lang)}`} value={viewingClient.report_location_balai} lang={lang} />
+                      <ViewField label={`${t('clients', 'districtPolice', lang)}`} value={viewingClient.report_location_ipd} lang={lang} />
+                      <ViewField label={`${t('clients', 'statePolice', lang)}`} value={viewingClient.report_location_ipk} lang={lang} />
+                    </div>
                   </div>
                 </div>
 
@@ -1169,24 +1196,6 @@ export default function ClientDataView() {
                           </div>
                         ));
                      })()}
-                  </div>
-                </div>
-
-                {/* 4. lokasi laporan */}
-                <div>
-                  <SectionHeader
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    }
-                    title={t('clients', 'reportLocation', lang)}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <ViewField label={`${t('clients', 'policeStation', lang)}`} value={viewingClient.report_location_balai} lang={lang} />
-                    <ViewField label={`${t('clients', 'districtPolice', lang)}`} value={viewingClient.report_location_ipd} lang={lang} />
-                    <ViewField label={`${t('clients', 'statePolice', lang)}`} value={viewingClient.report_location_ipk} lang={lang} />
                   </div>
                 </div>
 
@@ -1569,7 +1578,7 @@ export default function ClientDataView() {
                       }} 
                       className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
                     >
-                       + Add Report
+                       + ADD
                     </button>
                   </div>
                   
@@ -1597,6 +1606,38 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
+                  {/* Lokasi Laporan */}
+                  <div className="sm:col-span-2 mt-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                    {t('clients', 'reportLocation', lang)}
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
+                    <input list="ipk-list" type="text" name="report_location_ipk" value={selectedIpk} onChange={(e) => { setSelectedIpk(e.target.value); setSelectedIpd(''); }} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPK' : 'Select or type IPK'} />
+                    <datalist id="ipk-list">
+                      {Object.keys(policeLocations).map(ipk => (
+                        <option key={ipk} value={ipk} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'districtPolice', lang)}`}</label>
+                    <input list="ipd-list" type="text" name="report_location_ipd" value={selectedIpd} onChange={(e) => setSelectedIpd(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPD' : 'Select or type IPD'} />
+                    <datalist id="ipd-list">
+                      {selectedIpk && policeLocations[selectedIpk] ? Object.keys(policeLocations[selectedIpk]).map(ipd => (
+                        <option key={ipd} value={ipd} />
+                      )) : null}
+                    </datalist>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
+                    <input list="balai-list" type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip Balai' : 'Select or type Balai'} />
+                    <datalist id="balai-list">
+                      {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? policeLocations[selectedIpk][selectedIpd].map(balai => (
+                        <option key={balai} value={balai} />
+                      )) : null}
+                    </datalist>
+                  </div>
+
                   {/* 3. Kertas Siasatan (IP) */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
@@ -1616,7 +1657,7 @@ export default function ClientDataView() {
                       }} 
                       className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
                     >
-                       + Add IP
+                       + ADD
                     </button>
                   </div>
                   
@@ -1658,39 +1699,7 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
-                  {/* 4. Lokasi Laporan */}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'reportLocation', lang)}</h3>
-                  </div>
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
-                    <input list="ipk-list" type="text" name="report_location_ipk" value={selectedIpk} onChange={(e) => { setSelectedIpk(e.target.value); setSelectedIpd(''); }} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPK' : 'Select or type IPK'} />
-                    <datalist id="ipk-list">
-                      {Object.keys(policeLocations).map(ipk => (
-                        <option key={ipk} value={ipk} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'districtPolice', lang)}`}</label>
-                    <input list="ipd-list" type="text" name="report_location_ipd" value={selectedIpd} onChange={(e) => setSelectedIpd(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPD' : 'Select or type IPD'} />
-                    <datalist id="ipd-list">
-                      {selectedIpk && policeLocations[selectedIpk] ? Object.keys(policeLocations[selectedIpk]).map(ipd => (
-                        <option key={ipd} value={ipd} />
-                      )) : null}
-                    </datalist>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
-                    <input list="balai-list" type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip Balai' : 'Select or type Balai'} />
-                    <datalist id="balai-list">
-                      {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? policeLocations[selectedIpk][selectedIpd].map(balai => (
-                        <option key={balai} value={balai} />
-                      )) : null}
-                    </datalist>
-                  </div>
-
-                  {/* 5. Financial Details */}
+                  {/* 4. Financial Details */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
                   </div>
@@ -1733,7 +1742,7 @@ export default function ClientDataView() {
                         }}
                         className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
                       >
-                        + {lang === 'bm' ? 'Tambah Bayaran' : 'Add Payment'}
+                        + ADD
                       </button>
                     )}
                   </div>

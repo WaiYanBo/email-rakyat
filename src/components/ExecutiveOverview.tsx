@@ -627,7 +627,9 @@ export default function ExecutiveOverview() {
                           ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
                           : a.type === 'Memo'
                             ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
-                            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-700/60 dark:text-zinc-100 dark:border-zinc-600/60'
+                            : a.type === 'Info'
+                              ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30'
+                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-700/60 dark:text-zinc-100 dark:border-zinc-600/60'
                           }`}>
                           {a.type}
                         </span>
@@ -806,82 +808,89 @@ export default function ExecutiveOverview() {
                 const displayContent = isTranslated ? translatedAnnouncements[a.id].content : a.content;
 
                 return (
-                  <div key={a.id} className="p-5 rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 hover:border-slate-350 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between min-h-[160px]">
-                    <div className="space-y-2">
-                      <div className="flex flex-row justify-between items-start gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
-                            ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
-                            : a.type === 'Memo'
-                              ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
-                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-gray-800 dark:text-zinc-300 dark:border-gray-700'
-                            }`}>
-                            {a.type}
-                          </span>
-                          <span className="text-[11px] text-slate-450 dark:text-zinc-500">{a.date}</span>
-                        </div>
-                        {hasFullAccess && (
-                          <div className="relative flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === a.id ? null : a.id);
-                              }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-105 dark:hover:bg-zinc-800 transition-colors"
-                              title="Actions"
-                              type="button"
-                            >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                            </button>
-                            {activeMenuId === a.id && (
-                              <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenEditModal(a);
-                                    setActiveMenuId(null);
-                                  }}
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-705 dark:text-zinc-305 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
-                                >
-                                  {lang === 'bm' ? 'Kemaskini' : 'Edit'}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteNotice(a.id, a.title, a.content, a.type, a.scheduled_at);
-                                    setActiveMenuId(null);
-                                  }}
-                                  type="button"
-                                  className="w-full px-4 py-2 text-left text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-55/10 dark:hover:bg-rose-950/20 transition-colors"
-                                >
-                                  {lang === 'bm' ? 'Padam' : 'Delete'}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                  <div
+                    key={a.id}
+                    className="p-5 rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 hover:border-indigo-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all"
+                  >
+                    {/* Top row: type badge + date + actions menu */}
+                    <div className="flex justify-between items-start gap-2 mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
+                          ? 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
+                          : a.type === 'Memo'
+                            ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                            : a.type === 'Info'
+                              ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30'
+                              : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-zinc-700/60 dark:text-zinc-100 dark:border-zinc-600/60'
+                          }`}>
+                          {a.type}
+                        </span>
+                        <span className="text-[11px] text-slate-450 dark:text-zinc-500">{a.date}</span>
                       </div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1" title={displayTitle}>
-                        {displayTitle}
-                      </h3>
-                      <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap">
-                        {displayContent}
-                      </p>
+                      {hasFullAccess && (
+                        <div className="relative flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(activeMenuId === a.id ? null : a.id);
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                            title="Actions"
+                            type="button"
+                          >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 12a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </button>
+                          {activeMenuId === a.id && (
+                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-fade-in">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenEditModal(a);
+                                  setActiveMenuId(null);
+                                }}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
+                              >
+                                {lang === 'bm' ? 'Kemaskini' : 'Edit'}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNotice(a.id, a.title, a.content, a.type, a.scheduled_at);
+                                  setActiveMenuId(null);
+                                }}
+                                type="button"
+                                className="w-full px-4 py-2 text-left text-xs font-bold text-rose-600 dark:text-rose-455 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
+                              >
+                                {lang === 'bm' ? 'Padam' : 'Delete'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-gray-800 flex justify-between items-center gap-4">
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-zinc-400 truncate min-w-0" title={a.author}>
-                        <span className="font-semibold truncate">{a.author}</span>
-                      </div>
+                    {/* Title & content */}
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1" title={displayTitle}>
+                      {displayTitle}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2 overflow-hidden text-ellipsis whitespace-pre-wrap mb-4">
+                      {displayContent}
+                    </p>
+
+                    {/* Footer: author + action buttons — always inside the card */}
+                    <div className="pt-3 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold truncate min-w-0" title={a.author}>
+                        {a.author}
+                      </span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleTranslate(a.id, a.title, a.content)}
                           disabled={translatingIds[a.id]}
                           type="button"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-202 dark:border-gray-700 transition-all text-xs"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-gray-800 hover:bg-slate-205 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-gray-700 transition-all flex-shrink-0"
                           title="Translate / Terjemah"
                         >
                           {translatingIds[a.id] ? (
@@ -897,7 +906,7 @@ export default function ExecutiveOverview() {
                         <button
                           onClick={() => setSelectedAnnouncement(a)}
                           type="button"
-                          className="h-8 px-3 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm"
+                          className="h-8 px-4 rounded-lg bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-950 hover:bg-black dark:hover:bg-white text-xs font-semibold transition-all shadow-sm flex-shrink-0"
                         >
                           {t('overview', 'read', lang)}
                         </button>

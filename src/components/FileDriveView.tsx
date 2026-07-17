@@ -723,7 +723,7 @@ export default function FileDriveView() {
     switch (ext) {
       case 'pdf': 
         return (
-          <div className="w-5 h-5 bg-rose-50 dark:bg-rose-500/10 rounded flex items-center justify-center text-rose-600 dark:text-rose-450 flex-shrink-0">
+          <div className="w-5 h-5 bg-rose-50 dark:bg-rose-500/10 rounded flex items-center justify-center text-rose-600 dark:text-rose-400 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
             </svg>
@@ -732,7 +732,7 @@ export default function FileDriveView() {
       case 'doc':
       case 'docx': 
         return (
-          <div className="w-5 h-5 bg-blue-50 dark:bg-blue-500/10 rounded flex items-center justify-center text-blue-600 dark:text-blue-450 flex-shrink-0">
+          <div className="w-5 h-5 bg-blue-50 dark:bg-blue-500/10 rounded flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
             </svg>
@@ -741,7 +741,7 @@ export default function FileDriveView() {
       case 'xls':
       case 'xlsx': 
         return (
-          <div className="w-5 h-5 bg-green-50 dark:bg-green-500/10 rounded flex items-center justify-center text-green-600 dark:text-green-455 flex-shrink-0">
+          <div className="w-5 h-5 bg-green-50 dark:bg-green-500/10 rounded flex items-center justify-center text-green-600 dark:text-green-400 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
             </svg>
@@ -753,7 +753,7 @@ export default function FileDriveView() {
       case 'gif':
       case 'webp': 
         return (
-          <div className="w-5 h-5 bg-amber-50 dark:bg-amber-500/10 rounded flex items-center justify-center text-amber-600 dark:text-amber-450 flex-shrink-0">
+          <div className="w-5 h-5 bg-amber-50 dark:bg-amber-500/10 rounded flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
             </svg>
@@ -811,7 +811,7 @@ export default function FileDriveView() {
                 <div className="w-1 h-1 bg-white/50 rounded-full" />
                 <div className="w-5 h-1 bg-white/70 rounded-full" />
               </div>
-              <div className="flex-1 grid grid-cols-4 gap-0.5 p-0.5 bg-slate-55 dark:bg-zinc-850">
+              <div className="flex-1 grid grid-cols-4 gap-0.5 p-0.5 bg-slate-50 dark:bg-zinc-850">
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="bg-white dark:bg-zinc-900 border-[0.5px] border-slate-100/80 dark:border-zinc-800/80 rounded-[1px] flex items-center justify-center">
                     {i === 2 && <div className="w-2 h-0.5 bg-green-200 dark:bg-green-800/40 rounded-full" />}
@@ -834,7 +834,7 @@ export default function FileDriveView() {
                 <div className="w-full h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
                 <div className="w-11/12 h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
                 <div className="w-full h-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 rounded flex items-center justify-center my-0.5">
-                  <svg className="w-2.5 h-2.5 text-blue-450 dark:text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <svg className="w-2.5 h-2.5 text-blue-500 dark:text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
                   </svg>
                 </div>
@@ -868,7 +868,7 @@ export default function FileDriveView() {
         onClick={navigateUp}
         className="group cursor-pointer bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl px-4 h-16 flex items-center gap-3 hover:border-indigo-300 dark:hover:border-yellow-500/50 hover:shadow-md transition-all relative overflow-hidden select-none"
       >
-        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-black flex items-center justify-center text-slate-550 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-yellow-505 transition-colors flex-shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-black flex items-center justify-center text-slate-500 dark:text-zinc-500 group-hover:text-indigo-600 dark:group-hover:text-yellow-500 transition-colors flex-shrink-0">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -900,7 +900,7 @@ export default function FileDriveView() {
           isSelected 
             ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-yellow-500 dark:ring-yellow-500/20 shadow-md bg-indigo-50/30 dark:bg-yellow-500/5' 
             : activeOverFolder === item.name
-              ? 'border-dashed border-2 border-indigo-650 bg-indigo-50/50 dark:border-yellow-500 dark:bg-yellow-550/10 scale-95 shadow-md z-10'
+              ? 'border-dashed border-2 border-indigo-600 bg-indigo-50/50 dark:border-yellow-500 dark:bg-yellow-500/10 scale-95 shadow-md z-10'
               : 'border-slate-200 dark:border-gray-800 hover:border-indigo-300 dark:hover:border-gray-700 hover:shadow-sm'
         }`}
       >
@@ -963,7 +963,7 @@ export default function FileDriveView() {
                   setActiveMenu(null);
                   setIsDeleteOpen(true);
                 }}
-                className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors flex items-center gap-2 font-semibold"
+                className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors flex items-center gap-2 font-semibold"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -1079,7 +1079,7 @@ export default function FileDriveView() {
                     setActiveMenu(null);
                     setIsDeleteOpen(true);
                   }}
-                  className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors flex items-center gap-2 font-semibold"
+                  className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors flex items-center gap-2 font-semibold"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -1164,7 +1164,7 @@ export default function FileDriveView() {
                 setSelectedItem(item);
                 setShowDetailsPanel(true);
               }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-505 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-500 transition-colors"
               title={t('drive', 'viewDetails', lang)}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1173,7 +1173,7 @@ export default function FileDriveView() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); navigateToFolder(item); }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-505 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-500 transition-colors"
               title="Open Folder"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1241,7 +1241,7 @@ export default function FileDriveView() {
                 setSelectedItem(item);
                 setShowDetailsPanel(true);
               }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-505 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-650 dark:hover:text-yellow-500 transition-colors"
               title={t('drive', 'viewDetails', lang)}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1250,7 +1250,7 @@ export default function FileDriveView() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handlePreview(item); }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-505 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-500 transition-colors"
               title="Preview File"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1260,7 +1260,7 @@ export default function FileDriveView() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedItem(item); handleDownload(); }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-505 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-500 transition-colors"
               title="Download"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1269,7 +1269,7 @@ export default function FileDriveView() {
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedItem(item); setIsRenameOpen(true); }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-550 transition-colors"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-gray-800 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-yellow-500 transition-colors"
               title="Rename"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1364,7 +1364,7 @@ export default function FileDriveView() {
     const isText = textPreviewContent !== null;
 
     return (
-      <div className="fixed inset-0 bg-slate-955/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+      <div className="fixed inset-0 bg-slate-905/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden animate-scale-in">
           
           <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/50 flex-shrink-0">
@@ -1416,7 +1416,7 @@ export default function FileDriveView() {
             {previewLoading && (
               <div className="flex flex-col items-center gap-3">
                 <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent dark:border-yellow-500 dark:border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs text-slate-400 dark:text-zinc-555 font-bold uppercase tracking-wider">
+                <p className="text-xs text-slate-400 dark:text-zinc-550 font-bold uppercase tracking-wider">
                   {t('drive', 'loadingPreview', lang)}
                 </p>
               </div>
@@ -1502,7 +1502,7 @@ export default function FileDriveView() {
                         setSelectedItem(previewItem);
                         handleDownload();
                       }}
-                      className="px-5 py-2.5 bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-black text-white font-bold rounded-xl text-xs shadow-md transition-colors inline-flex items-center gap-2"
+                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 dark:text-black text-white font-bold rounded-xl text-xs shadow-md transition-colors inline-flex items-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1820,7 +1820,7 @@ export default function FileDriveView() {
                               setSelectedItem({ name: crumb, id: null, fullPath: pathStr });
                               setIsDeleteOpen(true);
                             }}
-                            className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors flex items-center gap-2 font-semibold text-left"
+                            className="w-full px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors flex items-center gap-2 font-semibold text-left"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -1852,7 +1852,7 @@ export default function FileDriveView() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex-1 sm:flex-none px-4 py-2 bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-450 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+            className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-450 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />

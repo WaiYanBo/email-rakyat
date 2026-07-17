@@ -345,12 +345,12 @@ export default function ReportsView() {
           </div>
 
           <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[60vh]">
-            <div className="p-5 border-b border-indigo-955 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
+            <div className="p-5 border-b border-indigo-950 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
               <h3 className="text-sm font-bold text-white tracking-tight">{t('reports', 'staffDirectory', lang)}</h3>
               {canEditStaff && (
                 <button
                   onClick={() => { setEditingStaff(null); setDepartmentInputType('select'); setIsStaffModalOpen(true); }}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-955 dark:bg-yellow-500 dark:text-black border border-slate-200 dark:border-yellow-500/50 dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-indigo-950 dark:bg-yellow-500 dark:text-black border border-slate-200 dark:border-yellow-500/50 dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm min-h-[48px] flex items-center justify-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -433,7 +433,7 @@ export default function ReportsView() {
               </h2>
               <button
                 onClick={() => { setIsViewStaffModalOpen(false); setViewingStaff(null); }}
-                className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
+                className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -508,7 +508,7 @@ export default function ReportsView() {
               <h2 className="text-base font-semibold text-slate-800 dark:text-white tracking-tight">{editingStaff ? t('reports', 'editStaff', lang) : t('reports', 'onboarding', lang)}</h2>
               <button
                 onClick={() => setIsStaffModalOpen(false)}
-                className="text-slate-400 hover:text-rose-500 p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl transition-colors"
+                className="text-slate-400 hover:text-rose-500 p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>

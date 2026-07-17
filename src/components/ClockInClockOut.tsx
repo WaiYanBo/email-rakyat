@@ -314,6 +314,107 @@ export default function ClockInClockOut() {
     XLSX.writeFile(wb, filename);
   };
 
+  // Helper to run a single geolocation request with a safety timeout net
+  const getSingleLocation = (options: { enableHighAccuracy?: boolean; timeout?: number; maximumAge?: number }): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      let finished = false;
+
+      // Timeout safety net to handle Safari "doing nothing" hang bug
+      const safetyTimeoutId = setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          reject(new DOMException("Location request timed out (safety net)", "TimeoutError"));
+        }
+      }, (options.timeout || 10000) + 1500); // 1.5s grace period over standard timeout
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (!finished) {
+            finished = true;
+            clearTimeout(safetyTimeoutId);
+            resolve(position);
+          }
+        },
+        (error) => {
+          if (!finished) {
+            finished = true;
+            clearTimeout(safetyTimeoutId);
+            reject(error);
+          }
+        },
+        options
+      );
+    });
+  };
+
+  // Robust location helper with sequential fallbacks (High Accuracy -> Low Accuracy/Wi-Fi -> Cached last resort)
+  const getCurrentPositionWithFallback = async (): Promise<GeolocationPosition> => {
+    if (!navigator.geolocation) {
+      throw new DOMException("Geolocation not supported", "NotSupportedError");
+    }
+
+    // Attempt 1: High accuracy, fresh position, moderate timeout (10 seconds)
+    try {
+      console.log("Attempt 1: high accuracy");
+      return await getSingleLocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    } catch (err: any) {
+      console.warn("Attempt 1 (High Accuracy) failed:", err);
+      // Code 1 is PERMISSION_DENIED. If user denied permission, do not retry.
+      if (err.code === 1) {
+        throw err;
+      }
+
+      // Attempt 2: Fallback to lower accuracy (much faster, works indoors using Wi-Fi / Cell towers)
+      try {
+        console.log("Attempt 2: lower accuracy fallback");
+        return await getSingleLocation({
+          enableHighAccuracy: false,
+          timeout: 12000,
+          maximumAge: 10000 // Accept position up to 10s old
+        });
+      } catch (err2: any) {
+        console.warn("Attempt 2 (Low Accuracy) failed:", err2);
+        if (err2.code === 1) {
+          throw err2;
+        }
+
+        // Attempt 3: Cached position fallback (as a last resort)
+        try {
+          console.log("Attempt 3: cached position fallback");
+          return await getSingleLocation({
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: Infinity // Allow any cached position
+          });
+        } catch (err3) {
+          console.error("All geolocation attempts failed:", err3);
+          throw err3;
+        }
+      }
+    }
+  };
+
+  // Actionable instruction text for iOS users facing permission issues
+  const getActionableErrorMessage = (error: any): string => {
+    const isBm = lang === 'bm';
+    
+    // Check if it's permission denied (code 1)
+    if (error.code === 1) {
+      return isBm
+        ? "Akses lokasi ditolak.\n\nSila dayakan akses lokasi untuk Safari/Chrome di iPhone anda:\n1. Buka Settings > Privacy & Security > Location Services.\n2. Pastikan Location Services dihidupkan.\n3. Skrol ke bawah dan pilih Safari / Chrome.\n4. Pilih 'While Using the App' dan hidupkan 'Precise Location'."
+        : "Location access denied.\n\nPlease enable location access for Safari/Chrome on your iPhone:\n1. Go to Settings > Privacy & Security > Location Services.\n2. Ensure Location Services is turned ON.\n3. Scroll down and select Safari / Chrome.\n4. Select 'While Using the App' and turn ON 'Precise Location'.";
+    }
+    
+    // Other errors (timeout/unavailable/safety-net)
+    return isBm
+      ? "Gagal mendapatkan lokasi.\n\nTips untuk iPhone:\n1. Pastikan Wi-Fi dihidupkan (ia membantu carian lokasi dalam bangunan).\n2. Gerak berhampiran tingkap atau kawasan terbuka untuk isyarat GPS lebih kuat.\n3. Periksa tetapan lokasi anda."
+      : "Failed to get location.\n\nTips for iPhone:\n1. Ensure Wi-Fi is turned ON (helps with indoor location positioning).\n2. Move near a window or open area for a stronger GPS signal.\n3. Check your device location settings.";
+  };
+
   const checkLocationPermission = async () => {
     if (!navigator.geolocation) {
       setLocationStatus(t('attendance', 'geolocationNotSupported', lang));
@@ -322,25 +423,21 @@ export default function ClockInClockOut() {
 
     setLocationStatus(t('attendance', 'requestingLocation', lang));
 
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocationStatus(t('attendance', 'locationAccessed', lang));
-          setHasLocationPermission(true);
-          resolve(true);
-        },
-        (error) => {
-          setLocationStatus(t('attendance', 'locationAccessDenied', lang));
-          setHasLocationPermission(false);
-          resolve(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    });
+    try {
+      await getCurrentPositionWithFallback();
+      setLocationStatus(t('attendance', 'locationAccessed', lang));
+      setHasLocationPermission(true);
+      return true;
+    } catch (error) {
+      setLocationStatus(t('attendance', 'locationAccessDenied', lang));
+      setHasLocationPermission(false);
+      return false;
+    }
   };
 
   const getLocationAndClockIn = async (type: 'clock_in' | 'clock_out') => {
     setIsProcessing(true);
+    setLocationStatus(t('attendance', 'requestingLocation', lang));
 
     try {
       if (!navigator.geolocation) {
@@ -349,103 +446,96 @@ export default function ClockInClockOut() {
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
-          const distance = calculateDistance(OFFICE_LAT, OFFICE_LNG, latitude, longitude);
-          const isWithinZone = distance <= ZONE_RADIUS_METERS;
+      const position = await getCurrentPositionWithFallback();
+      const { latitude, longitude, accuracy } = position.coords;
+      const distance = calculateDistance(OFFICE_LAT, OFFICE_LNG, latitude, longitude);
+      const isWithinZone = distance <= ZONE_RADIUS_METERS;
 
-          // Get current user
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            alert(t('attendance', 'sessionExpired', lang));
-            setIsProcessing(false);
-            return;
-          }
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert(t('attendance', 'sessionExpired', lang));
+        setIsProcessing(false);
+        return;
+      }
 
-          const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
 
-          // Get today's active record (where clock_out_time is null)
-          const { data: activeRecord } = await supabase
-            .from('attendance')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .eq('date', today)
-            .is('clock_out_time', null)
-            .order('clock_in_time', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+      // Get today's active record (where clock_out_time is null)
+      const { data: activeRecord } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('date', today)
+        .is('clock_out_time', null)
+        .order('clock_in_time', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-          let error;
+      let error;
 
-          if (type === 'clock_in') {
-            if (activeRecord) {
-              alert(lang === 'bm' ? 'Anda sudah daftar masuk. Sila daftar keluar dahulu.' : 'You are already clocked in. Please clock out first.');
-              setIsProcessing(false);
-              return;
-            }
-
-            const attendanceData = {
-              user_id: session.user.id,
-              user_name: profile?.name,
-              date: today,
-              clock_in_time: new Date().toISOString(),
-              clock_in_latitude: latitude,
-              clock_in_longitude: longitude,
-              clock_in_distance: Math.round(distance),
-              clock_in_within_zone: isWithinZone,
-              clock_in_accuracy: Math.round(accuracy)
-            };
-
-            const { error: insertError } = await supabase
-              .from('attendance')
-              .insert([attendanceData]);
-            error = insertError;
-          } else {
-            if (!activeRecord) {
-              alert(lang === 'bm' ? 'Tiada rekod daftar masuk aktif ditemui untuk daftar keluar.' : 'No active clock-in session found to clock out from.');
-              setIsProcessing(false);
-              return;
-            }
-
-            const attendanceData = {
-              clock_out_time: new Date().toISOString(),
-              clock_out_latitude: latitude,
-              clock_out_longitude: longitude,
-              clock_out_distance: Math.round(distance),
-              clock_out_within_zone: isWithinZone,
-              clock_out_accuracy: Math.round(accuracy)
-            };
-
-            const { error: updateError } = await supabase
-              .from('attendance')
-              .update(attendanceData)
-              .eq('id', activeRecord.id);
-            error = updateError;
-          }
-
-          if (error) {
-            console.error(`Error recording ${type}:`, error);
-            alert(`${t('attendance', 'failedToRecord', lang)} ${type === 'clock_in' ? (lang === 'bm' ? 'daftar masuk' : 'clock in') : (lang === 'bm' ? 'daftar keluar' : 'clock out')}`);
-          } else {
-            const typeStr = type === 'clock_in' ? t('attendance', 'checkedIn', lang) : t('attendance', 'checkedOut', lang);
-            const zoneStr = isWithinZone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang);
-            const awayStr = lang === 'bm' ? `${Math.round(distance)}m dari pejabat` : `${Math.round(distance)}m away`;
-            setLocationStatus(`${typeStr} - ${zoneStr} (${awayStr})`);
-            await fetchTodayRecord();
-          }
+      if (type === 'clock_in') {
+        if (activeRecord) {
+          alert(lang === 'bm' ? 'Anda sudah daftar masuk. Sila daftar keluar dahulu.' : 'You are already clocked in. Please clock out first.');
           setIsProcessing(false);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          alert(t('attendance', 'failedToGetLocation', lang));
-          setLocationStatus(t('attendance', 'locationAccessFailed', lang));
+          return;
+        }
+
+        const attendanceData = {
+          user_id: session.user.id,
+          user_name: profile?.name,
+          date: today,
+          clock_in_time: new Date().toISOString(),
+          clock_in_latitude: latitude,
+          clock_in_longitude: longitude,
+          clock_in_distance: Math.round(distance),
+          clock_in_within_zone: isWithinZone,
+          clock_in_accuracy: Math.round(accuracy)
+        };
+
+        const { error: insertError } = await supabase
+          .from('attendance')
+          .insert([attendanceData]);
+        error = insertError;
+      } else {
+        if (!activeRecord) {
+          alert(lang === 'bm' ? 'Tiada rekod daftar masuk aktif ditemui untuk daftar keluar.' : 'No active clock-in session found to clock out from.');
           setIsProcessing(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } catch (err) {
-      console.error('Error:', err);
+          return;
+        }
+
+        const attendanceData = {
+          clock_out_time: new Date().toISOString(),
+          clock_out_latitude: latitude,
+          clock_out_longitude: longitude,
+          clock_out_distance: Math.round(distance),
+          clock_out_within_zone: isWithinZone,
+          clock_out_accuracy: Math.round(accuracy)
+        };
+
+        const { error: updateError } = await supabase
+          .from('attendance')
+          .update(attendanceData)
+          .eq('id', activeRecord.id);
+        error = updateError;
+      }
+
+      if (error) {
+        console.error(`Error recording ${type}:`, error);
+        alert(`${t('attendance', 'failedToRecord', lang)} ${type === 'clock_in' ? (lang === 'bm' ? 'daftar masuk' : 'clock in') : (lang === 'bm' ? 'daftar keluar' : 'clock out')}`);
+      } else {
+        const typeStr = type === 'clock_in' ? t('attendance', 'checkedIn', lang) : t('attendance', 'checkedOut', lang);
+        const zoneStr = isWithinZone ? t('attendance', 'inZone', lang) : t('attendance', 'outsideZone', lang);
+        const awayStr = lang === 'bm' ? `${Math.round(distance)}m dari pejabat` : `${Math.round(distance)}m away`;
+        setLocationStatus(`${typeStr} - ${zoneStr} (${awayStr})`);
+        await fetchTodayRecord();
+      }
+    } catch (err: any) {
+      console.error('Geolocation error:', err);
+      const errMsg = getActionableErrorMessage(err);
+      alert(errMsg);
+      setLocationStatus(t('attendance', 'locationAccessFailed', lang));
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -472,13 +562,7 @@ export default function ClockInClockOut() {
 
       if (navigator.geolocation) {
         try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 5000,
-              maximumAge: 0
-            });
-          });
+          const position = await getCurrentPositionWithFallback();
           latitude = position.coords.latitude;
           longitude = position.coords.longitude;
           accuracy = Math.round(position.coords.accuracy);
@@ -861,7 +945,7 @@ export default function ClockInClockOut() {
 
               {/* Filters Card for Privileged Roles (HR, CFO, IT) */}
               {showDetails && isPrivilegedRole && (
-                <div className="p-5 rounded-2xl bg-slate-55/30 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800/80 space-y-4">
+                <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800/80 space-y-4">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                     {t('attendance', 'filterAttendanceLogs', lang)}
                   </h4>
@@ -984,7 +1068,7 @@ export default function ClockInClockOut() {
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-[650px] text-left border-collapse text-xs md:text-sm">
                           <thead>
-                            <tr className="bg-rose-50/30 dark:bg-rose-955/20 border-b border-rose-100 dark:border-rose-900/30">
+                            <tr className="bg-rose-50/30 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-900/30">
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendance', 'employee', lang)}</th>
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendance', 'date', lang)}</th>
                               <th className="px-4 py-3 font-semibold text-rose-800 dark:text-rose-300">{t('attendanceAdmin', 'colCheckIn', lang)}</th>
@@ -1001,7 +1085,7 @@ export default function ClockInClockOut() {
                               </tr>
                             ) : (
                               filteredForgotRecords.map((record) => (
-                                <tr key={record.id} className="hover:bg-rose-50/10 dark:hover:bg-rose-955/5 bg-white dark:bg-black">
+                                <tr key={record.id} className="hover:bg-rose-50/10 dark:hover:bg-rose-950/5 bg-white dark:bg-black">
                                   <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
                                   <td className="px-4 py-3.5 font-mono">{record.date}</td>
                                   <td className="px-4 py-3.5">

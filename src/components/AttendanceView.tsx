@@ -485,7 +485,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                                   <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                     record.clock_in_within_zone
                                       ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
                                   }`}>
                                     {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                                   </span>
@@ -501,13 +501,13 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                                       {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
                                     </p>
                                     {record.is_late_clockout && (
-                                      <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50">
+                                      <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50">
                                         {t('attendanceAdmin', 'flaggedLate', lang)}
                                       </span>
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-955/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                  <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
                                     {t('attendanceAdmin', 'pending', lang)}
                                   </span>
                                 )}
@@ -517,7 +517,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                                   <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
                                     record.clock_out_within_zone
                                       ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
                                   }`}>
                                     {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
                                   </span>
@@ -555,7 +555,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </div>
 
 
-                <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-955/10 shadow-sm">
+                <div className="p-5 rounded-2xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/30 dark:bg-rose-950/10 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">{t('attendanceAdmin', 'statOutside', lang)}</p>
                   <p className="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">
                     {filteredRecords.filter((r) => r.clock_in_time && !r.clock_in_within_zone).length}

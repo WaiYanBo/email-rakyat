@@ -112,7 +112,7 @@ export default function LoginAuth() {
         </div>
 
         <div>
-          <label htmlFor="login-password" className="block text-xs md:text-sm font-bold text-indigo-955 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
+          <label htmlFor="login-password" className="block text-xs md:text-sm font-bold text-indigo-950 dark:text-gray-300 mb-1.5 md:mb-2 uppercase tracking-wide transition-colors">
             {t('login', 'password', lang)}
           </label>
           <input

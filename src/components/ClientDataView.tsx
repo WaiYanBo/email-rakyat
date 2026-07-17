@@ -1075,7 +1075,7 @@ export default function ClientDataView() {
                 </h2>
                 <button
                   onClick={handleCloseViewModal}
-                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
+                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -1328,7 +1328,7 @@ export default function ClientDataView() {
                                 {canEdit && (
                                   <button
                                     onClick={() => handleDeleteBillingRecord(record)}
-                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-955/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
                                     title="Delete"
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -1377,7 +1377,7 @@ export default function ClientDataView() {
                                 {canEdit && (
                                   <button
                                     onClick={() => handleDeleteBillingRecord(record)}
-                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-955/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                    className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/35 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
                                     title="Delete"
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -1513,7 +1513,7 @@ export default function ClientDataView() {
                 </h2>
                 <button
                   onClick={handleCloseModal}
-                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-955/20 rounded-xl"
+                  className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -1722,7 +1722,7 @@ export default function ClientDataView() {
 
                   {/* Dynamic payments Scheduler */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-slate-550 dark:text-zinc-550 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
+                    <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
                     {paymentList.length < 6 && (
                       <button
                         type="button"
@@ -1787,7 +1787,7 @@ export default function ClientDataView() {
                         <option value="DROPPED">DROPPED</option>
                         <option value="KIV">KIV</option>
                       </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -1809,7 +1809,7 @@ export default function ClientDataView() {
                             <option value="Bank">Bank</option>
                             {showCustomOption && <option value={currentVal}>{currentVal}</option>}
                           </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-555 flex items-center justify-center">
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
@@ -1854,7 +1854,7 @@ export default function ClientDataView() {
                         <button
                           type="button"
                           onClick={handleDeleteClient}
-                          className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-955/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
+                          className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
                         >
                           {t('clients', 'deleteClient', lang)}
                         </button>

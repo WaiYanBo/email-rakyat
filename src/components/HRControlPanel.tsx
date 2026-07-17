@@ -68,7 +68,7 @@ export default function HRControlPanel() {
 
   if (!hasAccess) {
     return (
-      <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-955/20 shadow-sm text-center mt-12">
+      <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
         <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">
           {t('common', 'accessDenied', lang)}
         </h2>

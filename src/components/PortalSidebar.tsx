@@ -635,7 +635,7 @@ export default function PortalSidebar() {
                   {lang === 'bm' ? 'Tindakan & Arahan Penting' : 'Important & Action Alerts'}
                 </div>
                 {importantNotifications.length === 0 ? (
-                  <div className="p-5 text-center text-[10px] text-slate-400 dark:text-zinc-555 italic font-medium">
+                  <div className="p-5 text-center text-[10px] text-slate-400 dark:text-zinc-550 italic font-medium">
                     {lang === 'bm' ? 'Tiada tindakan penting' : 'No important actions'}
                   </div>
                 ) : (
@@ -650,7 +650,7 @@ export default function PortalSidebar() {
                   {lang === 'bm' ? 'Pengumuman Am' : 'General Announcements'}
                 </div>
                 {generalNotifications.length === 0 ? (
-                  <div className="p-5 text-center text-[10px] text-slate-450 dark:text-zinc-555 italic font-medium">
+                  <div className="p-5 text-center text-[10px] text-slate-450 dark:text-zinc-550 italic font-medium">
                     {lang === 'bm' ? 'Tiada pengumuman baru' : 'No new announcements'}
                   </div>
                 ) : (

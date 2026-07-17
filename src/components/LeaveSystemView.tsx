@@ -670,7 +670,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                   {t('leave', 'loadingBalances', lang)}
                 </div>
               ) : !balance ? (
-                <div className="p-8 text-center text-rose-500 bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-955/20 rounded-xl">
+                <div className="p-8 text-center text-rose-500 bg-rose-50/50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-950/20 rounded-xl">
                   {t('leave', 'noBalancesFound', lang)}
                 </div>
               ) : (
@@ -973,7 +973,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               <button
                 type="submit"
                 disabled={formSubmitting}
-                className="w-full py-3 bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-450 dark:text-black text-white font-bold rounded-xl text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black text-white font-bold rounded-xl text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {formSubmitting ? t('common', 'loading', lang) : t('leave', 'submitRequest', lang)}
               </button>
@@ -988,7 +988,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             <button
               onClick={() => setDashboardSubTab('pending')}
               className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'pending'
-                  ? 'bg-indigo-650 text-white dark:bg-yellow-550 dark:text-black shadow-sm'
+                  ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
             >
@@ -997,7 +997,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             <button
               onClick={() => setDashboardSubTab('balances')}
               className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'balances'
-                  ? 'bg-indigo-650 text-white dark:bg-yellow-550 dark:text-black shadow-sm'
+                  ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
             >
@@ -1006,7 +1006,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             <button
               onClick={() => setDashboardSubTab('calendar')}
               className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'calendar'
-                  ? 'bg-indigo-650 text-white dark:bg-yellow-550 dark:text-black shadow-sm'
+                  ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
             >
@@ -1081,7 +1081,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                 {item.attachment_url ? (
                                   <button
                                     onClick={() => handleDownloadProof(item.attachment_url!)}
-                                    className="text-indigo-600 hover:text-indigo-800 dark:text-yellow-500 dark:hover:text-yellow-450 font-bold"
+                                    className="text-indigo-600 hover:text-indigo-800 dark:text-yellow-500 dark:hover:text-yellow-400 font-bold"
                                   >
                                     {t('leave', 'viewAttachment', lang)}
                                   </button>
@@ -1264,7 +1264,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                   className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                   required
                                 />
-                                <p className="text-[10px] text-slate-450 dark:text-zinc-555 font-medium">
+                                <p className="text-[10px] text-slate-450 dark:text-zinc-550 font-medium">
                                   {lang === 'bm'
                                     ? 'Peruntukan Cuti Bersalin untuk kakitangan wanita (Standard: 98 hari).'
                                     : 'Maternity Leave days for female employees (Standard: 98 days).'}
@@ -1287,7 +1287,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                   className="w-32 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                   required
                                 />
-                                <p className="text-[10px] text-slate-450 dark:text-zinc-555 font-medium">
+                                <p className="text-[10px] text-slate-450 dark:text-zinc-550 font-medium">
                                   {lang === 'bm'
                                     ? 'Peruntukan Cuti Paternity untuk kakitangan lelaki (Standard: 7 hari).'
                                     : 'Paternity Leave days for male employees (Standard: 7 days).'}
@@ -1308,7 +1308,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             <button
                               type="submit"
                               disabled={isUpdatingBalances}
-                              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-450 dark:text-black rounded-xl transition-all disabled:opacity-50"
+                              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl transition-all disabled:opacity-50"
                             >
                               {isUpdatingBalances 
                                 ? t('common', 'loading', lang) 
@@ -1342,7 +1342,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                 setEditPaternityTotal(currentRecord.paternity_total.toString());
                                 setIsEditingBalancesInline(true);
                               }}
-                              className="px-4 py-2 text-xs font-bold text-white bg-indigo-650 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                              className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl transition-all shadow-sm flex items-center gap-1.5"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />

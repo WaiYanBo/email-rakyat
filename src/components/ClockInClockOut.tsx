@@ -327,23 +327,31 @@ export default function ClockInClockOut() {
         }
       }, (options.timeout || 10000) + 1500); // 1.5s grace period over standard timeout
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!finished) {
-            finished = true;
-            clearTimeout(safetyTimeoutId);
-            resolve(position);
-          }
-        },
-        (error) => {
-          if (!finished) {
-            finished = true;
-            clearTimeout(safetyTimeoutId);
-            reject(error);
-          }
-        },
-        options
-      );
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (!finished) {
+              finished = true;
+              clearTimeout(safetyTimeoutId);
+              resolve(position);
+            }
+          },
+          (error) => {
+            if (!finished) {
+              finished = true;
+              clearTimeout(safetyTimeoutId);
+              reject(error);
+            }
+          },
+          options
+        );
+      } catch (syncError) {
+        if (!finished) {
+          finished = true;
+          clearTimeout(safetyTimeoutId);
+          reject(syncError);
+        }
+      }
     });
   };
 
@@ -353,18 +361,18 @@ export default function ClockInClockOut() {
       throw new DOMException("Geolocation not supported", "NotSupportedError");
     }
 
-    // Attempt 1: High accuracy, fresh position, moderate timeout (10 seconds)
+    // Attempt 1: High accuracy, fresh position, moderate timeout (15 seconds to allow user permission prompt response)
     try {
       console.log("Attempt 1: high accuracy");
       return await getSingleLocation({
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       });
     } catch (err: any) {
       console.warn("Attempt 1 (High Accuracy) failed:", err);
       // Code 1 is PERMISSION_DENIED. If user denied permission, do not retry.
-      if (err.code === 1) {
+      if (err?.code === 1) {
         throw err;
       }
 
@@ -378,7 +386,7 @@ export default function ClockInClockOut() {
         });
       } catch (err2: any) {
         console.warn("Attempt 2 (Low Accuracy) failed:", err2);
-        if (err2.code === 1) {
+        if (err2?.code === 1) {
           throw err2;
         }
 
@@ -403,7 +411,7 @@ export default function ClockInClockOut() {
     const isBm = lang === 'bm';
     
     // Check if it's permission denied (code 1)
-    if (error.code === 1) {
+    if (error?.code === 1) {
       return isBm
         ? "Akses lokasi ditolak.\n\nSila dayakan akses lokasi untuk Safari/Chrome di iPhone anda:\n1. Buka Settings > Privacy & Security > Location Services.\n2. Pastikan Location Services dihidupkan.\n3. Skrol ke bawah dan pilih Safari / Chrome.\n4. Pilih 'While Using the App' dan hidupkan 'Precise Location'."
         : "Location access denied.\n\nPlease enable location access for Safari/Chrome on your iPhone:\n1. Go to Settings > Privacy & Security > Location Services.\n2. Ensure Location Services is turned ON.\n3. Scroll down and select Safari / Chrome.\n4. Select 'While Using the App' and turn ON 'Precise Location'.";

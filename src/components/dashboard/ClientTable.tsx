@@ -37,6 +37,12 @@ const hasPendingAmount = (pendingVal: any) => {
   return !isNaN(num) && num > 0;
 };
 
+const isCaseDropped = (statusVal?: any): boolean => {
+  if (!statusVal) return false;
+  const s = String(statusVal).trim().toLowerCase();
+  return s.includes('dropped') || s.includes('ditarik balik');
+};
+
 const translateBmMonths = (str: string): string => {
   const bmToEn: Record<string, string> = {
     'JANUARI': 'JANUARY',
@@ -1050,7 +1056,7 @@ export default function ClientTable({
                   return (
                     <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
                       <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client.No ?? client.NO ?? '-'}</td>
-                      <td className={`px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug ${client["CASE STATUS"]?.toString().toUpperCase().includes('DROPPED') ? 'bg-white text-black dark:bg-white dark:text-black' : 'text-slate-900 dark:text-white'}`}>{client.NAME}</td>
+                      <td className="px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug text-slate-900 dark:text-white">{client.NAME}</td>
                       <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client["PHONE NUMBER"] || '-'}</td>
                       <td className="px-4 py-3.5 text-slate-500 dark:text-zinc-400">{client["CASE STATUS"] || '-'}</td>
                       <td className="px-4 py-3.5 font-mono text-slate-700 dark:text-zinc-300 font-semibold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
@@ -1086,10 +1092,11 @@ export default function ClientTable({
                 }
 
                 const isPending = hasPendingAmount(client["PENDING (RM)"]);
+                const isDropped = isCaseDropped(client["CASE STATUS"]);
                 const nameHighlightClasses = client.isVirtual
                   ? "bg-slate-100 text-slate-700 dark:bg-zinc-800/40 dark:text-zinc-300 italic"
-                  : client["CASE STATUS"]?.toString().toUpperCase().includes('DROPPED')
-                  ? "bg-white text-black dark:bg-white dark:text-black font-bold"
+                  : isDropped
+                  ? "text-slate-900 dark:text-white font-bold"
                   : isPending
                   ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"
                   : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";

@@ -37,10 +37,18 @@ const hasPendingAmount = (pendingVal: any) => {
   return !isNaN(num) && num > 0;
 };
 
-const isCaseDropped = (statusVal?: any): boolean => {
+const isCaseUncolored = (statusVal?: any): boolean => {
   if (!statusVal) return false;
   const s = String(statusVal).trim().toLowerCase();
-  return s.includes('dropped') || s.includes('ditarik balik');
+  return (
+    s.includes('dropped') ||
+    s.includes('ditarik balik') ||
+    s.includes('not started') ||
+    s.includes('yet started') ||
+    s.includes('belum mula') ||
+    s.includes('belum bermula') ||
+    s.includes('belum start')
+  );
 };
 
 const translateBmMonths = (str: string): string => {
@@ -1092,10 +1100,10 @@ export default function ClientTable({
                 }
 
                 const isPending = hasPendingAmount(client["PENDING (RM)"]);
-                const isDropped = isCaseDropped(client["CASE STATUS"]);
+                const isUncolored = isCaseUncolored(client["CASE STATUS"]);
                 const nameHighlightClasses = client.isVirtual
                   ? "bg-slate-100 text-slate-700 dark:bg-zinc-800/40 dark:text-zinc-300 italic"
-                  : isDropped
+                  : isUncolored
                   ? "text-slate-900 dark:text-white font-bold"
                   : isPending
                   ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"

@@ -150,7 +150,7 @@ export const translations = {
     redNote: { en: 'Red = Forgot clockout', bm: 'Merah = Terlupa daftar keluar' },
     orangeNote: { en: 'Orange = Less than 9 hours', bm: 'Oren = Kurang dari 9 jam' },
     greenNote: { en: 'Green = Full work day', bm: 'Hijau = Hari kerja penuh' },
-    
+
     // Additional ClockInClockOut keys
     loading: { en: 'Loading...', bm: 'Memuatkan...' },
     notSelf: { en: 'Not Self', bm: 'Bukan Diri Sendiri' },
@@ -312,7 +312,7 @@ export const translations = {
     investigationPaper: { en: 'Investigation Paper (IP)', bm: 'Kertas Siasatan (IP)' },
     ipDate: { en: 'IP Date', bm: 'Tarikh IP' },
     ipNo: { en: 'No. KS', bm: 'No. KS' },
-    ipPem1: { en: 'PEM 1', bm: 'PEM 1' },
+    ipPem1: { en: 'PEM No.', bm: 'PEM No.' },
     ipOfficer: { en: 'Investigating Officer', bm: 'Pegawai Penyiasat' },
     reportLocation: { en: 'Report Location', bm: 'Lokasi Laporan' },
     policeStation: { en: 'Police Station', bm: 'Balai Polis' },
@@ -411,7 +411,7 @@ export const translations = {
     zoom: { en: 'Zoom', bm: 'Zum' },
     useThisPhoto: { en: 'Use This Photo', bm: 'Guna Gambar Ini' },
     savingPhoto: { en: 'Saving...', bm: 'Menyimpan...' },
-    
+
     // Settings alignment additions
     langPrefTitle: { en: 'Language Preference', bm: 'Pilihan Bahasa' },
     langPrefSubtitle: { en: 'Select your preferred display language for the Staff Portal.', bm: 'Pilih bahasa paparan kegemaran anda untuk Portal Kakitangan.' },

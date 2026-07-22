@@ -156,6 +156,10 @@ export default function ClientDataView() {
   const [ipList, setIpList] = useState<{date: string, no: string, pem: string, officer: string}[]>([{date: '', no: '', pem: '', officer: ''}]);
   const [selectedIpk, setSelectedIpk] = useState('');
   const [selectedIpd, setSelectedIpd] = useState('');
+  const [selectedBalai, setSelectedBalai] = useState('');
+  const [isCustomIpk, setIsCustomIpk] = useState(false);
+  const [isCustomIpd, setIsCustomIpd] = useState(false);
+  const [isCustomBalai, setIsCustomBalai] = useState(false);
   const [paymentList, setPaymentList] = useState<{amount: string, date: string}[]>([]);
   // MODAL STATE - VIEW (NEW)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -611,6 +615,10 @@ export default function ClientDataView() {
     setIpList([{date: '', no: '', pem: '', officer: ''}]);
     setSelectedIpk('');
     setSelectedIpd('');
+    setSelectedBalai('');
+    setIsCustomIpk(false);
+    setIsCustomIpd(false);
+    setIsCustomBalai(false);
     setPaymentList([]);
     setIsModalOpen(true); 
   };
@@ -649,8 +657,21 @@ export default function ClientDataView() {
     if (parsedIps.length === 0) parsedIps = [{ date: '', no: '', pem: '', officer: '' }];
     setIpList(parsedIps);
     
-    setSelectedIpk(currentData?.report_location_ipk || '');
-    setSelectedIpd(currentData?.report_location_ipd || '');
+    const currentIpk = currentData?.report_location_ipk || '';
+    const currentIpd = currentData?.report_location_ipd || '';
+    const currentBalai = currentData?.report_location_balai || '';
+
+    setSelectedIpk(currentIpk);
+    setSelectedIpd(currentIpd);
+    setSelectedBalai(currentBalai);
+
+    const hasIpk = Boolean(currentIpk && policeLocations[currentIpk]);
+    const hasIpd = Boolean(currentIpd && currentIpk && policeLocations[currentIpk]?.[currentIpd]);
+    const hasBalai = Boolean(currentBalai && currentIpk && currentIpd && policeLocations[currentIpk]?.[currentIpd]?.includes(currentBalai));
+
+    setIsCustomIpk(Boolean(currentIpk && !hasIpk));
+    setIsCustomIpd(Boolean(currentIpd && !hasIpd));
+    setIsCustomBalai(Boolean(currentBalai && !hasBalai));
 
     const payments = [];
     for (let i = 1; i <= 6; i++) {
@@ -1606,36 +1627,183 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
-                  {/* Lokasi Laporan */}
-                  <div className="sm:col-span-2 mt-4 text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                    {t('clients', 'reportLocation', lang)}
+                  {/* Lokasi Laporan Header & Quick Toggle */}
+                  <div className="sm:col-span-2 mt-4 mb-1 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                      {t('clients', 'reportLocation', lang)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const turnOnManual = !isCustomIpk || !isCustomIpd || !isCustomBalai;
+                        setIsCustomIpk(turnOnManual);
+                        setIsCustomIpd(turnOnManual);
+                        setIsCustomBalai(turnOnManual);
+                      }}
+                      className="text-[11px] font-bold text-indigo-600 dark:text-yellow-500 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {isCustomIpk && isCustomIpd && isCustomBalai ? (
+                        <>{lang === 'bm' ? '📋 Tukar ke Mod Dropdown' : '📋 Switch to Dropdown Mode'}</>
+                      ) : (
+                        <>{lang === 'bm' ? '✏️ Tukar ke Mod Taip Manual' : '✏️ Switch to Manual Mode'}</>
+                      )}
+                    </button>
                   </div>
+
+                  {/* 1. IPK (Kontinjen / Negeri) */}
                   <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'statePolice', lang)}`}</label>
-                    <input list="ipk-list" type="text" name="report_location_ipk" value={selectedIpk} onChange={(e) => { setSelectedIpk(e.target.value); setSelectedIpd(''); }} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPK' : 'Select or type IPK'} />
-                    <datalist id="ipk-list">
-                      {Object.keys(policeLocations).map(ipk => (
-                        <option key={ipk} value={ipk} />
-                      ))}
-                    </datalist>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {`${t('clients', 'statePolice', lang)}`}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomIpk(!isCustomIpk)}
+                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                      >
+                        {isCustomIpk ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                      </button>
+                    </div>
+
+                    {isCustomIpk ? (
+                      <input
+                        type="text"
+                        name="report_location_ipk"
+                        value={selectedIpk}
+                        onChange={(e) => {
+                          setSelectedIpk(e.target.value);
+                          setSelectedIpd('');
+                        }}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                        placeholder={lang === 'bm' ? 'Masukkan IPK / Negeri (cth: IPK Selangor Baru)' : 'Enter IPK / State (e.g. New IPK)'}
+                      />
+                    ) : (
+                      <select
+                        name="report_location_ipk"
+                        value={selectedIpk}
+                        onChange={(e) => {
+                          if (e.target.value === '__CUSTOM__') {
+                            setIsCustomIpk(true);
+                            setSelectedIpk('');
+                            setSelectedIpd('');
+                          } else {
+                            setSelectedIpk(e.target.value);
+                            setSelectedIpd('');
+                          }
+                        }}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                      >
+                        <option value="">{lang === 'bm' ? '-- Pilih Kontinjen / Negeri (IPK) --' : '-- Select Police Contingent / State (IPK) --'}</option>
+                        {Object.keys(policeLocations).map(ipk => (
+                          <option key={ipk} value={ipk}>{ipk}</option>
+                        ))}
+                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                          ✏️ {lang === 'bm' ? '+ Taip IPK Baru / Custom Manual...' : '+ Type Custom IPK Manually...'}
+                        </option>
+                      </select>
+                    )}
                   </div>
+
+                  {/* 2. IPD (Ibu Pejabat Polis Daerah) */}
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'districtPolice', lang)}`}</label>
-                    <input list="ipd-list" type="text" name="report_location_ipd" value={selectedIpd} onChange={(e) => setSelectedIpd(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip IPD' : 'Select or type IPD'} />
-                    <datalist id="ipd-list">
-                      {selectedIpk && policeLocations[selectedIpk] ? Object.keys(policeLocations[selectedIpk]).map(ipd => (
-                        <option key={ipd} value={ipd} />
-                      )) : null}
-                    </datalist>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {`${t('clients', 'districtPolice', lang)}`}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomIpd(!isCustomIpd)}
+                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                      >
+                        {isCustomIpd ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                      </button>
+                    </div>
+
+                    {isCustomIpd ? (
+                      <input
+                        type="text"
+                        name="report_location_ipd"
+                        value={selectedIpd}
+                        onChange={(e) => setSelectedIpd(e.target.value)}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                        placeholder={lang === 'bm' ? 'Masukkan IPD (cth: IPD Kuala Langat Baru)' : 'Enter IPD (e.g. New IPD)'}
+                      />
+                    ) : (
+                      <select
+                        name="report_location_ipd"
+                        value={selectedIpd}
+                        onChange={(e) => {
+                          if (e.target.value === '__CUSTOM__') {
+                            setIsCustomIpd(true);
+                            setSelectedIpd('');
+                          } else {
+                            setSelectedIpd(e.target.value);
+                          }
+                        }}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                      >
+                        <option value="">{lang === 'bm' ? '-- Pilih Daerah (IPD) --' : '-- Select District (IPD) --'}</option>
+                        {selectedIpk && policeLocations[selectedIpk] ? (
+                          Object.keys(policeLocations[selectedIpk]).map(ipd => (
+                            <option key={ipd} value={ipd}>{ipd}</option>
+                          ))
+                        ) : null}
+                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                          ✏️ {lang === 'bm' ? '+ Taip IPD Baru / Custom Manual...' : '+ Type Custom IPD Manually...'}
+                        </option>
+                      </select>
+                    )}
                   </div>
+
+                  {/* 3. Balai Polis */}
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'policeStation', lang)}`}</label>
-                    <input list="balai-list" type="text" name="report_location_balai" defaultValue={editingClient?.report_location_balai || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" placeholder={lang === 'bm' ? 'Pilih atau taip Balai' : 'Select or type Balai'} />
-                    <datalist id="balai-list">
-                      {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? policeLocations[selectedIpk][selectedIpd].map(balai => (
-                        <option key={balai} value={balai} />
-                      )) : null}
-                    </datalist>
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {`${t('clients', 'policeStation', lang)}`}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomBalai(!isCustomBalai)}
+                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                      >
+                        {isCustomBalai ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                      </button>
+                    </div>
+
+                    {isCustomBalai ? (
+                      <input
+                        type="text"
+                        name="report_location_balai"
+                        value={selectedBalai}
+                        onChange={(e) => setSelectedBalai(e.target.value)}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                        placeholder={lang === 'bm' ? 'Masukkan Balai (cth: Balai Polis Banting)' : 'Enter Police Station'}
+                      />
+                    ) : (
+                      <select
+                        name="report_location_balai"
+                        value={selectedBalai}
+                        onChange={(e) => {
+                          if (e.target.value === '__CUSTOM__') {
+                            setIsCustomBalai(true);
+                            setSelectedBalai('');
+                          } else {
+                            setSelectedBalai(e.target.value);
+                          }
+                        }}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                      >
+                        <option value="">{lang === 'bm' ? '-- Pilih Balai Polis --' : '-- Select Police Station --'}</option>
+                        {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? (
+                          policeLocations[selectedIpk][selectedIpd].map(balai => (
+                            <option key={balai} value={balai}>{balai}</option>
+                          ))
+                        ) : null}
+                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                          ✏️ {lang === 'bm' ? '+ Taip Balai Baru / Custom Manual...' : '+ Type Custom Station Manually...'}
+                        </option>
+                      </select>
+                    )}
                   </div>
 
                   {/* 3. Kertas Siasatan (IP) */}

@@ -23,6 +23,7 @@ export const translations = {
     navSettings: { en: 'Settings', bm: 'Tetapan' },
     navHR: { en: 'Human Resources', bm: 'Sumber Manusia' },
     navLeave: { en: 'My Leave', bm: 'Cuti Saya' },
+    navClaims: { en: 'My Claims', bm: 'Tuntutan Saya' },
     darkMode: { en: 'Dark Mode', bm: 'Mod Gelap' },
     lightMode: { en: 'Light Mode', bm: 'Mod Cerah' },
     logout: { en: 'Logout', bm: 'Log Keluar' },
@@ -614,6 +615,47 @@ export const translations = {
     sqlNote: { en: '(Ensure the public_holidays SQL script has been run in Supabase)', bm: '(Sila pastikan skrip SQL public_holidays telah dijalankan di Supabase)' },
     editBtn: { en: 'Edit', bm: 'Edit' },
     deleteBtn: { en: 'Delete', bm: 'Padam' }
+  },
+
+  // ─── Claims Management ───────────────────────────────────────────────────
+  claims: {
+    pageTitle: { en: 'Claims Management', bm: 'Pengurusan Tuntutan' },
+    pageSubtitle: { en: 'Submit, track, and manage employee expenses & claims', bm: 'Hantar, jejak, dan urus perbelanjaan & tuntutan kakitangan' },
+    newClaimBtn: { en: '+ Submit New Claim', bm: '+ Hantar Tuntutan Baharu' },
+    medicalBalanceTitle: { en: 'Annual Medical Entitlement', bm: 'Kelayakan Perubatan Tahunan' },
+    medicalRemaining: { en: 'Remaining Balance', bm: 'Baki Masih Ada' },
+    medicalUsed: { en: 'Used Balance', bm: 'Telah Digunakan' },
+    claimTypeMeal: { en: 'Meal Allowance (RM7 Cap)', bm: 'Elaun Makan (Had RM7)' },
+    claimTypeMileage: { en: 'Mileage Claim', bm: 'Tuntutan Perbatuan (KM)' },
+    claimTypeMedical: { en: 'Medical Claim', bm: 'Tuntutan Perubatan' },
+    claimTypeOther: { en: 'General / Other Claim', bm: 'Tuntutan Am / Lain-lain' },
+    statusDraft: { en: 'Draft', bm: 'Draf' },
+    statusPending: { en: 'Pending Approval', bm: 'Menunggu Kelulusan' },
+    statusApproved: { en: 'Approved', bm: 'Diluluskan' },
+    statusRejected: { en: 'Rejected', bm: 'Ditolak' },
+    statusPaid: { en: 'Paid', bm: 'Telah Dibayar' },
+    saveDraftBtn: { en: 'Save as Draft', bm: 'Simpan Sebagai Draf' },
+    submitClaimBtn: { en: 'Submit Claim', bm: 'Hantar Tuntutan' },
+    rejectReasonRequired: { en: 'Rejection remark is mandatory.', bm: 'Catatan penolakan adalah wajib.' },
+    rejectReasonPlaceholder: { en: 'Enter mandatory rejection reason (e.g. Receipt too blurry, exceeds 30-day limit)...', bm: 'Masukkan sebab penolakan (cth: Resit tidak jelas, melebihi tempoh 30 hari)...' },
+
+    // Table Headers
+    colClaimNo: { en: 'Claim No.', bm: 'No. Tuntutan' },
+    colDate: { en: 'Date', bm: 'Tarikh' },
+    colStaff: { en: 'Staff', bm: 'Kakitangan' },
+    colTypeTitle: { en: 'Type & Title', bm: 'Jenis & Tajuk' },
+    colReceiptAmount: { en: 'Receipt Amount', bm: 'Jumlah Resit' },
+    colPayableAmount: { en: 'Payable Amount (RM)', bm: 'Jumlah Layak (RM)' },
+    colReceipt: { en: 'Receipt', bm: 'Resit' },
+    colStatus: { en: 'Status', bm: 'Status' },
+    colActions: { en: 'Actions', bm: 'Tindakan' },
+
+    // Action Buttons
+    btnApprove: { en: 'Approve', bm: 'Luluskan' },
+    btnReject: { en: 'Reject', bm: 'Tolak' },
+    btnMarkPaid: { en: 'Mark Paid', bm: 'Tanda Dibayar' },
+    btnDelete: { en: 'Delete', bm: 'Padam' },
+    btnEdit: { en: 'Edit', bm: 'Edit' },
   },
 
   // ─── Common / Shared ──────────────────────────────────────────────────────

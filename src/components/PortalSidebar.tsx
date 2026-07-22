@@ -13,6 +13,7 @@ export default function PortalSidebar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [readNotifications, setReadNotifications] = useState<string[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any | null>(null);
 
   const { lang, setLang } = usePortalLanguage();
   const { permissions } = usePermissions(profile);
@@ -120,8 +121,10 @@ export default function PortalSidebar() {
         annData.forEach((a: any) => {
           list.push({
             id: `ann-${a.id}`,
-            title: lang === 'bm' ? 'Pengumuman Baru' : 'New Announcement',
-            message: `${a.author_name}: "${a.title}"`,
+            title: a.title || (lang === 'bm' ? 'Pengumuman Baru' : 'New Announcement'),
+            author: a.author_name || 'Management',
+            message: `${a.author_name || 'Management'}: "${a.title}"`,
+            content: a.content || a.message || a.title,
             date: a.scheduled_at,
             type: 'announcement',
             link: '/portal',
@@ -142,7 +145,11 @@ export default function PortalSidebar() {
             list.push({
               id: `leave-pending-${l.id}`,
               title: lang === 'bm' ? 'Kelulusan Cuti Menunggu' : 'Pending Leave Request',
+              author: l.profiles?.full_name || 'Staff Member',
               message: `${l.profiles?.full_name || 'Staff'} memohon ${l.leave_type} (${l.total_days} hari) bermula ${l.start_date}.`,
+              content: lang === 'bm'
+                ? `Permohonan Cuti Kakitangan:\n\n• Kakitangan: ${l.profiles?.full_name || 'Staff'}\n• Jenis Cuti: ${l.leave_type}\n• Jangka Masa: ${l.total_days} hari (${l.start_date} hingga ${l.end_date || l.start_date})\n• Sebab: ${l.reason || 'Tiada catatan'}`
+                : `Staff Leave Request Details:\n\n• Staff: ${l.profiles?.full_name || 'Staff'}\n• Leave Type: ${l.leave_type}\n• Duration: ${l.total_days} day(s) (${l.start_date} to ${l.end_date || l.start_date})\n• Reason: ${l.reason || 'No remarks'}`,
               date: l.created_at,
               type: 'leave_pending',
               link: '/portal/leave',
@@ -162,10 +169,14 @@ export default function PortalSidebar() {
         myLeaves.forEach((l: any) => {
           list.push({
             id: `leave-processed-${l.id}-${l.status}`,
-            title: lang === 'bm' ? `Cuti ${l.status === 'Approved' ? 'Diluluskan' : 'Ditolak'}` : `Leave Request ${l.status}`,
+            title: lang === 'bm' ? `Permohonan Cuti ${l.status === 'Approved' ? 'Diluluskan' : 'Ditolak'}` : `Leave Request ${l.status}`,
+            author: l.approver?.full_name || 'Management',
             message: lang === 'bm'
               ? `Permohonan cuti ${l.leave_type} anda pada ${l.start_date} telah ${l.status === 'Approved' ? 'diluluskan' : 'ditolak'} oleh ${l.approver?.full_name || 'Pengurusan'}.`
               : `Your ${l.leave_type} request for ${l.start_date} was ${l.status.toLowerCase()} by ${l.approver?.full_name || 'Management'}.`,
+            content: lang === 'bm'
+              ? `Status Permohonan Cuti:\n\n• Jenis Cuti: ${l.leave_type}\n• Tarikh: ${l.start_date} (${l.total_days} hari)\n• Keputusan: ${l.status === 'Approved' ? 'DILULUSKAN' : 'DITOLAK'}\n• Pelulus: ${l.approver?.full_name || 'Pengurusan'}${l.rejection_reason ? `\n• Sebab Penolakan: ${l.rejection_reason}` : ''}`
+              : `Leave Request Status:\n\n• Leave Type: ${l.leave_type}\n• Date: ${l.start_date} (${l.total_days} day(s))\n• Status: ${l.status.toUpperCase()}\n• Approved By: ${l.approver?.full_name || 'Management'}${l.rejection_reason ? `\n• Rejection Remark: ${l.rejection_reason}` : ''}`,
             date: l.updated_at || l.created_at,
             type: `leave_${l.status.toLowerCase()}`,
             link: '/portal/leave',
@@ -183,10 +194,14 @@ export default function PortalSidebar() {
         casesData.forEach((c: any) => {
           list.push({
             id: `case-pem1-${c.id}`,
-            title: lang === 'bm' ? 'Kes Ditugaskan' : 'Case Assigned',
+            title: lang === 'bm' ? 'Penugasan Kes Baru' : 'Case Assigned',
+            author: 'System',
             message: lang === 'bm'
               ? `Anda telah ditugaskan sebagai PEM 1 untuk klien ${c.NAME} (${c['CASE CATEGORY']}).`
               : `You are designated as PEM 1 for client ${c.NAME} (${c['CASE CATEGORY']}).`,
+            content: lang === 'bm'
+              ? `Maklumat Penugasan Kes:\n\n• Nama Klien: ${c.NAME}\n• Kategori Kes: ${c['CASE CATEGORY'] || '-'}\n• Peranan Anda: Pegawai Mengendalikan Utama (PEM 1)`
+              : `Case Designation Details:\n\n• Client Name: ${c.NAME}\n• Case Category: ${c['CASE CATEGORY'] || '-'}\n• Your Role: Officer In-Charge (PEM 1)`,
             date: c.DATE ? (c.DATE.includes('/') ? c.DATE.split('/').reverse().join('-') : c.DATE) : new Date().toISOString(),
             type: 'case_designation',
             link: `/portal/klien?search=${encodeURIComponent(c.NAME)}`,
@@ -236,7 +251,7 @@ export default function PortalSidebar() {
       saveReadNotifications([...readNotifications, n.id]);
     }
     setIsNotificationOpen(false);
-    window.location.href = n.link;
+    setSelectedNotification(n);
   };
 
   const formatTime = (dateStr: string) => {
@@ -377,6 +392,20 @@ export default function PortalSidebar() {
           </svg>
         )
       });
+
+      /* 
+      // UNCOMMENT WHEN READY TO LAUNCH CLAIM SYSTEM
+      items.push({
+        label: t('sidebar', 'navClaims', lang),
+        path: '/portal/tuntutan',
+        activeClass,
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        )
+      });
+      */
     }
 
     // Only users with HR manage permission can access Human Resources
@@ -612,7 +641,7 @@ export default function PortalSidebar() {
         const importantNotifications = notifications.filter(n => ['leave_pending', 'leave_approved', 'leave_rejected', 'case_designation'].includes(n.type));
         const generalNotifications = notifications.filter(n => n.type === 'announcement');
         return (
-          <div className="fixed left-4 md:left-[200px] top-[60px] w-[calc(100%-2rem)] md:w-80 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-xl z-[99999] overflow-hidden flex flex-col transition-all duration-300 notification-dropdown">
+          <div className="fixed top-16 left-4 right-4 md:left-64 md:right-auto md:w-80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-slate-200 dark:border-gray-800 rounded-2xl shadow-2xl z-[99999] overflow-hidden flex flex-col transition-all duration-300 notification-dropdown">
             <div className="p-4 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center">
               <span className="text-sm font-bold text-slate-800 dark:text-zinc-150">
                 {lang === 'bm' ? 'Pusat Notifikasi' : 'Notification Center'}
@@ -661,6 +690,70 @@ export default function PortalSidebar() {
           </div>
         );
       })()}
+
+      {/* Notification Detail Modal */}
+      {selectedNotification && (
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-gray-800/80 flex items-start justify-between gap-3 bg-slate-50/70 dark:bg-zinc-900/50">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-500 flex items-center justify-center text-xl flex-shrink-0 font-bold border border-indigo-100 dark:border-yellow-500/20">
+                  {selectedNotification.icon}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                    {selectedNotification.title}
+                  </h3>
+                  {selectedNotification.author && (
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                      {selectedNotification.author} • {formatTime(selectedNotification.date)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold p-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs md:text-sm text-slate-700 dark:text-zinc-200 leading-relaxed font-medium">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/60 dark:border-gray-800/60 font-semibold text-slate-800 dark:text-zinc-100 whitespace-pre-wrap">
+                {selectedNotification.content || selectedNotification.message}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-100 dark:border-gray-800/80 bg-slate-50/70 dark:bg-zinc-900/50 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+              >
+                {lang === 'bm' ? 'Tutup' : 'Close'}
+              </button>
+
+              {selectedNotification.link && (
+                <button
+                  onClick={() => {
+                    const link = selectedNotification.link;
+                    setSelectedNotification(null);
+                    window.location.href = link;
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-slate-950 text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>{lang === 'bm' ? 'Buka Halaman Penuh' : 'Open Full Page'}</span>
+                  <span>→</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

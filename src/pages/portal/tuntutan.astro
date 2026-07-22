@@ -1,0 +1,33 @@
+---
+// UNCOMMENT WHEN READY TO LAUNCH CLAIM SYSTEM:
+// import ClaimSystemView from '../../components/ClaimSystemView';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="My Claims / Sistem Tuntutan - Staff Portal">
+  {/* UNCOMMENT BELOW WHEN READY TO LAUNCH CLAIM SYSTEM: */}
+  {/* <ClaimSystemView client:only="react" /> */}
+
+  {/* TEMPORARY COMING SOON BANNER (AHEAD OF SCHEDULE): */}
+  <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+    <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-3xl p-8 max-w-lg shadow-xl space-y-4">
+      <div className="w-16 h-16 rounded-2xl bg-amber-500/10 dark:bg-yellow-500/10 text-amber-600 dark:text-yellow-500 flex items-center justify-center text-3xl mx-auto font-black">
+        💳
+      </div>
+      <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+        Sistem Tuntutan (Claims System)
+      </h1>
+      <p className="text-xs md:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed font-medium">
+        Modul Sistem Tuntutan telah disiapkan lebih awal daripada jadual! Ciri ini sedang dalam fasa persediaan akhir sebelum dilancarkan secara rasmi.
+      </p>
+      <div className="pt-2">
+        <a
+          href="/portal"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 text-white dark:text-slate-950 font-bold text-xs shadow-md transition-all"
+        >
+          <span>← Kembali ke Papan Pemuka / Back to Portal</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</DashboardLayout>

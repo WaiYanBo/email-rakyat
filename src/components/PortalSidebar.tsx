@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
@@ -44,7 +44,7 @@ export default function PortalSidebar() {
   }, [theme]);
 
   const loadProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCurrentSession();
     if (!session) {
       window.location.href = '/portal/login';
       return;
@@ -335,6 +335,8 @@ export default function PortalSidebar() {
     const canViewAttendance = permissions?.view_attendance || isIT;
     const canManageHR = permissions?.manage_hr || isIT;
     const canManageDrive = permissions?.manage_drive || isIT;
+    const canViewLeave = permissions?.view_leave ?? true;
+    const canViewClaims = permissions?.view_claims ?? true;
 
     const activeClass = 'bg-indigo-50/70 text-indigo-750 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500';
 
@@ -364,8 +366,6 @@ export default function PortalSidebar() {
       });
     }
 
-
-
     if (canViewReports) {
       items.push({
         label: t('sidebar', 'navReports', lang),
@@ -379,9 +379,9 @@ export default function PortalSidebar() {
       });
     }
 
-    // Only non-contract/non-freelance staff can access My Leave
+    // Only non-contract/non-freelance staff can access My Leave if permission is enabled
     const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
-    if (!isContractor) {
+    if (!isContractor && canViewLeave) {
       items.push({
         label: t('sidebar', 'navLeave', lang),
         path: '/portal/leave',
@@ -392,9 +392,9 @@ export default function PortalSidebar() {
           </svg>
         )
       });
+    }
 
-      /* 
-      // UNCOMMENT WHEN READY TO LAUNCH CLAIM SYSTEM
+    if (canViewClaims) {
       items.push({
         label: t('sidebar', 'navClaims', lang),
         path: '/portal/tuntutan',
@@ -405,7 +405,6 @@ export default function PortalSidebar() {
           </svg>
         )
       });
-      */
     }
 
     // Only users with HR manage permission can access Human Resources

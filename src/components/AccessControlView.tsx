@@ -18,6 +18,8 @@ interface PermissionEntry {
     manage_access_control: boolean;
     manage_drive: boolean;
     manage_hr: boolean;
+    view_claims: boolean;
+    view_leave: boolean;
   };
 }
 
@@ -77,7 +79,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'department',
           target_id: dept,
           permissions: {
-            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false, manage_hr: false
+            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false, manage_hr: false, view_claims: true, view_leave: true
           }
         };
       });
@@ -87,7 +89,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'user',
           target_id: user.id,
           permissions: {
-            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any, manage_hr: null as any
+            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any, manage_hr: null as any, view_claims: null as any, view_leave: null as any
           } // null defaults to inherited department settings
         };
       });
@@ -109,7 +111,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           const deptUsers = profiles?.filter(p => p.department === deptName) || [];
           if (deptUsers.length > 0) {
             const modules: (keyof PermissionEntry['permissions'])[] = [
-              'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive', 'manage_hr'
+              'view_claims', 'view_leave', 'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive', 'manage_hr'
             ];
             modules.forEach(module => {
               const allChecked = deptUsers.every(u => {
@@ -248,13 +250,15 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
   }
 
   const allFeatures: (keyof PermissionEntry['permissions'])[] = [
-    'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 
+    'view_claims', 'view_leave', 'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 
     'view_attendance', 'view_snapshot', 'manage_drive', 'manage_hr',
     ...(isITAdmin ? ['manage_access_control' as keyof PermissionEntry['permissions']] : [])
   ];
 
   const getFeatureLabel = (f: string) => {
     switch(f) {
+      case 'view_claims': return t('accessControl', 'colClaims', lang) || 'Claims System';
+      case 'view_leave': return t('accessControl', 'colLeave', lang) || 'Leave System';
       case 'view_clients': return t('accessControl', 'colViewClients', lang);
       case 'edit_clients': return t('accessControl', 'colEditClients', lang);
       case 'view_staff': return t('accessControl', 'colViewStaff', lang);
@@ -270,6 +274,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   const getFeatureDesc = (f: string) => {
     switch(f) {
+      case 'view_claims': return t('accessControl', 'colClaimsDesc', lang) || 'Submit & view claim requests';
+      case 'view_leave': return t('accessControl', 'colLeaveDesc', lang) || 'Apply & view leave requests';
       case 'view_clients': return t('accessControl', 'colViewClientsDesc', lang);
       case 'edit_clients': return t('accessControl', 'colEditClientsDesc', lang);
       case 'view_staff': return t('accessControl', 'colViewStaffDesc', lang);

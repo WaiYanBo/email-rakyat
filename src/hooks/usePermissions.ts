@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 
 export interface Permissions {
   view_clients: boolean;
@@ -11,6 +11,8 @@ export interface Permissions {
   manage_access_control: boolean;
   manage_drive: boolean;
   manage_hr: boolean;
+  view_claims: boolean;
+  view_leave: boolean;
 }
 
 const IT_ADMIN_PERMISSIONS: Permissions = {
@@ -23,6 +25,8 @@ const IT_ADMIN_PERMISSIONS: Permissions = {
   manage_access_control: true,
   manage_drive: true,
   manage_hr: true,
+  view_claims: true,
+  view_leave: true,
 };
 
 // In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
@@ -39,6 +43,8 @@ export function usePermissions(profile: any) {
     manage_access_control: false,
     manage_drive: false,
     manage_hr: false,
+    view_claims: true,
+    view_leave: true,
   });
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +58,7 @@ export function usePermissions(profile: any) {
         let role = profile?.role || profile?.role_name;
 
         if (!userId) {
-          const { data: { session } } = await supabase.auth.getSession();
+          const session = await getCurrentSession();
           if (session) {
             userId = session.user.id;
           }
@@ -126,6 +132,8 @@ export function usePermissions(profile: any) {
           manage_access_control: false,
           manage_drive: false,
           manage_hr: false,
+          view_claims: true,
+          view_leave: true,
         };
 
         if (data && data.length > 0) {
@@ -142,6 +150,8 @@ export function usePermissions(profile: any) {
             manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? finalPerms.manage_access_control,
             manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? finalPerms.manage_drive,
             manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? finalPerms.manage_hr,
+            view_claims: userPerms.view_claims ?? deptPerms.view_claims ?? true,
+            view_leave: userPerms.view_leave ?? deptPerms.view_leave ?? true,
           };
         }
 

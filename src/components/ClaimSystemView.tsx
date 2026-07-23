@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { sanitizeInput } from '../utils/security';
@@ -65,7 +65,7 @@ export default function ClaimSystemView() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) {
         window.location.href = '/portal/login';
         return;

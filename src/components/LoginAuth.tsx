@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from 'react';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { isValidEmail, isLoginAllowed, clearRateLimit } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
@@ -11,6 +11,15 @@ export default function LoginAuth() {
   const [loading, setLoading] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
   const { lang } = usePortalLanguage();
+
+  useEffect(() => {
+    // If user is already authenticated, redirect straight to portal
+    getCurrentSession().then((session) => {
+      if (session) {
+        window.location.href = '/portal';
+      }
+    });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +79,7 @@ export default function LoginAuth() {
         }
       } else if (data?.user) {
         clearRateLimit(trimmedEmail); // Reset on success
+        await new Promise((r) => setTimeout(r, 100));
         window.location.href = '/portal';
       }
     } catch (_err) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { sanitizeInput, isValidName, isStrongPassword } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
@@ -28,7 +28,7 @@ export default function SettingsView() {
   // Fetch Profile & Session
   const loadUserSettings = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) {
         window.location.href = '/portal/login';
         return;

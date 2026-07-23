@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import InteractiveBarChart, { type BarChartItem } from './InteractiveBarChart';
 
@@ -128,7 +128,7 @@ export default function AttendanceAnalyticsSample() {
     async function loadAnalytics() {
       try {
         setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await getCurrentSession();
         if (!session) {
           setLoading(false);
           return;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { sanitizeInput, isValidEmail, isStrongPassword } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
@@ -60,7 +60,7 @@ export default function ReportsView() {
 
   useEffect(() => {
     async function loadData() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) {
         window.location.href = '/portal/login';
         return;

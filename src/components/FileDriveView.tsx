@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
@@ -181,7 +181,7 @@ export default function FileDriveView() {
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) return;
 
       const { data: profile } = await supabase

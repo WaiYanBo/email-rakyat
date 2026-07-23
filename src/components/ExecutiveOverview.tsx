@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import { sanitizeInput, sanitizeLongText } from '../utils/security';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
@@ -107,7 +107,7 @@ export default function ExecutiveOverview() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await getCurrentSession();
         if (!session) {
           console.warn('No session found, redirecting to login');
           return window.location.href = '/portal/login';

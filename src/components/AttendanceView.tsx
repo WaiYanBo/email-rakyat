@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
@@ -175,7 +175,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
   useEffect(() => {
     const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!session) {
         window.location.href = '/portal/login';
         return;

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, getCurrentSession } from '../lib/supabase';
 import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
 import { BillingGenerator } from './dashboard/BillingGenerator';
@@ -448,7 +448,7 @@ export default function ClientDataView() {
     let isMounted = true;
     const timer = setTimeout(async () => {
       async function loadData() {
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await getCurrentSession();
         if (!session) {
           window.location.href = '/portal/login';
           return;

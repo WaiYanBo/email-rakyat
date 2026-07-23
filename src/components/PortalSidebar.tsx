@@ -86,19 +86,31 @@ export default function PortalSidebar() {
     };
   }, []);
 
-  // Load read notifications from localStorage
+  // Load read notifications from localStorage (scoped per user profile)
   useEffect(() => {
+    if (!profile?.id) return;
     try {
-      const saved = localStorage.getItem('portal-read-notifications');
-      if (saved) {
-        setReadNotifications(JSON.parse(saved));
+      const userKey = `portal-read-notifications-${profile.id}`;
+      const savedUser = localStorage.getItem(userKey);
+      const savedGlobal = localStorage.getItem('portal-read-notifications');
+
+      const readSet = new Set<string>();
+      if (savedGlobal) {
+        try { JSON.parse(savedGlobal).forEach((id: string) => readSet.add(id)); } catch (e) { }
       }
+      if (savedUser) {
+        try { JSON.parse(savedUser).forEach((id: string) => readSet.add(id)); } catch (e) { }
+      }
+      setReadNotifications(Array.from(readSet));
     } catch (e) { }
-  }, []);
+  }, [profile?.id]);
 
   const saveReadNotifications = (updated: string[]) => {
     setReadNotifications(updated);
     try {
+      if (profile?.id) {
+        localStorage.setItem(`portal-read-notifications-${profile.id}`, JSON.stringify(updated));
+      }
       localStorage.setItem('portal-read-notifications', JSON.stringify(updated));
     } catch (e) { }
   };
@@ -108,11 +120,13 @@ export default function PortalSidebar() {
     try {
       const isApprover = ['CEO', 'CFO', 'COO', 'CPO'].includes(profile.role);
       const list: any[] = [];
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-      // 1. Fetch latest announcements
+      // 1. Fetch latest announcements (last 14 days)
       const { data: annData } = await supabase
         .from('announcements')
         .select('*')
+        .gte('scheduled_at', fourteenDaysAgo)
         .lte('scheduled_at', new Date().toISOString())
         .order('scheduled_at', { ascending: false })
         .limit(10);
@@ -135,7 +149,7 @@ export default function PortalSidebar() {
 
       // 2. Fetch leave requests
       if (isApprover) {
-        // Management: fetch all pending leaves
+        // Management: fetch pending leaves
         const { data: pendingLeaves } = await supabase
           .from('leave_requests')
           .select('*, profiles!profile_id(full_name)')
@@ -159,16 +173,18 @@ export default function PortalSidebar() {
         }
       }
 
-      // Fetch own processed leaves (Approved / Rejected)
+      // Fetch own processed leaves (Approved / Rejected) - last 14 days only
       const { data: myLeaves } = await supabase
         .from('leave_requests')
         .select('*, approver:profiles!approved_by(full_name)')
         .eq('profile_id', profile.id)
-        .in('status', ['Approved', 'Rejected']);
+        .in('status', ['Approved', 'Rejected'])
+        .gte('updated_at', fourteenDaysAgo);
+
       if (myLeaves) {
         myLeaves.forEach((l: any) => {
           list.push({
-            id: `leave-processed-${l.id}-${l.status}`,
+            id: `leave-processed-${l.id}`,
             title: lang === 'bm' ? `Permohonan Cuti ${l.status === 'Approved' ? 'Diluluskan' : 'Ditolak'}` : `Leave Request ${l.status}`,
             author: l.approver?.full_name || 'Management',
             message: lang === 'bm'
@@ -185,13 +201,19 @@ export default function PortalSidebar() {
         });
       }
 
-      // 3. Fetch designated cases (where ip_pem1 = profile.name)
+      // 3. Fetch 5 most recent designated cases (where ip_pem1 = profile.name)
       const { data: casesData } = await supabase
         .from('clients')
         .select('id, NAME, "CASE CATEGORY", DATE')
-        .ilike('ip_pem1', profile.name);
+        .ilike('ip_pem1', profile.name)
+        .order('id', { ascending: false })
+        .limit(5);
+
       if (casesData) {
         casesData.forEach((c: any) => {
+          const stableDate = c.DATE
+            ? (c.DATE.includes('/') ? c.DATE.split('/').reverse().join('-') : c.DATE)
+            : '2026-01-01'; // Stable date, avoid changing timestamps every 30s
           list.push({
             id: `case-pem1-${c.id}`,
             title: lang === 'bm' ? 'Penugasan Kes Baru' : 'Case Assigned',
@@ -202,7 +224,7 @@ export default function PortalSidebar() {
             content: lang === 'bm'
               ? `Maklumat Penugasan Kes:\n\n• Nama Klien: ${c.NAME}\n• Kategori Kes: ${c['CASE CATEGORY'] || '-'}\n• Peranan Anda: Pegawai Mengendalikan Utama (PEM 1)`
               : `Case Designation Details:\n\n• Client Name: ${c.NAME}\n• Case Category: ${c['CASE CATEGORY'] || '-'}\n• Your Role: Officer In-Charge (PEM 1)`,
-            date: c.DATE ? (c.DATE.includes('/') ? c.DATE.split('/').reverse().join('-') : c.DATE) : new Date().toISOString(),
+            date: stableDate,
             type: 'case_designation',
             link: `/portal/klien?search=${encodeURIComponent(c.NAME)}`,
             icon: '💼'

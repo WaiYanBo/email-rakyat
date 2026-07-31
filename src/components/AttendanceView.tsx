@@ -259,14 +259,32 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
     fetchAttendanceRecords(selectedDate, selectedMonth, filterMode, employeeId);
   };
 
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportMonthlySalary, setExportMonthlySalary] = useState<number>(3000);
+  const [exportSalaryAdvance, setExportSalaryAdvance] = useState<number>(0);
+  const [exportIrbPcb, setExportIrbPcb] = useState<number>(0);
+  const [exportIncludeEpf, setExportIncludeEpf] = useState<boolean>(false);
+  const [exportIncludeSocso, setExportIncludeSocso] = useState<boolean>(false);
+  const [exportProjectRemainingDays, setExportProjectRemainingDays] = useState<boolean>(true);
+
   const exportToExcel = () => {
     if (filteredRecords.length === 0) {
       alert(t('attendance', 'noRecordsToExport', lang));
       return;
     }
+    setIsExportModalOpen(true);
+  };
 
-    // Call the new utility function
-    exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth, publicHolidays);
+  const handleConfirmExport = () => {
+    exportAttendanceToExcel(filteredRecords, filterMode, selectedDate, selectedMonth, publicHolidays, {
+      monthlySalary: exportMonthlySalary,
+      salaryAdvance: exportSalaryAdvance,
+      irbPcb: exportIrbPcb,
+      includeEpf: exportIncludeEpf,
+      includeSocso: exportIncludeSocso,
+      projectRemainingDays: exportProjectRemainingDays
+    });
+    setIsExportModalOpen(false);
   };
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
@@ -567,6 +585,290 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           </div>
         )}
       </div>
+
+      {/* ─── EXPORT ATTENDANCE & PAYROLL MODAL ────────────────────────────────────── */}
+      {isExportModalOpen && (() => {
+        const targetMonthStr = filterMode === 'month' ? selectedMonth : selectedDate.slice(0, 7);
+        const [yStr, mStr] = targetMonthStr.split('-');
+        const previewYear = parseInt(yStr || '2026');
+        const previewMonthIdx = parseInt(mStr || '01') - 1;
+        const previewDaysInMonth = new Date(previewYear, previewMonthIdx + 1, 0).getDate();
+
+        let previewWorkingDays = 0;
+        let previewRestDays = 0;
+        let previewNonWeekendHolidays = 0;
+
+        for (let d = 1; d <= previewDaysInMonth; d++) {
+          const dt = new Date(previewYear, previewMonthIdx, d);
+          const dayOfWeek = dt.getDay();
+          const dStr = `${previewYear}-${String(previewMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          if (isWeekend) {
+            previewRestDays++;
+          } else {
+            previewWorkingDays++;
+            if (publicHolidays.some(h => h.date === dStr)) {
+              previewNonWeekendHolidays++;
+            }
+          }
+        }
+
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let prevSick = 0;
+        let prevAnnual = 0;
+        let prevHospital = 0;
+        let prevUnpaid = 0;
+        let prevAwol = 0;
+
+        for (let d = 1; d <= previewDaysInMonth; d++) {
+          const dStr = `${previewYear}-${String(previewMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const dt = new Date(previewYear, previewMonthIdx, d);
+          const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+          const isHoliday = publicHolidays.some(h => h.date === dStr);
+
+          const dayRecs = filteredRecords.filter(r => r.date === dStr);
+          const leaveRec = dayRecs.find(r => r.is_leave);
+
+          if (leaveRec) {
+            const type = (leaveRec.leave_type || '').toLowerCase();
+            const dayVal = leaveRec.total_days ? Number(leaveRec.total_days) : (leaveRec.session_type?.includes('Half') ? 0.5 : 1);
+            if (type.includes('sick') || type.includes('mc')) prevSick += dayVal;
+            else if (type.includes('hospital')) prevHospital += dayVal;
+            else if (type.includes('unpaid')) prevUnpaid += dayVal;
+            else prevAnnual += dayVal;
+          } else if (!isWeekend && !isHoliday && dayRecs.length === 0) {
+            const isFutureOrToday = dStr >= todayStr;
+            if (isFutureOrToday && exportProjectRemainingDays) {
+              // Projected as worked for full month estimation
+            } else {
+              prevAwol += 1;
+            }
+          }
+        }
+
+        const prevTotalUnpaid = prevUnpaid + prevAwol;
+        const prevEligibleSalary = prevTotalUnpaid === 0
+          ? exportMonthlySalary
+          : Math.max(0, exportMonthlySalary - (exportMonthlySalary / previewDaysInMonth) * prevTotalUnpaid);
+        const prevEpf = exportIncludeEpf ? Math.round(prevEligibleSalary * 0.11 * 100) / 100 : 0;
+        const prevSocso = exportIncludeSocso ? Math.min(19.75, Math.round(prevEligibleSalary * 0.005 * 100) / 100) : 0;
+        const prevEis = exportIncludeSocso ? Math.min(7.90, Math.round(prevEligibleSalary * 0.002 * 100) / 100) : 0;
+        const prevTotalDeductions = prevEpf + prevSocso + prevEis + exportIrbPcb + exportSalaryAdvance;
+        const prevSalaryInHand = Math.max(0, prevEligibleSalary - prevTotalDeductions);
+
+        const formatDaysDisplay = (num: number) => Number.isInteger(num) ? String(Math.round(num)) : String(Number(num.toFixed(1)));
+        const paidDaysCountStr = formatDaysDisplay(previewDaysInMonth - prevTotalUnpaid);
+        const totalUnpaidDaysStr = formatDaysDisplay(prevTotalUnpaid);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full p-6 md:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto my-auto">
+              
+              {/* Modal Header */}
+              <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>📊</span> {t('attendanceAdmin', 'exportModalTitle', lang)}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                    {t('attendanceAdmin', 'exportModalSub', lang)} ({targetMonthStr})
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsExportModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Editable Parameters */}
+              <div className="space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
+                      {t('attendanceAdmin', 'monthlySalary', lang)} (RM)
+                    </label>
+                    <input
+                      type="number"
+                      value={exportMonthlySalary}
+                      onChange={(e) => setExportMonthlySalary(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
+                      {t('attendanceAdmin', 'irbPcb', lang)} (RM)
+                    </label>
+                    <input
+                      type="number"
+                      value={exportIrbPcb}
+                      onChange={(e) => setExportIrbPcb(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
+                      {t('attendanceAdmin', 'salaryAdvance', lang)} (RM)
+                    </label>
+                    <input
+                      type="number"
+                      value={exportSalaryAdvance}
+                      onChange={(e) => setExportSalaryAdvance(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                {/* EPF, SOCSO & Full Month Projection Toggles */}
+                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs font-semibold">
+                  <label className="flex items-center gap-2 cursor-pointer text-indigo-700 dark:text-indigo-400 select-none bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                    <input
+                      type="checkbox"
+                      checked={exportProjectRemainingDays}
+                      onChange={(e) => setExportProjectRemainingDays(e.target.checked)}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                    />
+                    <span>🗓️ {t('attendanceAdmin', 'projectRemainingDaysLabel', lang)}</span>
+                  </label>
+
+                  <div className="flex flex-wrap items-center gap-6 pt-1">
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-slate-800 dark:text-zinc-200 select-none">
+                      <input
+                        type="checkbox"
+                        checked={exportIncludeEpf}
+                        onChange={(e) => setExportIncludeEpf(e.target.checked)}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                      />
+                      <span>{t('attendanceAdmin', 'includeEpfLabel', lang)}</span>
+                    </label>
+
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-slate-800 dark:text-zinc-200 select-none">
+                      <input
+                        type="checkbox"
+                        checked={exportIncludeSocso}
+                        onChange={(e) => setExportIncludeSocso(e.target.checked)}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                      />
+                      <span>{t('attendanceAdmin', 'includeSocsoLabel', lang)}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Breakdown Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                
+                {/* Paid & Days Breakdown Card */}
+                <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-2">
+                  <div className="font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-400 border-b border-indigo-200 dark:border-indigo-900/60 pb-1.5 flex items-center justify-between">
+                    <span>{t('attendanceAdmin', 'paidDaySection', lang)}</span>
+                    <span className="text-[10px] bg-indigo-200 dark:bg-indigo-900 px-2 py-0.5 rounded text-indigo-950 dark:text-indigo-200">
+                      {paidDaysCountStr} / {formatDaysDisplay(previewDaysInMonth)} {t('common', 'days', lang)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'numDaysInMonth', lang)}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{formatDaysDisplay(previewDaysInMonth)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'numWorkingDays', lang)}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{formatDaysDisplay(previewWorkingDays)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'numRestDays', lang)}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{formatDaysDisplay(previewRestDays)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'additionalHolidaysExclRest', lang)}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{formatDaysDisplay(previewNonWeekendHolidays)}</span>
+                  </div>
+                  <div className="pt-1 border-t border-indigo-100 dark:border-indigo-900/40 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">• {t('attendanceAdmin', 'sickLeave', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">{formatDaysDisplay(prevSick)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">• {t('attendanceAdmin', 'annualLeave', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">{formatDaysDisplay(prevAnnual)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">• {t('attendanceAdmin', 'hospitalizationLeave', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">{formatDaysDisplay(prevHospital)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Unpaid & Rejection Card */}
+                <div className="p-4 rounded-2xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 space-y-2">
+                  <div className="font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400 border-b border-rose-200 dark:border-rose-900/60 pb-1.5 flex items-center justify-between">
+                    <span>{t('attendanceAdmin', 'unpaidDaySection', lang)} & {t('attendanceAdmin', 'rejectionSection', lang)}</span>
+                    <span className="text-[10px] bg-rose-200 dark:bg-rose-900 px-2 py-0.5 rounded text-rose-950 dark:text-rose-200">
+                      {totalUnpaidDaysStr} {t('common', 'days', lang)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'leaveWithoutPayAwol', lang)}</span>
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">{totalUnpaidDaysStr} day(s)</span>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-rose-100 dark:border-rose-900/40 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'employeeEpf', lang)} (11%)</span>
+                      <span className="font-medium text-slate-900 dark:text-white">RM {prevEpf.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'socsoEmployee', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">RM {prevSocso.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'employeeEis', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">RM {prevEis.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'irbPcb', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">RM {exportIrbPcb.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600 dark:text-zinc-400">{t('attendanceAdmin', 'salaryAdvance', lang)}</span>
+                      <span className="font-medium text-slate-900 dark:text-white">RM {exportSalaryAdvance.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Salary Results Banner */}
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-400 font-medium">
+                    {t('attendanceAdmin', 'eligibleSalary', lang)}: <strong className="text-slate-900 dark:text-white">RM {prevEligibleSalary.toFixed(2)}</strong>
+                  </p>
+                  <p className="text-base font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5">
+                    {t('attendanceAdmin', 'salaryInHand', lang)}: RM {prevSalaryInHand.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <button
+                    onClick={() => setIsExportModalOpen(false)}
+                    className="flex-1 md:flex-initial px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold transition-all"
+                  >
+                    {t('common', 'cancel', lang)}
+                  </button>
+                  <button
+                    onClick={handleConfirmExport}
+                    className="flex-1 md:flex-initial px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <span>📊</span>
+                    <span>{t('attendanceAdmin', 'downloadReport', lang)}</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

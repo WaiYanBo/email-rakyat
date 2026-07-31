@@ -34,15 +34,15 @@ const permissionsCache: Record<string, Permissions> = {};
 
 export function usePermissions(profile: any) {
   const [permissions, setPermissions] = useState<Permissions>({
-    view_clients: false,
-    edit_clients: false,
-    view_staff: false,
-    edit_staff: false,
-    view_attendance: false,
-    view_snapshot: false,
+    view_clients: true,
+    edit_clients: true,
+    view_staff: true,
+    edit_staff: true,
+    view_attendance: true,
+    view_snapshot: true,
     manage_access_control: false,
-    manage_drive: false,
-    manage_hr: false,
+    manage_drive: true,
+    manage_hr: true,
     view_claims: true,
     view_leave: true,
   });
@@ -123,15 +123,15 @@ export function usePermissions(profile: any) {
         }
 
         let finalPerms: Permissions = {
-          view_clients: false,
-          edit_clients: false,
-          view_staff: false,
-          edit_staff: false,
-          view_attendance: false,
-          view_snapshot: false,
+          view_clients: true,
+          edit_clients: true,
+          view_staff: true,
+          edit_staff: true,
+          view_attendance: true,
+          view_snapshot: true,
           manage_access_control: false,
-          manage_drive: false,
-          manage_hr: false,
+          manage_drive: true,
+          manage_hr: true,
           view_claims: true,
           view_leave: true,
         };

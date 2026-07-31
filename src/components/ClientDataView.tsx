@@ -56,7 +56,7 @@ const DateInput = ({ name, label, defaultValue, lang, required }: { name: string
                 } else {
                   dateRef.current.click();
                 }
-              } catch (err) {}
+              } catch (err) { }
             }
           }}
           placeholder="DD/MM/YYYY"
@@ -73,7 +73,7 @@ const DateInput = ({ name, label, defaultValue, lang, required }: { name: string
                 } else {
                   dateRef.current.click();
                 }
-              } catch (err) {}
+              } catch (err) { }
             }
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-600 dark:hover:text-yellow-500 cursor-pointer p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center"
@@ -152,15 +152,50 @@ export default function ClientDataView() {
   // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
-  const [policeReportsList, setPoliceReportsList] = useState<{date: string, no: string}[]>([{date: '', no: ''}]);
-  const [ipList, setIpList] = useState<{date: string, no: string, pem: string, officer: string}[]>([{date: '', no: '', pem: '', officer: ''}]);
+  const [policeReportsList, setPoliceReportsList] = useState<{ date: string, no: string }[]>([{ date: '', no: '' }]);
+  const [ipList, setIpList] = useState<{ date: string, no: string, pem: string, officer: string }[]>([{ date: '', no: '', pem: '', officer: '' }]);
   const [selectedIpk, setSelectedIpk] = useState('');
   const [selectedIpd, setSelectedIpd] = useState('');
   const [selectedBalai, setSelectedBalai] = useState('');
   const [isCustomIpk, setIsCustomIpk] = useState(false);
   const [isCustomIpd, setIsCustomIpd] = useState(false);
   const [isCustomBalai, setIsCustomBalai] = useState(false);
-  const [paymentList, setPaymentList] = useState<{amount: string, date: string}[]>([]);
+
+  // CASE CATEGORY STATE & REGISTRATION
+  const [registeredCategories, setRegisteredCategories] = useState<string[]>(() => {
+    const defaults = ["Ah Long", "Kredit Komuniti", "Bank", "Scam Victim"];
+    try {
+      const saved = localStorage.getItem('custom_case_categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return Array.from(new Set([...defaults, ...parsed]));
+        }
+      }
+    } catch (e) { }
+    return defaults;
+  });
+  const [isCustomCaseCategory, setIsCustomCaseCategory] = useState(false);
+  const [selectedCaseCategory, setSelectedCaseCategory] = useState('Ah Long');
+  const [customCaseCategoryVal, setCustomCaseCategoryVal] = useState('');
+
+  const registerNewCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (!trimmed) return;
+    setRegisteredCategories(prev => {
+      if (prev.includes(trimmed)) return prev;
+      const updated = [...prev, trimmed];
+      try {
+        localStorage.setItem(
+          'custom_case_categories',
+          JSON.stringify(updated.filter(c => !["Ah Long", "Kredit Komuniti", "Bank", "Scam Victim"].includes(c)))
+        );
+      } catch (e) { }
+      return updated;
+    });
+  };
+
+  const [paymentList, setPaymentList] = useState<{ amount: string, date: string }[]>([]);
   // MODAL STATE - VIEW (NEW)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
@@ -609,18 +644,21 @@ export default function ClientDataView() {
     };
   }, [permissions, searchQuery, dateFilter, viewMode, storageFolders, refreshTrigger]);
 
-  const handleOpenAddModal = () => { 
-    setEditingClient(null); 
-    setPoliceReportsList([{date: '', no: ''}]);
-    setIpList([{date: '', no: '', pem: '', officer: ''}]);
+  const handleOpenAddModal = () => {
+    setEditingClient(null);
+    setPoliceReportsList([{ date: '', no: '' }]);
+    setIpList([{ date: '', no: '', pem: '', officer: '' }]);
     setSelectedIpk('');
     setSelectedIpd('');
     setSelectedBalai('');
     setIsCustomIpk(false);
     setIsCustomIpd(false);
     setIsCustomBalai(false);
+    setSelectedCaseCategory('Ah Long');
+    setIsCustomCaseCategory(false);
+    setCustomCaseCategoryVal('');
     setPaymentList([]);
-    setIsModalOpen(true); 
+    setIsModalOpen(true);
   };
   const handleOpenEditModal = async (client: any) => {
     setEditingClient(client);
@@ -633,30 +671,30 @@ export default function ClientDataView() {
         setEditingClient(currentData);
       }
     }
-    
+
     let parsedReports = [];
     if (currentData?.police_report_no && currentData.police_report_no.trim().startsWith('[')) {
-       try { parsedReports = JSON.parse(currentData.police_report_no); } catch(e){}
+      try { parsedReports = JSON.parse(currentData.police_report_no); } catch (e) { }
     } else if (currentData?.police_report_no || currentData?.police_report_date) {
-       parsedReports = [{ date: currentData.police_report_date || '', no: currentData.police_report_no || '' }];
+      parsedReports = [{ date: currentData.police_report_date || '', no: currentData.police_report_no || '' }];
     }
     if (parsedReports.length === 0) parsedReports = [{ date: '', no: '' }];
     setPoliceReportsList(parsedReports);
 
     let parsedIps = [];
     if (currentData?.ip_no && currentData.ip_no.trim().startsWith('[')) {
-       try { parsedIps = JSON.parse(currentData.ip_no); } catch(e){}
+      try { parsedIps = JSON.parse(currentData.ip_no); } catch (e) { }
     } else if (currentData?.ip_no || currentData?.ip_date || currentData?.ip_pem1 || currentData?.ip_officer) {
-       parsedIps = [{ 
-         date: currentData.ip_date || '', 
-         no: currentData.ip_no || '',
-         pem: currentData.ip_pem1 || '',
-         officer: currentData.ip_officer || ''
-       }];
+      parsedIps = [{
+        date: currentData.ip_date || '',
+        no: currentData.ip_no || '',
+        pem: currentData.ip_pem1 || '',
+        officer: currentData.ip_officer || ''
+      }];
     }
     if (parsedIps.length === 0) parsedIps = [{ date: '', no: '', pem: '', officer: '' }];
     setIpList(parsedIps);
-    
+
     const currentIpk = currentData?.report_location_ipk || '';
     const currentIpd = currentData?.report_location_ipd || '';
     const currentBalai = currentData?.report_location_balai || '';
@@ -672,6 +710,16 @@ export default function ClientDataView() {
     setIsCustomIpk(Boolean(currentIpk && !hasIpk));
     setIsCustomIpd(Boolean(currentIpd && !hasIpd));
     setIsCustomBalai(Boolean(currentBalai && !hasBalai));
+
+    const currentCat = currentData?.['CASE CATEGORY'] || '';
+    if (currentCat && currentCat !== '-') {
+      registerNewCategory(currentCat);
+      setSelectedCaseCategory(currentCat);
+    } else {
+      setSelectedCaseCategory('Ah Long');
+    }
+    setIsCustomCaseCategory(false);
+    setCustomCaseCategoryVal('');
 
     const payments = [];
     for (let i = 1; i <= 6; i++) {
@@ -864,7 +912,7 @@ export default function ClientDataView() {
     });
 
     if (paidInput) {
-       paidInput.value = totalPaid % 1 === 0 ? totalPaid.toString() : totalPaid.toFixed(2);
+      paidInput.value = totalPaid % 1 === 0 ? totalPaid.toString() : totalPaid.toFixed(2);
     }
 
     if (pkgInput && pendingInput) {
@@ -884,38 +932,38 @@ export default function ClientDataView() {
     const gatheredReports = [];
     let idx = 0;
     while (true) {
-       const dKey = `report_date_${idx}`;
-       const nKey = `report_no_${idx}`;
-       if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey)) {
-         break;
-       }
-       const dVal = sanitizeInput((data[dKey] as string) || '', 50);
-       const nVal = sanitizeInput((data[nKey] as string) || '', 200);
-       if (dVal || nVal) {
-         gatheredReports.push({ date: dVal, no: nVal });
-       }
-       idx++;
+      const dKey = `report_date_${idx}`;
+      const nKey = `report_no_${idx}`;
+      if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey)) {
+        break;
+      }
+      const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+      const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+      if (dVal || nVal) {
+        gatheredReports.push({ date: dVal, no: nVal });
+      }
+      idx++;
     }
     const reportsJson = JSON.stringify(gatheredReports);
 
     const gatheredIps = [];
     let ipIdx = 0;
     while (true) {
-       const dKey = `ip_date_${ipIdx}`;
-       const nKey = `ip_no_${ipIdx}`;
-       const pKey = `ip_pem_${ipIdx}`;
-       const oKey = `ip_officer_${ipIdx}`;
-       if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey) && !data.hasOwnProperty(pKey) && !data.hasOwnProperty(oKey)) {
-         break;
-       }
-       const dVal = sanitizeInput((data[dKey] as string) || '', 50);
-       const nVal = sanitizeInput((data[nKey] as string) || '', 200);
-       const pVal = sanitizeInput((data[pKey] as string) || '', 100);
-       const oVal = sanitizeInput((data[oKey] as string) || '', 200);
-       if (dVal || nVal || pVal || oVal) {
-         gatheredIps.push({ date: dVal, no: nVal, pem: pVal, officer: oVal });
-       }
-       ipIdx++;
+      const dKey = `ip_date_${ipIdx}`;
+      const nKey = `ip_no_${ipIdx}`;
+      const pKey = `ip_pem_${ipIdx}`;
+      const oKey = `ip_officer_${ipIdx}`;
+      if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey) && !data.hasOwnProperty(pKey) && !data.hasOwnProperty(oKey)) {
+        break;
+      }
+      const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+      const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+      const pVal = sanitizeInput((data[pKey] as string) || '', 100);
+      const oVal = sanitizeInput((data[oKey] as string) || '', 200);
+      if (dVal || nVal || pVal || oVal) {
+        gatheredIps.push({ date: dVal, no: nVal, pem: pVal, officer: oVal });
+      }
+      ipIdx++;
     }
     const ipsJson = JSON.stringify(gatheredIps);
 
@@ -932,12 +980,12 @@ export default function ClientDataView() {
     const autoTotalPaid = p1 + p2 + p3 + p4 + p5 + p6;
     const pkg = parseSafeAmount(data['PACKAGE (RM)']);
     const autoPending = Math.max(0, pkg - autoTotalPaid);
-    
+
     const getPaymentValue = (val: any) => {
       if (val === undefined || val === null || String(val).trim() === '') return null;
       return parseSafeAmount(val);
     };
- 
+
     const clientPayload = {
       No: data.No ? parseInt(data.No as string, 10) : null,
       NAME: sanitizeInput((data.NAME as string) || '', 100),
@@ -1137,32 +1185,32 @@ export default function ClientDataView() {
                   />
                   <div className="space-y-4">
                     <div className="flex flex-col gap-3">
-                       {(() => {
-                          let parsedReports = [];
-                          if (viewingClient.police_report_no && String(viewingClient.police_report_no).trim().startsWith('[')) {
-                             try { parsedReports = JSON.parse(viewingClient.police_report_no); } catch(e){}
-                          } else if (viewingClient.police_report_no || viewingClient.police_report_date) {
-                             parsedReports = [{ date: viewingClient.police_report_date || '', no: viewingClient.police_report_no || '' }];
-                          }
-                          
-                          if (parsedReports.length === 0) {
-                             return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
-                          }
+                      {(() => {
+                        let parsedReports = [];
+                        if (viewingClient.police_report_no && String(viewingClient.police_report_no).trim().startsWith('[')) {
+                          try { parsedReports = JSON.parse(viewingClient.police_report_no); } catch (e) { }
+                        } else if (viewingClient.police_report_no || viewingClient.police_report_date) {
+                          parsedReports = [{ date: viewingClient.police_report_date || '', no: viewingClient.police_report_no || '' }];
+                        }
 
-                          return parsedReports.map((rp: any, idx: number) => (
-                            <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                               {parsedReports.length > 1 && (
-                                 <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
-                                   Report #{idx + 1}
-                                 </div>
-                               )}
-                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                                 <ViewField label={t('clients', 'reportDate', lang)} value={rp.date} lang={lang} />
-                                 <ViewField label={t('clients', 'reportNo', lang)} value={rp.no} lang={lang} />
-                               </div>
+                        if (parsedReports.length === 0) {
+                          return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
+                        }
+
+                        return parsedReports.map((rp: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                            {parsedReports.length > 1 && (
+                              <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
+                                Report #{idx + 1}
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                              <ViewField label={t('clients', 'reportDate', lang)} value={rp.date} lang={lang} />
+                              <ViewField label={t('clients', 'reportNo', lang)} value={rp.no} lang={lang} />
                             </div>
-                          ));
-                       })()}
+                          </div>
+                        ));
+                      })()}
                     </div>
                     {/* Lokasi Laporan */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-gray-800">
@@ -1184,39 +1232,39 @@ export default function ClientDataView() {
                     title={t('clients', 'investigationPaper', lang)}
                   />
                   <div className="flex flex-col gap-3">
-                     {(() => {
-                        let parsedIps = [];
-                        if (viewingClient.ip_no && String(viewingClient.ip_no).trim().startsWith('[')) {
-                           try { parsedIps = JSON.parse(viewingClient.ip_no); } catch(e){}
-                        } else if (viewingClient.ip_no || viewingClient.ip_date || viewingClient.ip_pem1 || viewingClient.ip_officer) {
-                           parsedIps = [{ 
-                             date: viewingClient.ip_date || '', 
-                             no: viewingClient.ip_no || '',
-                             pem: viewingClient.ip_pem1 || '',
-                             officer: viewingClient.ip_officer || ''
-                           }];
-                        }
-                        
-                        if (parsedIps.length === 0) {
-                           return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
-                        }
+                    {(() => {
+                      let parsedIps = [];
+                      if (viewingClient.ip_no && String(viewingClient.ip_no).trim().startsWith('[')) {
+                        try { parsedIps = JSON.parse(viewingClient.ip_no); } catch (e) { }
+                      } else if (viewingClient.ip_no || viewingClient.ip_date || viewingClient.ip_pem1 || viewingClient.ip_officer) {
+                        parsedIps = [{
+                          date: viewingClient.ip_date || '',
+                          no: viewingClient.ip_no || '',
+                          pem: viewingClient.ip_pem1 || '',
+                          officer: viewingClient.ip_officer || ''
+                        }];
+                      }
 
-                        return parsedIps.map((ip: any, idx: number) => (
-                          <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                             {parsedIps.length > 1 && (
-                               <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
-                                 IP #{idx + 1}
-                               </div>
-                             )}
-                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                               <ViewField label={t('clients', 'ipDate', lang)} value={ip.date} lang={lang} />
-                               <ViewField label={t('clients', 'ipNo', lang)} value={ip.no} lang={lang} />
-                               <ViewField label={t('clients', 'ipPem1', lang)} value={ip.pem} lang={lang} />
-                               <ViewField label={t('clients', 'ipOfficer', lang)} value={ip.officer} lang={lang} />
-                             </div>
+                      if (parsedIps.length === 0) {
+                        return <div className="text-sm font-semibold text-slate-400 dark:text-zinc-650 italic">{lang === 'bm' ? 'Tiada Maklumat' : 'Not Provided'}</div>;
+                      }
+
+                      return parsedIps.map((ip: any, idx: number) => (
+                        <div key={idx} className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                          {parsedIps.length > 1 && (
+                            <div className="absolute top-0 right-0 bg-slate-100 dark:bg-gray-800 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-zinc-400 rounded-bl-xl border-b border-l border-slate-200 dark:border-gray-700">
+                              IP #{idx + 1}
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                            <ViewField label={t('clients', 'ipDate', lang)} value={ip.date} lang={lang} />
+                            <ViewField label={t('clients', 'ipNo', lang)} value={ip.no} lang={lang} />
+                            <ViewField label={t('clients', 'ipPem1', lang)} value={ip.pem} lang={lang} />
+                            <ViewField label={t('clients', 'ipOfficer', lang)} value={ip.officer} lang={lang} />
                           </div>
-                        ));
-                     })()}
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
 
@@ -1583,8 +1631,8 @@ export default function ClientDataView() {
                   {/* 2. Laporan Polis */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => {
                         const lastIdx = policeReportsList.length - 1;
                         if (lastIdx >= 0) {
@@ -1595,35 +1643,35 @@ export default function ClientDataView() {
                             return;
                           }
                         }
-                        setPoliceReportsList([...policeReportsList, {date:'', no:''}]);
-                      }} 
+                        setPoliceReportsList([...policeReportsList, { date: '', no: '' }]);
+                      }}
                       className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
                     >
-                       + ADD
+                      + ADD
                     </button>
                   </div>
-                  
+
                   {policeReportsList.map((rp, idx) => (
                     <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
-                         {policeReportsList.length > 1 && (
-                           <button 
-                             type="button" 
-                             onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))} 
-                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm"
-                           >
-                             ×
-                           </button>
-                         )}
-                       <DateInput
-                         name={`report_date_${idx}`}
-                         label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
-                         defaultValue={rp.date}
-                         lang={lang}
-                       />
-                       <div className="space-y-1">
-                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'reportNo', lang)}</label>
-                         <input type="text" name={`report_no_${idx}`} defaultValue={rp.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                       </div>
+                      {policeReportsList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm"
+                        >
+                          ×
+                        </button>
+                      )}
+                      <DateInput
+                        name={`report_date_${idx}`}
+                        label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
+                        defaultValue={rp.date}
+                        lang={lang}
+                      />
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'reportNo', lang)}</label>
+                        <input type="text" name={`report_no_${idx}`} defaultValue={rp.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      </div>
                     </div>
                   ))}
 
@@ -1809,8 +1857,8 @@ export default function ClientDataView() {
                   {/* 3. Kertas Siasatan (IP) */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => {
                         const lastIdx = ipList.length - 1;
                         if (lastIdx >= 0) {
@@ -1821,49 +1869,49 @@ export default function ClientDataView() {
                             return;
                           }
                         }
-                        setIpList([...ipList, {date:'', no:'', pem:'', officer:''}]);
-                      }} 
+                        setIpList([...ipList, { date: '', no: '', pem: '', officer: '' }]);
+                      }}
                       className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
                     >
-                       + ADD
+                      + ADD
                     </button>
                   </div>
-                  
+
                   {ipList.map((ip, idx) => (
                     <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
-                         {ipList.length > 1 && (
-                           <button 
-                             type="button" 
-                             onClick={() => setIpList(ipList.filter((_, i) => i !== idx))} 
-                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm z-10"
-                           >
-                             ×
-                           </button>
-                         )}
-                       <DateInput
-                         name={`ip_date_${idx}`}
-                         label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
-                         defaultValue={ip.date}
-                         lang={lang}
-                       />
-                       <div className="space-y-1">
-                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipNo', lang)}</label>
-                         <input type="text" name={`ip_no_${idx}`} defaultValue={ip.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                       </div>
-                       <div className="space-y-1">
-                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipPem1', lang)}</label>
-                         <select name={`ip_pem_${idx}`} defaultValue={ip.pem} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]">
-                           <option value="">{lang === 'bm' ? 'Pilih PEM' : 'Select PEM'}</option>
-                           <option value="PEM 1">PEM 1</option>
-                           <option value="PEM 2">PEM 2</option>
-                           <option value="PEM 3">PEM 3</option>
-                           <option value="PEM 4">PEM 4</option>
-                         </select>
-                       </div>
-                       <div className="space-y-1">
-                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipOfficer', lang)}</label>
-                         <input type="text" name={`ip_officer_${idx}`} defaultValue={ip.officer} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                       </div>
+                      {ipList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setIpList(ipList.filter((_, i) => i !== idx))}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm z-10"
+                        >
+                          ×
+                        </button>
+                      )}
+                      <DateInput
+                        name={`ip_date_${idx}`}
+                        label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
+                        defaultValue={ip.date}
+                        lang={lang}
+                      />
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipNo', lang)}</label>
+                        <input type="text" name={`ip_no_${idx}`} defaultValue={ip.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipPem1', lang)}</label>
+                        <select name={`ip_pem_${idx}`} defaultValue={ip.pem} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]">
+                          <option value="">{lang === 'bm' ? 'Pilih PEM' : 'Select PEM'}</option>
+                          <option value="PEM 1">PEM 1</option>
+                          <option value="PEM 2">PEM 2</option>
+                          <option value="PEM 3">PEM 3</option>
+                          <option value="PEM 4">PEM 4</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipOfficer', lang)}</label>
+                        <input type="text" name={`ip_officer_${idx}`} defaultValue={ip.officer} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      </div>
                     </div>
                   ))}
 
@@ -1916,30 +1964,30 @@ export default function ClientDataView() {
                   </div>
                   {paymentList.map((pay, idx) => (
                     <div key={`pay-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            const newList = [...paymentList];
-                            newList.splice(idx, 1);
-                            setPaymentList(newList);
-                            setTimeout(handleFinancialChange, 100);
-                          }}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors"
-                        >
-                           ×
-                        </button>
-                        <div className="space-y-1">
-                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                            {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
-                          </label>
-                          <input type="number" name={`payment_amt_${idx}`} step="0.01" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                        </div>
-                        <DateInput
-                          name={`payment_date_${idx}`}
-                          label={lang === 'bm' ? `Tarikh Bayaran ${idx + 1} (DD/MM/YYYY)` : `Payment Date ${idx + 1} (DD/MM/YYYY)`}
-                          defaultValue={pay.date}
-                          lang={lang}
-                        />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newList = [...paymentList];
+                          newList.splice(idx, 1);
+                          setPaymentList(newList);
+                          setTimeout(handleFinancialChange, 100);
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors"
+                      >
+                        ×
+                      </button>
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
+                        </label>
+                        <input type="number" name={`payment_amt_${idx}`} step="0.01" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      </div>
+                      <DateInput
+                        name={`payment_date_${idx}`}
+                        label={lang === 'bm' ? `Tarikh Bayaran ${idx + 1} (DD/MM/YYYY)` : `Payment Date ${idx + 1} (DD/MM/YYYY)`}
+                        defaultValue={pay.date}
+                        lang={lang}
+                      />
                     </div>
                   ))}
                   {/* 6. Case & Resolution Details */}
@@ -1963,29 +2011,90 @@ export default function ClientDataView() {
                     </div>
                   </div>
 
-                  {(() => {
-                    const currentVal = editingClient?.["CASE CATEGORY"] || '';
-                    const options = ["Ah Long", "Kredit Komuniti", "Bank"];
-                    const showCustomOption = currentVal && !options.includes(currentVal);
-                    return (
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'caseCategoryLabel', lang)}</label>
-                        <div className="relative">
-                          <select name="CASE CATEGORY" defaultValue={currentVal || 'Ah Long'} className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
-                            <option value="Ah Long">Ah Long</option>
-                            <option value="Kredit Komuniti">Kredit Komuniti</option>
-                            <option value="Bank">Bank</option>
-                            {showCustomOption && <option value={currentVal}>{currentVal}</option>}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {t('clients', 'caseCategoryLabel', lang)}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isCustomCaseCategory) {
+                            setIsCustomCaseCategory(false);
+                          } else {
+                            setIsCustomCaseCategory(true);
+                            setCustomCaseCategoryVal('');
+                          }
+                        }}
+                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer font-bold"
+                      >
+                        {isCustomCaseCategory
+                          ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown')
+                          : (lang === 'bm' ? '✏️ + Tambah Kategori Manual' : '✏️ + Add Custom Category')}
+                      </button>
+                    </div>
+
+                    {isCustomCaseCategory ? (
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          name="CASE CATEGORY"
+                          value={customCaseCategoryVal}
+                          onChange={(e) => setCustomCaseCategoryVal(e.target.value)}
+                          onBlur={() => {
+                            if (customCaseCategoryVal.trim()) {
+                              registerNewCategory(customCaseCategoryVal);
+                            }
+                          }}
+                          placeholder={lang === 'bm' ? 'Masukkan Kategori Kes Baru (cth: Scam Victim / E-Wallet)' : 'Enter New Case Category (e.g. Scam Victim / E-Wallet)'}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (customCaseCategoryVal.trim()) {
+                              registerNewCategory(customCaseCategoryVal);
+                              setSelectedCaseCategory(customCaseCategoryVal.trim());
+                              setIsCustomCaseCategory(false);
+                            }
+                          }}
+                          className="px-3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-bold text-xs rounded-xl flex-shrink-0 transition-colors cursor-pointer min-h-[48px]"
+                          title={lang === 'bm' ? 'Daftar Kategori' : 'Register Category'}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <select
+                          name="CASE CATEGORY"
+                          value={selectedCaseCategory}
+                          onChange={(e) => {
+                            if (e.target.value === '__ADD_CUSTOM__') {
+                              setIsCustomCaseCategory(true);
+                              setCustomCaseCategoryVal('');
+                            } else {
+                              setSelectedCaseCategory(e.target.value);
+                            }
+                          }}
+                          className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none"
+                        >
+                          {registeredCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                          <option value="__ADD_CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                            {lang === 'bm' ? '+ Add' : '+ Add'}
+                          </option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
                         </div>
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
 
                   <div className="sm:col-span-2 space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'remarkCatatan', lang)}</label>

@@ -12,8 +12,8 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
-  const [filterMode, setFilterMode] = useState<'date' | 'month'>('date');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('all');
+  const [filterMode, setFilterMode] = useState<'date' | 'month'>(personalOnly ? 'month' : 'date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [uniqueEmployees, setUniqueEmployees] = useState<any[]>([]);
   const [publicHolidays, setPublicHolidays] = useState<any[]>([]);
@@ -105,9 +105,10 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         const listToSearch = overrideEmployees || uniqueEmployees;
         const enrichedRecords = records.map((r: any) => {
           const employee = listToSearch.find((e: any) => e.id === r.user_id) || profile;
+          const nameStr = String(employee?.full_name || employee?.name || 'Unknown');
           return {
             ...r,
-            user_name: employee ? (employee.full_name || employee.name) : 'Unknown'
+            user_name: nameStr
           };
         });
 
@@ -139,10 +140,11 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                   
                   if (!existingRecord) {
                     const employee = listToSearch.find((e: any) => e.id === leave.profile_id) || profile;
+                    const empName = String(employee?.full_name || employee?.name || 'Unknown');
                     enrichedRecords.push({
                       id: `leave-${leave.id}-${dateStr}`,
                       user_id: leave.profile_id,
-                      user_name: employee ? (employee.full_name || employee.name) : 'Unknown',
+                      user_name: empName,
                       date: dateStr,
                       clock_in_time: null,
                       clock_out_time: null,
@@ -159,8 +161,12 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
         // Re-sort the enriched records by date descending, then name
         enrichedRecords.sort((a, b) => {
-          if (a.date !== b.date) return b.date.localeCompare(a.date);
-          return a.user_name.localeCompare(b.user_name);
+          const dateA = String(a.date || '');
+          const dateB = String(b.date || '');
+          if (dateA !== dateB) return dateB.localeCompare(dateA);
+          const nameA = String(a.user_name || 'Unknown');
+          const nameB = String(b.user_name || 'Unknown');
+          return nameA.localeCompare(nameB);
         });
 
         setAttendanceRecords(enrichedRecords);
@@ -183,7 +189,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`id, department, full_name, roles ( role_name )`)
+        .select(`id, department, full_name, salary, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
@@ -198,7 +204,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
             roleName = rolesVar?.role_name || 'No Role';
           }
         }
-        userProfile = { id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName };
+        userProfile = { id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName, salary: profileData.salary };
         setProfile(userProfile);
       }
 
@@ -206,7 +212,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
       let allEmployees: any[] = [];
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, salary')
         .order('full_name', { ascending: true });
       if (profilesData) {
         setUniqueEmployees(profilesData);
@@ -228,9 +234,15 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         console.warn('Could not fetch public holidays', err);
       }
 
-      if (personalOnly && profileData) {
-        setSelectedEmployeeId(profileData.id);
-        await fetchAttendanceRecords(selectedDate, selectedMonth, filterMode, profileData.id, allEmployees.length > 0 ? allEmployees : [profileData]);
+      const activeUserId = profileData?.id || session.user.id;
+      const initialMode = personalOnly ? 'month' : filterMode;
+
+      if (personalOnly) {
+        setSelectedEmployeeId(activeUserId);
+        await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, activeUserId, allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
+      } else {
+        setSelectedEmployeeId('all');
+        await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, 'all', allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
       }
 
       setLoading(false);
@@ -267,12 +279,53 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const [exportIncludeSocso, setExportIncludeSocso] = useState<boolean>(false);
   const [exportProjectRemainingDays, setExportProjectRemainingDays] = useState<boolean>(true);
 
+  const [empSalaryMap, setEmpSalaryMap] = useState<Record<string, {
+    monthlySalary: number;
+    salaryAdvance: number;
+    irbPcb: number;
+    includeEpf: boolean;
+    includeSocso: boolean;
+    projectRemainingDays: boolean;
+    isFromReportTab: boolean;
+  }>>({});
+
   const exportToExcel = () => {
     if (filteredRecords.length === 0) {
       alert(t('attendance', 'noRecordsToExport', lang));
       return;
     }
+
+    const empNames = Array.from(new Set(filteredRecords.map(r => r.user_name || 'Unknown'))).filter(Boolean);
+    const initialMap: Record<string, any> = {};
+
+    empNames.forEach(empName => {
+      const empProfile = uniqueEmployees.find(e => (e.full_name || e.name) === empName) || (profile?.name === empName ? profile : null);
+      const dbSalary = empProfile?.salary ? parseFloat(empProfile.salary) : 0;
+      const isFromTab = isFinite(dbSalary) && dbSalary > 0;
+
+      initialMap[empName] = {
+        monthlySalary: isFromTab ? dbSalary : 3000,
+        salaryAdvance: 0,
+        irbPcb: 0,
+        includeEpf: false,
+        includeSocso: false,
+        projectRemainingDays: true,
+        isFromReportTab: isFromTab
+      };
+    });
+
+    setEmpSalaryMap(initialMap);
     setIsExportModalOpen(true);
+  };
+
+  const handleEmpSalaryChange = (empName: string, field: string, value: any) => {
+    setEmpSalaryMap(prev => ({
+      ...prev,
+      [empName]: {
+        ...prev[empName],
+        [field]: value
+      }
+    }));
   };
 
   const handleConfirmExport = () => {
@@ -282,7 +335,8 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
       irbPcb: exportIrbPcb,
       includeEpf: exportIncludeEpf,
       includeSocso: exportIncludeSocso,
-      projectRemainingDays: exportProjectRemainingDays
+      projectRemainingDays: exportProjectRemainingDays,
+      customSalariesByEmployee: empSalaryMap
     });
     setIsExportModalOpen(false);
   };
@@ -445,106 +499,146 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                         </td>
                       </tr>
                     ) : (
-                      filteredRecords.map((record, idx) => (
-                        <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
-                          <td className="px-5 py-4">
-                            {personalOnly ? (
-                              <p className="font-semibold text-slate-900 dark:text-white">
-                                {record.date ? new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric'
-                                }) : '-'}
-                              </p>
+                      filteredRecords.map((record, idx) => {
+                        const formatDateSafe = (dateStr: any, locale: string) => {
+                          if (!dateStr) return '-';
+                          try {
+                            const s = String(dateStr).trim();
+                            const parts = s.split('-');
+                            if (parts.length === 3) {
+                              const year = parseInt(parts[0], 10);
+                              const month = parseInt(parts[1], 10) - 1;
+                              const day = parseInt(parts[2], 10);
+                              const d = new Date(year, month, day);
+                              if (!isNaN(d.getTime())) {
+                                return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+                              }
+                            }
+                            const d = new Date(s);
+                            if (!isNaN(d.getTime())) {
+                              return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+                            }
+                          } catch (e) {}
+                          return String(dateStr);
+                        };
+
+                        const formatTimeSafe = (timeStr: any) => {
+                          if (!timeStr) return '-';
+                          try {
+                            const s = String(timeStr).trim();
+                            if (s.includes(':') && !s.includes('T')) {
+                              const parts = s.split(':');
+                              if (parts.length >= 2) {
+                                const hh = parseInt(parts[0], 10);
+                                const mm = parts[1];
+                                if (!isNaN(hh)) {
+                                  const ampm = hh >= 12 ? 'PM' : 'AM';
+                                  const displayHh = hh % 12 || 12;
+                                  return `${String(displayHh).padStart(2, '0')}:${mm} ${ampm}`;
+                                }
+                              }
+                            }
+                            const d = new Date(s);
+                            if (!isNaN(d.getTime())) {
+                              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            }
+                          } catch (e) {}
+                          return String(timeStr);
+                        };
+
+                        return (
+                          <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
+                            <td className="px-5 py-4">
+                              {personalOnly ? (
+                                <p className="font-semibold text-slate-900 dark:text-white">
+                                  {formatDateSafe(record.date, lang === 'bm' ? 'ms-MY' : 'en-US')}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="font-semibold text-slate-900 dark:text-white">
+                                    {record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name}
+                                  </p>
+                                  {filterMode === 'month' && record.date && (
+                                    <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
+                                      {formatDateSafe(record.date, lang === 'bm' ? 'ms-MY' : 'en-US')}
+                                    </p>
+                                  )}
+                                </>
+                              )}
+                            </td>
+                            {record.is_leave ? (
+                              <td colSpan={4} className="px-5 py-4 text-center">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 font-semibold text-sm">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
+                                  </svg>
+                                  On Leave {record.leave_type ? `(${record.leave_type})` : ''}
+                                </span>
+                              </td>
                             ) : (
                               <>
-                                <p className="font-semibold text-slate-900 dark:text-white">
-                                  {record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name}
-                                </p>
-                                {filterMode === 'month' && record.date && (
-                                  <p className="text-base text-slate-600 dark:text-zinc-300 mt-1 font-medium">
-                                    {new Date(record.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric'
-                                    })}
-                                  </p>
-                                )}
+                                <td className="px-5 py-4">
+                                  {record.clock_in_time ? (
+                                    <div>
+                                      <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
+                                        {formatTimeSafe(record.clock_in_time)}
+                                      </p>
+                                      <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                        {record.clock_in_distance}{t('attendance', 'away', lang)}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-400 font-medium">-</span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-4 text-center">
+                                  {record.clock_in_time && (
+                                    <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                                      record.clock_in_within_zone
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                        : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                    }`}>
+                                      {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-4">
+                                  {record.clock_out_time ? (
+                                    <div>
+                                      <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
+                                        {formatTimeSafe(record.clock_out_time)}
+                                      </p>
+                                      <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
+                                        {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
+                                      </p>
+                                      {record.is_late_clockout && (
+                                        <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50">
+                                          {t('attendanceAdmin', 'flaggedLate', lang)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                      {t('attendanceAdmin', 'pending', lang)}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-5 py-4 text-center">
+                                  {record.clock_out_time && (
+                                    <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                                      record.clock_out_within_zone
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                        : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                    }`}>
+                                      {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                    </span>
+                                  )}
+                                </td>
                               </>
                             )}
-                          </td>
-                          {record.is_leave ? (
-                            <td colSpan={4} className="px-5 py-4 text-center">
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 font-semibold text-sm">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
-                                </svg>
-                                On Leave {record.leave_type ? `(${record.leave_type})` : ''}
-                              </span>
-                            </td>
-                          ) : (
-                            <>
-                              <td className="px-5 py-4">
-                                {record.clock_in_time ? (
-                                  <div>
-                                    <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
-                                      {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                    <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                      {record.clock_in_distance}{t('attendance', 'away', lang)}
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <span className="text-slate-400 font-medium">-</span>
-                                )}
-                              </td>
-                              <td className="px-5 py-4 text-center">
-                                {record.clock_in_time && (
-                                  <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                    record.clock_in_within_zone
-                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
-                                  }`}>
-                                    {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-4">
-                                {record.clock_out_time ? (
-                                  <div>
-                                    <p className="font-semibold text-slate-800 dark:text-zinc-200 text-sm">
-                                      {new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                    <p className="text-[11px] text-slate-450 dark:text-zinc-400 mt-0.5">
-                                      {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
-                                    </p>
-                                    {record.is_late_clockout && (
-                                      <span className="mt-1 inline-flex items-center text-[10px] font-semibold uppercase px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-800 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50">
-                                        {t('attendanceAdmin', 'flaggedLate', lang)}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-md border border-amber-100 dark:border-amber-900/30">
-                                    {t('attendanceAdmin', 'pending', lang)}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-5 py-4 text-center">
-                                {record.clock_out_time && (
-                                  <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${
-                                    record.clock_out_within_zone
-                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
-                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
-                                  }`}>
-                                    {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
-                                  </span>
-                                )}
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -646,14 +740,21 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           }
         }
 
+        const empSalaries = Object.values(empSalaryMap);
+        const previewMonthlySalary = empSalaries.length > 0 ? (empSalaries[0].monthlySalary || 2400) : (exportMonthlySalary || 2400);
+        const previewSalaryAdvance = empSalaries.length > 0 ? empSalaries.reduce((sum, e) => sum + (e.salaryAdvance || 0), 0) : exportSalaryAdvance;
+        const previewIrbPcb = empSalaries.length > 0 ? empSalaries.reduce((sum, e) => sum + (e.irbPcb || 0), 0) : exportIrbPcb;
+        const previewIncludeEpf = empSalaries.length > 0 ? empSalaries.some(e => e.includeEpf) : exportIncludeEpf;
+        const previewIncludeSocso = empSalaries.length > 0 ? empSalaries.some(e => e.includeSocso) : exportIncludeSocso;
+
         const prevTotalUnpaid = prevUnpaid + prevAwol;
         const prevEligibleSalary = prevTotalUnpaid === 0
-          ? exportMonthlySalary
-          : Math.max(0, exportMonthlySalary - (exportMonthlySalary / previewDaysInMonth) * prevTotalUnpaid);
-        const prevEpf = exportIncludeEpf ? Math.round(prevEligibleSalary * 0.11 * 100) / 100 : 0;
-        const prevSocso = exportIncludeSocso ? Math.min(19.75, Math.round(prevEligibleSalary * 0.005 * 100) / 100) : 0;
-        const prevEis = exportIncludeSocso ? Math.min(7.90, Math.round(prevEligibleSalary * 0.002 * 100) / 100) : 0;
-        const prevTotalDeductions = prevEpf + prevSocso + prevEis + exportIrbPcb + exportSalaryAdvance;
+          ? previewMonthlySalary
+          : Math.max(0, previewMonthlySalary - (previewMonthlySalary / previewDaysInMonth) * prevTotalUnpaid);
+        const prevEpf = previewIncludeEpf ? Math.round(prevEligibleSalary * 0.11 * 100) / 100 : 0;
+        const prevSocso = previewIncludeSocso ? Math.min(19.75, Math.round(prevEligibleSalary * 0.005 * 100) / 100) : 0;
+        const prevEis = previewIncludeSocso ? Math.min(7.90, Math.round(prevEligibleSalary * 0.002 * 100) / 100) : 0;
+        const prevTotalDeductions = prevEpf + prevSocso + prevEis + previewIrbPcb + previewSalaryAdvance;
         const prevSalaryInHand = Math.max(0, prevEligibleSalary - prevTotalDeductions);
 
         const formatDaysDisplay = (num: number) => Number.isInteger(num) ? String(Math.round(num)) : String(Number(num.toFixed(1)));
@@ -682,77 +783,111 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </button>
               </div>
 
-              {/* Editable Parameters */}
-              <div className="space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
-                      {t('attendanceAdmin', 'monthlySalary', lang)} (RM)
-                    </label>
-                    <input
-                      type="number"
-                      value={exportMonthlySalary}
-                      onChange={(e) => setExportMonthlySalary(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
-                      {t('attendanceAdmin', 'irbPcb', lang)} (RM)
-                    </label>
-                    <input
-                      type="number"
-                      value={exportIrbPcb}
-                      onChange={(e) => setExportIrbPcb(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
-                      {t('attendanceAdmin', 'salaryAdvance', lang)} (RM)
-                    </label>
-                    <input
-                      type="number"
-                      value={exportSalaryAdvance}
-                      onChange={(e) => setExportSalaryAdvance(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
+              {/* Global Projection Option */}
+              <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-indigo-900 dark:text-indigo-300 select-none">
+                  <input
+                    type="checkbox"
+                    checked={exportProjectRemainingDays}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setExportProjectRemainingDays(val);
+                      setEmpSalaryMap(prev => {
+                        const updated: Record<string, any> = {};
+                        Object.keys(prev).forEach(k => {
+                          updated[k] = { ...prev[k], projectRemainingDays: val };
+                        });
+                        return updated;
+                      });
+                    }}
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                  />
+                  <span>🗓️ {t('attendanceAdmin', 'projectRemainingDaysLabel', lang)}</span>
+                </label>
+              </div>
+
+              {/* Employee Salaries & Payroll Configuration (Aligned to Staff Report) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
+                    {lang === 'bm' ? 'Konfigurasi Gaji Pekerja (Diselaraskan dari Laporan Staf)' : 'Employee Salary Configuration (Aligned from Staff Report)'}
+                  </h4>
                 </div>
 
-                {/* EPF, SOCSO & Full Month Projection Toggles */}
-                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs font-semibold">
-                  <label className="flex items-center gap-2 cursor-pointer text-indigo-700 dark:text-indigo-400 select-none bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
-                    <input
-                      type="checkbox"
-                      checked={exportProjectRemainingDays}
-                      onChange={(e) => setExportProjectRemainingDays(e.target.checked)}
-                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
-                    />
-                    <span>🗓️ {t('attendanceAdmin', 'projectRemainingDaysLabel', lang)}</span>
-                  </label>
+                <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
+                  {Object.entries(empSalaryMap).map(([empName, opts]) => (
+                    <div key={empName} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">{empName}</span>
+                        {opts.isFromReportTab ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                            ✓ {lang === 'bm' ? 'Selaras Laporan Staf' : 'Aligned to Staff Report'} (RM {opts.monthlySalary.toFixed(2)})
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
+                            ✏️ {lang === 'bm' ? 'Input Manual (Gaji Staf Belum Set)' : 'Manual Input (Report Salary Not Set)'}
+                          </span>
+                        )}
+                      </div>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-1">
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-slate-800 dark:text-zinc-200 select-none">
-                      <input
-                        type="checkbox"
-                        checked={exportIncludeEpf}
-                        onChange={(e) => setExportIncludeEpf(e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
-                      />
-                      <span>{t('attendanceAdmin', 'includeEpfLabel', lang)}</span>
-                    </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+                            {t('attendanceAdmin', 'monthlySalary', lang)} (RM)
+                          </label>
+                          <input
+                            type="number"
+                            value={opts.monthlySalary}
+                            onChange={(e) => handleEmpSalaryChange(empName, 'monthlySalary', Number(e.target.value) || 0)}
+                            className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+                            {t('attendanceAdmin', 'salaryAdvance', lang)} (RM)
+                          </label>
+                          <input
+                            type="number"
+                            value={opts.salaryAdvance}
+                            onChange={(e) => handleEmpSalaryChange(empName, 'salaryAdvance', Number(e.target.value) || 0)}
+                            className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+                            {t('attendanceAdmin', 'irbPcb', lang)} (RM)
+                          </label>
+                          <input
+                            type="number"
+                            value={opts.irbPcb}
+                            onChange={(e) => handleEmpSalaryChange(empName, 'irbPcb', Number(e.target.value) || 0)}
+                            className="w-full px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
 
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-slate-800 dark:text-zinc-200 select-none">
-                      <input
-                        type="checkbox"
-                        checked={exportIncludeSocso}
-                        onChange={(e) => setExportIncludeSocso(e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
-                      />
-                      <span>{t('attendanceAdmin', 'includeSocsoLabel', lang)}</span>
-                    </label>
-                  </div>
+                      <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold pt-1 border-t border-slate-200/60 dark:border-slate-700/40">
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-zinc-300 select-none">
+                          <input
+                            type="checkbox"
+                            checked={opts.includeEpf}
+                            onChange={(e) => handleEmpSalaryChange(empName, 'includeEpf', e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                          />
+                          <span>{t('attendanceAdmin', 'includeEpfLabel', lang)}</span>
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-zinc-300 select-none">
+                          <input
+                            type="checkbox"
+                            checked={opts.includeSocso}
+                            onChange={(e) => handleEmpSalaryChange(empName, 'includeSocso', e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                          />
+                          <span>{t('attendanceAdmin', 'includeSocsoLabel', lang)}</span>
+                        </label>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 

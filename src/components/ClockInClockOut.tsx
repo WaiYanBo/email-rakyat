@@ -28,6 +28,108 @@ export default function ClockInClockOut() {
   const [detailFilterDay, setDetailFilterDay] = useState('');
   const [detailFilterMonth, setDetailFilterMonth] = useState('');
 
+  // Edit / Delete attendance record state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [editDate, setEditDate] = useState('');
+  const [editClockIn, setEditClockIn] = useState('');
+  const [editClockOut, setEditClockOut] = useState('');
+  const [editInZone, setEditInZone] = useState(true);
+  const [editOutZone, setEditOutZone] = useState(true);
+  const [editLateClockout, setEditLateClockout] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  const canEditAttendance = permissions.edit_attendance || (profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin');
+
+  const handleOpenEditModal = (record: any) => {
+    setEditingRecord(record);
+    setEditDate(record.date || new Date().toISOString().split('T')[0]);
+
+    let clockInStr = '';
+    if (record.clock_in_time) {
+      try {
+        const d = new Date(record.clock_in_time);
+        if (!isNaN(d.getTime())) {
+          clockInStr = d.toTimeString().slice(0, 5);
+        }
+      } catch (e) {}
+    }
+    setEditClockIn(clockInStr);
+
+    let clockOutStr = '';
+    if (record.clock_out_time) {
+      try {
+        const d = new Date(record.clock_out_time);
+        if (!isNaN(d.getTime())) {
+          clockOutStr = d.toTimeString().slice(0, 5);
+        }
+      } catch (e) {}
+    }
+    setEditClockOut(clockOutStr);
+
+    setEditInZone(record.clock_in_within_zone ?? true);
+    setEditOutZone(record.clock_out_within_zone ?? true);
+    setEditLateClockout(record.is_late_clockout ?? false);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRecord?.id) return;
+    setIsSubmittingEdit(true);
+    try {
+      const clockInTimestamp = editClockIn ? new Date(`${editDate}T${editClockIn}:00`).toISOString() : null;
+      const clockOutTimestamp = editClockOut ? new Date(`${editDate}T${editClockOut}:00`).toISOString() : null;
+
+      const { error } = await supabase
+        .from('attendance')
+        .update({
+          date: editDate,
+          clock_in_time: clockInTimestamp,
+          clock_out_time: clockOutTimestamp,
+          clock_in_within_zone: editInZone,
+          clock_out_within_zone: editOutZone,
+          is_late_clockout: editLateClockout
+        })
+        .eq('id', editingRecord.id);
+
+      if (error) throw error;
+
+      alert(t('attendanceAdmin', 'editSuccess', lang));
+      setIsEditModalOpen(false);
+      setEditingRecord(null);
+      await fetchTodayRecord();
+      await fetchForgotClockoutRecords(profile?.id, isPrivilegedRole);
+    } catch (err: any) {
+      console.error('Error updating attendance record:', err);
+      alert(err.message || t('attendanceAdmin', 'editFailed', lang));
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  const handleDeleteAttendance = async (record: any) => {
+    if (!record?.id || record.is_leave) return;
+    const confirmMsg = `${t('attendanceAdmin', 'confirmDelete', lang)}\n\n${record.user_name} (${record.date})`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      alert(t('attendanceAdmin', 'deleteSuccess', lang));
+      await fetchTodayRecord();
+      await fetchForgotClockoutRecords(profile?.id, isPrivilegedRole);
+    } catch (err: any) {
+      console.error('Error deleting attendance record:', err);
+      alert(err.message || t('attendanceAdmin', 'deleteFailed', lang));
+    }
+  };
+
   // Office coordinates
   const OFFICE_LAT = 3.0750624396122763;
   const OFFICE_LNG = 101.61250689446412;
@@ -1161,12 +1263,15 @@ export default function ClockInClockOut() {
                               <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">{t('attendanceAdmin', 'colCheckOut', lang)}</th>
                               <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">{t('attendance', 'hours', lang)}</th>
                               <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">{t('attendance', 'flag', lang)}</th>
+                              {canEditAttendance && (
+                                <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">{t('reports', 'colActions', lang) || 'Actions'}</th>
+                              )}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-150 dark:divide-gray-800 text-slate-700 dark:text-zinc-300">
                             {filteredAllRecords.length === 0 ? (
                                <tr>
-                                 <td colSpan={6} className="px-4 py-6 text-center text-slate-500 font-medium italic">
+                                 <td colSpan={canEditAttendance ? 7 : 6} className="px-4 py-6 text-center text-slate-500 font-medium italic">
                                    {t('attendance', 'noAttendanceRecords', lang)}
                                  </td>
                                </tr>
@@ -1196,7 +1301,7 @@ export default function ClockInClockOut() {
                                       >
                                         <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">{record.user_name}</td>
                                         <td className="px-4 py-3.5 font-mono">{record.date}</td>
-                                        <td colSpan={4} className="px-4 py-3.5 text-center">
+                                        <td colSpan={canEditAttendance ? 5 : 4} className="px-4 py-3.5 text-center">
                                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 font-semibold text-xs">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
@@ -1245,6 +1350,32 @@ export default function ClockInClockOut() {
                                          </span>
                                        )}
                                      </td>
+                                     {canEditAttendance && (
+                                       <td className="px-4 py-3.5 text-center">
+                                         <div className="flex items-center justify-center gap-1.5">
+                                           <button
+                                             type="button"
+                                             onClick={() => handleOpenEditModal(record)}
+                                             className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/20 dark:text-yellow-500 rounded transition-colors"
+                                             title={t('attendanceAdmin', 'editRecord', lang)}
+                                           >
+                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                             </svg>
+                                           </button>
+                                           <button
+                                             type="button"
+                                             onClick={() => handleDeleteAttendance(record)}
+                                             className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:text-rose-400 rounded transition-colors"
+                                             title={t('attendanceAdmin', 'deleteRecord', lang)}
+                                           >
+                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                             </svg>
+                                           </button>
+                                         </div>
+                                       </td>
+                                     )}
                                    </tr>
                                  );
                                })
@@ -1333,6 +1464,122 @@ export default function ClockInClockOut() {
                         ) : (
                           <span>{t('attendance', 'submit', lang)}</span>
                         )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Attendance Record Modal */}
+            {isEditModalOpen && editingRecord && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+                <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                  <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900">
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
+                      {t('attendanceAdmin', 'editTitle', lang)}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                      {editingRecord.user_name}
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSaveEdit} className="p-6 space-y-4 bg-white dark:bg-black">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        {t('attendance', 'date', lang)}
+                      </label>
+                      <input
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                          {t('attendanceAdmin', 'colCheckIn', lang)}
+                        </label>
+                        <input
+                          type="time"
+                          value={editClockIn}
+                          onChange={(e) => setEditClockIn(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                          {t('attendanceAdmin', 'colCheckOut', lang)}
+                        </label>
+                        <input
+                          type="time"
+                          value={editClockOut}
+                          onChange={(e) => setEditClockOut(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-gray-800">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editInZone}
+                          onChange={(e) => setEditInZone(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                          {t('attendanceAdmin', 'inZone', lang)} (Clock In)
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editOutZone}
+                          onChange={(e) => setEditOutZone(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                          {t('attendanceAdmin', 'inZone', lang)} (Clock Out)
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editLateClockout}
+                          onChange={(e) => setEditLateClockout(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                          {t('attendanceAdmin', 'flaggedLate', lang)}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditModalOpen(false);
+                          setEditingRecord(null);
+                        }}
+                        disabled={isSubmittingEdit}
+                        className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 text-xs font-semibold rounded-xl transition-all"
+                      >
+                        {t('common', 'cancel', lang)}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingEdit}
+                        className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black font-semibold text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isSubmittingEdit ? t('common', 'saving', lang) : t('common', 'save', lang)}
                       </button>
                     </div>
                   </form>

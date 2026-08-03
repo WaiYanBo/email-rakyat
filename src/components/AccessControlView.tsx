@@ -14,6 +14,7 @@ interface PermissionEntry {
     view_staff: boolean;
     edit_staff: boolean;
     view_attendance: boolean;
+    edit_attendance: boolean;
     view_snapshot: boolean;
     manage_access_control: boolean;
     manage_drive: boolean;
@@ -79,7 +80,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'department',
           target_id: dept,
           permissions: {
-            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false, manage_hr: false, view_claims: true, view_leave: true
+            view_clients: false, edit_clients: false, view_staff: false, edit_staff: false, view_attendance: false, edit_attendance: false, view_snapshot: false, manage_access_control: false, manage_drive: false, manage_hr: false, view_claims: true, view_leave: true
           }
         };
       });
@@ -89,7 +90,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           target_type: 'user',
           target_id: user.id,
           permissions: {
-            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any, manage_hr: null as any, view_claims: null as any, view_leave: null as any
+            view_clients: null as any, edit_clients: null as any, view_staff: null as any, edit_staff: null as any, view_attendance: null as any, edit_attendance: null as any, view_snapshot: null as any, manage_access_control: null as any, manage_drive: null as any, manage_hr: null as any, view_claims: null as any, view_leave: null as any
           } // null defaults to inherited department settings
         };
       });
@@ -111,7 +112,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           const deptUsers = profiles?.filter(p => p.department === deptName) || [];
           if (deptUsers.length > 0) {
             const modules: (keyof PermissionEntry['permissions'])[] = [
-              'view_claims', 'view_leave', 'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive', 'manage_hr'
+              'view_claims', 'view_leave', 'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 'view_attendance', 'edit_attendance', 'view_snapshot', 'manage_access_control', 'manage_drive', 'manage_hr'
             ];
             modules.forEach(module => {
               const allChecked = deptUsers.every(u => {
@@ -251,7 +252,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   const allFeatures: (keyof PermissionEntry['permissions'])[] = [
     'view_claims', 'view_leave', 'view_clients', 'edit_clients', 'view_staff', 'edit_staff', 
-    'view_attendance', 'view_snapshot', 'manage_drive', 'manage_hr',
+    'view_attendance', 'edit_attendance', 'view_snapshot', 'manage_drive', 'manage_hr',
     ...(isITAdmin ? ['manage_access_control' as keyof PermissionEntry['permissions']] : [])
   ];
 
@@ -264,6 +265,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       case 'view_staff': return t('accessControl', 'colViewStaff', lang);
       case 'edit_staff': return t('accessControl', 'colEditStaff', lang);
       case 'view_attendance': return t('accessControl', 'colAttendance', lang);
+      case 'edit_attendance': return t('accessControl', 'colEditAttendance', lang) || 'Edit/Delete Attendance';
       case 'view_snapshot': return t('accessControl', 'colSnapshot', lang);
       case 'manage_drive': return t('accessControl', 'colDrive', lang);
       case 'manage_hr': return t('accessControl', 'colHR', lang) || 'Human Resources';
@@ -281,6 +283,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       case 'view_staff': return t('accessControl', 'colViewStaffDesc', lang);
       case 'edit_staff': return t('accessControl', 'colEditStaffDesc', lang);
       case 'view_attendance': return t('accessControl', 'colAttendanceDesc', lang);
+      case 'edit_attendance': return t('accessControl', 'colEditAttendanceDesc', lang) || 'Edit or delete employee clock-in/out records';
       case 'view_snapshot': return t('accessControl', 'colSnapshotDesc', lang);
       case 'manage_drive': return t('accessControl', 'colDriveDesc', lang);
       case 'manage_hr': return t('accessControl', 'colHRDesc', lang) || 'Manage HR settings';

@@ -238,6 +238,14 @@ export const translations = {
     noLocationData: { en: 'No location data', bm: 'Tiada data lokasi' },
     flaggedLate: { en: 'Flagged Late', bm: 'Ditandakan Lewat' },
     unknown: { en: 'Unknown', bm: 'Tidak Dikenali' },
+    editRecord: { en: 'Edit Record', bm: 'Edit Rekod' },
+    deleteRecord: { en: 'Delete Record', bm: 'Padam Rekod' },
+    editTitle: { en: 'Edit Attendance Record', bm: 'Edit Rekod Kehadiran' },
+    confirmDelete: { en: 'Are you sure you want to delete this attendance record?', bm: 'Adakah anda pasti ingin memadam rekod kehadiran ini?' },
+    editSuccess: { en: 'Attendance record updated successfully!', bm: 'Rekod kehadiran berjaya dikemas kini!' },
+    deleteSuccess: { en: 'Attendance record deleted successfully!', bm: 'Rekod kehadiran berjaya dipadam!' },
+    editFailed: { en: 'Failed to update attendance record.', bm: 'Gagal mengemas kini rekod kehadiran.' },
+    deleteFailed: { en: 'Failed to delete attendance record.', bm: 'Gagal memadam rekod kehadiran.' },
 
     // Export & Payroll Modal
     exportModalTitle: { en: 'Export Attendance & Payroll Report', bm: 'Eksport Laporan Kehadiran & Penggajian' },
@@ -608,6 +616,8 @@ export const translations = {
     colEditStaffDesc: { en: 'Modify staff details', bm: 'Ubah butiran kakitangan' },
     colAttendance: { en: 'Attendance', bm: 'Kehadiran' },
     colAttendanceDesc: { en: 'View clock-ins', bm: 'Lihat daftar masuk' },
+    colEditAttendance: { en: 'Edit/Delete Attendance', bm: 'Edit/Padam Kehadiran' },
+    colEditAttendanceDesc: { en: 'Edit or delete employee clock-in/out records', bm: 'Edit atau padam rekod daftar masuk/keluar kakitangan' },
     colSnapshot: { en: 'Executive Snapshot', bm: 'Ringkasan Eksekutif' },
     colSnapshotDesc: { en: 'View business metrics snapshot', bm: 'Lihat ringkasan metrik perniagaan' },
     colDrive: { en: 'Drive', bm: 'Pemacu' },

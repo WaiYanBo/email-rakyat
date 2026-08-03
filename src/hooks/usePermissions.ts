@@ -7,6 +7,7 @@ export interface Permissions {
   view_staff: boolean;
   edit_staff: boolean;
   view_attendance: boolean;
+  edit_attendance: boolean;
   view_snapshot: boolean;
   manage_access_control: boolean;
   manage_drive: boolean;
@@ -21,6 +22,7 @@ const IT_ADMIN_PERMISSIONS: Permissions = {
   view_staff: true,
   edit_staff: true,
   view_attendance: true,
+  edit_attendance: true,
   view_snapshot: true,
   manage_access_control: true,
   manage_drive: true,
@@ -39,6 +41,7 @@ export function usePermissions(profile: any) {
     view_staff: true,
     edit_staff: true,
     view_attendance: true,
+    edit_attendance: false,
     view_snapshot: true,
     manage_access_control: false,
     manage_drive: true,
@@ -128,6 +131,7 @@ export function usePermissions(profile: any) {
           view_staff: true,
           edit_staff: true,
           view_attendance: true,
+          edit_attendance: false,
           view_snapshot: true,
           manage_access_control: false,
           manage_drive: true,
@@ -146,6 +150,7 @@ export function usePermissions(profile: any) {
             view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? finalPerms.view_staff,
             edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? finalPerms.edit_staff,
             view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? finalPerms.view_attendance,
+            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? finalPerms.edit_attendance,
             view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? finalPerms.view_snapshot,
             manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? finalPerms.manage_access_control,
             manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? finalPerms.manage_drive,

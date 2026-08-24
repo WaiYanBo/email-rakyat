@@ -722,7 +722,7 @@ export default function ClientDataView() {
     setCustomCaseCategoryVal('');
 
     const payments = [];
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 10; i++) {
       const prefix = i === 1 ? '1st' : i === 2 ? '2nd' : i === 3 ? '3rd' : `${i}th`;
       const amt = currentData?.[`${prefix} PAYMENT`];
       const dt = currentData?.[`${prefix} PAYMENT DATE`];
@@ -971,13 +971,10 @@ export default function ClientDataView() {
     const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
     const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
 
-    const p1 = parseSafeAmount(data['payment_amt_0']);
-    const p2 = parseSafeAmount(data['payment_amt_1']);
-    const p3 = parseSafeAmount(data['payment_amt_2']);
-    const p4 = parseSafeAmount(data['payment_amt_3']);
-    const p5 = parseSafeAmount(data['payment_amt_4']);
-    const p6 = parseSafeAmount(data['payment_amt_5']);
-    const autoTotalPaid = p1 + p2 + p3 + p4 + p5 + p6;
+    let autoTotalPaid = 0;
+    for (let i = 0; i < 10; i++) {
+      autoTotalPaid += parseSafeAmount(data[`payment_amt_${i}`]);
+    }
     const pkg = parseSafeAmount(data['PACKAGE (RM)']);
     const autoPending = Math.max(0, pkg - autoTotalPaid);
 
@@ -1013,6 +1010,14 @@ export default function ClientDataView() {
       '5th PAYMENT DATE': sanitizeInput((data['payment_date_4'] as string) || '', 20),
       '6th PAYMENT': getPaymentValue(data['payment_amt_5']),
       '6th PAYMENT DATE': sanitizeInput((data['payment_date_5'] as string) || '', 20),
+      '7th PAYMENT': getPaymentValue(data['payment_amt_6']),
+      '7th PAYMENT DATE': sanitizeInput((data['payment_date_6'] as string) || '', 20),
+      '8th PAYMENT': getPaymentValue(data['payment_amt_7']),
+      '8th PAYMENT DATE': sanitizeInput((data['payment_date_7'] as string) || '', 20),
+      '9th PAYMENT': getPaymentValue(data['payment_amt_8']),
+      '9th PAYMENT DATE': sanitizeInput((data['payment_date_8'] as string) || '', 20),
+      '10th PAYMENT': getPaymentValue(data['payment_amt_9']),
+      '10th PAYMENT DATE': sanitizeInput((data['payment_date_9'] as string) || '', 20),
       'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
       'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
       'Report': sanitizeInput((data.Report as string) || '', 500),
@@ -1039,7 +1044,7 @@ export default function ClientDataView() {
     }
 
     // Installment dependency validation
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 10; i++) {
       const amtVal = data[`payment_amt_${i}`];
       const dateVal = data[`payment_date_${i}`];
       const hasAmt = amtVal !== undefined && amtVal !== null && String(amtVal).trim() !== '';
@@ -1299,7 +1304,7 @@ export default function ClientDataView() {
 
                 {/* Installment Payment Schedule */}
                 {(() => {
-                  const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+                  const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
                   const payments = paymentIndices.map(prefix => {
                     const amountKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment`);
                     const dateKey = Object.keys(viewingClient).find(k => k.toLowerCase() === `${prefix.toLowerCase()} payment date`);
@@ -1325,7 +1330,7 @@ export default function ClientDataView() {
                       <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl p-4 shadow-sm divide-y divide-slate-100 dark:divide-gray-800">
                         {payments.map(p => {
                           const ordinalLabel = lang === 'bm'
-                            ? `Bayaran Ke-${p.prefix === '1st' ? '1' : p.prefix === '2nd' ? '2' : p.prefix === '3rd' ? '3' : p.prefix === '4th' ? '4' : p.prefix === '5th' ? '5' : '6'}`
+                            ? `Bayaran Ke-${p.prefix.replace(/[^0-9]/g, '')}`
                             : `${p.prefix} Payment`;
                           const formattedAmt = String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`;
                           return (
@@ -1554,7 +1559,11 @@ export default function ClientDataView() {
                       viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
                       viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
                       viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
-                      viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment']
+                      viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment'],
+                      viewingClient['7TH PAYMENT'] ?? viewingClient['7th PAYMENT'] ?? viewingClient['7th payment'],
+                      viewingClient['8TH PAYMENT'] ?? viewingClient['8th PAYMENT'] ?? viewingClient['8th payment'],
+                      viewingClient['9TH PAYMENT'] ?? viewingClient['9th PAYMENT'] ?? viewingClient['9th payment'],
+                      viewingClient['10TH PAYMENT'] ?? viewingClient['10th PAYMENT'] ?? viewingClient['10th payment']
                     ]
                   }}
                   onSuccess={() => {
@@ -1939,7 +1948,7 @@ export default function ClientDataView() {
                   {/* Dynamic payments Scheduler */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
-                    {paymentList.length < 6 && (
+                    {paymentList.length < 10 && (
                       <button
                         type="button"
                         onClick={() => {

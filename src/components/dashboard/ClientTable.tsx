@@ -24,7 +24,7 @@ const getSortValue = (obj: any, key: string) => {
     const num = Number(val);
     return isNaN(num) ? 0 : num;
   }
-  if (['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'].includes(key)) {
+  if (['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(key)) {
     if (obj._parsedNumericValues?.[key] !== undefined) return obj._parsedNumericValues[key];
     const rawNumber = String(obj[key] || '0').replace(/[^0-9.-]+/g, '');
     return parseFloat(rawNumber) || 0;
@@ -116,12 +116,12 @@ const parseDateString = (dateStr: any): Date | null => {
 
 const getStageLabel = (stageName: string, lang: string) => {
   const isBm = lang === 'bm';
-  if (stageName.includes('1st')) return isBm ? 'Bayaran Pertama' : '1st Payment';
-  if (stageName.includes('2nd')) return isBm ? 'Bayaran Ke-2' : '2nd Payment';
-  if (stageName.includes('3rd')) return isBm ? 'Bayaran Ke-3' : '3rd Payment';
-  if (stageName.includes('4th')) return isBm ? 'Bayaran Ke-4' : '4th Payment';
-  if (stageName.includes('5th')) return isBm ? 'Bayaran Ke-5' : '5th Payment';
-  if (stageName.includes('6th')) return isBm ? 'Bayaran Ke-6' : '6th Payment';
+  const match = stageName.match(/(\d+)(?:st|nd|rd|th)/i);
+  if (match) {
+    const num = match[1];
+    if (num === '1') return isBm ? 'Bayaran Pertama' : '1st Payment';
+    return isBm ? `Bayaran Ke-${num}` : `${num}th Payment`;
+  }
   if (stageName.includes('None')) return isBm ? 'Tiada (Kes Didaftarkan)' : 'None (Case Registered)';
   return stageName;
 };
@@ -133,7 +133,11 @@ const getLastPaymentInfo = (client: any) => {
     { name: '3rd Payment', dateKey: '3rd PAYMENT DATE', amtKey: '3rd PAYMENT' },
     { name: '4th Payment', dateKey: '4th PAYMENT DATE', amtKey: '4th PAYMENT' },
     { name: '5th Payment', dateKey: '5th PAYMENT DATE', amtKey: '5th PAYMENT' },
-    { name: '6th Payment', dateKey: '6th PAYMENT DATE', amtKey: '6th PAYMENT' }
+    { name: '6th Payment', dateKey: '6th PAYMENT DATE', amtKey: '6th PAYMENT' },
+    { name: '7th Payment', dateKey: '7th PAYMENT DATE', amtKey: '7th PAYMENT' },
+    { name: '8th Payment', dateKey: '8th PAYMENT DATE', amtKey: '8th PAYMENT' },
+    { name: '9th Payment', dateKey: '9th PAYMENT DATE', amtKey: '9th PAYMENT' },
+    { name: '10th Payment', dateKey: '10th PAYMENT DATE', amtKey: '10th PAYMENT' }
   ];
 
   // Scan backwards from 6th down to 1st
@@ -227,6 +231,8 @@ const EXPANDED_COLUMNS_ORDER = [
   'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
   '1st PAYMENT', '1st PAYMENT DATE', '2nd PAYMENT', '2nd PAYMENT DATE', '3rd PAYMENT', '3rd PAYMENT DATE',
   '4th PAYMENT', '4th PAYMENT DATE', '5th PAYMENT', '5th PAYMENT DATE', '6th PAYMENT', '6th PAYMENT DATE',
+  '7th PAYMENT', '7th PAYMENT DATE', '8th PAYMENT', '8th PAYMENT DATE', '9th PAYMENT', '9th PAYMENT DATE',
+  '10th PAYMENT', '10th PAYMENT DATE',
   'Invoice Ref No', 'REMARK',
   'lod_date', 'lod_claim_amount', 'lod_remark',
   'police_report_date', 'police_report_no',
@@ -327,6 +333,22 @@ const getExportHeaderLabel = (key: string, lang: string) => {
       return isBm ? 'Bayaran Ke-6 (RM)' : '6th Payment (RM)';
     case '6th PAYMENT DATE':
       return isBm ? 'Tarikh Bayaran Ke-6' : '6th Payment Date';
+    case '7th PAYMENT':
+      return isBm ? 'Bayaran Ke-7 (RM)' : '7th Payment (RM)';
+    case '7th PAYMENT DATE':
+      return isBm ? 'Tarikh Bayaran Ke-7' : '7th Payment Date';
+    case '8th PAYMENT':
+      return isBm ? 'Bayaran Ke-8 (RM)' : '8th Payment (RM)';
+    case '8th PAYMENT DATE':
+      return isBm ? 'Tarikh Bayaran Ke-8' : '8th Payment Date';
+    case '9th PAYMENT':
+      return isBm ? 'Bayaran Ke-9 (RM)' : '9th Payment (RM)';
+    case '9th PAYMENT DATE':
+      return isBm ? 'Tarikh Bayaran Ke-9' : '9th Payment Date';
+    case '10th PAYMENT':
+      return isBm ? 'Bayaran Ke-10 (RM)' : '10th Payment (RM)';
+    case '10th PAYMENT DATE':
+      return isBm ? 'Tarikh Bayaran Ke-10' : '10th Payment Date';
     case 'Invoice Ref No':
       return isBm ? 'No. Rujukan Invois' : 'Invoice Ref No';
     case 'REMARK':
@@ -377,7 +399,8 @@ const isNumericKey = (key: string) => {
   return [
     'No', 'NO',
     'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
-    '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'
+    '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT',
+    '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'
   ].includes(key);
 };
 
@@ -527,7 +550,7 @@ export default function ClientTable({
 
       // Pre-parse numeric columns
       const numericValues: Record<string, number> = {};
-      const numericKeys = ['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'];
+      const numericKeys = ['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'];
       for (const k of numericKeys) {
         const raw = String(client[k] || '0').replace(/[^0-9.-]+/g, '');
         numericValues[k] = parseFloat(raw) || 0;
@@ -1137,7 +1160,7 @@ export default function ClientTable({
                           const v = client[k];
                           
                           let displayVal = v;
-                          if (['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT'].includes(k)) {
+                          if (['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(k)) {
                             const dateKey = `${k} DATE`;
                             const dateVal = client[dateKey];
                             const parsedAmt = parseAmount(v);

@@ -68,7 +68,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
   }, [documentType, clientData.payments]);
 
   const addItem = () => {
-    if (items.length < 6) {
+    if (items.length < 10) {
       const nextPayment = getPaymentOrdinalString(items.length, 0);
       setItems([...items, { id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: documentType === 'receipt' ? nextPayment : '', date: '', amount: '' }]);
     }

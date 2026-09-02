@@ -525,11 +525,7 @@ export default function ClientDataView() {
         if (canViewClients) {
           let query = supabase.from('clients');
 
-          if (viewMode === 'standard') {
-            query = query.select('id,NAME,"PHONE NUMBER","IC NUMBER","CASE CATEGORY","TOTAL PAID (RM)","PENDING (RM)","PACKAGE (RM)","CASE STATUS","Investigation Paper",Report,"Action Taken by police",DATE', { count: 'exact' });
-          } else {
-            query = query.select('*', { count: 'exact' });
-          }
+          query = query.select('*', { count: 'exact' });
 
           if (searchQuery) {
             query = query.or(`NAME.ilike.%${searchQuery}%,"IC NUMBER".ilike.%${searchQuery}%,"PHONE NUMBER".ilike.%${searchQuery}%,"CASE CATEGORY".ilike.%${searchQuery}%`);

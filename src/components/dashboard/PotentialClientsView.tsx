@@ -710,8 +710,158 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative border-b border-slate-200 dark:border-gray-800">
+      {/* Mobile Card System for Potential Clients (Phones only - Vertical, No Horizontal Scrolling) */}
+      <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">
+        {loading ? (
+          <div className="p-8 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <span>{lang === 'bm' ? 'Memuatkan senarai klien berpotensi...' : 'Loading potential clients...'}</span>
+            </div>
+          </div>
+        ) : paginatedClients.length > 0 ? (
+          paginatedClients.map((client, index) => {
+            const rowNum = (currentPage - 1) * pageSize + index + 1;
+            return (
+              <div
+                key={client.id}
+                className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
+                  <div className="space-y-0.5 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500">
+                        #{rowNum}
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                        {client.full_name}
+                      </h4>
+                      {client.status === 'Converted' && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
+                          Converted
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 flex-wrap pt-0.5">
+                      {client.phone_number && (
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span>📞 {client.phone_number}</span>
+                          <a
+                            href={`https://wa.me/${client.phone_number.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-emerald-600 dark:text-emerald-400 font-bold"
+                          >
+                            WhatsApp
+                          </a>
+                        </div>
+                      )}
+                      {client.ic_number && (
+                        <span className="font-mono text-[11px] text-slate-400">IC: {client.ic_number}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    {getPotentialBadge(client.potential_level)}
+                  </div>
+                </div>
+
+                {/* Details 2-col Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
+                      {lang === 'bm' ? 'Kategori Kes' : 'Case Category'}
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate block mt-0.5">
+                      {client.case_category || '-'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
+                      {t('clients', 'leadBy', lang)}
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate block mt-0.5">
+                      {client.lead_by ? `👤 ${client.lead_by}` : '-'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Date & Address / Email */}
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 px-1 flex-wrap gap-1">
+                  <span>📅 {client.date || '-'}</span>
+                  {client.email && (
+                    <a href={`mailto:${client.email}`} className="text-cyan-600 dark:text-cyan-400 truncate max-w-[170px]">
+                      ✉️ {client.email}
+                    </a>
+                  )}
+                </div>
+
+                {client.address && (
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-400 px-1 truncate" title={client.address}>
+                    📍 {client.address}
+                  </div>
+                )}
+
+                {client.notes && (
+                  <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-300 italic">
+                    "{client.notes}"
+                  </div>
+                )}
+
+                {/* Actions Footer */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={() => handleOpenViewModal(client)}
+                    className="flex-1 py-2.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span>👁️</span>
+                    <span>{t('clients', 'viewDoc', lang)}</span>
+                  </button>
+
+                  {canEdit && (
+                    <>
+                      <button
+                        onClick={() => handleOpenEditModal(client)}
+                        className="flex-1 py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                      >
+                        <span>✏️</span>
+                        <span>{t('reports', 'editBtn', lang)}</span>
+                      </button>
+
+                      {client.status !== 'Converted' && (
+                        <button
+                          onClick={() => handleConvertToActive(client)}
+                          className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm flex-shrink-0"
+                          title={t('clients', 'convertToActiveClient', lang)}
+                        >
+                          <span>★</span>
+                          <span>{lang === 'bm' ? 'Tukar' : 'Convert'}</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDelete(client)}
+                        className="h-[38px] w-[38px] flex items-center justify-center rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 text-xs font-bold flex-shrink-0"
+                        title="Delete Record"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
+            {t('clients', 'noClientsFound', lang)}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Main Table (Laptops / Tablets / Desktops only) */}
+      <div className="hidden md:block flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative border-b border-slate-200 dark:border-gray-800">
         <table className="w-full min-w-[1100px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
           <thead>
             <tr className="bg-slate-50 dark:bg-gray-900/90 border-b border-slate-200 dark:border-gray-800">

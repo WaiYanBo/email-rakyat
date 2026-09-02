@@ -13,13 +13,37 @@ export default function LoginAuth() {
   const { lang } = usePortalLanguage();
 
   useEffect(() => {
-    // If user is already authenticated, redirect straight to portal
-    getCurrentSession().then((session) => {
+    // Check if redirected due to termination
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('error') === 'terminated') {
+        setError(lang === 'bm' 
+          ? 'Akses ke portal telah ditamatkan kerana kakitangan telah berhenti kerja.' 
+          : 'Portal access terminated. This account has been deactivated as the staff member has resigned.');
+        return;
+      }
+    }
+
+    // If user is already authenticated, verify not resigned before redirecting
+    getCurrentSession().then(async (session) => {
       if (session) {
-        window.location.href = '/portal';
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', session.user.id)
+          .single();
+
+        if (prof?.status === 'Resigned' || prof?.status === 'Terminated' || prof?.status === 'Inactive') {
+          await supabase.auth.signOut();
+          setError(lang === 'bm' 
+            ? 'Akses ke portal telah ditamatkan kerana kakitangan telah berhenti kerja.' 
+            : 'Portal access terminated. This account has been deactivated as the staff member has resigned.');
+        } else {
+          window.location.href = '/portal';
+        }
       }
     });
-  }, []);
+  }, [lang]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +102,22 @@ export default function LoginAuth() {
           setError(t('login', 'attemptsRemaining', lang).replace('{count}', String(5 - newCount)));
         }
       } else if (data?.user) {
+        // ── 4. Verify staff account status (Terminate if Resigned) ────────
+        const { data: profileRecord } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileRecord?.status === 'Resigned' || profileRecord?.status === 'Terminated' || profileRecord?.status === 'Inactive') {
+          await supabase.auth.signOut();
+          setError(lang === 'bm' 
+            ? 'Akses ke portal telah ditamatkan kerana kakitangan telah berhenti kerja. Sila hubungi pihak pengurusan jika terdapat sebarang pertanyaan.' 
+            : 'Portal access terminated. This account has been deactivated as the staff member has resigned. Please contact management for inquiries.');
+          setLoading(false);
+          return;
+        }
+
         clearRateLimit(trimmedEmail); // Reset on success
         await new Promise((r) => setTimeout(r, 100));
         window.location.href = '/portal';

@@ -52,11 +52,17 @@ export default function PortalSidebar() {
 
     const { data: profileData } = await supabase
       .from('profiles')
-      .select(`id, full_name, department, avatar_url, roles ( role_name )`)
+      .select(`id, full_name, department, avatar_url, status, roles ( role_name )`)
       .eq('id', session.user.id)
       .single();
 
     if (profileData) {
+      if (profileData.status === 'Resigned' || profileData.status === 'Terminated' || profileData.status === 'Inactive') {
+        await supabase.auth.signOut();
+        window.location.href = '/portal/login?error=terminated';
+        return;
+      }
+
       let roleName = 'No Role';
       if (profileData.roles) {
         const rolesVar = profileData.roles as any;
@@ -386,6 +392,18 @@ export default function PortalSidebar() {
           </svg>
         )
       });
+      /* Temporarily commented out for maintenance / access restriction
+      items.push({
+        label: t('sidebar', 'navAppointments', lang),
+        path: '/portal/temujanji',
+        activeClass,
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        )
+      });
+      */
     }
 
     if (canViewReports) {

@@ -53,7 +53,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     try {
       const { data: profiles, error: profError } = await supabase
         .from('profiles')
-        .select('id, full_name, department, roles(role_name)');
+        .select('id, full_name, department, status, roles(role_name)');
 
       if (profError) throw profError;
 
@@ -62,10 +62,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         'top management', 'tm', 'executive'
       ];
 
-      const depts = Array.from(new Set(profiles?.map(p => p.department).filter(Boolean)))
+      const activeProfiles = (profiles || []).filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive');
+
+      const depts = Array.from(new Set(activeProfiles.map(p => p.department).filter(Boolean)))
         .filter(d => !EXCLUDED_DEPT_KEYWORDS.includes(d.trim().toLowerCase())) as string[];
       setDepartments(depts);
-      setUsers(profiles || []);
+      setUsers(activeProfiles);
 
       const { data: perms, error: permError } = await supabase
         .from('access_permissions')

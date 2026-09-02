@@ -1,0 +1,20 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+// import AppointmentsView from '../../components/dashboard/AppointmentsView';
+---
+
+<DashboardLayout title="Client Appointments - Staff Portal">
+  <!-- Temporarily commented out for maintenance / access restriction -->
+  <!-- <AppointmentsView client:only="react" /> -->
+  <div class="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+    <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-3xl mb-4 border border-amber-500/20">
+      🔒
+    </div>
+    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">
+      Under Scheduled Maintenance
+    </h2>
+    <p class="text-sm text-slate-500 dark:text-zinc-400 max-w-md">
+      This module is temporarily restricted. Please check back later.
+    </p>
+  </div>
+</DashboardLayout>

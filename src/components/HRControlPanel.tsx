@@ -27,11 +27,17 @@ export default function HRControlPanel() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select(`id, full_name, department, roles ( role_name )`)
+        .select(`id, full_name, department, status, roles ( role_name )`)
         .eq('id', session.user.id)
         .single();
 
       if (profileData) {
+        if (profileData.status === 'Resigned' || profileData.status === 'Terminated' || profileData.status === 'Inactive') {
+          await supabase.auth.signOut();
+          window.location.href = '/portal/login?error=terminated';
+          return;
+        }
+
         let roleName = 'No Role';
         if (profileData.roles) {
           const rolesVar = profileData.roles as any;

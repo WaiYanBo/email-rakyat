@@ -79,11 +79,12 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('full_name')
+          .select('full_name, status')
           .order('full_name', { ascending: true });
 
         if (!error && data) {
           const names = data
+            .filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive')
             .map(p => p.full_name?.trim())
             .filter((n): n is string => Boolean(n && n.length > 0));
           setStaffList(Array.from(new Set(names)));
@@ -1548,15 +1549,27 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
 
               {/* Actions footer */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
-                {canEdit && activeClient.status !== 'Converted' ? (
-                  <button
-                    onClick={() => handleConvertToActive(activeClient)}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Temporarily commented out for maintenance / access restriction
+                  <a
+                    href="/portal/temujanji"
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
                   >
-                    <span>★</span>
-                    <span>{t('clients', 'convertToActiveClient', lang)}</span>
-                  </button>
-                ) : <div />}
+                    <span>📅</span>
+                    <span>{lang === 'bm' ? 'Jadualkan Temujanji' : 'Schedule Appointment'}</span>
+                  </a>
+                  */}
+
+                  {canEdit && activeClient.status !== 'Converted' && (
+                    <button
+                      onClick={() => handleConvertToActive(activeClient)}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+                    >
+                      <span>★</span>
+                      <span>{t('clients', 'convertToActiveClient', lang)}</span>
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-2">
                   {canEdit && (

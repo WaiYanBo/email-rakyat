@@ -306,16 +306,17 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         setProfile(userProfile);
       }
 
-      // Fetch all profiles to populate employee search dropdown
+      // Fetch all active profiles to populate employee search dropdown (excluding resigned)
       let allEmployees: any[] = [];
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, full_name, salary')
+        .select('id, full_name, salary, status')
         .order('full_name', { ascending: true });
       if (profilesData) {
-        setUniqueEmployees(profilesData);
-        allEmployees = profilesData;
-      } else if (profileData) {
+        const activeOnly = profilesData.filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive');
+        setUniqueEmployees(activeOnly);
+        allEmployees = activeOnly;
+      } else if (profileData && profileData.status !== 'Resigned') {
         setUniqueEmployees([profileData]);
         allEmployees = [profileData];
       }

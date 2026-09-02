@@ -4,6 +4,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import type { Language } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
+import { calculateLeaveAccrual } from './ReportsView';
 
 interface LeaveBalance {
   annual_total: number;
@@ -109,9 +110,17 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   // Calendar navigation states
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
-  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const isApprover = profile?.department === 'Human Resources' || permissions.edit_staff || isIT;
-  const isActionAllowed = ['CEO', 'CFO', 'COO', 'CPO'].includes(profile?.role || '');
+  const userRole = (profile?.role || '').toUpperCase();
+  const userDept = (profile?.department || '').toLowerCase();
+  const isIT = userDept === 'it' || userRole.includes('IT');
+  const isExecutive = ['CEO', 'CFO', 'COO', 'CPO', 'DIRECTOR', 'CHAIRMAN', 'PRESIDENT', 'MANAGEMENT'].includes(userRole);
+  const isHR = userDept === 'human resources' || userRole.includes('HR') || userRole.includes('HUMAN RESOURCE');
+  const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff);
+
+  // Approvers who can view the admin tabs
+  const isApprover = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');
+  // Authorized users who can edit entitlements and take actions
+  const isActionAllowed = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');
 
   useEffect(() => {
     fetchEmployeeData();
@@ -188,43 +197,86 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const fetchAdminData = async () => {
     setAdminLoading(true);
     try {
-      // 1. Fetch pending
+      // 1. Fetch pending requests
       const { data: pendingData, error: pendingError } = await supabase
         .from('leave_requests')
-        .select('*, profiles!profile_id(full_name, department)')
+        .select('*, profiles!profile_id(full_name, department, status)')
         .eq('status', 'Pending')
         .order('created_at', { ascending: true });
-      if (pendingError) throw pendingError;
-      setPendingRequests(pendingData || []);
+      if (pendingError) console.warn('Pending requests fetch warning:', pendingError);
+      const activePending = (pendingData || []).filter((r: any) => r.profiles?.status !== 'Resigned' && r.profiles?.status !== 'Terminated');
+      setPendingRequests(activePending);
 
-      // 2. Fetch balances (joining roles to exclude BOD)
-      const { data: balancesData, error: balancesError } = await supabase
+      // 2. Fetch all active staff profiles
+      const { data: allProfiles, error: profError } = await supabase
+        .from('profiles')
+        .select('id, full_name, department, status, remarks, roles(role_name)')
+        .order('full_name', { ascending: true });
+
+      if (profError) {
+        console.error('Error loading profiles for leave balances:', profError);
+      }
+
+      // Filter out resigned / terminated staff (keeps ALL active staff, including developer/BOD/management)
+      const activeProfiles = (allProfiles || []).filter((p: any) => 
+        p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive'
+      );
+
+      // Fetch all existing balances
+      const { data: rawBalances, error: balancesError } = await supabase
         .from('leave_balances')
-        .select('*, profiles(full_name, department, roles(role_name))');
-      if (balancesError) throw balancesError;
-      
-      const filteredBalances = (balancesData || []).filter((sb: any) => {
-        const dept = sb.profiles?.department?.toUpperCase();
-        
-        let roleName = '';
-        if (sb.profiles?.roles) {
-          const rolesVar = sb.profiles.roles as any;
-          roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || '') : (rolesVar?.role_name || '');
+        .select('*');
+
+      if (balancesError) {
+        console.warn('Error fetching leave_balances:', balancesError);
+      }
+
+      const balancesByProfileId = new Map((rawBalances || []).map((b: any) => [b.profile_id, b]));
+
+      // Merge so EVERY active staff member ALWAYS appears in the Staff Balances dropdown!
+      const unifiedBalances = activeProfiles.map((p: any) => {
+        const existing = balancesByProfileId.get(p.id);
+        if (existing) {
+          return {
+            ...existing,
+            profiles: p
+          };
         }
-        roleName = roleName.toUpperCase();
-
-        const isBOD = dept === 'BOD' || dept === 'BOARD' || ['CHAIRMAN', 'CEO', 'COO', 'CFO', 'CPO'].includes(roleName);
-        return !isBOD;
+        // If staff member doesn't have a record in leave_balances yet, generate default
+        return {
+          id: p.id,
+          profile_id: p.id,
+          annual_total: 14.0,
+          annual_used: 0.0,
+          sick_total: 14.0,
+          sick_used: 0.0,
+          hospitalisation_total: 60.0,
+          hospitalisation_used: 0.0,
+          maternity_total: 98.0,
+          maternity_used: 0.0,
+          paternity_total: 7.0,
+          paternity_used: 0.0,
+          unpaid_used: 0.0,
+          profiles: p
+        };
       });
-      setStaffBalances(filteredBalances);
 
-      // 3. Fetch approved leaves for calendar
+      setStaffBalances(unifiedBalances);
+      if (unifiedBalances.length > 0) {
+        setSelectedStaffBalanceId((prev) => {
+          if (prev && unifiedBalances.some((b: any) => b.id === prev)) return prev;
+          return unifiedBalances[0].id;
+        });
+      }
+
+      // 3. Fetch approved leaves for calendar (excluding resigned staff)
       const { data: approvedData, error: approvedError } = await supabase
         .from('leave_requests')
-        .select('*, profiles!profile_id(full_name, department)')
+        .select('*, profiles!profile_id(full_name, department, status)')
         .eq('status', 'Approved');
-      if (approvedError) throw approvedError;
-      setApprovedRequests(approvedData || []);
+      if (approvedError) console.warn('Approved calendar fetch warning:', approvedError);
+      const activeApproved = (approvedData || []).filter((r: any) => r.profiles?.status !== 'Resigned' && r.profiles?.status !== 'Terminated');
+      setApprovedRequests(activeApproved);
     } catch (err) {
       console.error('Error loading admin leave data:', err);
     } finally {
@@ -444,25 +496,28 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     e.preventDefault();
     if (!selectedStaffBalanceId) return;
 
+    const currentRecord = staffBalances.find(sb => sb.id === selectedStaffBalanceId);
+    const targetProfileId = currentRecord?.profile_id || currentRecord?.profiles?.id || selectedStaffBalanceId;
+
     setIsUpdatingBalances(true);
     try {
       const { error } = await supabase
         .from('leave_balances')
-        .update({
+        .upsert({
+          profile_id: targetProfileId,
           annual_total: parseFloat(editAnnualTotal) || 0.0,
           sick_total: parseFloat(editSickTotal) || 0.0,
           hospitalisation_total: parseFloat(editHospitalisationTotal) || 0.0,
           maternity_total: parseFloat(editMaternityTotal) || 0.0,
           paternity_total: parseFloat(editPaternityTotal) || 0.0,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedStaffBalanceId);
+        }, { onConflict: 'profile_id' });
 
       if (error) throw error;
 
       alert(lang === 'bm' ? 'Baki cuti kakitangan berjaya dikemas kini!' : 'Staff leave balances successfully updated!');
       setIsEditingBalancesInline(false);
-      fetchAdminData();
+      await fetchAdminData();
     } catch (err: any) {
       console.error('Error updating leave balances:', err);
       alert(lang === 'bm' ? 'Gagal mengemas kini baki cuti: ' + err.message : 'Failed to update leave balances: ' + err.message);
@@ -750,97 +805,104 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             </div>
 
             {/* Leave History List */}
-            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6">
-              <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 mb-4">
-                {t('leave', 'myRequests', lang)}
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colType', lang)}</th>
-                      <th className="py-2.5 pb-3 font-semibold">{t('leave', 'startDate', lang)}</th>
-                      <th className="py-2.5 pb-3 font-semibold">{t('leave', 'endDate', lang)}</th>
-                      <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colDuration', lang)}</th>
-                      <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colStatus', lang)}</th>
-                      <th className="py-2.5 pb-3 font-semibold text-right">{t('leave', 'colActions', lang)}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 dark:divide-zinc-900/50">
-                    {requests.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-6 text-center text-slate-400 dark:text-zinc-500 italic">
-                          {t('leave', 'noHistory', lang)}
-                        </td>
-                      </tr>
-                    ) : (
-                      requests.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
-                          <td className="py-3 font-bold text-slate-700 dark:text-zinc-300">
-                            {t('leave', item.leave_type.toLowerCase(), lang)}
-                            {item.session_type !== 'Full Day' && (
-                              <span className="block text-[9px] text-slate-400 dark:text-zinc-500 font-medium">
-                                ({item.session_type})
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 text-slate-500 dark:text-zinc-400">
-                            {new Date(item.start_date).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 text-slate-500 dark:text-zinc-400">
-                            {new Date(item.end_date).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 font-bold text-slate-700 dark:text-zinc-200">
-                            {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
-                          </td>
-                          <td className="py-3">
-                            <div className="flex flex-col gap-1 items-start">
-                              {getStatusBadge(item.status)}
-                              
-                              {/* Display who approved or rejected the request */}
-                              {(item.status === 'Approved' || item.status === 'Rejected') && (item as any).approver && (
-                                <span className="text-[9px] text-slate-400 dark:text-zinc-550 font-medium leading-tight">
-                                  {item.status === 'Approved' ? 'Approved' : 'Rejected'} by: <br/>
-                                  <strong className="text-slate-600 dark:text-zinc-300">{(item as any).approver.full_name}</strong> {(() => {
-                                    const approver = (item as any).approver;
-                                    const rolesVar = approver.roles;
-                                    const roleName = Array.isArray(rolesVar) ? (rolesVar[0]?.role_name || '') : (rolesVar?.role_name || '');
-                                    return roleName ? `(${roleName})` : '';
-                                  })()}
-                                </span>
-                              )}
-
-                              {item.status === 'Rejected' && item.rejection_reason && (
-                                <span className="text-[10px] text-rose-500 italic font-medium mt-1">
-                                  "{item.rejection_reason}"
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 text-right">
-                            {item.status === 'Pending' && (
-                              <button
-                                onClick={() => handleCancelRequest(item)}
-                                className="px-2.5 py-1 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-md border border-rose-100 font-bold transition-colors"
-                              >
-                                {t('leave', 'cancelBtn', lang)}
-                              </button>
-                            )}
-                            {item.attachment_url && (
-                              <button
-                                onClick={() => handleDownloadProof(item.attachment_url!)}
-                                className="px-2 py-1 text-[10px] bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 rounded-md border border-slate-200 dark:border-zinc-700 font-bold transition-colors ml-2"
-                              >
-                                MC
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+            <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+                <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 flex items-center gap-2">
+                  <span>{t('leave', 'myRequests', lang)}</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-black bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
+                    {requests.length}
+                  </span>
+                </h3>
               </div>
+
+              {requests.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 dark:text-zinc-500 italic bg-slate-50 dark:bg-zinc-900/30 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
+                  {t('leave', 'noHistory', lang)}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {requests.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 sm:p-4 space-y-3 transition-all hover:border-slate-300 dark:hover:border-zinc-700"
+                    >
+                      {/* Top row: Type & Status */}
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            {t('leave', item.leave_type.toLowerCase(), lang)}
+                            {item.session_type !== 'Full Day' && ` (${item.session_type})`}
+                          </span>
+                          <span className="font-bold text-xs text-slate-700 dark:text-zinc-300">
+                            ⏱️ {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {getStatusBadge(item.status)}
+                        </div>
+                      </div>
+
+                      {/* Dates */}
+                      <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-950 p-2 rounded-lg border border-slate-150 dark:border-zinc-800/80">
+                        <span>📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        <span>→</span>
+                        <span>{new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      </div>
+
+                      {/* Reason Submitted */}
+                      {item.reason && (
+                        <div className="text-xs bg-white dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-150 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 break-words whitespace-pre-wrap">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block mb-0.5">💬 {t('leave', 'reason', lang)}:</span>
+                          {item.reason}
+                        </div>
+                      )}
+
+                      {/* Approver details */}
+                      {(item.status === 'Approved' || item.status === 'Rejected') && (item as any).approver && (
+                        <div className="text-[11px] text-slate-500 dark:text-zinc-400 bg-white/60 dark:bg-zinc-950/60 p-2 rounded-lg border border-slate-100 dark:border-zinc-800/60 flex items-center justify-between flex-wrap gap-2">
+                          <span>
+                            {item.status === 'Approved' ? '✓ Diluluskan oleh / Approved by' : '✕ Ditolak oleh / Rejected by'}: <strong className="text-slate-800 dark:text-zinc-200">{(item as any).approver.full_name}</strong>
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Rejection Reason Alert Box */}
+                      {item.status === 'Rejected' && item.rejection_reason && (
+                        <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                          <span className="text-[10px] font-black uppercase tracking-wider block mb-0.5">⚠️ Sebab Penolakan / Reason for Rejection:</span>
+                          "{item.rejection_reason}"
+                        </div>
+                      )}
+
+                      {/* Actions footer */}
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div>
+                          {item.attachment_url && (
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadProof(item.attachment_url!)}
+                              className="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg border border-slate-200 dark:border-zinc-700 font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>📎</span>
+                              <span>{t('leave', 'viewAttachment', lang)}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {item.status === 'Pending' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCancelRequest(item)}
+                            className="px-3 py-1.5 text-xs bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg border border-rose-200 dark:border-rose-800 font-bold transition-colors cursor-pointer"
+                          >
+                            {t('leave', 'cancelBtn', lang)}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -984,10 +1046,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         // HR/Manager views
         <div className="space-y-8 animate-fade-in">
           {/* Sub menu controls */}
-          <div className="flex bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-1 w-fit gap-1">
+          <div className="flex flex-wrap bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-1 w-full sm:w-fit gap-1">
             <button
               onClick={() => setDashboardSubTab('pending')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'pending'
+              className={`px-3.5 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-initial text-center ${dashboardSubTab === 'pending'
                   ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
@@ -996,7 +1058,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             </button>
             <button
               onClick={() => setDashboardSubTab('balances')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'balances'
+              className={`px-3.5 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-initial text-center ${dashboardSubTab === 'balances'
                   ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
@@ -1005,7 +1067,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             </button>
             <button
               onClick={() => setDashboardSubTab('calendar')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${dashboardSubTab === 'calendar'
+              className={`px-3.5 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-initial text-center ${dashboardSubTab === 'calendar'
                   ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                 }`}
@@ -1021,100 +1083,149 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           ) : (
             <>
               {/* Approvals tab */}
+              {/* Approvals tab */}
               {dashboardSubTab === 'pending' && (
-                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6">
-                  <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 mb-4">
-                    {t('leave', 'pendingApprovals', lang)}
-                  </h3>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-100 dark:border-zinc-800 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colEmployee', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colType', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'startDate', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'endDate', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colDuration', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'reason', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold">{t('leave', 'colAttachment', lang)}</th>
-                          <th className="py-2.5 pb-3 font-semibold text-right">{t('leave', 'colActions', lang)}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50 dark:divide-zinc-900/50">
-                        {pendingRequests.length === 0 ? (
-                          <tr>
-                            <td colSpan={8} className="py-6 text-center text-slate-400 dark:text-zinc-500 italic">
-                              {t('leave', 'noPending', lang)}
-                            </td>
-                          </tr>
-                        ) : (
-                          pendingRequests.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
-                              <td className="py-3 font-bold text-slate-800 dark:text-zinc-200">
-                                {item.profiles?.full_name}
-                                <span className="block text-[10px] text-slate-450 dark:text-zinc-500 font-medium">
-                                  {item.profiles?.department}
-                                </span>
-                              </td>
-                              <td className="py-3 text-slate-700 dark:text-zinc-300 font-semibold">
-                                {t('leave', item.leave_type.toLowerCase(), lang)}
-                                {item.session_type !== 'Full Day' && (
-                                  <span className="block text-[9px] text-slate-400 dark:text-zinc-500 font-medium">
-                                    ({item.session_type})
-                                  </span>
-                                )}
-                              </td>
-                              <td className="py-3 text-slate-500 dark:text-zinc-400">
-                                {new Date(item.start_date).toLocaleDateString()}
-                              </td>
-                              <td className="py-3 text-slate-500 dark:text-zinc-400">
-                                {new Date(item.end_date).toLocaleDateString()}
-                              </td>
-                              <td className="py-3 font-black text-slate-800 dark:text-zinc-200">
-                                {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
-                              </td>
-                              <td className="py-3 text-slate-500 dark:text-zinc-400 max-w-[200px] truncate" title={item.reason}>
-                                {item.reason}
-                              </td>
-                              <td className="py-3">
-                                {item.attachment_url ? (
-                                  <button
-                                    onClick={() => handleDownloadProof(item.attachment_url!)}
-                                    className="text-indigo-600 hover:text-indigo-800 dark:text-yellow-500 dark:hover:text-yellow-400 font-bold"
-                                  >
-                                    {t('leave', 'viewAttachment', lang)}
-                                  </button>
-                                ) : (
-                                  <span className="text-slate-400">--</span>
-                                )}
-                              </td>
-                              <td className="py-3 text-right space-x-2 whitespace-nowrap">
-                                {isActionAllowed ? (
-                                  <>
-                                    <button
-                                      onClick={() => handleApprove(item)}
-                                      className="px-2.5 py-1 text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md border border-emerald-200 font-bold transition-colors"
-                                    >
-                                      {t('leave', 'approveBtn', lang)}
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectClick(item)}
-                                      className="px-2.5 py-1 text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-md border border-rose-200 font-bold transition-colors"
-                                    >
-                                      {t('leave', 'rejectBtn', lang)}
-                                    </button>
-                                  </>
-                                ) : (
-                                  getStatusBadge(item.status)
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-zinc-800 pb-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-slate-850 dark:text-zinc-200 flex items-center gap-2">
+                        <span>{t('leave', 'pendingApprovals', lang)}</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-black bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          {pendingRequests.length}
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                        {lang === 'bm' ? 'Permohonan cuti yang menunggu semakan dan kelulusan pengurusan.' : 'Leave applications awaiting management review and approval.'}
+                      </p>
+                    </div>
                   </div>
+
+                  {pendingRequests.length === 0 ? (
+                    <div className="p-8 sm:p-12 text-center bg-slate-50 dark:bg-zinc-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800">
+                      <span className="text-3xl block mb-2">🎉</span>
+                      <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+                        {lang === 'bm' ? 'Tiada Permohonan Menunggu' : 'No Pending Requests'}
+                      </h4>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
+                        {t('leave', 'noPending', lang)}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {pendingRequests.map((item) => (
+                        <div
+                          key={item.id}
+                          className="bg-white dark:bg-zinc-900/70 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 relative group"
+                        >
+                          {/* Top Header: Employee details + Leave Type & Status */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                                {item.profiles?.full_name ? item.profiles.full_name.slice(0, 2).toUpperCase() : 'ST'}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                                  {item.profiles?.full_name || 'Staff Member'}
+                                </h4>
+                                <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium block mt-0.5">
+                                  {item.profiles?.department || 'General'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                              <span className="px-2.5 py-1 rounded-lg text-[11px] font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shadow-xs">
+                                {t('leave', item.leave_type.toLowerCase(), lang)}
+                                {item.session_type !== 'Full Day' && ` (${item.session_type})`}
+                              </span>
+                              {getStatusBadge(item.status)}
+                            </div>
+                          </div>
+
+                          {/* Date Range & Duration Highlight */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-150 dark:border-zinc-800 text-xs">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'startDate', lang)}
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono block mt-0.5">
+                                📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'endDate', lang)}
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono block mt-0.5">
+                                📅 {new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'colDuration', lang)}
+                              </span>
+                              <span className="font-black text-amber-500 dark:text-amber-400 text-sm block mt-0.5">
+                                ⏱️ {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* FULL REASON (100% VISIBLE, NEVER TRUNCATED, PHONE OPTIMIZED) */}
+                          <div className="space-y-1.5 flex-1">
+                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                              <span>💬</span>
+                              <span>{t('leave', 'reason', lang)}:</span>
+                            </span>
+                            <div className="p-3.5 bg-slate-50 dark:bg-zinc-950/90 border border-slate-200/90 dark:border-zinc-800 rounded-xl text-xs text-slate-800 dark:text-zinc-200 leading-relaxed break-words whitespace-pre-wrap select-text">
+                              {item.reason ? (
+                                item.reason
+                              ) : (
+                                <span className="italic text-slate-400">
+                                  {lang === 'bm' ? 'Tiada alasan dinyatakan.' : 'No reason provided.'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Attachment Link */}
+                          {item.attachment_url && (
+                            <div className="pt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadProof(item.attachment_url!)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-bold transition-all border border-slate-200 dark:border-zinc-700 cursor-pointer"
+                              >
+                                <span>📎</span>
+                                <span>{t('leave', 'viewAttachment', lang)} (MC / Proof)</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Action Buttons: Approve / Reject (Mobile-first, prominent, touch-friendly) */}
+                          {isActionAllowed && item.status === 'Pending' && (
+                            <div className="pt-3 border-t border-slate-150 dark:border-zinc-800/80 flex items-center gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(item)}
+                                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>✓</span>
+                                <span>{t('leave', 'approveBtn', lang)}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectClick(item)}
+                                className="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>✕</span>
+                                <span>{t('leave', 'rejectBtn', lang)}</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1363,6 +1474,42 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               {currentRecord.annual_total - currentRecord.annual_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.annual_total} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki' : 'remaining'}</span>
                             </p>
                             <p className="text-[10px] text-slate-400 mt-1">{currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+
+                            {/* Month-by-Month Accrued To Date */}
+                            {(() => {
+                              let empType = currentRecord.profiles?.employment_type;
+                              let sDate = currentRecord.profiles?.start_date;
+                              let eDate = currentRecord.profiles?.end_date;
+                              let isWorking = currentRecord.profiles?.is_currently_working;
+
+                              if (currentRecord.profiles?.remarks) {
+                                const match = currentRecord.profiles.remarks.match(/<!--EMP_META:(.*?)-->/);
+                                if (match) {
+                                  try {
+                                    const meta = JSON.parse(match[1]);
+                                    if (!empType && meta.type) empType = meta.type;
+                                    if (!sDate && meta.start) sDate = meta.start;
+                                    if (!eDate && meta.end) eDate = meta.end;
+                                    if (isWorking === undefined && typeof meta.active === 'boolean') isWorking = meta.active;
+                                  } catch (e) {}
+                                }
+                              }
+
+                              const accrual = calculateLeaveAccrual(sDate, eDate, currentRecord.annual_total, empType, isWorking);
+
+                              return (
+                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
+                                  <span className="font-bold text-amber-500 dark:text-yellow-400">
+                                    📅 {accrual.isEligible ? `${accrual.accruedDays}d Accrued to Date` : 'Contract for Service (No AL)'}
+                                  </span>
+                                  {accrual.isEligible && (
+                                    <span className="text-slate-400 block text-[9px] mt-0.5">
+                                      ({accrual.completedMonthsThisYear}/12 mos · {accrual.monthlyRate} d/mo)
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">

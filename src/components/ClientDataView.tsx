@@ -423,7 +423,7 @@ export default function ClientDataView() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'standard' | 'expanded' | 'lod'>('standard');
+  const [viewMode, setViewMode] = useState<'standard' | 'expanded' | 'lod' | 'potential'>('standard');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [storageFolders, setStorageFolders] = useState<string[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -983,11 +983,19 @@ export default function ClientDataView() {
       return parseSafeAmount(val);
     };
 
+    let rawPhone = sanitizeInput((data['PHONE NUMBER'] as string) || '', 30).trim();
+    let formattedPhone = rawPhone;
+    if (rawPhone && !rawPhone.startsWith('+')) {
+      if (rawPhone.startsWith('60')) formattedPhone = `+${rawPhone}`;
+      else if (rawPhone.startsWith('0')) formattedPhone = `+60${rawPhone.slice(1)}`;
+      else formattedPhone = `+60${rawPhone}`;
+    }
+
     const clientPayload = {
       No: data.No ? parseInt(data.No as string, 10) : null,
       NAME: sanitizeInput((data.NAME as string) || '', 100),
       'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
-      'PHONE NUMBER': sanitizeInput((data['PHONE NUMBER'] as string) || '', 20),
+      'PHONE NUMBER': formattedPhone,
       DATE: sanitizeInput((data.DATE as string) || '', 20),
       'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
       // Whitelist-based: only accept known status values
@@ -1133,6 +1141,7 @@ export default function ClientDataView() {
             onAddClick={handleOpenAddModal}
             onEditClick={handleOpenEditModal}
             onViewClick={handleOpenViewModal}
+            onClientConverted={() => setRefreshTrigger(prev => prev + 1)}
           />
         </div>
 
@@ -1623,8 +1632,22 @@ export default function ClientDataView() {
                     <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'phoneNumberLabel', lang)}</label>
-                    <input type="text" name="PHONE NUMBER" defaultValue={editingClient?.["PHONE NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {t('clients', 'phoneNumberLabel', lang)}
+                      </label>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
+                        {lang === 'bm' ? 'Lalai: +60 (Boleh diedit untuk luar negara)' : 'Default: +60 (Editable for overseas)'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      name="PHONE NUMBER"
+                      defaultValue={editingClient?.["PHONE NUMBER"] || '+60 '}
+                      placeholder="+60 12-345 6789"
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                      required
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'emailLabel', lang)}</label>

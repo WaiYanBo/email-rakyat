@@ -320,22 +320,29 @@ export default function ExecutiveOverview() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('announcements')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
       if (error) {
+        console.error('Error deleting announcement:', error);
         alert(t('overview', 'failedDelete', lang));
       } else {
+        setAnnouncements(prev => prev.filter(a => a.id !== id));
+        setTranslatedAnnouncements(prev => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+
         await writeAuditLog('DELETE', id, {
           title,
           content,
           type,
           scheduled_at
         });
-        // Fallback: manually update state if real-time listener is slow or replication is disabled
-        setAnnouncements(prev => prev.filter(a => a.id !== id));
       }
     } catch (err) {
       console.error('Error deleting announcement:', err);
@@ -374,9 +381,9 @@ export default function ExecutiveOverview() {
       return;
     }
 
-    // Combine date with current time for scheduling
+    // Combine date with midday local time to prevent UTC timezone date flips
     const scheduledDateTime = announcementDate
-      ? new Date(`${announcementDate}T00:00:00`).toISOString()
+      ? new Date(`${announcementDate}T12:00:00`).toISOString()
       : new Date().toISOString();
 
     try {
@@ -393,9 +400,29 @@ export default function ExecutiveOverview() {
           .eq('id', editingNotice.id)
           .select();
 
-        if (error) {
-          alert(t('overview', 'failedUpdate', lang));
+        if (error || (data && data.length === 0)) {
+          console.error('Announcement update failed or RLS blocked:', error, data);
+          alert(error ? `${t('overview', 'failedUpdate', lang)} (${error.message})` : `${t('overview', 'failedUpdate', lang)} (Database RLS permission denied)`);
         } else {
+          // Instant optimistic local state update
+          const updatedDateFormatted = new Date(scheduledDateTime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          setAnnouncements(prev => prev.map(a => a.id === editingNotice.id ? {
+            ...a,
+            title: cleanTitle,
+            content: cleanContent,
+            type: cleanType,
+            author: cleanAuthor,
+            scheduled_at: scheduledDateTime,
+            date: updatedDateFormatted
+          } : a));
+
+          // Clear cached translation so edited text / type badge reflects immediately
+          setTranslatedAnnouncements(prev => {
+            const next = { ...prev };
+            delete next[editingNotice.id];
+            return next;
+          });
+
           await writeAuditLog('UPDATE', editingNotice.id, {
             before: {
               title: editingNotice.title,
@@ -411,7 +438,6 @@ export default function ExecutiveOverview() {
             }
           });
           handleCloseNoticeModal();
-          // Instant local state update
           await fetchAnnouncements();
         }
       } else {
@@ -430,22 +456,32 @@ export default function ExecutiveOverview() {
           ])
           .select();
 
-        if (error) {
-          console.error('Insert announcement error:', error);
-          alert(`${t('overview', 'failedPost', lang)}${error.message || ''}`);
+        if (error || !data || data.length === 0) {
+          console.error('Insert announcement error:', error, data);
+          alert(`${t('overview', 'failedPost', lang)}${error?.message || ''}`);
         } else {
-          const newRecord = data?.[0];
-          if (newRecord) {
-            await writeAuditLog('INSERT', newRecord.id, {
-              title: cleanTitle,
-              type: cleanType,
-              content: cleanContent,
-              scheduled_at: scheduledDateTime
-            });
-          }
+          const newRecord = data[0];
+          const newFormatted = {
+            id: newRecord.id,
+            type: newRecord.type || cleanType,
+            title: newRecord.title || cleanTitle,
+            content: newRecord.content || cleanContent,
+            author: newRecord.author_name || cleanAuthor,
+            date: new Date(newRecord.scheduled_at || scheduledDateTime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            scheduled_at: newRecord.scheduled_at || scheduledDateTime,
+            created_at: newRecord.created_at || new Date().toISOString()
+          };
+          setAnnouncements(prev => [newFormatted, ...prev]);
+
+          await writeAuditLog('INSERT', newRecord.id, {
+            title: cleanTitle,
+            type: cleanType,
+            content: cleanContent,
+            scheduled_at: scheduledDateTime
+          });
+
           handleCloseNoticeModal();
           (e.target as HTMLFormElement).reset();
-          // Instant local state update
           await fetchAnnouncements();
         }
       }
@@ -466,18 +502,28 @@ export default function ExecutiveOverview() {
     );
   }
 
-  // Helper function to get today's date in YYYY-MM-DD format
-  const getTodayDateString = () => new Date().toISOString().split('T')[0];
+  // Helper function to get date in local YYYY-MM-DD format
+  const getLocalDateString = (isoOrDate?: string | Date) => {
+    if (!isoOrDate) return '';
+    const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-  // Separate announcements into today and past
+  const getTodayDateString = () => getLocalDateString(new Date());
+
+  // Separate announcements into today and past (timezone safe)
   const getTodayAnnouncements = () => {
     const todayStr = getTodayDateString();
-    return announcements.filter(a => a.scheduled_at.split('T')[0] === todayStr);
+    return announcements.filter(a => getLocalDateString(a.scheduled_at) === todayStr);
   };
 
   const getPastAnnouncements = () => {
     const todayStr = getTodayDateString();
-    return announcements.filter(a => a.scheduled_at.split('T')[0] < todayStr);
+    return announcements.filter(a => getLocalDateString(a.scheduled_at) < todayStr);
   };
 
   // Get announcements to display on main page
@@ -1008,7 +1054,7 @@ export default function ExecutiveOverview() {
                 <input
                   type="date"
                   name="scheduled_date"
-                  defaultValue={editingNotice ? editingNotice.scheduled_at.split('T')[0] : new Date().toISOString().split('T')[0]}
+                  defaultValue={editingNotice ? getLocalDateString(editingNotice.scheduled_at) : getTodayDateString()}
                   onClick={(e) => { }}
                   className="w-full px-4 py-3 border border-slate-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-sm font-medium text-slate-900 dark:text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 transition-all disabled:opacity-50 min-h-[48px]"
                   disabled={isPostingNotice}

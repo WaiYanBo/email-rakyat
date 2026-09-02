@@ -11,11 +11,32 @@ export type EmploymentType = 'Contract of Service' | 'Contract for Service' | 'I
 export interface AccrualCalculation {
   tenureText: string;
   completedMonthsThisYear: number;
+  monthsInYear: number;
+  proRatedYearTotal: number;
   accruedDays: number;
   annualTotal: number;
   monthlyRate: string;
   isEligible: boolean;
   note?: string;
+}
+
+// ─── HELPER: ROUND LEAVE DAYS (0.5 and Whole numbers) ───────────────────────
+// Rules:
+// - Negligible remainder (< 0.20, e.g. 3.01, 3.02) -> stays at whole number: 3.0!
+// - Moderate remainder (0.20 - 0.59, e.g. 3.35, 1.34) -> rounds to 0.5: 3.5, 1.5!
+// - High remainder (>= 0.60, e.g. 6.67, 0.67) -> rounds up to whole number: 7.0, 1.0!
+export function roundLeaveDays(val: number): number {
+  if (val <= 0) return 0;
+  const intPart = Math.floor(val);
+  const frac = Math.round((val - intPart) * 100) / 100;
+
+  if (frac < 0.20) {
+    return intPart;
+  }
+  if (frac < 0.60) {
+    return intPart + 0.5;
+  }
+  return intPart + 1.0;
 }
 
 // ─── HELPER: CALCULATE MONTH-BY-MONTH ANNUAL LEAVE ACCRUAL & TENURE ───
@@ -31,6 +52,8 @@ export function calculateLeaveAccrual(
     return {
       tenureText: 'Start date not set',
       completedMonthsThisYear: 0,
+      monthsInYear: 12,
+      proRatedYearTotal: annualTotal,
       accruedDays: 0,
       annualTotal,
       monthlyRate: (annualTotal / 12).toFixed(2),
@@ -39,19 +62,29 @@ export function calculateLeaveAccrual(
     };
   }
 
-  const start = new Date(startDateStr);
-  const end = !isCurrentlyWorking && endDateStr ? new Date(endDateStr) : referenceDate;
-  
-  if (isNaN(start.getTime())) {
+  // Parse YYYY-MM-DD explicitly to prevent any UTC/timezone shifts
+  const dateParts = startDateStr.split('T')[0].split('-');
+  const startYear = parseInt(dateParts[0], 10);
+  const startMonth1Based = parseInt(dateParts[1], 10); // 1 = Jan, 8 = Aug
+  const startDay = parseInt(dateParts[2], 10) || 1;
+
+  if (isNaN(startYear) || isNaN(startMonth1Based)) {
     return {
       tenureText: 'Invalid start date',
       completedMonthsThisYear: 0,
+      monthsInYear: 12,
+      proRatedYearTotal: annualTotal,
       accruedDays: 0,
       annualTotal,
       monthlyRate: (annualTotal / 12).toFixed(2),
       isEligible: employmentType !== 'Contract for Service',
     };
   }
+
+  const start = new Date(startYear, startMonth1Based - 1, startDay);
+  const end = !isCurrentlyWorking && endDateStr 
+    ? new Date(parseInt(endDateStr.split('-')[0], 10), parseInt(endDateStr.split('-')[1], 10) - 1, parseInt(endDateStr.split('-')[2], 10) || 1)
+    : referenceDate;
 
   // 1. Calculate Tenure
   let years = end.getFullYear() - start.getFullYear();
@@ -79,6 +112,8 @@ export function calculateLeaveAccrual(
     return {
       tenureText,
       completedMonthsThisYear: 0,
+      monthsInYear: 0,
+      proRatedYearTotal: 0,
       accruedDays: 0,
       annualTotal: 0,
       monthlyRate: '0.00',
@@ -92,10 +127,13 @@ export function calculateLeaveAccrual(
     const internEnd = endDateStr ? new Date(endDateStr) : end;
     const totalInternMonths = Math.max(1, (internEnd.getFullYear() - start.getFullYear()) * 12 + (internEnd.getMonth() - start.getMonth()) + (internEnd.getDate() >= start.getDate() ? 1 : 0));
     const elapsedMonths = Math.max(0, Math.min(totalInternMonths, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + (end.getDate() >= start.getDate() ? 1 : 0)));
-    const internAccrual = Math.min(annualTotal, parseFloat(((elapsedMonths / 12) * annualTotal).toFixed(1)));
+    const internAccrual = Math.min(annualTotal, roundLeaveDays((elapsedMonths / 12) * annualTotal));
+    const proRatedIntern = Math.min(annualTotal, roundLeaveDays((totalInternMonths / 12) * annualTotal));
     return {
       tenureText,
       completedMonthsThisYear: elapsedMonths,
+      monthsInYear: totalInternMonths,
+      proRatedYearTotal: proRatedIntern,
       accruedDays: internAccrual,
       annualTotal,
       monthlyRate: (annualTotal / 12).toFixed(2),
@@ -106,34 +144,64 @@ export function calculateLeaveAccrual(
 
   // 4. Contract of Service: Month-by-month statutory accrual in current calendar year
   const currentYear = referenceDate.getFullYear();
-  const startYear = start.getFullYear();
-  let monthsEligibleThisYear = 0;
+  let monthsInYear = 12;
+  let completedMonthsThisYear = 0;
 
   if (startYear === currentYear) {
-    // Joined this year: months from start month up to current month
-    const startMonth = start.getMonth(); // 0-11
-    const currentMonth = referenceDate.getMonth(); // 0-11
-    monthsEligibleThisYear = Math.max(0, currentMonth - startMonth + (start.getDate() <= 15 ? 1 : 0));
+    // Full months after the start month through December
+    const fullMonthsAfter = 12 - startMonth1Based;
+    // Join month credit:
+    // Started on 1st: 1.0 month credit (e.g. Aug 1st = 1.0 + 4 = 5.0 months)
+    // Started between 2nd and 15th: 0.5 month credit (e.g. Aug 15th = 0.5 + 4 = 4.5 months)
+    // Started after 15th: 0 month credit (e.g. Aug 20th = 0 + 4 = 4.0 months)
+    const joinMonthCredit = startDay === 1 ? 1.0 : (startDay <= 15 ? 0.5 : 0.0);
+    monthsInYear = fullMonthsAfter + joinMonthCredit;
+    monthsInYear = Math.max(0.5, Math.min(12, monthsInYear));
+
+    // Completed months elapsed so far in current year up to reference date
+    const refMonth1Based = referenceDate.getMonth() + 1; // 1-12
+    if (refMonth1Based > startMonth1Based) {
+      const fullMonthsBetween = refMonth1Based - startMonth1Based - 1;
+      const startMonthWorked = startDay === 1 ? 1.0 : (startDay <= 15 ? 0.5 : 0.0);
+      const currentMonthWorked = referenceDate.getDate() >= 15 ? 1.0 : (referenceDate.getDate() >= 1 ? 0.5 : 0.0);
+      completedMonthsThisYear = startMonthWorked + fullMonthsBetween + currentMonthWorked;
+    } else if (refMonth1Based === startMonth1Based) {
+      completedMonthsThisYear = referenceDate.getDate() >= startDay ? (referenceDate.getDate() - startDay >= 15 ? 0.5 : 0.0) : 0.0;
+    } else {
+      completedMonthsThisYear = 0;
+    }
+    completedMonthsThisYear = Math.min(monthsInYear, Math.max(0, completedMonthsThisYear));
   } else if (startYear < currentYear) {
-    // Joined in earlier year: full months in current calendar year up to current month
-    monthsEligibleThisYear = referenceDate.getMonth() + (referenceDate.getDate() >= 1 ? 1 : 0);
+    monthsInYear = 12;
+    completedMonthsThisYear = referenceDate.getMonth() + (referenceDate.getDate() >= 15 ? 1 : 0.5);
+    completedMonthsThisYear = Math.min(12, Math.max(0, completedMonthsThisYear));
   } else {
-    monthsEligibleThisYear = 0;
+    // Future start date
+    monthsInYear = 0;
+    completedMonthsThisYear = 0;
   }
 
-  monthsEligibleThisYear = Math.min(12, Math.max(0, monthsEligibleThisYear));
-  const rawAccrued = (monthsEligibleThisYear / 12) * annualTotal;
-  // Round to nearest 0.5 day
-  const accruedDays = Math.min(annualTotal, Math.round(rawAccrued * 2) / 2);
+  const monthlyRateNum = annualTotal / 12;
+  // Year pro-rata entitlement:
+  // For Aug 15: 4.5 * (8 / 12) = 3.015 -> roundLeaveDays(3.015) = 3 days!
+  // For Aug 1:  5.0 * (8 / 12) = 3.333 (or 5 * 0.67 = 3.35) -> roundLeaveDays(3.35) = 3.5 days!
+  const proRatedYearTotal = roundLeaveDays(monthsInYear * monthlyRateNum);
+  // Accrued to date
+  const rawAccrued = completedMonthsThisYear * monthlyRateNum;
+  const accruedDays = Math.min(proRatedYearTotal, roundLeaveDays(rawAccrued));
 
   return {
     tenureText,
-    completedMonthsThisYear: monthsEligibleThisYear,
+    completedMonthsThisYear,
+    monthsInYear,
+    proRatedYearTotal,
     accruedDays,
     annualTotal,
-    monthlyRate: (annualTotal / 12).toFixed(2),
+    monthlyRate: monthlyRateNum.toFixed(2),
     isEligible: true,
-    note: `${monthsEligibleThisYear}/12 months completed in ${currentYear} (${(annualTotal / 12).toFixed(2)} days/month)`
+    note: startYear === currentYear
+      ? `Joined mid-year (${monthsInYear} mos in ${currentYear}) · ${currentYear} Pro-Rata Entitlement: ${proRatedYearTotal} days (${monthlyRateNum.toFixed(2)} d/mo · Accrued to date: ${accruedDays}d)`
+      : `${completedMonthsThisYear}/12 months completed in ${currentYear} (${monthlyRateNum.toFixed(2)} days/month)`
   };
 }
 
@@ -698,10 +766,10 @@ export default function ReportsView() {
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
                             <span className="font-mono font-black text-xs text-amber-600 dark:text-yellow-400">
-                              🏖️ {staff.accrual?.accruedDays ?? 0} / {staff.annual_total || 12} d earned
+                              🏖️ {staff.accrual?.accruedDays ?? 0} / {staff.accrual?.proRatedYearTotal ?? staff.annual_total ?? 12} d earned
                             </span>
                             <span className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium">
-                              {staff.accrual?.completedMonthsThisYear ?? 0}/12 mos ({staff.accrual?.monthlyRate || '1.00'} d/mo)
+                              {staff.accrual?.monthsInYear && staff.accrual.monthsInYear < 12 ? `${staff.accrual.monthsInYear} mos in ${new Date().getFullYear()}` : `${staff.accrual?.completedMonthsThisYear ?? 0}/12 mos`} ({staff.accrual?.monthlyRate || '1.00'} d/mo)
                             </span>
                           </div>
                         )}
@@ -845,7 +913,7 @@ export default function ReportsView() {
                     <span className="font-black text-amber-500 dark:text-yellow-400 font-mono text-sm">
                       {viewingStaff.employment_type === 'Contract for Service' 
                         ? '0 Days (Not Eligible)' 
-                        : `${viewingStaff.accrual?.accruedDays || 0} / ${viewingStaff.annual_total || 12} Days`}
+                        : `${viewingStaff.accrual?.accruedDays || 0} / ${viewingStaff.accrual?.proRatedYearTotal || viewingStaff.annual_total || 12} Days`}
                     </span>
                   </div>
                 </div>

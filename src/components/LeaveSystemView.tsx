@@ -4,7 +4,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import type { Language } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
-import { calculateLeaveAccrual } from './ReportsView';
+import { calculateLeaveAccrual, type AccrualCalculation } from './ReportsView';
 
 interface LeaveBalance {
   annual_total: number;
@@ -70,6 +70,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
   // Employee states
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
+  const [employeeAccrual, setEmployeeAccrual] = useState<AccrualCalculation | null>(null);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [holidays, setHolidays] = useState<string[]>([]);
   const [balancesLoading, setBalancesLoading] = useState(true);
@@ -164,16 +165,40 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     if (!profile?.id) return;
     setBalancesLoading(true);
     try {
-      // 1. Fetch balances
-      const { data: balanceData, error: balanceError } = await supabase
-        .from('leave_balances')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .single();
+      // 1. Fetch balances and employee profile details
+      const [balanceRes, profileRes] = await Promise.all([
+        supabase.from('leave_balances').select('*').eq('profile_id', profile.id).single(),
+        supabase.from('profiles').select('id, full_name, remarks, roles(role_name)').eq('id', profile.id).single()
+      ]);
 
-      if (balanceError && balanceError.code !== 'PGRST116') throw balanceError;
-      if (balanceData) {
-        setBalance(balanceData);
+      if (balanceRes.error && balanceRes.error.code !== 'PGRST116') throw balanceRes.error;
+
+      let sDate = '';
+      let eDate = '';
+      let empType = 'Contract of Service';
+      let isWorking = true;
+
+      const myProf = profileRes.data;
+      if (myProf?.roles?.role_name?.toLowerCase().includes('intern')) {
+        empType = 'Internship';
+      }
+      if (myProf?.remarks) {
+        const match = myProf.remarks.match(/<!--EMP_META:(.*?)-->/);
+        if (match) {
+          try {
+            const meta = JSON.parse(match[1]);
+            if (meta.type) empType = meta.type;
+            if (meta.start) sDate = meta.start;
+            if (meta.end) eDate = meta.end;
+            if (typeof meta.active === 'boolean') isWorking = meta.active;
+          } catch (e) {}
+        }
+      }
+
+      if (balanceRes.data) {
+        setBalance(balanceRes.data);
+        const myAcc = calculateLeaveAccrual(sDate, eDate, balanceRes.data.annual_total, empType, isWorking);
+        setEmployeeAccrual(myAcc);
       }
 
       // 2. Fetch requests (joining approver details)
@@ -340,15 +365,31 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
     // Check balances
     if (balance) {
-      const remainingAnnual = balance.annual_total - balance.annual_used;
+      // Annual leave is strictly capped by current year pro-rata entitlement
+      const effectiveAnnualTotal = employeeAccrual?.isEligible 
+        ? employeeAccrual.proRatedYearTotal 
+        : (employeeAccrual?.isEligible === false ? 0 : balance.annual_total);
+      const remainingAnnual = Math.max(0, effectiveAnnualTotal - balance.annual_used);
+
       const remainingSick = balance.sick_total - balance.sick_used;
       const remainingHosp = balance.hospitalisation_total - balance.hospitalisation_used;
       const remainingMat = balance.maternity_total - balance.maternity_used;
       const remainingPat = balance.paternity_total - balance.paternity_used;
 
-      if (leaveType === 'Annual' && daysCount > remainingAnnual) {
-        setFormError(t('leave', 'insufficientBalance', lang));
-        return;
+      if (leaveType === 'Annual') {
+        if (employeeAccrual && !employeeAccrual.isEligible) {
+          setFormError(lang === 'bm'
+            ? 'Kakitangan di bawah Kontrak Perkhidmatan (Contract for Service) tidak layak untuk Cuti Tahunan berbayar.'
+            : 'Contract for Service workers are not entitled to paid Annual Leave.');
+          return;
+        }
+
+        if (daysCount > remainingAnnual) {
+          setFormError(lang === 'bm'
+            ? `Baki cuti tahunan tidak mencukupi. Had kelayakan anda untuk tahun ${new Date().getFullYear()} ialah ${effectiveAnnualTotal} hari pro-rata (Baki tersedia: ${remainingAnnual} hari).`
+            : `Insufficient annual leave balance. Your entitlement for ${new Date().getFullYear()} is ${effectiveAnnualTotal} pro-rated days (Remaining available: ${remainingAnnual} days).`);
+          return;
+        }
       }
       if (leaveType === 'Sick' && daysCount > remainingSick) {
         setFormError(t('leave', 'insufficientBalance', lang));
@@ -731,20 +772,52 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {/* Annual Leave */}
-                  <div className="bg-gradient-to-br from-indigo-50/50 to-indigo-100/10 dark:from-indigo-950/20 dark:to-indigo-900/5 border border-indigo-150/40 dark:border-indigo-900/20 p-4 rounded-2xl shadow-xs">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 dark:text-indigo-400 block mb-1">
-                      {t('leave', 'annual', lang)}
-                    </span>
-                    <p className="text-2xl font-black text-slate-800 dark:text-white mb-2">
-                      {balance.annual_total - balance.annual_used} <span className="text-xs font-semibold text-slate-400">/ {balance.annual_total} {t('leave', 'days', lang)}</span>
-                    </p>
-                    <div className="w-full bg-slate-200/50 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-indigo-500 h-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (balance.annual_used / balance.annual_total) * 100)}%` }}
-                      ></div>
-                    </div>
-                  </div>
+                  {(() => {
+                    const effectiveAnnualTotal = employeeAccrual?.isEligible 
+                      ? employeeAccrual.proRatedYearTotal 
+                      : (employeeAccrual?.isEligible === false ? 0 : balance.annual_total);
+                    const remainingAnnual = Math.max(0, effectiveAnnualTotal - balance.annual_used);
+
+                    return (
+                      <div className="bg-gradient-to-br from-indigo-50/50 to-indigo-100/10 dark:from-indigo-950/20 dark:to-indigo-900/5 border border-indigo-150/40 dark:border-indigo-900/20 p-4 rounded-2xl shadow-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
+                            {t('leave', 'annual', lang)}
+                          </span>
+                          {employeeAccrual?.isEligible && employeeAccrual.monthsInYear < 12 && (
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-yellow-400 border border-amber-200 dark:border-amber-800">
+                              Pro-Rata {new Date().getFullYear()}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-2xl font-black text-slate-800 dark:text-white mb-2">
+                          {remainingAnnual} <span className="text-xs font-semibold text-slate-400">/ {effectiveAnnualTotal} {t('leave', 'days', lang)}</span>
+                        </p>
+
+                        <div className="w-full bg-slate-200/50 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mb-2">
+                          <div
+                            className="bg-indigo-500 h-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (balance.annual_used / (effectiveAnnualTotal || 1)) * 100)}%` }}
+                          ></div>
+                        </div>
+
+                        {employeeAccrual?.isEligible && (
+                          <div className="pt-2 border-t border-indigo-100/60 dark:border-indigo-900/40 space-y-0.5">
+                            <div className="flex items-center justify-between text-[10px] font-bold">
+                              <span className="text-slate-500 dark:text-zinc-400">📅 Accrued to Date:</span>
+                              <span className="text-amber-500 dark:text-yellow-400 font-mono font-black">
+                                {employeeAccrual.accruedDays} / {effectiveAnnualTotal}d
+                              </span>
+                            </div>
+                            <p className="text-[9px] text-slate-400 dark:text-zinc-500">
+                              {employeeAccrual.monthlyRate} d/mo · {employeeAccrual.monthsInYear} mos in {new Date().getFullYear()} (Annual Rate: {balance.annual_total}d)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Sick Leave */}
                   <div className="bg-gradient-to-br from-amber-50/50 to-amber-100/10 dark:from-amber-950/20 dark:to-amber-900/5 border border-amber-150/40 dark:border-amber-900/20 p-4 rounded-2xl shadow-xs">
@@ -1466,51 +1539,66 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         {/* Large, high contrast detail metrics */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                           
-                          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">
-                              {t('leave', 'annual', lang)}
-                            </span>
-                            <p className="text-xl font-black text-slate-800 dark:text-white">
-                              {currentRecord.annual_total - currentRecord.annual_used} <span className="text-xs font-semibold text-slate-400">/ {currentRecord.annual_total} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki' : 'remaining'}</span>
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-1">{currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'}</p>
+                          {(() => {
+                            let empType = currentRecord.profiles?.employment_type;
+                            let sDate = currentRecord.profiles?.start_date;
+                            let eDate = currentRecord.profiles?.end_date;
+                            let isWorking = currentRecord.profiles?.is_currently_working;
 
-                            {/* Month-by-Month Accrued To Date */}
-                            {(() => {
-                              let empType = currentRecord.profiles?.employment_type;
-                              let sDate = currentRecord.profiles?.start_date;
-                              let eDate = currentRecord.profiles?.end_date;
-                              let isWorking = currentRecord.profiles?.is_currently_working;
-
-                              if (currentRecord.profiles?.remarks) {
-                                const match = currentRecord.profiles.remarks.match(/<!--EMP_META:(.*?)-->/);
-                                if (match) {
-                                  try {
-                                    const meta = JSON.parse(match[1]);
-                                    if (!empType && meta.type) empType = meta.type;
-                                    if (!sDate && meta.start) sDate = meta.start;
-                                    if (!eDate && meta.end) eDate = meta.end;
-                                    if (isWorking === undefined && typeof meta.active === 'boolean') isWorking = meta.active;
-                                  } catch (e) {}
-                                }
+                            if (currentRecord.profiles?.remarks) {
+                              const match = currentRecord.profiles.remarks.match(/<!--EMP_META:(.*?)-->/);
+                              if (match) {
+                                try {
+                                  const meta = JSON.parse(match[1]);
+                                  if (!empType && meta.type) empType = meta.type;
+                                  if (!sDate && meta.start) sDate = meta.start;
+                                  if (!eDate && meta.end) eDate = meta.end;
+                                  if (isWorking === undefined && typeof meta.active === 'boolean') isWorking = meta.active;
+                                } catch (e) {}
                               }
+                            }
 
-                              const accrual = calculateLeaveAccrual(sDate, eDate, currentRecord.annual_total, empType, isWorking);
+                            const accrual = calculateLeaveAccrual(sDate, eDate, currentRecord.annual_total, empType, isWorking);
+                            const effectiveTotal = accrual.isEligible ? accrual.proRatedYearTotal : currentRecord.annual_total;
+                            const remainingDays = Math.max(0, effectiveTotal - currentRecord.annual_used);
 
-                              return (
-                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
-                                  <span className="font-bold text-amber-500 dark:text-yellow-400">
-                                    📅 {accrual.isEligible ? `${accrual.accruedDays}d Accrued to Date` : 'Contract for Service (No AL)'}
+                            return (
+                              <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block">
+                                    {t('leave', 'annual', lang)}
                                   </span>
-                                  {accrual.isEligible && (
-                                    <span className="text-slate-400 block text-[9px] mt-0.5">
-                                      ({accrual.completedMonthsThisYear}/12 mos · {accrual.monthlyRate} d/mo)
+                                  {accrual.isEligible && accrual.monthsInYear < 12 && (
+                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-yellow-400 border border-amber-200 dark:border-amber-800">
+                                      Pro-Rata {new Date().getFullYear()}
                                     </span>
                                   )}
                                 </div>
-                              );
-                            })()}
-                          </div>
+
+                                <p className="text-xl font-black text-slate-800 dark:text-white">
+                                  {remainingDays} <span className="text-xs font-semibold text-slate-400">/ {effectiveTotal} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki' : 'remaining'}</span>
+                                </p>
+                                <p className="text-[10px] text-slate-400 mt-1">
+                                  {currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'} · Baseline: {currentRecord.annual_total}d/yr
+                                </p>
+
+                                {/* Month-by-Month Accrued To Date */}
+                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-medium">📅 Accrued to Date:</span>
+                                    <span className="font-bold text-amber-500 dark:text-yellow-400 font-mono">
+                                      {accrual.isEligible ? `${accrual.accruedDays} / ${effectiveTotal} Days` : 'Contract for Service (0d)'}
+                                    </span>
+                                  </div>
+                                  {accrual.isEligible && (
+                                    <span className="text-slate-400 block text-[9px] mt-0.5">
+                                      ({accrual.completedMonthsThisYear}/{accrual.monthsInYear} mos in {new Date().getFullYear()} · {accrual.monthlyRate} d/mo)
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block mb-1">

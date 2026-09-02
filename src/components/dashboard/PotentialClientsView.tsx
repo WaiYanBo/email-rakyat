@@ -603,8 +603,8 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
       )}
 
       {/* Top Controls Header */}
-      <div className="p-4 border-b border-amber-600/40 dark:border-amber-500/30 bg-amber-600 dark:bg-gray-900 flex-shrink-0 rounded-t-2xl">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+      <div className="p-3 sm:p-4 border-b border-amber-600/40 dark:border-amber-500/30 bg-amber-600 dark:bg-gray-900 flex-shrink-0 rounded-t-2xl">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/15 dark:bg-amber-500/20 text-white dark:text-yellow-400 flex items-center justify-center font-bold">
               ★
@@ -622,23 +622,23 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
           </div>
 
           {/* Action buttons (Export + Add) */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[48px] items-center">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
               <button
                 onClick={handleExportCSV}
-                className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center"
+                className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center"
               >
                 CSV
               </button>
               <button
                 onClick={handleExportExcel}
-                className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center"
+                className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center"
               >
                 Excel
               </button>
               <button
                 onClick={handleExportPDF}
-                className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center"
+                className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center"
               >
                 PDF
               </button>
@@ -647,7 +647,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             {canEdit && (
               <button
                 onClick={handleOpenAddModal}
-                className="text-xs font-semibold bg-white hover:bg-slate-50 text-amber-700 dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-400 px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[48px] flex items-center justify-center gap-1.5 border border-amber-200 dark:border-yellow-500/50"
+                className="text-xs font-semibold bg-white hover:bg-slate-50 text-amber-700 dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-400 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[42px] sm:h-[48px] flex items-center justify-center gap-1.5 border border-amber-200 dark:border-yellow-500/50 flex-shrink-0"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -659,50 +659,50 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
 
         {/* Search & Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-12 gap-2.5 sm:gap-3">
           {/* Search bar */}
-          <div className="sm:col-span-6 relative">
+          <div className="col-span-2 sm:col-span-6 relative">
             <input
               type="text"
               placeholder={lang === 'bm' ? 'Cari nama, IC, no. telefon, kategori, staf...' : 'Search name, IC, phone, category, staff...'}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition-all h-[48px] shadow-sm"
+              className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 transition-all h-[42px] sm:h-[48px] shadow-sm"
             />
           </div>
 
           {/* Potential Level Filter */}
-          <div className="sm:col-span-3 relative">
+          <div className="col-span-1 sm:col-span-3 relative">
             <select
               value={potentialFilter}
               onChange={(e) => { setPotentialFilter(e.target.value as any); setCurrentPage(1); }}
-              className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-amber-500 cursor-pointer h-[48px] shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-7 sm:pr-10 focus:outline-none focus:border-amber-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none truncate"
             >
               <option value="all">{t('clients', 'allPotentials', lang)}</option>
               <option value="High">{t('clients', 'highPotential', lang)}</option>
               <option value="Medium">{t('clients', 'mediumPotential', lang)}</option>
               <option value="Low">{t('clients', 'lowPotential', lang)}</option>
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </div>
 
           {/* Date Filter */}
-          <div className="sm:col-span-3 relative">
+          <div className="col-span-1 sm:col-span-3 relative">
             <select
               value={dateFilter}
               onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
-              className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-amber-500 cursor-pointer h-[48px] shadow-sm appearance-none"
+              className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-7 sm:pr-10 focus:outline-none focus:border-amber-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none truncate"
             >
               <option value="all">{t('clients', 'allDates', lang)}</option>
               <option value="year">{t('clients', 'thisYear', lang)}</option>
               <option value="month">{t('clients', 'thisMonth', lang)}</option>
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
@@ -785,7 +785,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                   {sortKey === 'lead_by' && (sortDirection === 'asc' ? '▲' : '▼')}
                 </div>
               </th>
-              <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 sticky right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">
+              <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 md:sticky md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">
                 {t('clients', 'actions', lang)}
               </th>
             </tr>
@@ -866,11 +866,11 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                         </span>
                       ) : '-'}
                     </td>
-                    <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
-                      <div className="flex items-center justify-start gap-1.5">
+                    <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
+                      <div className="flex items-center justify-start gap-1 sm:gap-1.5">
                         <button
                           onClick={() => handleOpenViewModal(client)}
-                          className="h-7 px-2.5 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                          className="h-7 px-2 sm:px-2.5 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-[11px] sm:text-xs font-semibold transition-all shadow-sm"
                           title="View Profile"
                         >
                           {t('clients', 'viewDoc', lang)}
@@ -880,7 +880,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                           <>
                             <button
                               onClick={() => handleOpenEditModal(client)}
-                              className="h-7 px-2.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
+                              className="h-7 px-2 sm:px-2.5 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-[11px] sm:text-xs font-semibold transition-all shadow-sm"
                               title="Edit Client"
                             >
                               {t('reports', 'editBtn', lang)}
@@ -889,10 +889,10 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                             {client.status !== 'Converted' && (
                               <button
                                 onClick={() => handleConvertToActive(client)}
-                                className="h-7 px-2.5 flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-sm"
+                                className="h-7 px-2 sm:px-2.5 flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] sm:text-xs font-semibold transition-all shadow-sm"
                                 title={t('clients', 'convertToActiveClient', lang)}
                               >
-                                {lang === 'bm' ? '+ Tukar Klien' : '+ Convert'}
+                                {lang === 'bm' ? '+ Tukar' : '+ Convert'}
                               </button>
                             )}
 

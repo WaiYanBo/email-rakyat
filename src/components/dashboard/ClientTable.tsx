@@ -918,28 +918,28 @@ export default function ClientTable({
       <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
 
 
-        <div className="flex border-b border-slate-200 dark:border-gray-800 px-3 md:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none">
+        <div className="flex border-b border-slate-200 dark:border-gray-800 px-2 sm:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none gap-0.5 sm:gap-1">
           <button
             onClick={() => onViewModeChange('standard')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             {t('clients', 'standardView', lang)}
           </button>
           <button
             onClick={() => onViewModeChange('expanded')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
-            {t('clients', 'expandedView', lang)}
+            {lang === 'bm' ? 'Pandangan Lanjut' : 'Expanded View'}
           </button>
           <button
             onClick={() => onViewModeChange('lod')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'lod' ? 'border-rose-600 text-rose-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'lod' ? 'border-rose-600 text-rose-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             {lang === 'bm' ? 'Surat Tuntutan (LoD)' : 'Letter of Demand (LoD)'}
           </button>
           <button
             onClick={() => onViewModeChange('potential')}
-            className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'potential' ? 'border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'potential' ? 'border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
           >
             ★ {t('clients', 'potentialClients', lang)}
           </button>
@@ -949,39 +949,39 @@ export default function ClientTable({
           <PotentialClientsView canEdit={canEdit} onClientConverted={onClientConverted} />
         ) : (
           <>
-            <div className="p-4 border-b border-cyan-700 dark:border-yellow-500/50 bg-cyan-600 dark:bg-gray-900 flex-shrink-0">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+            <div className="p-3 sm:p-4 border-b border-cyan-700 dark:border-yellow-500/50 bg-cyan-600 dark:bg-gray-900 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">{t('clients', 'clientRegistry', lang)}</h3>
 
             {/* EXPORT BUTTONS & ADD BUTTON */}
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-              <div className="relative flex-1 sm:flex-none">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+              <div className="relative flex-1 sm:flex-none min-w-[130px]">
                 <select
                   value={exportScope}
                   onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
                   data-custom-select
-                  className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[48px] shadow-sm appearance-none"
+                  className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
                 >
                   <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
                   <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
 
-              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[48px] items-center">
-                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
-                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
-                <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
+              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
+                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
+                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
+                <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
               </div>
 
               {canEdit && (
                 <button
                   onClick={onAddClick}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-4 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50"
+                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[42px] sm:h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50 flex-shrink-0"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
@@ -992,28 +992,28 @@ export default function ClientTable({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
             <div className="relative flex-1">
               <input
                 type="text"
                 placeholder={t('clients', 'searchPlaceholder', lang)}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all h-[48px] shadow-sm"
+                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all h-[42px] sm:h-[48px] shadow-sm"
               />
             </div>
-            <div className="relative w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto min-w-[130px]">
               <select
                 value={dateFilter}
                 onChange={(e) => onDateFilterChange(e.target.value)}
                 data-custom-select
-                className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[48px] shadow-sm appearance-none min-w-[140px]"
+                className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
               >
                 <option value="all">{t('clients', 'allDates', lang)}</option>
                 <option value="year">{t('clients', 'thisYear', lang)}</option>
                 <option value="month">{t('clients', 'thisMonth', lang)}</option>
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -1034,7 +1034,7 @@ export default function ClientTable({
                   <SortHeader label={getLabel("PACKAGE")} sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("CATEGORY")} sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={getLabel("DATE")} sortKey="DATE" currentSort={sort} onClick={handleSort} />
-                  <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               ) : viewMode === 'lod' ? (
                 <tr>
@@ -1047,14 +1047,14 @@ export default function ClientTable({
                   <SortHeader label={lang === 'bm' ? 'Tarikh Bayaran Terakhir' : 'Last Payment Date'} sortKey="last_payment_date" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={lang === 'bm' ? 'Tempoh Tunggakan' : 'Overdue Duration'} sortKey="overdue_days" currentSort={sort} onClick={handleSort} />
                   <SortHeader label={lang === 'bm' ? 'Tarikh LoD' : 'LoD Date'} sortKey="lod_date" currentSort={sort} onClick={handleSort} />
-                  <th className="px-4 py-3.5 font-semibold text-slate-505 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-505 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               ) : (
                 <tr>
                   {getOrderedKeys(clients[0] || {}).map(key => (
                     <SortHeader key={key} label={getLabel(key)} sortKey={key} currentSort={sort} onClick={handleSort} />
                   ))}
-                  <th className="px-4 py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 sticky top-0 right-0 bg-slate-50 dark:bg-gray-900 z-20 shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
                 </tr>
               )}
             </thead>
@@ -1113,18 +1113,18 @@ export default function ClientTable({
                       </td>
                       <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lod_date || (lang === 'bm' ? 'Belum Dihantar' : 'Not Sent')}</td>
                       
-                      <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
-                        <div className="flex items-center justify-start gap-2">
+                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
+                        <div className="flex items-center justify-start gap-1.5 sm:gap-2">
                           <button
                             onClick={() => onViewClick(client)}
-                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                            className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
                           >
                             {t('clients', 'viewDoc', lang)}
                           </button>
                           {canEdit && (
                             <button
                               onClick={() => onEditClick(client)}
-                              className="h-8 px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
+                              className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
                             >
                               {lang === 'bm' ? 'Rekod LoD' : 'Record LoD'}
                             </button>
@@ -1224,18 +1224,18 @@ export default function ClientTable({
                     )}
 
 
-                    <td className="px-4 py-3.5 text-left whitespace-nowrap sticky right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] z-10">
-                      <div className="flex items-center justify-start gap-2">
+                    <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
+                      <div className="flex items-center justify-start gap-1.5 sm:gap-2">
                         <button
                           onClick={() => onViewClick(client)}
-                          className="h-8 px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                          className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
                         >
                           {t('clients', 'viewDoc', lang)}
                         </button>
                         {canEdit && (
                           <button
                             onClick={() => onEditClick(client)}
-                            className="h-8 px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
+                            className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
                           >
                             {t('reports', 'editBtn', lang)}
                           </button>

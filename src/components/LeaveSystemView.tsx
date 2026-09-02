@@ -365,11 +365,13 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
     // Check balances
     if (balance) {
-      // Annual leave is strictly capped by current year pro-rata entitlement
-      const effectiveAnnualTotal = employeeAccrual?.isEligible 
+      // Annual leave available right now is strictly what has been accrued to date:
+      const yearCap = employeeAccrual?.isEligible 
         ? employeeAccrual.proRatedYearTotal 
         : (employeeAccrual?.isEligible === false ? 0 : balance.annual_total);
-      const remainingAnnual = Math.max(0, effectiveAnnualTotal - balance.annual_used);
+      const availableAnnualAccrued = employeeAccrual?.isEligible
+        ? Math.max(0, employeeAccrual.accruedDays - balance.annual_used)
+        : Math.max(0, balance.annual_total - balance.annual_used);
 
       const remainingSick = balance.sick_total - balance.sick_used;
       const remainingHosp = balance.hospitalisation_total - balance.hospitalisation_used;
@@ -384,10 +386,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           return;
         }
 
-        if (daysCount > remainingAnnual) {
+        if (daysCount > availableAnnualAccrued) {
           setFormError(lang === 'bm'
-            ? `Baki cuti tahunan tidak mencukupi. Had kelayakan anda untuk tahun ${new Date().getFullYear()} ialah ${effectiveAnnualTotal} hari pro-rata (Baki tersedia: ${remainingAnnual} hari).`
-            : `Insufficient annual leave balance. Your entitlement for ${new Date().getFullYear()} is ${effectiveAnnualTotal} pro-rated days (Remaining available: ${remainingAnnual} days).`);
+            ? `Baki cuti tahunan yang telah terkumpul (accrued) setakat ini ialah ${availableAnnualAccrued} hari (daripada had kelayakan tahun ${new Date().getFullYear()}: ${yearCap} hari). Anda tidak boleh memohon melebihi baki yang telah diperoleh.`
+            : `You have only accrued ${availableAnnualAccrued} day(s) to date (out of ${yearCap} days total for ${new Date().getFullYear()}). You cannot apply for ${daysCount} day(s).`);
           return;
         }
       }
@@ -773,10 +775,12 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {/* Annual Leave */}
                   {(() => {
-                    const effectiveAnnualTotal = employeeAccrual?.isEligible 
+                    const yearCap = employeeAccrual?.isEligible 
                       ? employeeAccrual.proRatedYearTotal 
                       : (employeeAccrual?.isEligible === false ? 0 : balance.annual_total);
-                    const remainingAnnual = Math.max(0, effectiveAnnualTotal - balance.annual_used);
+                    const availableAnnualAccrued = employeeAccrual?.isEligible
+                      ? Math.max(0, employeeAccrual.accruedDays - balance.annual_used)
+                      : Math.max(0, balance.annual_total - balance.annual_used);
 
                     return (
                       <div className="bg-gradient-to-br from-indigo-50/50 to-indigo-100/10 dark:from-indigo-950/20 dark:to-indigo-900/5 border border-indigo-150/40 dark:border-indigo-900/20 p-4 rounded-2xl shadow-xs">
@@ -784,34 +788,34 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
                             {t('leave', 'annual', lang)}
                           </span>
-                          {employeeAccrual?.isEligible && employeeAccrual.monthsInYear < 12 && (
+                          {employeeAccrual?.isEligible && (
                             <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-yellow-400 border border-amber-200 dark:border-amber-800">
-                              Pro-Rata {new Date().getFullYear()}
+                              Month-by-Month Accrual
                             </span>
                           )}
                         </div>
 
                         <p className="text-2xl font-black text-slate-800 dark:text-white mb-2">
-                          {remainingAnnual} <span className="text-xs font-semibold text-slate-400">/ {effectiveAnnualTotal} {t('leave', 'days', lang)}</span>
+                          {availableAnnualAccrued} <span className="text-xs font-semibold text-slate-400">/ {yearCap} {t('leave', 'days', lang)}</span>
                         </p>
 
                         <div className="w-full bg-slate-200/50 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mb-2">
                           <div
                             className="bg-indigo-500 h-full transition-all duration-500"
-                            style={{ width: `${Math.min(100, (balance.annual_used / (effectiveAnnualTotal || 1)) * 100)}%` }}
+                            style={{ width: `${Math.min(100, (balance.annual_used / (yearCap || 1)) * 100)}%` }}
                           ></div>
                         </div>
 
                         {employeeAccrual?.isEligible && (
                           <div className="pt-2 border-t border-indigo-100/60 dark:border-indigo-900/40 space-y-0.5">
                             <div className="flex items-center justify-between text-[10px] font-bold">
-                              <span className="text-slate-500 dark:text-zinc-400">📅 Accrued to Date:</span>
+                              <span className="text-slate-500 dark:text-zinc-400">Available Accrued Balance:</span>
                               <span className="text-amber-500 dark:text-yellow-400 font-mono font-black">
-                                {employeeAccrual.accruedDays} / {effectiveAnnualTotal}d
+                                {availableAnnualAccrued} / {yearCap}d
                               </span>
                             </div>
                             <p className="text-[9px] text-slate-400 dark:text-zinc-500">
-                              {employeeAccrual.monthlyRate} d/mo · {employeeAccrual.monthsInYear} mos in {new Date().getFullYear()} (Annual Rate: {balance.annual_total}d)
+                              Accrued {employeeAccrual.accruedDays}d so far ({employeeAccrual.monthlyRate} d/mo) · Year Cap: {yearCap}d
                             </p>
                           </div>
                         )}
@@ -1559,8 +1563,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             }
 
                             const accrual = calculateLeaveAccrual(sDate, eDate, currentRecord.annual_total, empType, isWorking);
-                            const effectiveTotal = accrual.isEligible ? accrual.proRatedYearTotal : currentRecord.annual_total;
-                            const remainingDays = Math.max(0, effectiveTotal - currentRecord.annual_used);
+                            const yearCap = accrual.isEligible ? accrual.proRatedYearTotal : currentRecord.annual_total;
+                            const availableAccrued = accrual.isEligible
+                              ? Math.max(0, accrual.accruedDays - currentRecord.annual_used)
+                              : Math.max(0, currentRecord.annual_total - currentRecord.annual_used);
 
                             return (
                               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 p-4 rounded-xl shadow-xs">
@@ -1568,18 +1574,18 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-450 dark:text-zinc-550 block">
                                     {t('leave', 'annual', lang)}
                                   </span>
-                                  {accrual.isEligible && accrual.monthsInYear < 12 && (
+                                  {accrual.isEligible && (
                                     <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-yellow-400 border border-amber-200 dark:border-amber-800">
-                                      Pro-Rata {new Date().getFullYear()}
+                                      Accrued Balance
                                     </span>
                                   )}
                                 </div>
 
                                 <p className="text-xl font-black text-slate-800 dark:text-white">
-                                  {remainingDays} <span className="text-xs font-semibold text-slate-400">/ {effectiveTotal} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki' : 'remaining'}</span>
+                                  {availableAccrued} <span className="text-xs font-semibold text-slate-400">/ {yearCap} {t('leave', 'days', lang)} {lang === 'bm' ? 'baki terkumpul' : 'accrued available'}</span>
                                 </p>
                                 <p className="text-[10px] text-slate-400 mt-1">
-                                  {currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'} · Baseline: {currentRecord.annual_total}d/yr
+                                  {currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'} · Year Cap: {yearCap}d (Baseline: {currentRecord.annual_total}d/yr)
                                 </p>
 
                                 {/* Month-by-Month Accrued To Date */}
@@ -1587,7 +1593,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                   <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-medium">📅 Accrued to Date:</span>
                                     <span className="font-bold text-amber-500 dark:text-yellow-400 font-mono">
-                                      {accrual.isEligible ? `${accrual.accruedDays} / ${effectiveTotal} Days` : 'Contract for Service (0d)'}
+                                      {accrual.isEligible ? `${accrual.accruedDays} / ${yearCap} Days` : 'Contract for Service (0d)'}
                                     </span>
                                   </div>
                                   {accrual.isEligible && (

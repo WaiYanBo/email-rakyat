@@ -116,7 +116,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const isIT = userDept === 'it' || userRole.includes('IT');
   const isExecutive = ['CEO', 'CFO', 'COO', 'CPO', 'DIRECTOR', 'CHAIRMAN', 'PRESIDENT', 'MANAGEMENT'].includes(userRole);
   const isHR = userDept === 'human resources' || userRole.includes('HR') || userRole.includes('HUMAN RESOURCE');
-  const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff);
+  const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff || permissions?.manage_leave);
 
   // Approvers who can view the admin tabs
   const isApprover = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');

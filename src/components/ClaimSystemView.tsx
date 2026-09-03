@@ -3,6 +3,7 @@ import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { sanitizeInput } from '../utils/security';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface ClaimSystemViewProps {
   profile?: any;
@@ -25,6 +26,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
 
   // State
   const [profile, setProfile] = useState<any>(initialProfile || null);
+  const { permissions } = usePermissions(profile);
   const [isApprover, setIsApprover] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -128,7 +130,8 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         const roleStr = userProfile.role || '';
         const isUserApprover = approverRoles.some(r => roleStr.toLowerCase().includes(r.toLowerCase())) ||
           userProfile.department?.toLowerCase() === 'human resources' ||
-          userProfile.department?.toLowerCase() === 'it';
+          userProfile.department?.toLowerCase() === 'it' ||
+          Boolean(permissions?.manage_claims || permissions?.manage_hr);
         setIsApprover(isUserApprover);
 
         // Set default tab based on mode

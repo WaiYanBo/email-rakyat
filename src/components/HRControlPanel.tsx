@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import AttendanceView from './AttendanceView';
 import PublicHolidaysView from './PublicHolidaysView';
 import LeaveSystemView from './LeaveSystemView';
+import ClaimSystemView from './ClaimSystemView';
 
 type HRTab = 'attendance' | 'holidays' | 'leave' | 'claims';
 
@@ -172,32 +173,8 @@ export default function HRControlPanel() {
         )}
 
         {activeTab === 'claims' && (
-          <div className="animate-fade-in bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-8 md:p-16 text-center space-y-6 max-w-4xl mx-auto shadow-sm">
-            <div className="inline-flex p-4 rounded-3xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-yellow-500">
-              <svg className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V15a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-
-            <div className="space-y-2 max-w-xl mx-auto">
-              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-500 rounded-full text-xs font-bold uppercase tracking-wider">
-                {t('hr', 'comingSoon', lang)}
-              </span>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white pt-2">
-                {t('hr', 'tabClaims', lang)}
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-zinc-405 leading-relaxed pt-2">
-                {t('hr', 'claimsPlaceholder', lang)}
-              </p>
-            </div>
-
-            <div className="pt-4 flex justify-center">
-              <div className="flex gap-2 p-1 bg-slate-50 dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800 text-xs font-semibold text-slate-400 dark:text-zinc-500">
-                <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-850 shadow-sm text-slate-700 dark:text-zinc-300">Phase 2</span>
-                <span className="px-3 py-1.5">Expense Claims</span>
-                <span className="px-3 py-1.5">Receipt Uploads</span>
-              </div>
-            </div>
+          <div className="animate-fade-in">
+            <ClaimSystemView mode="admin" profile={profile} />
           </div>
         )}
       </div>

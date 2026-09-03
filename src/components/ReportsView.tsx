@@ -680,8 +680,8 @@ export default function ReportsView() {
             </div>
           </div>
 
-          {/* Staff Directory Table */}
-          <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[68vh]">
+          {/* Staff Directory (Mobile Cards + Desktop Table) */}
+          <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[75vh]">
             <div className="p-5 border-b border-indigo-950 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
               <div>
                 <h3 className="text-sm font-bold text-white tracking-tight">{t('reports', 'staffDirectory', lang)}</h3>
@@ -701,7 +701,107 @@ export default function ReportsView() {
                 </button>
               )}
             </div>
-            <div className="flex-1 overflow-auto scrollbar-thin">
+
+            {/* Mobile Card View (md:hidden) */}
+            <div className="md:hidden flex-1 overflow-y-auto p-3 space-y-3">
+              {sortedStaffRecords.map(staff => (
+                <div
+                  key={staff.id}
+                  className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                >
+                  {/* Top: Name, Role & Status */}
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                        {staff.full_name}
+                      </h4>
+                      <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                        {staff.roles?.role_name || 'N/A'} • <span className="text-slate-700 dark:text-zinc-300 font-bold">{staff.department || 'General'}</span>
+                      </p>
+                      <p className="text-xs font-mono text-indigo-650 dark:text-indigo-400 mt-0.5">
+                        {staff.email || '-'}
+                      </p>
+                    </div>
+
+                    <span className={`px-2.5 py-0.5 rounded border text-[10px] font-bold tracking-wide uppercase flex-shrink-0 ${
+                      staff.is_on_leave_today
+                        ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                        : (staff.status === 'Active' || !staff.status)
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                          : staff.status === 'On Leave'
+                            ? 'bg-amber-50 text-amber-800 border-amber-100 dark:bg-amber-900/20 dark:text-yellow-500 dark:border-amber-900/30'
+                            : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
+                    }`}>
+                      {staff.is_on_leave_today ? 'On Leave' : (staff.status || 'Active')}
+                    </span>
+                  </div>
+
+                  {/* Contract & Period */}
+                  <div className="p-2.5 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800 space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                        staff.employment_type === 'Internship'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+                          : staff.employment_type === 'Contract for Service'
+                            ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800'
+                            : 'bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+                      }`}>
+                        {staff.employment_type || 'Contract of Service'}
+                      </span>
+                      {staff.salary ? (
+                        <span className="font-mono font-bold text-slate-800 dark:text-zinc-200">
+                          RM {staff.salary}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="text-[11px] text-slate-600 dark:text-zinc-400">
+                      {staff.start_date ? (
+                        <>
+                          <span>📅 {new Date(staff.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          {staff.end_date ? ` → ${new Date(staff.end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ' (Active)'}
+                        </>
+                      ) : (
+                        <span className="italic text-slate-400">Start date not set</span>
+                      )}
+                    </div>
+
+                    {/* Accrued Leave Info */}
+                    <div className="pt-1.5 border-t border-slate-200 dark:border-gray-800 flex justify-between items-center text-[11px]">
+                      <span className="text-slate-500 dark:text-zinc-400 font-medium">Accrued Leave:</span>
+                      {staff.employment_type === 'Contract for Service' ? (
+                        <span className="text-slate-400 italic text-[10px]">No Statutory AL</span>
+                      ) : (
+                        <span className="font-mono font-bold text-amber-600 dark:text-yellow-400">
+                          🏖️ {staff.accrual?.accruedDays ?? 0} / {staff.accrual?.proRatedYearTotal ?? staff.annual_total ?? 12} days
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-gray-800">
+                    <button
+                      onClick={() => { setViewingStaff(staff); setIsViewStaffModalOpen(true); }}
+                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 text-xs font-bold transition-all shadow-xs"
+                    >
+                      👁️ {t('clients', 'viewDoc', lang)}
+                    </button>
+                    {canEditStaff && (
+                      <button
+                        onClick={() => openEditModal(staff)}
+                        className="px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-gray-900/30 dark:text-yellow-500 dark:hover:bg-yellow-500/20 border border-indigo-200 dark:border-yellow-500/30 text-xs font-bold transition-all shadow-xs"
+                      >
+                        ✏️ {t('reports', 'editBtn', lang)}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (hidden md:block) */}
+            <div className="hidden md:block flex-1 overflow-auto scrollbar-thin">
               <table className="w-full min-w-[950px] text-left border-collapse text-xs md:text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">

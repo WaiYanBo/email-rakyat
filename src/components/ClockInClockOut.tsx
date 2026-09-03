@@ -1175,7 +1175,51 @@ export default function ClockInClockOut() {
                       )}
                     </div>
                     <div className="overflow-hidden rounded-xl border border-rose-100 dark:border-rose-900/20">
-                      <div className="overflow-x-auto">
+                      {/* Mobile Cards (md:hidden) */}
+                      <div className="md:hidden space-y-2.5 p-2.5 bg-rose-50/20 dark:bg-rose-950/10">
+                        {filteredForgotRecords.length === 0 ? (
+                          <div className="p-6 text-center text-rose-700 dark:text-rose-400 font-medium italic bg-white dark:bg-black rounded-xl">
+                            {t('attendance', 'noForgotRecords', lang)}
+                          </div>
+                        ) : (
+                          filteredForgotRecords.map((record) => (
+                            <div
+                              key={record.id}
+                              className="p-3.5 rounded-xl bg-white dark:bg-gray-850 border border-rose-100 dark:border-rose-900/30 shadow-xs space-y-2"
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <div>
+                                  <h4 className="font-bold text-slate-900 dark:text-white text-xs">
+                                    {record.user_name}
+                                  </h4>
+                                  <span className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 block mt-0.5">
+                                    📅 {record.date} • 🟢 {new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400">
+                                  {t('attendance', 'noCheckout', lang).replace('⚠️ ', '')}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center justify-end pt-1">
+                                {record.user_id === currentUserId ? (
+                                  <button
+                                    onClick={() => handleOpenLateClockoutModal(record)}
+                                    className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white text-xs font-bold rounded-lg shadow-xs transition-all h-8 flex items-center justify-center"
+                                  >
+                                    {t('attendance', 'checkOutBtn', lang).replace('✗ ', '')}
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 dark:text-zinc-550 italic">{t('attendance', 'notSelf', lang)}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Desktop Table (hidden md:block) */}
+                      <div className="hidden md:block overflow-x-auto">
                         <table className="w-full min-w-[650px] text-left border-collapse text-xs md:text-sm">
                           <thead>
                             <tr className="bg-rose-50/30 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-900/30">
@@ -1253,7 +1297,138 @@ export default function ClockInClockOut() {
                       )}
                     </div>
                     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
-                      <div className="overflow-x-auto">
+                      {/* Mobile Card View (md:hidden) */}
+                      <div className="md:hidden space-y-2.5 p-3">
+                        {filteredAllRecords.length === 0 ? (
+                          <div className="p-6 text-center text-slate-500 font-medium italic">
+                            {t('attendance', 'noAttendanceRecords', lang)}
+                          </div>
+                        ) : (
+                          (isPrivilegedRole ? filteredAllRecords : filteredAllRecords.slice(0, 20)).map((record) => {
+                            const workingHours = calculateWorkingHours(record.clock_in_time, record.clock_out_time);
+                            const isShortDay = workingHours && workingHours.hours < MINIMUM_WORK_HOURS;
+                            const isForgotCheckout = record.clock_in_time && !record.clock_out_time;
+
+                            if (record.is_leave) {
+                              let leaveTypeName = record.leave_type || 'Leave';
+                              if (leaveTypeName.toLowerCase() === 'sick') leaveTypeName = 'Sick Leave';
+                              else if (leaveTypeName.toLowerCase() === 'annual') leaveTypeName = 'Annual Leave';
+                              else if (leaveTypeName.toLowerCase() === 'hospitalisation') leaveTypeName = 'Hospitalisation Leave';
+                              else if (leaveTypeName.toLowerCase() === 'maternity') leaveTypeName = 'Maternity Leave';
+                              else if (leaveTypeName.toLowerCase() === 'paternity') leaveTypeName = 'Paternity Leave';
+                              else if (leaveTypeName.toLowerCase() === 'unpaid') leaveTypeName = 'Unpaid Leave';
+
+                              return (
+                                <div
+                                  key={record.id}
+                                  className="p-3.5 rounded-xl bg-indigo-50/10 dark:bg-yellow-500/5 border border-indigo-100 dark:border-yellow-500/20 space-y-2"
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <h4 className="font-bold text-slate-900 dark:text-white text-xs">{record.user_name}</h4>
+                                    <span className="text-xs font-mono text-slate-500 dark:text-zinc-400">📅 {record.date}</span>
+                                  </div>
+                                  <div className="p-2 rounded-lg bg-indigo-50 dark:bg-yellow-500/10 text-indigo-700 dark:text-yellow-500 text-xs font-semibold text-center flex items-center justify-center gap-1.5">
+                                    <span>🏖️ {lang === 'bm' ? 'Cuti Diluluskan' : 'On Leave'} {leaveTypeName ? `(${leaveTypeName})` : ''}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={record.id}
+                                className={`p-3.5 rounded-xl border shadow-xs space-y-2.5 ${
+                                  isForgotCheckout
+                                    ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30'
+                                    : isShortDay
+                                      ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30'
+                                      : 'bg-white dark:bg-gray-850 border-slate-200 dark:border-gray-800'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start gap-2">
+                                  <div>
+                                    <h4 className="font-bold text-slate-900 dark:text-white text-xs">
+                                      {record.user_name}
+                                    </h4>
+                                    <span className="text-[11px] font-mono text-slate-500 dark:text-zinc-400 block mt-0.5">
+                                      📅 {record.date}
+                                    </span>
+                                  </div>
+
+                                  <div>
+                                    {isForgotCheckout ? (
+                                      <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400">
+                                        {t('attendance', 'noCheckout', lang).replace('⚠️ ', '')}
+                                      </span>
+                                    ) : record.is_late_clockout ? (
+                                      <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-400">
+                                        {lang === 'bm' ? 'Keluar Lewat' : 'Late Clockout'}
+                                      </span>
+                                    ) : isShortDay ? (
+                                      <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400">
+                                        {lang === 'bm' ? '< 9 Jam' : '< 9 Hours'}
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400">
+                                        {lang === 'bm' ? 'Hari Penuh' : 'Full Day'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-1.5 p-2 bg-slate-50 dark:bg-gray-900 rounded-lg border border-slate-150 dark:border-gray-800 text-center text-xs">
+                                  <div>
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">Masuk</span>
+                                    <span className="font-mono font-bold text-slate-800 dark:text-zinc-200 text-[11px] block mt-0.5">
+                                      {record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">Keluar</span>
+                                    <span className="font-mono font-bold text-slate-800 dark:text-zinc-200 text-[11px] block mt-0.5">
+                                      {record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">Tempoh</span>
+                                    <span className="font-mono font-black text-indigo-600 dark:text-yellow-400 text-[11px] block mt-0.5">
+                                      {workingHours ? `${workingHours.hours}${lang === 'bm' ? 'j' : 'h'} ${workingHours.minutes}m` : '-'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {canEditAttendance && (
+                                  <div className="flex items-center justify-end gap-1.5 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEditModal(record)}
+                                      className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/20 dark:text-yellow-500 rounded-lg transition-colors"
+                                      title={t('attendanceAdmin', 'editRecord', lang)}
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteAttendance(record)}
+                                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:text-rose-400 rounded-lg transition-colors"
+                                      title={t('attendanceAdmin', 'deleteRecord', lang)}
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Desktop Table (hidden md:block) */}
+                      <div className="hidden md:block overflow-x-auto">
                         <table className="w-full min-w-[750px] text-left border-collapse text-xs md:text-sm">
                           <thead>
                             <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">

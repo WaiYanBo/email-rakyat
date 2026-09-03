@@ -1293,63 +1293,192 @@ export default function FileDriveView() {
 
   const renderListView = () => {
     return (
-      <div className="overflow-x-auto w-full">
-        <table className="w-full min-w-[650px] border-collapse text-left text-sm text-slate-600 dark:text-zinc-350">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider select-none">
-              <th 
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
-                onClick={() => handleHeaderClick('name')}
+      <div className="w-full">
+        {/* Mobile Cards (md:hidden) */}
+        <div className="md:hidden space-y-2.5 p-2">
+          {currentPath !== '' && searchQuery === '' && (
+            <div
+              onClick={navigateUp}
+              className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3 text-xs font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
+            >
+              <div className="w-5 h-5 flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </div>
+              <span>.. ({t('drive', 'back', lang)})</span>
+            </div>
+          )}
+
+          {/* Folders in mobile card list */}
+          {sortedFolders.map(folder => {
+            const isSelected = selectedItem?.id === folder.id;
+            return (
+              <div
+                key={folder.id}
+                onClick={() => navigateToFolder(folder.name)}
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                  isSelected
+                    ? 'bg-indigo-50/70 border-indigo-300 dark:bg-yellow-500/10 dark:border-yellow-500/30'
+                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-xs'
+                }`}
               >
-                <div className="flex items-center gap-1">
-                  {t('drive', 'name', lang)}
-                  {sortBy === 'name' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
-                </div>
-              </th>
-              <th 
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
-                onClick={() => handleHeaderClick('updated_at')}
-              >
-                <div className="flex items-center gap-1">
-                  {t('drive', 'lastModified', lang)}
-                  {sortBy === 'updated_at' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
-                </div>
-              </th>
-              <th 
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
-                onClick={() => handleHeaderClick('size')}
-              >
-                <div className="flex items-center gap-1">
-                  {t('drive', 'size', lang)}
-                  {sortBy === 'size' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
-                </div>
-              </th>
-              <th className="py-3 px-4 text-right">{t('clients', 'actions', lang)}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
-            {currentPath !== '' && searchQuery === '' && (
-              <tr 
-                onClick={navigateUp}
-                className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
-              >
-                <td className="py-3 px-4 font-bold flex items-center gap-3 text-slate-500 hover:text-indigo-650 dark:text-zinc-400 dark:hover:text-yellow-500">
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xl">📁</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-xs truncate">
+                      {folder.name}
+                    </span>
                   </div>
-                  <span>.. ({t('drive', 'back', lang)})</span>
-                </td>
-                <td></td>
-                <td></td>
-                <td></td>
+                  <span className="text-[10px] uppercase font-bold text-indigo-600 dark:text-yellow-500 bg-indigo-50 dark:bg-yellow-500/10 px-2 py-0.5 rounded flex-shrink-0">
+                    {t('drive', 'folder', lang)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px] text-slate-400 dark:text-zinc-500">
+                  <span>{folder.updated_at ? new Date(folder.updated_at).toLocaleDateString() : '--'}</span>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => { setSelectedItem(folder); setIsRenameOpen(true); }}
+                      className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-slate-500 dark:text-zinc-400 text-xs font-bold"
+                      title="Rename"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => { setSelectedItem(folder); setIsDeleteOpen(true); }}
+                      className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 rounded text-xs font-bold"
+                      title="Delete"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Files in mobile card list */}
+          {sortedFiles.map(file => {
+            const isSelected = selectedItem?.id === file.id;
+            return (
+              <div
+                key={file.id}
+                onClick={() => setSelectedItem(file)}
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2.5 ${
+                  isSelected
+                    ? 'bg-indigo-50/70 border-indigo-300 dark:bg-yellow-500/10 dark:border-yellow-500/30'
+                    : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-xs'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getFileIcon(file.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-bold text-slate-900 dark:text-white text-xs block truncate" title={file.name}>
+                        {file.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 block mt-0.5">
+                        {formatBytes(file.metadata?.size || 0)} • {file.updated_at ? new Date(file.updated_at).toLocaleDateString() : '--'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-100 dark:border-zinc-800" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handlePreview(file)}
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg text-xs font-semibold"
+                  >
+                    👁️ {lang === 'bm' ? 'Lihat' : 'Preview'}
+                  </button>
+                  <button
+                    onClick={() => { setSelectedItem(file); handleDownload(); }}
+                    className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-500 rounded-lg text-xs font-semibold"
+                  >
+                    ⬇️
+                  </button>
+                  <button
+                    onClick={() => { setSelectedItem(file); setIsRenameOpen(true); }}
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg text-xs"
+                    title="Rename"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => { setSelectedItem(file); setIsDeleteOpen(true); }}
+                    className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-600 rounded-lg text-xs"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full min-w-[650px] border-collapse text-left text-sm text-slate-600 dark:text-zinc-350">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-gray-800 text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider select-none">
+                <th 
+                  className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
+                  onClick={() => handleHeaderClick('name')}
+                >
+                  <div className="flex items-center gap-1">
+                    {t('drive', 'name', lang)}
+                    {sortBy === 'name' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
+                  </div>
+                </th>
+                <th 
+                  className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
+                  onClick={() => handleHeaderClick('updated_at')}
+                >
+                  <div className="flex items-center gap-1">
+                    {t('drive', 'lastModified', lang)}
+                    {sortBy === 'updated_at' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
+                  </div>
+                </th>
+                <th 
+                  className="py-3 px-4 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
+                  onClick={() => handleHeaderClick('size')}
+                >
+                  <div className="flex items-center gap-1">
+                    {t('drive', 'size', lang)}
+                    {sortBy === 'size' && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
+                  </div>
+                </th>
+                <th className="py-3 px-4 text-right">{t('clients', 'actions', lang)}</th>
               </tr>
-            )}
-            {sortedFolders.map(folder => renderFolderRow(folder))}
-            {sortedFiles.map(file => renderFileRow(file))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-gray-800/80">
+              {currentPath !== '' && searchQuery === '' && (
+                <tr 
+                  onClick={navigateUp}
+                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
+                >
+                  <td className="py-3 px-4 font-bold flex items-center gap-3 text-slate-500 hover:text-indigo-650 dark:text-zinc-400 dark:hover:text-yellow-500">
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                    </div>
+                    <span>.. ({t('drive', 'back', lang)})</span>
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              )}
+              {sortedFolders.map(folder => renderFolderRow(folder))}
+              {sortedFiles.map(file => renderFileRow(file))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };

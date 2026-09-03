@@ -224,7 +224,51 @@ export default function PublicHolidaysView() {
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
+        {/* Mobile Card View (md:hidden) */}
+        <div className="md:hidden space-y-3">
+          {holidays.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 dark:text-zinc-400 italic bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800">
+              {t('holidays', 'noRecords', lang)}
+              <br />
+              <span className="text-xs text-indigo-500 mt-2 block">
+                {t('holidays', 'sqlNote', lang)}
+              </span>
+            </div>
+          ) : (
+            holidays.map(holiday => (
+              <div
+                key={holiday.id}
+                className="p-4 rounded-xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs flex justify-between items-center gap-3"
+              >
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                    {holiday.name}
+                  </h4>
+                  <span className="text-xs font-mono font-medium text-indigo-600 dark:text-yellow-400 block mt-0.5">
+                    📅 {new Date(holiday.date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleEdit(holiday)}
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-500 hover:bg-indigo-100 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    {t('holidays', 'editBtn', lang)}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(holiday.id)}
+                    className="px-3 py-1.5 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 hover:bg-rose-100 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    {t('holidays', 'deleteBtn', lang)}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
           <table className="w-full min-w-[500px] text-left border-collapse text-sm">
             <thead>
               <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">

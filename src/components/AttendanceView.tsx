@@ -571,8 +571,188 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
             </div>
 
 
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4">
-              <div className="overflow-x-auto">
+            <div className="rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4 overflow-hidden">
+              {/* Mobile Card View (md:hidden) */}
+              <div className="md:hidden space-y-3 p-3">
+                {!selectedEmployeeId ? (
+                  <div className="p-8 text-center text-slate-450 dark:text-zinc-550 font-medium italic bg-slate-50/50 dark:bg-gray-900/30 rounded-xl">
+                    {t('attendanceAdmin', 'selectFromDropdown', lang)}
+                  </div>
+                ) : filteredRecords.length === 0 ? (
+                  <div className="p-8 text-center text-slate-450 dark:text-zinc-500 font-medium italic bg-slate-50/50 dark:bg-gray-900/30 rounded-xl">
+                    {t('attendanceAdmin', 'noRecords', lang)} {filterMode === 'date' ? selectedDate : selectedMonth}
+                  </div>
+                ) : (
+                  filteredRecords.map((record) => {
+                    const formatDateSafe = (dateStr: any, locale: string) => {
+                      if (!dateStr) return '-';
+                      try {
+                        const s = String(dateStr).trim();
+                        const parts = s.split('-');
+                        if (parts.length === 3) {
+                          const year = parseInt(parts[0], 10);
+                          const month = parseInt(parts[1], 10) - 1;
+                          const day = parseInt(parts[2], 10);
+                          const d = new Date(year, month, day);
+                          if (!isNaN(d.getTime())) {
+                            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+                          }
+                        }
+                        const d = new Date(s);
+                        if (!isNaN(d.getTime())) {
+                          return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+                        }
+                      } catch (e) {}
+                      return String(dateStr);
+                    };
+
+                    const formatTimeSafe = (timeStr: any) => {
+                      if (!timeStr) return '-';
+                      try {
+                        const s = String(timeStr).trim();
+                        if (s.includes(':') && !s.includes('T')) {
+                          const parts = s.split(':');
+                          if (parts.length >= 2) {
+                            const hh = parseInt(parts[0], 10);
+                            const mm = parts[1];
+                            if (!isNaN(hh)) {
+                              const ampm = hh >= 12 ? 'PM' : 'AM';
+                              const displayHh = hh % 12 || 12;
+                              return `${String(displayHh).padStart(2, '0')}:${mm} ${ampm}`;
+                            }
+                          }
+                        }
+                        const d = new Date(s);
+                        if (!isNaN(d.getTime())) {
+                          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+                      } catch (e) {}
+                      return String(timeStr);
+                    };
+
+                    return (
+                      <div
+                        key={record.id}
+                        className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                      >
+                        {/* Top: Name & Date */}
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                              {personalOnly
+                                ? formatDateSafe(record.date, lang === 'bm' ? 'ms-MY' : 'en-US')
+                                : (record.user_name === 'Unknown' ? t('attendanceAdmin', 'unknown', lang) : record.user_name)}
+                            </h4>
+                            {!personalOnly && record.date && (
+                              <span className="text-xs text-slate-400 dark:text-zinc-500 font-mono font-medium block mt-0.5">
+                                📅 {formatDateSafe(record.date, lang === 'bm' ? 'ms-MY' : 'en-US')}
+                              </span>
+                            )}
+                          </div>
+
+                          {canEditAttendance && (
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditModal(record)}
+                                className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/20 dark:text-yellow-500 rounded-lg transition-colors"
+                                title={t('attendanceAdmin', 'editRecord', lang)}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAttendance(record)}
+                                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:text-rose-400 rounded-lg transition-colors"
+                                title={t('attendanceAdmin', 'deleteRecord', lang)}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {record.is_leave ? (
+                          <div className="p-3 bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500/20 rounded-xl font-semibold text-xs text-center flex items-center justify-center gap-1.5">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 6.364A9 9 0 115.636 5.636 9 9 0 0118.364 12z" />
+                            </svg>
+                            <span>On Leave {record.leave_type ? `(${record.leave_type})` : ''}</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800">
+                            {/* Check In Block */}
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                🟢 {t('attendanceAdmin', 'colCheckIn', lang)}
+                              </span>
+                              {record.clock_in_time ? (
+                                <div className="mt-1 space-y-1">
+                                  <p className="font-mono font-bold text-slate-800 dark:text-zinc-200 text-xs">
+                                    {formatTimeSafe(record.clock_in_time)}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 dark:text-zinc-400">
+                                    {record.clock_in_distance}{t('attendance', 'away', lang)}
+                                  </p>
+                                  <span className={`inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded border ${
+                                    record.clock_in_within_zone
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  }`}>
+                                    {record.clock_in_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-slate-400 text-xs mt-1 block font-medium">-</span>
+                              )}
+                            </div>
+
+                            {/* Check Out Block */}
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                🔴 {t('attendanceAdmin', 'colCheckOut', lang)}
+                              </span>
+                              {record.clock_out_time ? (
+                                <div className="mt-1 space-y-1">
+                                  <p className="font-mono font-bold text-slate-800 dark:text-zinc-200 text-xs">
+                                    {formatTimeSafe(record.clock_out_time)}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 dark:text-zinc-400">
+                                    {record.clock_out_distance !== null ? `${record.clock_out_distance}${t('attendance', 'away', lang)}` : t('attendanceAdmin', 'noLocationData', lang)}
+                                  </p>
+                                  <span className={`inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded border ${
+                                    record.clock_out_within_zone
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-100 dark:bg-black/20 dark:text-yellow-500 dark:border-yellow-500/30'
+                                      : 'bg-rose-50 text-rose-800 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50'
+                                  }`}>
+                                    {record.clock_out_within_zone ? t('attendanceAdmin', 'inZone', lang) : t('attendanceAdmin', 'outside', lang)}
+                                  </span>
+                                  {record.is_late_clockout && (
+                                    <span className="block text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400 mt-0.5">
+                                      {t('attendanceAdmin', 'flaggedLate', lang)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-amber-700 dark:text-yellow-500 font-semibold text-xs bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-100 dark:border-amber-900/30 inline-block mt-1">
+                                  {t('attendanceAdmin', 'pending', lang)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Desktop Table View (hidden md:block) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left border-collapse text-xs md:text-sm">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-gray-900 border-b border-slate-200 dark:border-gray-800">
@@ -604,7 +784,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                         </td>
                       </tr>
                     ) : (
-                      filteredRecords.map((record, idx) => {
+                      filteredRecords.map((record) => {
                         const formatDateSafe = (dateStr: any, locale: string) => {
                           if (!dateStr) return '-';
                           try {

@@ -673,13 +673,13 @@ export const translations = {
     colManageAccessDesc: { en: 'Full authority to modify permission matrices and grant staff privileges', bm: 'Kuasa penuh untuk mengubah matriks kebenaran dan memberi keistimewaan staf' },
 
     // Presets & Badges
-    presetLabel: { en: 'Quick Privilege Presets:', bm: 'Pilihan Pantas Keistimewaan:' },
-    presetFullAdmin: { en: '👑 Grant All Privileges', bm: '👑 Beri Semua Akses' },
-    presetManager: { en: '🛡️ Manager / Approver', bm: '🛡️ Pengurus / Pelulus' },
-    presetHR: { en: '👥 HR Administrator', bm: '👥 Pentadbir HR' },
-    presetStaff: { en: '💼 Standard Staff', bm: '💼 Staf Standard' },
-    presetReadOnly: { en: '👁️ Read Only', bm: '👁️ Baca Sahaja' },
-    presetRevoke: { en: '🚫 Revoke All', bm: '🚫 Tarik Balik Semua' },
+    presetLabel: { en: 'Quick Presets:', bm: 'Pratetap Pantas:' },
+    presetFullAdmin: { en: 'Grant Full Access', bm: 'Beri Akses Penuh' },
+    presetManager: { en: 'Manager / Approver', bm: 'Pengurus / Pelulus' },
+    presetHR: { en: 'HR Administrator', bm: 'Pentadbir HR' },
+    presetStaff: { en: 'Standard Staff', bm: 'Kakitangan Standard' },
+    presetReadOnly: { en: 'Read Only', bm: 'Baca Sahaja' },
+    presetRevoke: { en: 'Revoke All', bm: 'Tarik Balik Semua' },
 
     resetToDept: { en: 'Reset to Dept Default', bm: 'Set Semula ke Lalai Jabatan' },
     syncAllDept: { en: 'Sync All Staff to Dept Template', bm: 'Selaraskan Semua Staf ke Templat Jabatan' },

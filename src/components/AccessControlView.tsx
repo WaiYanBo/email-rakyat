@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
-import { clearPermissionsCache, type Permissions } from '../hooks/usePermissions';
+import { clearPermissionsCache } from '../hooks/usePermissions';
 
 export interface PermissionEntry {
   id?: string;
@@ -55,7 +55,6 @@ interface PermissionCategory {
   id: string;
   titleEn: string;
   titleBm: string;
-  icon: string;
   features: PermissionKey[];
 }
 
@@ -64,35 +63,30 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     id: 'clients',
     titleEn: 'Clients, Cases & Appointments',
     titleBm: 'Klien, Kes & Temujanji',
-    icon: '📁',
     features: ['view_clients', 'edit_clients', 'view_appointments', 'manage_appointments', 'export_data'],
   },
   {
     id: 'hr_staff',
     titleEn: 'Human Resources & Staff Management',
     titleBm: 'Sumber Manusia & Pengurusan Staf',
-    icon: '👥',
     features: ['view_staff', 'edit_staff', 'manage_hr'],
   },
   {
     id: 'attendance',
     titleEn: 'Attendance & Time Logs',
     titleBm: 'Kehadiran & Log Masa',
-    icon: '⏰',
     features: ['view_attendance', 'edit_attendance'],
   },
   {
     id: 'leave_claims',
     titleEn: 'Leave & Expense Claims',
     titleBm: 'Cuti & Tuntutan Perbelanjaan',
-    icon: '🏖️',
     features: ['view_leave', 'manage_leave', 'view_claims', 'manage_claims'],
   },
   {
     id: 'system_drive',
     titleEn: 'Storage, Analytics & Administration',
     titleBm: 'Storan, Analitik & Pentadbiran',
-    icon: '🔒',
     features: ['manage_drive', 'view_snapshot', 'manage_access_control'],
   },
 ];
@@ -463,7 +457,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       };
     });
 
-    showToast(isBm ? 'Pratetap keistimewaan digunakan!' : 'Privilege preset applied!');
+    showToast(isBm ? 'Pratetap keistimewaan dikemaskini.' : 'Privilege preset applied.');
   };
 
   // Reset user to department default
@@ -487,7 +481,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       };
     });
 
-    showToast(isBm ? 'Kebenaran staf diset semula ke lalai jabatan!' : 'Staff permissions reset to department default!');
+    showToast(isBm ? 'Kebenaran staf diset semula ke lalai jabatan.' : 'Staff permissions reset to department default.');
   };
 
   // Synchronize all staff in department to match department template
@@ -512,8 +506,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
     showToast(
       isBm
-        ? `Semua ${deptUsers.length} staf dalam ${deptName} diselaraskan ke templat jabatan!`
-        : `All ${deptUsers.length} staff in ${deptName} synced to department template!`
+        ? `Semua ${deptUsers.length} staf dalam ${deptName} diselaraskan ke templat jabatan.`
+        : `All ${deptUsers.length} staff in ${deptName} synced to department template.`
     );
   };
 
@@ -685,26 +679,22 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-sm font-semibold animate-bounce-in ${
+          className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold animate-bounce-in ${
             toastMessage.type === 'success'
-              ? 'bg-emerald-500 text-white border-emerald-400'
-              : 'bg-rose-600 text-white border-rose-500'
+              ? 'bg-emerald-700 text-white border-emerald-600'
+              : 'bg-rose-700 text-white border-rose-600'
           }`}
         >
-          <span>{toastMessage.type === 'success' ? '✅' : '⚠️'}</span>
           <span>{toastMessage.text}</span>
         </div>
       )}
 
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-black p-6 rounded-3xl border border-slate-200 dark:border-gray-800 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🛡️</span>
-            <h2 className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {t('accessControl', 'matrixTitle', lang)}
-            </h2>
-          </div>
+          <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            {t('accessControl', 'matrixTitle', lang)}
+          </h2>
           <p className="text-xs md:text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-3xl leading-relaxed">
             {t('accessControl', 'matrixSubtitle', lang)}
           </p>
@@ -715,7 +705,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             <button
               onClick={handleDiscard}
               disabled={saving}
-              className="flex-1 md:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all"
+              className="flex-1 md:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition-all cursor-pointer"
             >
               {t('accessControl', 'discardBtn', lang)}
             </button>
@@ -724,7 +714,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           <button
             onClick={handleSave}
             disabled={saving || unsavedCount === 0}
-            className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${
               unsavedCount > 0
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black shadow-md cursor-pointer'
                 : 'bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed opacity-60'
@@ -736,62 +726,56 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                 <span>{t('accessControl', 'saving', lang)}</span>
               </>
             ) : (
-              <>
-                <span>💾</span>
-                <span>
-                  {t('accessControl', 'saveBtn', lang)}
-                  {unsavedCount > 0 ? ` (${unsavedCount})` : ''}
-                </span>
-              </>
+              <span>
+                {t('accessControl', 'saveBtn', lang)}
+                {unsavedCount > 0 ? ` (${unsavedCount})` : ''}
+              </span>
             )}
           </button>
         </div>
       </div>
 
       {/* Main Container */}
-      <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm p-6 space-y-6">
+      <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
         
         {/* Filter Mode Selector */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-gray-800 pb-4">
           <button
             onClick={() => setFilterType('staff')}
-            className={`px-5 py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
               filterType === 'staff'
-                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md'
+                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'
             }`}
           >
-            <span>👤</span>
             <span>{isBm ? 'Kakitangan Individu' : 'Individual Staff'}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20 font-bold">
               {users.length}
             </span>
           </button>
 
           <button
             onClick={() => setFilterType('department')}
-            className={`px-5 py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
               filterType === 'department'
-                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md'
+                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'
             }`}
           >
-            <span>🏢</span>
             <span>{isBm ? 'Seluruh Jabatan' : 'Department Wide'}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20 font-bold">
               {departments.length}
             </span>
           </button>
 
           <button
             onClick={() => setFilterType('feature')}
-            className={`px-5 py-2.5 rounded-2xl font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
               filterType === 'feature'
-                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-md'
+                ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-900 dark:text-zinc-400 dark:hover:bg-gray-800'
             }`}
           >
-            <span>⚙️</span>
             <span>{isBm ? 'Ciri-Ciri Portal' : 'Portal Features'}</span>
           </button>
         </div>
@@ -807,7 +791,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   placeholder={t('accessControl', 'searchStaffPlaceholder', lang)}
                   value={staffSearch}
                   onChange={(e) => setStaffSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
                 />
                 <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -818,7 +802,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
                 <button
                   onClick={() => setDeptFilterPill('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                     deptFilterPill === 'all'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                       : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
@@ -830,7 +814,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   <button
                     key={d}
                     onClick={() => setDeptFilterPill(d)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                       deptFilterPill === d
                         ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-slate-950'
                         : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
@@ -842,7 +826,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               </div>
             </div>
 
-            {/* Staff Selector Dropdown or Horizontal List */}
+            {/* Staff Selector Dropdown */}
             <div>
               <label className="block text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
                 {isBm ? 'Pilih Kakitangan' : 'Select Staff Member'} ({filteredUsers.length})
@@ -850,7 +834,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               <select
                 value={selectedStaffId}
                 onChange={(e) => setSelectedStaffId(e.target.value)}
-                className="w-full md:w-96 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
+                className="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
               >
                 {filteredUsers.map(u => (
                   <option key={u.id} value={u.id}>
@@ -861,28 +845,28 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             </div>
 
             {selectedUserObj && (
-              <div className="bg-slate-50 dark:bg-gray-900/60 p-6 rounded-3xl border border-slate-200 dark:border-gray-800 space-y-6">
+              <div className="bg-slate-50 dark:bg-gray-900/60 p-6 rounded-2xl border border-slate-200 dark:border-gray-800 space-y-6">
                 {/* Staff Dossier Header & Active Stats */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-5 border-b border-slate-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-yellow-500/20 text-indigo-700 dark:text-yellow-400 flex items-center justify-center font-bold text-lg border border-indigo-200 dark:border-yellow-500/30 flex-shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center justify-center font-bold text-sm flex-shrink-0">
                       {selectedUserObj.avatar_url ? (
-                        <img src={selectedUserObj.avatar_url} alt={selectedUserObj.full_name} className="w-full h-full rounded-2xl object-cover" />
+                        <img src={selectedUserObj.avatar_url} alt={selectedUserObj.full_name} className="w-full h-full rounded-xl object-cover" />
                       ) : (
                         selectedUserObj.full_name.charAt(0).toUpperCase()
                       )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
                           {selectedUserObj.full_name}
                         </h3>
-                        <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-800 dark:bg-yellow-500/20 dark:text-yellow-400">
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-400">
                           {selectedUserObj.roles?.role_name || 'Staff'}
                         </span>
                         {selectedUserObj.department && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 dark:bg-gray-800 dark:text-zinc-300">
-                            🏢 {selectedUserObj.department}
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-gray-800 dark:text-zinc-300">
+                            {selectedUserObj.department}
                           </span>
                         )}
                       </div>
@@ -896,62 +880,61 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => resetUserToDeptDefault(selectedUserObj.id)}
-                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-xs"
                       title="Clear custom overrides and revert to department default"
                     >
-                      <span>🔄</span>
-                      <span>{t('accessControl', 'resetToDept', lang)}</span>
+                      {t('accessControl', 'resetToDept', lang)}
                     </button>
                   </div>
                 </div>
 
                 {/* Quick Presets Bar */}
-                <div className="p-4 rounded-2xl bg-white dark:bg-black/60 border border-slate-200 dark:border-gray-800/80 space-y-2.5">
+                <div className="p-4 rounded-xl bg-white dark:bg-black/60 border border-slate-200 dark:border-gray-800/80 space-y-2">
                   <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
                     {t('accessControl', 'presetLabel', lang)}
                   </span>
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'full')}
-                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/20 dark:text-yellow-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/20 dark:text-yellow-400 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetFullAdmin', lang)}
                     </button>
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'manager')}
-                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetManager', lang)}
                     </button>
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'hr')}
-                      className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetHR', lang)}
                     </button>
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'staff')}
-                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetStaff', lang)}
                     </button>
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'readonly')}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-gray-800 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetReadOnly', lang)}
                     </button>
                     <button
                       onClick={() => applyPreset(`user_${selectedUserObj.id}`, 'revoke')}
-                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                     >
                       {t('accessControl', 'presetRevoke', lang)}
                     </button>
                   </div>
                 </div>
 
-                {/* Categorized Permissions Accordions/Grids */}
-                <div className="space-y-6">
+                {/* Categorized Permissions Grid */}
+                <div className="space-y-5">
                   {PERMISSION_CATEGORIES.map(category => {
                     const availableFeatures = category.features.filter(
                       f => f !== 'manage_access_control' || isITAdmin
@@ -960,16 +943,15 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     return (
                       <div
                         key={category.id}
-                        className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-gray-800 p-5 shadow-xs space-y-4"
+                        className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800 p-5 shadow-xs space-y-3"
                       >
-                        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-gray-800">
-                          <span className="text-lg">{category.icon}</span>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        <div className="pb-2.5 border-b border-slate-100 dark:border-gray-800">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                             {isBm ? category.titleBm : category.titleEn}
                           </h4>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                           {availableFeatures.map(feat => {
                             const isEffective = getEffectivePermission(selectedUserObj.id, feat);
                             const hasOverride = isUserOverride(selectedUserObj.id, feat);
@@ -977,19 +959,19 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                             return (
                               <div
                                 key={feat}
-                                className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-gray-800"
+                                className="flex items-start justify-between gap-4 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
                               >
                                 <div className="space-y-0.5 flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                                    <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
                                       {getFeatureLabel(feat)}
                                     </span>
                                     {hasOverride ? (
-                                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                         {t('accessControl', 'customOverrideBadge', lang)}
                                       </span>
                                     ) : (
-                                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-gray-800 dark:text-zinc-400">
+                                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 dark:bg-gray-800 dark:text-zinc-400">
                                         {t('accessControl', 'deptDefaultBadge', lang)}
                                       </span>
                                     )}
@@ -1029,7 +1011,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   placeholder={t('accessControl', 'searchDeptPlaceholder', lang)}
                   value={deptSearch}
                   onChange={(e) => setDeptSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
                 />
                 <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1044,7 +1026,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
-                className="w-full md:w-96 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
+                className="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
               >
                 {filteredDepts.map(d => (
                   <option key={d} value={d}>
@@ -1057,15 +1039,13 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             {selectedDept && (
               <div className="space-y-6">
                 {/* Department Template Card */}
-                <div className="bg-indigo-50/60 dark:bg-gray-900/80 p-6 rounded-3xl border border-indigo-100 dark:border-gray-800 relative overflow-hidden space-y-6">
-                  <div className="absolute left-0 top-0 bottom-0 w-2 bg-indigo-600 dark:bg-yellow-500"></div>
-
-                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-indigo-100 dark:border-gray-800">
+                <div className="bg-slate-50 dark:bg-gray-900/80 p-6 rounded-2xl border border-slate-200 dark:border-gray-800 space-y-6">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-200 dark:border-gray-800">
                     <div>
-                      <h3 className="text-lg md:text-xl font-extrabold text-indigo-950 dark:text-yellow-500">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
                         {selectedDept} - {t('accessControl', 'deptWideAccess', lang)}
                       </h3>
-                      <p className="text-xs text-indigo-900/70 dark:text-zinc-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                         {isBm
                           ? `Kebenaran ini menjadi templat lalai untuk semua kakitangan di bawah jabatan ${selectedDept}.`
                           : `These settings serve as the default baseline for all staff members assigned to the ${selectedDept} department.`}
@@ -1075,53 +1055,52 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => syncAllStaffInDept(selectedDept)}
-                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-slate-950 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                        className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-slate-950 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>⚡</span>
-                        <span>{t('accessControl', 'syncAllDept', lang)}</span>
+                        {t('accessControl', 'syncAllDept', lang)}
                       </button>
                     </div>
                   </div>
 
                   {/* Department Quick Presets */}
-                  <div className="p-4 rounded-2xl bg-white/80 dark:bg-black/40 border border-indigo-100 dark:border-gray-800 space-y-2">
-                    <span className="text-[11px] font-bold text-indigo-900 dark:text-yellow-400 uppercase tracking-wider block">
+                  <div className="p-4 rounded-xl bg-white dark:bg-black/40 border border-slate-200 dark:border-gray-800 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider block">
                       {isBm ? 'Tetapkan Templat Jabatan Mengikut Peranan:' : 'Set Department Baseline from Role Preset:'}
                     </span>
                     <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'full')}
-                        className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 dark:bg-yellow-500/20 dark:text-yellow-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-yellow-500/10 dark:text-yellow-400 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetFullAdmin', lang)}
                       </button>
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'manager')}
-                        className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetManager', lang)}
                       </button>
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'hr')}
-                        className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetHR', lang)}
                       </button>
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'staff')}
-                        className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetStaff', lang)}
                       </button>
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'readonly')}
-                        className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-gray-800 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetReadOnly', lang)}
                       </button>
                       <button
                         onClick={() => applyPreset(`dept_${selectedDept}`, 'revoke')}
-                        className="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                       >
                         {t('accessControl', 'presetRevoke', lang)}
                       </button>
@@ -1129,7 +1108,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   </div>
 
                   {/* Department Matrix Grid by Categories */}
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {PERMISSION_CATEGORIES.map(category => {
                       const availableFeatures = category.features.filter(
                         f => f !== 'manage_access_control' || isITAdmin
@@ -1138,26 +1117,25 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                       return (
                         <div
                           key={category.id}
-                          className="bg-white dark:bg-black rounded-2xl border border-indigo-100 dark:border-gray-800 p-5 shadow-xs space-y-4"
+                          className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800 p-5 shadow-xs space-y-3"
                         >
-                          <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-gray-800">
-                            <span className="text-lg">{category.icon}</span>
-                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                          <div className="pb-2.5 border-b border-slate-100 dark:border-gray-800">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                               {isBm ? category.titleBm : category.titleEn}
                             </h4>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                             {availableFeatures.map(feat => {
                               const deptChecked = !!permissionsMatrix[`dept_${selectedDept}`]?.permissions[feat];
 
                               return (
                                 <div
                                   key={feat}
-                                  className="flex items-start justify-between gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
+                                  className="flex items-start justify-between gap-4 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors"
                                 >
                                   <div className="space-y-0.5 flex-1 min-w-0">
-                                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                                    <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200 block">
                                       {getFeatureLabel(feat)}
                                     </span>
                                     <p className="text-[11px] text-slate-400 dark:text-zinc-500 leading-snug">
@@ -1182,12 +1160,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                 </div>
 
                 {/* Staff list in this department */}
-                <div className="bg-slate-50 dark:bg-black p-6 rounded-3xl border border-slate-200 dark:border-gray-800 space-y-4">
+                <div className="bg-slate-50 dark:bg-black p-6 rounded-2xl border border-slate-200 dark:border-gray-800 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
                       {isBm ? `Senarai Kakitangan (${selectedDept})` : `Staff Directory (${selectedDept})`}
                     </h4>
-                    <span className="text-xs font-bold text-slate-400 dark:text-zinc-500">
+                    <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500">
                       {users.filter(u => u.department === selectedDept).length} {isBm ? 'Orang' : 'Members'}
                     </span>
                   </div>
@@ -1203,10 +1181,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                               setSelectedStaffId(user.id);
                               setFilterType('staff');
                             }}
-                            className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-slate-200 dark:border-gray-800 flex items-center justify-between cursor-pointer hover:border-indigo-400 dark:hover:border-yellow-500 transition-all shadow-xs"
+                            className="bg-white dark:bg-gray-900 p-3.5 rounded-xl border border-slate-200 dark:border-gray-800 flex items-center justify-between cursor-pointer hover:border-indigo-400 dark:hover:border-yellow-500 transition-all shadow-xs"
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-gray-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-zinc-300 flex-shrink-0">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-zinc-300 flex-shrink-0">
                                 {user.full_name.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
@@ -1218,8 +1196,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                                 </p>
                               </div>
                             </div>
-                            <span className="text-xs text-indigo-600 dark:text-yellow-400 font-bold flex-shrink-0">
-                              {isBm ? 'Urus ➔' : 'Manage ➔'}
+                            <span className="text-xs text-indigo-600 dark:text-yellow-400 font-semibold flex-shrink-0">
+                              {isBm ? 'Urus' : 'Manage'} &rarr;
                             </span>
                           </div>
                         );
@@ -1242,7 +1220,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   placeholder={t('accessControl', 'searchFeaturePlaceholder', lang)}
                   value={featureSearch}
                   onChange={(e) => setFeatureSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
                 />
                 <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1257,7 +1235,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               <select
                 value={selectedFeature}
                 onChange={(e) => setSelectedFeature(e.target.value as PermissionKey)}
-                className="w-full md:w-96 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
+                className="w-full md:w-96 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500 cursor-pointer"
               >
                 {allFilteredFeatures.map(f => (
                   <option key={f} value={f}>
@@ -1268,11 +1246,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             </div>
 
             {selectedFeature && (
-              <div className="bg-slate-50 dark:bg-gray-900/60 p-6 rounded-3xl border border-slate-200 dark:border-gray-800 space-y-6">
+              <div className="bg-slate-50 dark:bg-gray-900/60 p-6 rounded-2xl border border-slate-200 dark:border-gray-800 space-y-6">
                 <div className="pb-4 border-b border-slate-200 dark:border-gray-800">
-                  <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>🔑</span>
-                    <span>{getFeatureLabel(selectedFeature)}</span>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    {getFeatureLabel(selectedFeature)}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl leading-relaxed">
                     {getFeatureDesc(selectedFeature)}
@@ -1280,7 +1257,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                 </div>
 
                 {/* By Department Breakdown */}
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {departments.map(dept => {
                     const deptUsers = users.filter(u => u.department === dept);
                     const deptChecked = !!permissionsMatrix[`dept_${dept}`]?.permissions[selectedFeature];
@@ -1288,15 +1265,15 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     return (
                       <div
                         key={dept}
-                        className="bg-white dark:bg-black rounded-2xl border border-slate-200 dark:border-gray-800 overflow-hidden shadow-xs"
+                        className="bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800 overflow-hidden shadow-xs"
                       >
                         {/* Department Header with Toggle */}
-                        <div className="flex items-center justify-between bg-indigo-50/70 dark:bg-gray-900 px-5 py-3.5 border-b border-indigo-100 dark:border-gray-800">
+                        <div className="flex items-center justify-between bg-slate-100/70 dark:bg-gray-900 px-4 py-3 border-b border-slate-200 dark:border-gray-800">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs md:text-sm text-indigo-950 dark:text-yellow-400">
-                              🏢 {dept} ({isBm ? 'Seluruh Jabatan' : 'Department Wide'})
+                            <span className="font-bold text-xs md:text-sm text-slate-900 dark:text-white">
+                              {dept} ({isBm ? 'Seluruh Jabatan' : 'Department Wide'})
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-yellow-500/20 dark:text-yellow-300 font-bold">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 dark:bg-gray-800 dark:text-zinc-300 font-semibold">
                               {deptUsers.length} {isBm ? 'Staf' : 'Staff'}
                             </span>
                           </div>
@@ -1308,7 +1285,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                         </div>
 
                         {/* Staff items in department */}
-                        <div className="p-3 divide-y divide-slate-100 dark:divide-gray-800">
+                        <div className="p-2 divide-y divide-slate-100 dark:divide-gray-800">
                           {deptUsers.map(user => {
                             const isEffective = getEffectivePermission(user.id, selectedFeature);
                             const hasOverride = isUserOverride(user.id, selectedFeature);
@@ -1316,7 +1293,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                             return (
                               <div
                                 key={user.id}
-                                className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors"
+                                className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/40 transition-colors"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-gray-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-zinc-300 flex-shrink-0">
@@ -1324,11 +1301,11 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                                   </div>
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <p className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">
+                                      <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate">
                                         {user.full_name}
                                       </p>
                                       {hasOverride && (
-                                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                           {t('accessControl', 'customOverrideBadge', lang)}
                                         </span>
                                       )}

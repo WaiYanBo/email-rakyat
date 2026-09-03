@@ -633,7 +633,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                     return (
                       <div
                         key={record.id}
-                        className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                        className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                       >
                         {/* Top: Name & Date */}
                         <div className="flex justify-between items-start gap-2">
@@ -684,7 +684,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                             <span>On Leave {record.leave_type ? `(${record.leave_type})` : ''}</span>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800">
+                          <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800">
                             {/* Check In Block */}
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">

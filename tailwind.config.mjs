@@ -4,6 +4,32 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        gray: {
+          850: '#18181b',
+        },
+        zinc: {
+          850: '#18181b',
+          905: '#121214',
+          305: '#c4c4cc',
+          350: '#b4b4bc',
+          550: '#686873',
+          650: '#4a4a55',
+        },
+        slate: {
+          150: '#e9edf3',
+          250: '#cbd5e1',
+          450: '#7e8e9e',
+          755: '#2d3748',
+          850: '#141e30',
+        },
+        indigo: {
+          150: '#dce5fe',
+          355: '#7c88fc',
+          650: '#4338ca',
+          755: '#3730a3',
+        },
+      },
       animation: {
         'slide-in': 'slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         'fade-in': 'fade-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',

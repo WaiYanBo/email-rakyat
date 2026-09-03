@@ -707,7 +707,7 @@ export default function ReportsView() {
               {sortedStaffRecords.map(staff => (
                 <div
                   key={staff.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                  className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                 >
                   {/* Top: Name, Role & Status */}
                   <div className="flex justify-between items-start gap-2">
@@ -737,7 +737,7 @@ export default function ReportsView() {
                   </div>
 
                   {/* Contract & Period */}
-                  <div className="p-2.5 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800 space-y-1.5 text-xs">
+                  <div className="p-2.5 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                         staff.employment_type === 'Internship'

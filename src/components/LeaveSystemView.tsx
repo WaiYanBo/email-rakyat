@@ -651,7 +651,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             {leavesOnThisDay.map((leave) => (
               <div
                 key={leave.id}
-                className="text-[9px] font-semibold px-1 py-0.5 rounded truncate bg-indigo-50 border border-indigo-150 text-indigo-755 dark:bg-zinc-850 dark:border-zinc-700 dark:text-yellow-500/80 shadow-xs"
+                className="text-[9px] font-semibold px-1 py-0.5 rounded truncate bg-indigo-50 border border-indigo-200 text-indigo-700 dark:bg-zinc-900 dark:border-zinc-800 dark:text-yellow-500/80 shadow-xs"
                 title={`${leave.profiles?.full_name} (${t('leave', leave.leave_type.toLowerCase(), lang)})`}
               >
                 {leave.profiles?.full_name.split(' ')[0]} ({leave.leave_type[0]}L)
@@ -745,7 +745,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           <button
             onClick={() => setActiveSubTab('dashboard')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all min-h-[38px] ${activeSubTab === 'dashboard'
-                ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm'
+                ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 shadow-sm'
                 : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200'
               }`}
           >
@@ -869,7 +869,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                   </div>
 
                   {/* Unpaid Leave Info */}
-                  <div className="bg-gradient-to-br from-slate-50/50 to-slate-100/10 dark:from-zinc-900/30 dark:to-zinc-850/10 border border-slate-200/40 dark:border-zinc-800 p-4 rounded-2xl shadow-xs col-span-2 sm:col-span-1">
+                  <div className="bg-gradient-to-br from-slate-50/50 to-slate-100/10 dark:from-zinc-900/30 dark:to-zinc-900/10 border border-slate-200/40 dark:border-zinc-800 p-4 rounded-2xl shadow-xs col-span-2 sm:col-span-1">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 block mb-1">
                       {t('leave', 'unpaid', lang)}
                     </span>
@@ -884,7 +884,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             {/* Leave History List */}
             <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
-                <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-200 flex items-center gap-2">
                   <span>{t('leave', 'myRequests', lang)}</span>
                   <span className="px-2 py-0.5 rounded-full text-xs font-black bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
                     {requests.length}
@@ -1165,7 +1165,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-zinc-800 pb-3">
                     <div>
-                      <h3 className="text-sm sm:text-base font-bold text-slate-850 dark:text-zinc-200 flex items-center gap-2">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-zinc-200 flex items-center gap-2">
                         <span>{t('leave', 'pendingApprovals', lang)}</span>
                         <span className="px-2 py-0.5 rounded-full text-xs font-black bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           {pendingRequests.length}
@@ -1220,7 +1220,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           </div>
 
                           {/* Date Range & Duration Highlight */}
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-150 dark:border-zinc-800 text-xs">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                                 {t('leave', 'startDate', lang)}
@@ -1310,7 +1310,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               {dashboardSubTab === 'balances' && (
                 <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6 space-y-6">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-200 mb-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-200 mb-2">
                       {t('leave', 'staffBalances', lang)}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4">
@@ -1353,7 +1353,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     if (isEditingBalancesInline) {
                       // WORDPRESS / GOVT WP-TABLE STYLE EDIT VIEW!
                       return (
-                        <form onSubmit={handleEditBalancesSubmit} className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-150 dark:border-zinc-800/85 rounded-2xl p-6 space-y-6">
+                        <form onSubmit={handleEditBalancesSubmit} className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-200 dark:border-zinc-800/85 rounded-2xl p-6 space-y-6">
                           <div className="pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
                             <div>
                               <h4 className="text-sm font-black uppercase text-indigo-900 dark:text-yellow-500">
@@ -1489,7 +1489,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             <button
                               type="button"
                               onClick={() => setIsEditingBalancesInline(false)}
-                              className="px-5 py-2.5 text-xs font-bold text-slate-500 bg-white hover:bg-slate-100 border border-slate-200 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                              className="px-5 py-2.5 text-xs font-bold text-slate-500 bg-white hover:bg-slate-100 border border-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800 rounded-xl transition-all"
                             >
                               {t('leave', 'cancelBtn', lang)}
                             </button>

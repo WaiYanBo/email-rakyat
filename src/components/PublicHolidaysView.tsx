@@ -238,7 +238,7 @@ export default function PublicHolidaysView() {
             holidays.map(holiday => (
               <div
                 key={holiday.id}
-                className="p-4 rounded-xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs flex justify-between items-center gap-3"
+                className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs flex justify-between items-center gap-3"
               >
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-sm">

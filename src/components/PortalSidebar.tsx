@@ -645,7 +645,7 @@ export default function PortalSidebar() {
 
           <button
             onClick={toggleTheme}
-            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-gray-900 dark:hover:bg-zinc-850/80 text-slate-600 hover:text-slate-900 dark:text-zinc-350 dark:hover:text-white text-xs font-semibold transition-all border border-slate-200 dark:border-gray-800 shadow-sm min-h-[48px] flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-900 dark:text-zinc-300 dark:hover:text-white text-xs font-semibold transition-all border border-slate-200 dark:border-zinc-800 shadow-sm min-h-[48px] flex items-center justify-center gap-2"
           >
             {theme === 'light' ? (
               <>

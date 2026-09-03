@@ -951,7 +951,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 return (
                   <div
                     key={staff.profile_id}
-                    className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                    className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div>
@@ -989,7 +989,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800 text-center">
+                    <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-center">
                       <div>
                         <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                           {isBm ? 'Kelayakan' : 'Allocated'}
@@ -1129,7 +1129,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                   return (
                     <div
                       key={c.id}
-                      className="p-4 rounded-2xl bg-white dark:bg-gray-850 border border-slate-200 dark:border-gray-800 shadow-xs space-y-3"
+                      className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                     >
                       {/* Top Header: Claim No & Status */}
                       <div className="flex justify-between items-start gap-2">
@@ -1192,7 +1192,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                       </div>
 
                       {/* Amounts & Receipt */}
-                      <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 dark:bg-gray-900 rounded-xl border border-slate-150 dark:border-gray-800 text-center items-center">
+                      <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-center items-center">
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                             {isBm ? 'Jumlah Resit' : 'Receipt'}
@@ -1293,7 +1293,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                   );
                 })
               ) : (
-                <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-gray-850 rounded-2xl border border-slate-200 dark:border-gray-800">
+                <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
                   {isBm ? 'Tiada tuntutan dijumpai.' : 'No claims found.'}
                 </div>
               )}

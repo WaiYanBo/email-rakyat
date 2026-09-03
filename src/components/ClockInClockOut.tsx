@@ -1185,7 +1185,7 @@ export default function ClockInClockOut() {
                           filteredForgotRecords.map((record) => (
                             <div
                               key={record.id}
-                              className="p-3.5 rounded-xl bg-white dark:bg-gray-850 border border-rose-100 dark:border-rose-900/30 shadow-xs space-y-2"
+                              className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-100 dark:border-rose-900/30 shadow-xs space-y-2"
                             >
                               <div className="flex justify-between items-start gap-2">
                                 <div>
@@ -1342,7 +1342,7 @@ export default function ClockInClockOut() {
                                     ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30'
                                     : isShortDay
                                       ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30'
-                                      : 'bg-white dark:bg-gray-850 border-slate-200 dark:border-gray-800'
+                                      : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800'
                                 }`}
                               >
                                 <div className="flex justify-between items-start gap-2">

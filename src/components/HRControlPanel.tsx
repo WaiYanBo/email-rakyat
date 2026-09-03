@@ -98,12 +98,12 @@ export default function HRControlPanel() {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex flex-wrap bg-slate-100/50 dark:bg-gray-900/40 p-1.5 rounded-2xl border border-slate-200/80 dark:border-gray-800/80 gap-1.5 w-full md:w-fit">
+      <div className="flex flex-wrap bg-slate-100/50 dark:bg-zinc-900/60 p-1.5 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 gap-1.5 w-full md:w-fit">
         <button
           onClick={() => setActiveTab('attendance')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'attendance'
-            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-zinc-700'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-zinc-800/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -115,8 +115,8 @@ export default function HRControlPanel() {
         <button
           onClick={() => setActiveTab('holidays')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'holidays'
-            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-zinc-700'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-zinc-800/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -128,8 +128,8 @@ export default function HRControlPanel() {
         <button
           onClick={() => setActiveTab('leave')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'leave'
-              ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+              ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-zinc-700'
+              : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-zinc-800/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -141,8 +141,8 @@ export default function HRControlPanel() {
         <button
           onClick={() => setActiveTab('claims')}
           className={`flex-1 md:flex-initial flex items-center justify-center px-5 py-3 rounded-xl text-xs md:text-sm font-semibold transition-all min-h-[48px] whitespace-nowrap ${activeTab === 'claims'
-            ? 'bg-white dark:bg-gray-850 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-gray-800'
-            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-gray-900/20'
+            ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-yellow-500 shadow-sm border border-slate-200/50 dark:border-zinc-700'
+            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-slate-100/30 dark:hover:bg-zinc-800/20'
             }`}
         >
           <svg className="w-4.5 h-4.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

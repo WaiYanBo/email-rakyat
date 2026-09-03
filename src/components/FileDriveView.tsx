@@ -88,7 +88,7 @@ function ImageThumbnail({ item, currentPath }: ImageThumbnailProps) {
 
   if (error || !url) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-zinc-850 text-slate-400 dark:text-zinc-600">
+      <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600">
         <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
         </svg>
@@ -786,7 +786,7 @@ export default function FileDriveView() {
       case 'pdf':
         return (
           <div className="w-full h-full bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-3">
-            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 shadow-sm rounded-sm flex flex-col p-2 relative overflow-hidden select-none">
+            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm rounded-sm flex flex-col p-2 relative overflow-hidden select-none">
               <div className="w-full h-1 bg-rose-500/80 rounded-full mb-1" />
               <div className="w-10 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full mb-1" />
               <div className="w-12 h-1 bg-slate-200 dark:bg-zinc-800 rounded-full mb-2" />
@@ -806,12 +806,12 @@ export default function FileDriveView() {
       case 'xlsx':
         return (
           <div className="w-full h-full bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-3">
-            <div className="w-24 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 shadow-sm rounded-sm flex flex-col overflow-hidden select-none">
+            <div className="w-24 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm rounded-sm flex flex-col overflow-hidden select-none">
               <div className="h-3.5 bg-green-700 w-full flex items-center px-1 gap-1">
                 <div className="w-1 h-1 bg-white/50 rounded-full" />
                 <div className="w-5 h-1 bg-white/70 rounded-full" />
               </div>
-              <div className="flex-1 grid grid-cols-4 gap-0.5 p-0.5 bg-slate-50 dark:bg-zinc-850">
+              <div className="flex-1 grid grid-cols-4 gap-0.5 p-0.5 bg-slate-50 dark:bg-zinc-800">
                 {Array.from({ length: 16 }).map((_, i) => (
                   <div key={i} className="bg-white dark:bg-zinc-900 border-[0.5px] border-slate-100/80 dark:border-zinc-800/80 rounded-[1px] flex items-center justify-center">
                     {i === 2 && <div className="w-2 h-0.5 bg-green-200 dark:bg-green-800/40 rounded-full" />}
@@ -827,19 +827,19 @@ export default function FileDriveView() {
       case 'docx':
         return (
           <div className="w-full h-full bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-3">
-            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 shadow-sm rounded-sm flex flex-col p-2 select-none">
+            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm rounded-sm flex flex-col p-2 select-none">
               <div className="w-full h-1 bg-blue-600 rounded-full mb-1.5" />
               <div className="space-y-1 flex-1">
-                <div className="w-4/5 h-0.5 bg-slate-250 dark:bg-zinc-800 rounded-full" />
-                <div className="w-full h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
-                <div className="w-11/12 h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
+                <div className="w-4/5 h-0.5 bg-slate-200 dark:bg-zinc-800 rounded-full" />
+                <div className="w-full h-0.5 bg-slate-200 dark:bg-zinc-800 rounded-full" />
+                <div className="w-11/12 h-0.5 bg-slate-200 dark:bg-zinc-800 rounded-full" />
                 <div className="w-full h-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 rounded flex items-center justify-center my-0.5">
                   <svg className="w-2.5 h-2.5 text-blue-500 dark:text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
                   </svg>
                 </div>
-                <div className="w-5/6 h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
-                <div className="w-2/3 h-0.5 bg-slate-150 dark:bg-zinc-850 rounded-full" />
+                <div className="w-5/6 h-0.5 bg-slate-200 dark:bg-zinc-800 rounded-full" />
+                <div className="w-2/3 h-0.5 bg-slate-200 dark:bg-zinc-800 rounded-full" />
               </div>
             </div>
           </div>
@@ -847,7 +847,7 @@ export default function FileDriveView() {
       default:
         return (
           <div className="w-full h-full bg-slate-100 dark:bg-zinc-950 flex items-center justify-center p-3">
-            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 shadow-sm rounded-sm flex flex-col p-2 items-center justify-center select-none relative">
+            <div className="w-20 h-28 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-sm rounded-sm flex flex-col p-2 items-center justify-center select-none relative">
               <svg className="w-8 h-8 text-slate-400 dark:text-zinc-605" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
               </svg>
@@ -920,7 +920,7 @@ export default function FileDriveView() {
               setSelectedItem(item);
               setActiveMenu(activeMenu === `folder-${item.name}` ? null : `folder-${item.name}`);
             }}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-gray-850 rounded-full text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-white transition-colors"
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-white transition-colors"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -996,7 +996,7 @@ export default function FileDriveView() {
             : 'border-slate-200 dark:border-gray-800 hover:border-indigo-355 dark:hover:border-gray-700 hover:shadow-md'
         }`}
       >
-        <div className="w-full px-3 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-gray-850/80 bg-slate-50/40 dark:bg-black/10 flex-shrink-0">
+        <div className="w-full px-3 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-950/40 flex-shrink-0">
           {getSmallFileIcon(item.name)}
           <span className={`text-xs font-bold truncate flex-1 ${isSelected ? 'text-indigo-755 dark:text-yellow-500' : 'text-slate-700 dark:text-zinc-205'}`} title={item.name}>
             {item.name}
@@ -1091,7 +1091,7 @@ export default function FileDriveView() {
           </div>
         </div>
 
-        <div className="flex-1 w-full bg-slate-50 dark:bg-black/30 flex items-center justify-center relative border-b border-slate-100 dark:border-zinc-850/80 transition-colors overflow-hidden">
+        <div className="flex-1 w-full bg-slate-50 dark:bg-zinc-950/40 flex items-center justify-center relative border-b border-slate-100 dark:border-zinc-800 transition-colors overflow-hidden">
           {renderVisualPreview(item)}
           
           <div className="absolute inset-0 bg-black/10 dark:bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200">
@@ -1603,7 +1603,7 @@ export default function FileDriveView() {
                           navigator.clipboard.writeText(textPreviewContent || '');
                           alert(t('drive', 'copiedClipboard', lang));
                         }}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-850 dark:hover:bg-zinc-800 rounded-lg text-[10px] font-bold text-slate-700 dark:text-zinc-300 transition-colors flex items-center gap-1.5"
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg text-[10px] font-bold text-slate-700 dark:text-zinc-300 transition-colors flex items-center gap-1.5"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" />

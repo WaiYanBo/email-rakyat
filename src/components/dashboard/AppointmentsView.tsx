@@ -80,11 +80,10 @@ export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
 export default function AppointmentsView() {
   // Global synchronized portal language hook
   const { lang, setLang } = usePortalLanguage();
-  const { profile, permissions, loading: loadingPerms } = usePermissions();
+  const { profile, permissions, isITAdmin, loading: loadingPerms } = usePermissions();
 
-  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const canView = permissions?.view_appointments ?? true;
-  const canManage = permissions?.manage_appointments ?? true;
+  const canView = isITAdmin || Boolean(permissions?.view_appointments);
+  const canManage = isITAdmin || Boolean(permissions?.manage_appointments);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +99,15 @@ export default function AppointmentsView() {
   const [filterPIC, setFilterPIC] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterPIC !== 'all') count++;
+    if (filterCategory !== 'all') count++;
+    if (filterStatus !== 'all') count++;
+    return count;
+  }, [filterPIC, filterCategory, filterStatus]);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -786,8 +794,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Open Add Modal
+  // Open Add Modal (Restricted to canManage)
   const handleOpenAddModal = (initialDate?: string) => {
+    if (!canManage) {
+      alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menambah temujanji.' : 'Access Restricted: You do not have permission to add appointments.');
+      return;
+    }
     setFormData({
       client_name: '',
       client_phone: '+60 ',
@@ -826,8 +838,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Open Edit Modal
+  // Open Edit Modal (Restricted to canManage)
   const handleOpenEditModal = (apt: Appointment) => {
+    if (!canManage) {
+      alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menjadual semula atau menyunting temujanji.' : 'Access Restricted: You do not have permission to reschedule or edit appointments.');
+      return;
+    }
     setActiveAppointment(apt);
     const standardCategories = ['Loan Shark', 'Ah Long', 'Kredit Komuniti', 'Bank', 'Scam Victim', 'Kemalangan', 'Tuntutan Sivil'];
     const isCustomCat = Boolean(apt.case_category && !standardCategories.includes(apt.case_category));
@@ -855,6 +871,10 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
 
   // Save Appointment Form (Supports both "Save Only" and "Save & Share to WhatsApp Group")
   const handleSubmitForm = async (shareToGroup: boolean = false) => {
+    if (!canManage) {
+      alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menyimpan perubahan temujanji.' : 'Access Restricted: You do not have permission to save appointment changes.');
+      return;
+    }
     if (!formData.client_name.trim()) {
       alert(t('appointments', 'clientNameRequired', lang));
       return;
@@ -942,8 +962,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Delete Appointment
+  // Delete Appointment (Restricted to canManage)
   const handleDelete = async (apt: Appointment) => {
+    if (!canManage) {
+      alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk memadam temujanji.' : 'Access Restricted: You do not have permission to delete appointments.');
+      return;
+    }
     const confirmMsg = t('appointments', 'deleteConfirm', lang).replace('{name}', apt.client_name);
     if (!confirm(confirmMsg)) return;
 
@@ -961,8 +985,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Quick Status Toggle
+  // Quick Status Toggle (Restricted to canManage)
   const handleUpdateStatus = async (apt: Appointment, newStatus: Appointment['status']) => {
+    if (!canManage) {
+      alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menukar status temujanji.' : 'Access Restricted: You do not have permission to update appointment status.');
+      return;
+    }
     try {
       const { error } = await supabase
         .from('appointments')
@@ -1069,8 +1097,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
         </div>
       )}
 
-      {/* ─── PENDING OUTCOME RESOLUTION BANNER (Option 1: 3+ Hours Window & Reschedule Option) ─── */}
-      {pendingOutcomeAppointments.length > 0 && !hidePendingOutcomeBanner && (
+      {/* ─── PENDING OUTCOME RESOLUTION BANNER (Restricted to canManage users only) ─── */}
+      {canManage && pendingOutcomeAppointments.length > 0 && !hidePendingOutcomeBanner && (
         <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm space-y-2.5 sm:space-y-3 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-2.5">
@@ -1187,8 +1215,45 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
         </div>
       )}
 
-      {/* Metrics Summary Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Metrics Summary Row: Compact Strip on Mobile, 4 Cards on Desktop */}
+      {/* 1. Mobile Compact Metrics Strip */}
+      <div className="grid grid-cols-4 sm:hidden bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-2.5 shadow-xs text-center divide-x divide-slate-100 dark:divide-gray-800/80">
+        <div className="px-1">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight block truncate">
+            {lang === 'bm' ? 'Hari Ini' : 'Today'}
+          </span>
+          <span className="text-lg font-black text-indigo-600 dark:text-yellow-400 font-mono">
+            {metrics.today}
+          </span>
+        </div>
+        <div className="px-1">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight block truncate">
+            {lang === 'bm' ? 'Minggu' : 'Week'}
+          </span>
+          <span className="text-lg font-black text-cyan-600 dark:text-cyan-400 font-mono">
+            {metrics.upcoming}
+          </span>
+        </div>
+        <div className="px-1">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight block truncate">
+            {lang === 'bm' ? 'Selesai' : 'Done'}
+          </span>
+          <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+            {metrics.completed}
+          </span>
+        </div>
+        <div className="px-1">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight block truncate">
+            {lang === 'bm' ? 'Jumlah' : 'Total'}
+          </span>
+          <span className="text-lg font-black text-slate-800 dark:text-zinc-100 font-mono">
+            {metrics.total}
+          </span>
+        </div>
+      </div>
+
+      {/* 2. Desktop 4-Card Metrics Grid */}
+      <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -1241,163 +1306,357 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
       {/* Main Calendar Card Container */}
       <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
         {/* Top Header & Calendar Controls */}
-        <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-          {/* Left: Date Navigation */}
-          <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-start">
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm">
-              <button
-                onClick={handlePrevDate}
-                className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
-                title="Previous"
-              >
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={handleToday}
-                className="px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                {t('appointments', 'today', lang)}
-              </button>
-              <button
-                onClick={handleNextDate}
-                className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
-                title="Next"
-              >
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 space-y-2.5">
+          {/* ─── MOBILE CONTROLS (Spacious 2-Row Layout with Dropdown View Switcher) ─── */}
+          <div className="sm:hidden space-y-2.5">
+            {/* Mobile Row 1: Date Navigation + Add Button (if canManage) */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 shadow-xs">
+                  <button
+                    onClick={handlePrevDate}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                    title="Previous"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleToday}
+                    className="px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg"
+                  >
+                    {t('appointments', 'today', lang)}
+                  </button>
+                  <button
+                    onClick={handleNextDate}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                    title="Next"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">
+                  {headerDateTitle}
+                </h3>
+              </div>
+
+              {/* + New Button (Protected) */}
+              {canManage && (
+                <button
+                  onClick={() => handleOpenAddModal()}
+                  className="h-9 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>{lang === 'bm' ? 'Temujanji' : 'New'}</span>
+                </button>
+              )}
             </div>
 
-            <h3 className="text-sm sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-              {headerDateTitle}
-            </h3>
+            {/* Mobile Row 2: Clean Dropdown View Selector (Default Month) + Language Switcher */}
+            <div className="flex items-center gap-2">
+              {/* Native Dropdown for View Mode */}
+              <div className="relative flex-1">
+                <select
+                  value={calendarView}
+                  onChange={(e) => setCalendarView(e.target.value as any)}
+                  className="w-full appearance-none h-9 pl-3 pr-8 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs font-extrabold text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-amber-400 shadow-xs cursor-pointer"
+                >
+                  <option value="month">📅 {lang === 'bm' ? 'Paparan Bulan (Month)' : 'Month View'}</option>
+                  <option value="week">📆 {lang === 'bm' ? 'Paparan Minggu (Week)' : 'Week View'}</option>
+                  <option value="day">🕒 {lang === 'bm' ? 'Paparan Hari (Day)' : 'Day View'}</option>
+                  <option value="list">📋 {lang === 'bm' ? 'Paparan Senarai (List)' : 'List View'}</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 dark:text-zinc-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Language Switcher */}
+              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 shadow-xs flex-shrink-0 h-9 items-center">
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`h-7 px-2.5 rounded-lg text-xs font-bold transition-all ${lang === 'en' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 dark:text-zinc-400'}`}
+                >
+                  EN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('bm')}
+                  className={`h-7 px-2.5 rounded-lg text-xs font-bold transition-all ${lang === 'bm' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 dark:text-zinc-400'}`}
+                >
+                  BM
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Right: View Switchers (Month, Week, Day, List) + Language Switcher + Add Button */}
-          <div className="flex items-center gap-1.5 sm:gap-2 justify-between sm:justify-end overflow-x-auto scrollbar-none">
-            {/* View Mode Toggle */}
-            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm flex-shrink-0">
-              <button
-                onClick={() => setCalendarView('month')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'month' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >
-                {lang === 'bm' ? 'Bulan' : 'Month'}
-              </button>
-              <button
-                onClick={() => setCalendarView('week')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'week' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >
-                {lang === 'bm' ? 'Minggu' : 'Week'}
-              </button>
-              <button
-                onClick={() => setCalendarView('day')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'day' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >
-                {lang === 'bm' ? 'Hari' : 'Day'}
-              </button>
-              <button
-                onClick={() => setCalendarView('list')}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'list' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >
-                {lang === 'bm' ? 'Senarai' : 'List'}
-              </button>
+          {/* ─── DESKTOP CONTROLS (Spacious Horizontal Header) ─── */}
+          <div className="hidden sm:flex items-center justify-between gap-3">
+            {/* Left: Date Navigation */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
+                <button
+                  onClick={handlePrevDate}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                  title="Previous"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleToday}
+                  className="px-3 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  {t('appointments', 'today', lang)}
+                </button>
+                <button
+                  onClick={handleNextDate}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                  title="Next"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                {headerDateTitle}
+              </h3>
             </div>
 
-            {/* Quick Language Toggle Button Group */}
-            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setLang('en')}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'en' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
-                title="Switch to English"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang('bm')}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'bm' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
-                title="Tukar ke Bahasa Melayu"
-              >
-                BM
-              </button>
-            </div>
+            {/* Right: View Switchers + Language Switcher + Add Button */}
+            <div className="flex items-center gap-2">
+              {/* View Mode Tabs */}
+              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
+                <button
+                  onClick={() => setCalendarView('month')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'month' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  {lang === 'bm' ? 'Bulan' : 'Month'}
+                </button>
+                <button
+                  onClick={() => setCalendarView('week')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'week' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  {lang === 'bm' ? 'Minggu' : 'Week'}
+                </button>
+                <button
+                  onClick={() => setCalendarView('day')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'day' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  {lang === 'bm' ? 'Hari' : 'Day'}
+                </button>
+                <button
+                  onClick={() => setCalendarView('list')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'list' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  {lang === 'bm' ? 'Senarai' : 'List'}
+                </button>
+              </div>
 
-            {/* + Add Appointment Button */}
-            <button
-              onClick={() => handleOpenAddModal()}
-              className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-400 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1 flex-shrink-0"
-            >
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden sm:inline">{t('appointments', 'newAppointment', lang)}</span>
-              <span className="sm:hidden">{lang === 'bm' ? 'Temujanji' : 'New'}</span>
-            </button>
+              {/* Language Switcher */}
+              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'en' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                  title="Switch to English"
+                >
+                  EN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('bm')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'bm' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                  title="Tukar ke Bahasa Melayu"
+                >
+                  BM
+                </button>
+              </div>
+
+              {/* + Add Appointment Button (Protected) */}
+              {canManage && (
+                <button
+                  onClick={() => handleOpenAddModal()}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>{t('appointments', 'newAppointment', lang)}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Filters Bar */}
-        <div className="p-3 sm:p-3.5 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          {/* Search Input */}
-          <div className="col-span-2 sm:col-span-1 relative">
-            <input
-              type="text"
-              placeholder={t('appointments', 'searchPlaceholder', lang)}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-            />
+        {/* ─── FILTERS BAR (Expandable on Mobile, Grid on Desktop) ─── */}
+        <div className="p-3 sm:p-3.5 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs">
+          {/* Mobile Filter Header: Search input + Filter toggle button */}
+          <div className="sm:hidden space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder={t('appointments', 'searchPlaceholder', lang)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-9 pl-8 pr-3 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-400"
+                />
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                  showMobileFilters || activeFilterCount > 0
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-xs'
+                    : 'bg-slate-50 dark:bg-gray-800/80 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-gray-700'
+                }`}
+              >
+                <span>⚙️</span>
+                <span>{lang === 'bm' ? 'Tapis' : 'Filter'}</span>
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-slate-950 text-amber-400 text-[10px] font-black flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Expandable Filter Dropdowns on Mobile */}
+            {showMobileFilters && (
+              <div className="pt-2 border-t border-slate-100 dark:border-gray-800 space-y-2 animate-in fade-in slide-in-from-top-1">
+                <div className="grid grid-cols-1 gap-2">
+                  <select
+                    value={filterPIC}
+                    onChange={(e) => setFilterPIC(e.target.value)}
+                    className="w-full h-9 px-3 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="all">{t('appointments', 'allPics', lang)}</option>
+                    {staffList.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      className="w-full h-9 px-3 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+                    >
+                      <option value="all">{t('appointments', 'allCategories', lang)}</option>
+                      <option value="Loan Shark">Loan Shark / Ah Long</option>
+                      <option value="Kredit Komuniti">Kredit Komuniti</option>
+                      <option value="Bank">Bank</option>
+                      <option value="Scam Victim">Scam Victim</option>
+                      <option value="Kemalangan">{lang === 'bm' ? 'Kemalangan' : 'Accident'}</option>
+                      <option value="Tuntutan Sivil">{lang === 'bm' ? 'Tuntutan Sivil' : 'Civil Claims'}</option>
+                    </select>
+
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full h-9 px-3 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+                    >
+                      <option value="all">{t('appointments', 'allStatuses', lang)}</option>
+                      <option value="Scheduled">{t('appointments', 'scheduled', lang)}</option>
+                      <option value="In Progress">{t('appointments', 'inProgress', lang)}</option>
+                      <option value="Completed">{t('appointments', 'completed', lang)}</option>
+                      <option value="Cancelled">{t('appointments', 'cancelled', lang)}</option>
+                      <option value="No-Show">{t('appointments', 'noShow', lang)}</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Reset Filters on Mobile if any active */}
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterPIC('all');
+                      setFilterCategory('all');
+                      setFilterStatus('all');
+                      setSearchQuery('');
+                    }}
+                    className="w-full py-1.5 text-center text-xs font-bold text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/30 rounded-lg border border-rose-200 dark:border-rose-900/40"
+                  >
+                    ✕ {lang === 'bm' ? 'Kosongkan Semua Tapisan' : 'Reset All Filters'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* PIC Filter */}
-          <div className="col-span-1">
-            <select
-              value={filterPIC}
-              onChange={(e) => setFilterPIC(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="all">{t('appointments', 'allPics', lang)}</option>
-              {staffList.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
+          {/* Desktop 4-Column Filter Grid */}
+          <div className="hidden sm:grid grid-cols-4 gap-2">
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={t('appointments', 'searchPlaceholder', lang)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-400"
+              />
+            </div>
 
-          {/* Category Filter */}
-          <div className="col-span-1">
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="all">{t('appointments', 'allCategories', lang)}</option>
-              <option value="Loan Shark">Loan Shark / Ah Long</option>
-              <option value="Kredit Komuniti">Kredit Komuniti</option>
-              <option value="Bank">Bank</option>
-              <option value="Scam Victim">Scam Victim</option>
-              <option value="Kemalangan">{lang === 'bm' ? 'Kemalangan' : 'Accident'}</option>
-              <option value="Tuntutan Sivil">{lang === 'bm' ? 'Tuntutan Sivil' : 'Civil Claims'}</option>
-            </select>
-          </div>
+            {/* PIC Filter */}
+            <div>
+              <select
+                value={filterPIC}
+                onChange={(e) => setFilterPIC(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+              >
+                <option value="all">{t('appointments', 'allPics', lang)}</option>
+                {staffList.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Status Filter */}
-          <div className="col-span-2 sm:col-span-1">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="all">{t('appointments', 'allStatuses', lang)}</option>
-              <option value="Scheduled">{t('appointments', 'scheduled', lang)}</option>
-              <option value="In Progress">{t('appointments', 'inProgress', lang)}</option>
-              <option value="Completed">{t('appointments', 'completed', lang)}</option>
-              <option value="Cancelled">{t('appointments', 'cancelled', lang)}</option>
-              <option value="No-Show">{t('appointments', 'noShow', lang)}</option>
-            </select>
+            {/* Category Filter */}
+            <div>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+              >
+                <option value="all">{t('appointments', 'allCategories', lang)}</option>
+                <option value="Loan Shark">Loan Shark / Ah Long</option>
+                <option value="Kredit Komuniti">Kredit Komuniti</option>
+                <option value="Bank">Bank</option>
+                <option value="Scam Victim">Scam Victim</option>
+                <option value="Kemalangan">{lang === 'bm' ? 'Kemalangan' : 'Accident'}</option>
+                <option value="Tuntutan Sivil">{lang === 'bm' ? 'Tuntutan Sivil' : 'Civil Claims'}</option>
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-amber-400"
+              >
+                <option value="all">{t('appointments', 'allStatuses', lang)}</option>
+                <option value="Scheduled">{t('appointments', 'scheduled', lang)}</option>
+                <option value="In Progress">{t('appointments', 'inProgress', lang)}</option>
+                <option value="Completed">{t('appointments', 'completed', lang)}</option>
+                <option value="Cancelled">{t('appointments', 'cancelled', lang)}</option>
+                <option value="No-Show">{t('appointments', 'noShow', lang)}</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1662,12 +1921,14 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                     )}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleOpenAddModal(formatDateToYYYYMMDD(currentDate))}
-                  className="px-3 py-1.5 bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-400 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
-                >
-                  {t('appointments', 'addSlotToday', lang)}
-                </button>
+                {canManage && (
+                  <button
+                    onClick={() => handleOpenAddModal(formatDateToYYYYMMDD(currentDate))}
+                    className="px-3 py-1.5 bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-400 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
+                  >
+                    {t('appointments', 'addSlotToday', lang)}
+                  </button>
+                )}
               </div>
 
               {/* Day Schedule Cards */}
@@ -1761,13 +2022,15 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                               <span>{t('appointments', 'sendClientReminder', lang)}</span>
                             </button>
                           )}
-                          <button
-                            onClick={() => handleOpenEditModal(apt)}
-                            className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-                          >
-                            <span>🗓️</span>
-                            <span>{t('appointments', 'reschedule', lang)}</span>
-                          </button>
+                          {canManage && (
+                            <button
+                              onClick={() => handleOpenEditModal(apt)}
+                              className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                            >
+                              <span>🗓️</span>
+                              <span>{t('appointments', 'reschedule', lang)}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1832,21 +2095,25 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-1">
+                        <div className={`grid ${canManage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 pt-1.5`}>
                           <button
+                            type="button"
                             onClick={() => handleShareToWhatsAppGroup(apt)}
-                            className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm"
+                            className="h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-98"
                           >
                             <span>📢</span>
-                            <span>{t('appointments', 'groupBroadcast', lang)}</span>
+                            <span className="truncate">{t('appointments', 'groupBroadcast', lang)}</span>
                           </button>
-                          <button
-                            onClick={() => handleOpenEditModal(apt)}
-                            className="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 rounded-xl text-xs font-bold flex items-center gap-1"
-                          >
-                            <span>🗓️</span>
-                            <span>{t('appointments', 'reschedule', lang)}</span>
-                          </button>
+                          {canManage && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(apt)}
+                              className="h-10 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-98"
+                            >
+                              <span>🗓️</span>
+                              <span className="truncate">{t('appointments', 'reschedule', lang)}</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1924,14 +2191,16 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                                     <span>💬</span>
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => handleOpenEditModal(apt)}
-                                  className="h-7 px-2.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 font-bold transition-all flex items-center gap-1"
-                                  title={t('appointments', 'reschedule', lang)}
-                                >
-                                  <span>🗓️</span>
-                                  <span>{t('appointments', 'reschedule', lang)}</span>
-                                </button>
+                                {canManage && (
+                                  <button
+                                    onClick={() => handleOpenEditModal(apt)}
+                                    className="h-7 px-2.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 font-bold transition-all flex items-center gap-1"
+                                    title={t('appointments', 'reschedule', lang)}
+                                  >
+                                    <span>🗓️</span>
+                                    <span>{t('appointments', 'reschedule', lang)}</span>
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -2751,46 +3020,63 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               </div>
             </div>
 
-            {/* Footer Status & Edit Actions (Fixed) */}
+            {/* Footer Status & Edit Actions (Protected) */}
             <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 flex-shrink-0 bg-slate-50 dark:bg-gray-900/90 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                {activeAppointment.status !== 'Completed' && (
-                  <button
-                    onClick={() => handleUpdateStatus(activeAppointment, 'Completed')}
-                    className="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 cursor-pointer"
-                  >
-                    {t('appointments', 'markCompleted', lang)}
-                  </button>
-                )}
-                {activeAppointment.status !== 'Cancelled' && (
-                  <button
-                    onClick={() => handleUpdateStatus(activeAppointment, 'Cancelled')}
-                    className="px-2.5 py-1.5 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100 cursor-pointer"
-                  >
-                    {t('appointments', 'markCancelled', lang)}
-                  </button>
-                )}
-              </div>
+              {canManage ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    {activeAppointment.status !== 'Completed' && (
+                      <button
+                        onClick={() => handleUpdateStatus(activeAppointment, 'Completed')}
+                        className="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 cursor-pointer"
+                      >
+                        {t('appointments', 'markCompleted', lang)}
+                      </button>
+                    )}
+                    {activeAppointment.status !== 'Cancelled' && (
+                      <button
+                        onClick={() => handleUpdateStatus(activeAppointment, 'Cancelled')}
+                        className="px-2.5 py-1.5 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100 cursor-pointer"
+                      >
+                        {t('appointments', 'markCancelled', lang)}
+                      </button>
+                    )}
+                  </div>
 
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    setIsViewModalOpen(false);
-                    handleOpenEditModal(activeAppointment);
-                  }}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
-                >
-                  <span>🗓️</span>
-                  <span>{t('appointments', 'reschedule', lang)}</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(activeAppointment)}
-                  className="px-2.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 rounded-lg text-xs font-bold cursor-pointer"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        setIsViewModalOpen(false);
+                        handleOpenEditModal(activeAppointment);
+                      }}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>🗓️</span>
+                      <span>{t('appointments', 'reschedule', lang)}</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(activeAppointment)}
+                      className="px-2.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 rounded-lg text-xs font-bold cursor-pointer"
+                      title="Delete"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                    <span>👁️</span>
+                    <span>{lang === 'bm' ? 'Mod Paparan Sahaja' : 'View Only Mode'}</span>
+                  </span>
+                  <button
+                    onClick={() => setIsViewModalOpen(false)}
+                    className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    {t('appointments', 'cancel', lang)}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

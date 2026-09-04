@@ -6,8 +6,7 @@ import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { exportAttendanceToExcel } from '../utils/excelExport';
 export default function AttendanceView({ personalOnly = false }: { personalOnly?: boolean }) {
-  const [profile, setProfile] = useState<any>(null);
-  const { permissions, loading: permsLoading } = usePermissions(profile);
+  const { profile, permissions, isITAdmin, loading: permsLoading } = usePermissions();
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -18,6 +17,10 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const [uniqueEmployees, setUniqueEmployees] = useState<any[]>([]);
   const [publicHolidays, setPublicHolidays] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
+
+  const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const canEditAttendance = !personalOnly && (isIT || Boolean(permissions?.edit_attendance));
+  const hasAccess = personalOnly || isIT || Boolean(permissions?.view_attendance);
 
   // Edit / Delete attendance record state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -31,6 +34,10 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const handleOpenEditModal = (record: any) => {
+    if (!canEditAttendance) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menyunting rekod kehadiran.' : 'Access denied: You do not have permission to edit attendance records.');
+      return;
+    }
     setEditingRecord(record);
     setEditDate(record.date || new Date().toISOString().split('T')[0]);
 
@@ -65,6 +72,10 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRecord?.id) return;
+    if (!canEditAttendance) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menyunting kehadiran.' : 'Access denied: You do not have permission to edit attendance.');
+      return;
+    }
     setIsSubmittingEdit(true);
     try {
       const clockInTimestamp = editClockIn ? new Date(`${editDate}T${editClockIn}:00`).toISOString() : null;
@@ -98,6 +109,10 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
   const handleDeleteAttendance = async (record: any) => {
     if (!record?.id || record.is_leave) return;
+    if (!canEditAttendance) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk memadam kehadiran.' : 'Access denied: You do not have permission to delete attendance.');
+      return;
+    }
     const confirmMsg = `${t('attendanceAdmin', 'confirmDelete', lang)}\n\n${record.user_name} (${record.date})`;
     if (!window.confirm(confirmMsg)) return;
 
@@ -439,10 +454,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
     });
     setIsExportModalOpen(false);
   };
-
-  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const canEditAttendance = (permissions.edit_attendance || isIT) && !personalOnly;
-  const hasAccess = personalOnly || permissions.view_attendance || isIT;
 
   if (loading || permsLoading) {
     return (

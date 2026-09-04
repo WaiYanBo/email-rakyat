@@ -481,6 +481,7 @@ const formatLodClient = (client: any, lang: string) => {
 export default function ClientTable({
   clients,
   canEdit,
+  canExport = false,
   searchQuery,
   onSearchChange,
   dateFilter,
@@ -495,6 +496,7 @@ export default function ClientTable({
 }: {
   clients: any[],
   canEdit: boolean,
+  canExport?: boolean,
   searchQuery: string,
   onSearchChange: (q: string) => void,
   dateFilter: string,
@@ -844,6 +846,10 @@ export default function ClientTable({
   };
 
   const handleExportExcel = async () => {
+    if (!canExport) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengeksport data.' : 'Access denied: You do not have permission to export data.');
+      return;
+    }
     const exportData = await getExportData();
     if (exportData.length === 0) return alert(t('attendance', 'noRecordsToExport', lang));
     const XLSX = await import('xlsx');
@@ -854,6 +860,10 @@ export default function ClientTable({
   };
 
   const handleExportCSV = async () => {
+    if (!canExport) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengeksport data.' : 'Access denied: You do not have permission to export data.');
+      return;
+    }
     const exportData = await getExportData();
     if (exportData.length === 0) return alert(t('attendance', 'noRecordsToExport', lang));
     const XLSX = await import('xlsx');
@@ -867,6 +877,10 @@ export default function ClientTable({
   };
 
   const handleExportPDF = async () => {
+    if (!canExport) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengeksport data.' : 'Access denied: You do not have permission to export data.');
+      return;
+    }
     const exportData = await getExportData();
     if (exportData.length === 0) return alert(t('attendance', 'noRecordsToExport', lang));
 
@@ -955,28 +969,32 @@ export default function ClientTable({
 
             {/* EXPORT BUTTONS & ADD BUTTON */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
-              <div className="relative flex-1 sm:flex-none min-w-[130px]">
-                <select
-                  value={exportScope}
-                  onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
-                  data-custom-select
-                  className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
-                >
-                  <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
-                  <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
-                </select>
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
+              {canExport && (
+                <>
+                  <div className="relative flex-1 sm:flex-none min-w-[130px]">
+                    <select
+                      value={exportScope}
+                      onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
+                      data-custom-select
+                      className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
+                    >
+                      <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
+                      <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
+                    </select>
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
 
-              <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
-                <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
-                <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
-                <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
-              </div>
+                  <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
+                    <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
+                    <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
+                    <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
+                  </div>
+                </>
+              )}
 
               {canEdit && (
                 <button

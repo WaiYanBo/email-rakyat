@@ -64,7 +64,8 @@ const DEFAULT_STAFF_PERMISSIONS: Permissions = {
 // In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
 const permissionsCache: Record<string, Permissions> = {};
 
-export function usePermissions(profile: any) {
+export function usePermissions(initialProfile?: any) {
+  const [profile, setProfile] = useState<any>(initialProfile || null);
   const [permissions, setPermissions] = useState<Permissions>(DEFAULT_STAFF_PERMISSIONS);
   const [loading, setLoading] = useState(true);
 
@@ -73,13 +74,12 @@ export function usePermissions(profile: any) {
 
     const fetchPermissions = async () => {
       try {
-        let userId = profile?.id;
-        let department = profile?.department;
-        let role = profile?.role || profile?.role_name;
+        let currentProf = initialProfile;
+        let userId = currentProf?.id;
 
         if (!userId) {
           const session = await getCurrentSession();
-          if (session) {
+          if (session?.user?.id) {
             userId = session.user.id;
           }
         }
@@ -89,63 +89,41 @@ export function usePermissions(profile: any) {
           return;
         }
 
-        // 1. Check in-memory cache
-        if (permissionsCache[userId]) {
-          if (isMounted) {
-            setPermissions(permissionsCache[userId]);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (userId && (!department || !role)) {
+        // Fetch full profile info if missing
+        if (!currentProf || !currentProf.department) {
           const { data: profData } = await supabase
             .from('profiles')
-            .select(`department, roles(role_name), role_id`)
+            .select(`id, full_name, email, department, status, role, roles(role_name), role_id`)
             .eq('id', userId)
             .single();
 
           if (profData) {
-            department = department || profData.department;
-            if (!role) {
-              if (profData.roles) {
-                if (Array.isArray(profData.roles)) {
-                  role = profData.roles[0]?.role_name || 'No Role';
-                } else {
-                  role = profData.roles?.role_name || 'No Role';
-                }
-              } else if (profData.role_id) {
-                const { data: roleData } = await supabase
-                  .from('roles')
-                  .select('role_name')
-                  .eq('id', profData.role_id)
-                  .single();
-                if (roleData) {
-                  role = roleData.role_name;
-                }
-              }
-            }
+            currentProf = profData;
+            if (isMounted) setProfile(profData);
           }
         }
 
+        const roleName = currentProf?.role || currentProf?.roles?.role_name || '';
+        const deptName = currentProf?.department || '';
+
         const isITAdmin = 
-          role?.toLowerCase() === 'it' || 
-          role?.toLowerCase() === 'it admin' || 
-          department?.toLowerCase() === 'it';
+          roleName.toLowerCase() === 'it' || 
+          roleName.toLowerCase() === 'it admin' || 
+          deptName.toLowerCase() === 'it';
 
         if (isITAdmin) {
           if (isMounted) {
             setPermissions(IT_ADMIN_PERMISSIONS);
             setLoading(false);
           }
-          if (userId) permissionsCache[userId] = IT_ADMIN_PERMISSIONS;
           return;
         }
 
+        // Fetch permissions for this specific user and their department
         const { data, error } = await supabase
           .from('access_permissions')
           .select('*')
-          .in('target_id', [userId, department].filter(Boolean));
+          .in('target_id', [userId, deptName].filter(Boolean));
 
         if (error) {
           console.warn('access_permissions table query failed', error);
@@ -182,10 +160,6 @@ export function usePermissions(profile: any) {
         if (isMounted) {
           setPermissions(finalPerms);
         }
-
-        if (userId) {
-          permissionsCache[userId] = finalPerms;
-        }
       } catch (err) {
         console.error('Error fetching permissions:', err);
       } finally {
@@ -195,10 +169,17 @@ export function usePermissions(profile: any) {
 
     fetchPermissions();
 
+    const handlePermissionsUpdated = () => {
+      fetchPermissions();
+    };
+
+    window.addEventListener('permissionsUpdated', handlePermissionsUpdated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('permissionsUpdated', handlePermissionsUpdated);
     };
-  }, [profile]);
+  }, [initialProfile]);
 
   const isITAdmin = 
     profile?.role?.toLowerCase() === 'it' || 
@@ -209,7 +190,7 @@ export function usePermissions(profile: any) {
 
   const finalPermissions = isITAdmin ? IT_ADMIN_PERMISSIONS : permissions;
 
-  return { permissions: finalPermissions, loading };
+  return { permissions: finalPermissions, profile, isITAdmin, loading };
 }
 
 export function clearPermissionsCache(userId?: string) {
@@ -219,6 +200,9 @@ export function clearPermissionsCache(userId?: string) {
     for (const key in permissionsCache) {
       delete permissionsCache[key];
     }
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('permissionsUpdated'));
   }
 }
 

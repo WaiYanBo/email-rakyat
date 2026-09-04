@@ -123,10 +123,9 @@ const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
   const [dbClients, setDbClients] = useState<any[]>([]);
   const { lang } = usePortalLanguage();
-  const { permissions, loading: permsLoading } = usePermissions(profile);
+  const { profile, permissions, isITAdmin, loading: permsLoading } = usePermissions();
 
   const getLabel = (key: string) => {
     const k = key.toUpperCase();
@@ -517,11 +516,11 @@ export default function ClientDataView() {
               department: profileData.department,
               role: roleName,
             };
-            if (isMounted) setProfile(currentProfile);
           }
         }
 
-        const canViewClients = permissions?.view_clients || false;
+        const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+        const canViewClients = isIT || Boolean(permissions?.view_clients);
 
         if (canViewClients) {
           let query = supabase.from('clients');
@@ -642,6 +641,12 @@ export default function ClientDataView() {
   }, [permissions, searchQuery, dateFilter, viewMode, storageFolders, refreshTrigger]);
 
   const handleOpenAddModal = () => {
+    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+    const canEditClient = isIT || Boolean(permissions?.edit_clients);
+    if (!canEditClient) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menambah klien.' : 'Access denied: You do not have permission to add clients.');
+      return;
+    }
     setEditingClient(null);
     setPoliceReportsList([{ date: '', no: '' }]);
     setIpList([{ date: '', no: '', pem: '', officer: '' }]);
@@ -658,6 +663,12 @@ export default function ClientDataView() {
     setIsModalOpen(true);
   };
   const handleOpenEditModal = async (client: any) => {
+    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+    const canEditClient = isIT || Boolean(permissions?.edit_clients);
+    if (!canEditClient) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengemas kini maklumat klien.' : 'Access denied: You do not have permission to edit clients.');
+      return;
+    }
     setEditingClient(client);
     setIsModalOpen(true);
     let currentData = client;
@@ -746,6 +757,12 @@ export default function ClientDataView() {
   const handleCloseViewModal = () => { setIsViewModalOpen(false); setViewingClient(null); };
 
   const handleExportFull = async () => {
+    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+    const canExport = isIT || Boolean(permissions?.export_data);
+    if (!canExport) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengeksport data.' : 'Access denied: You do not have permission to export data.');
+      return [];
+    }
     const { data: clientsData } = await supabase.from('clients').select('*');
     if (!clientsData) return [];
     return clientsData.map((c, idx) => ({
@@ -1067,6 +1084,14 @@ export default function ClientDataView() {
       }
     }
 
+    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+    const canEditClient = isIT || Boolean(permissions?.edit_clients);
+    if (!canEditClient) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengemas kini maklumat klien.' : 'Access denied: You do not have permission to edit clients.');
+      setIsSaving(false);
+      return;
+    }
+
     try {
       if (editingClient && !editingClient.isVirtual) {
         const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
@@ -1094,9 +1119,10 @@ export default function ClientDataView() {
     );
   }
 
-  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const canEdit = permissions?.edit_clients || isIT;
-  const canView = permissions?.view_clients || isIT;
+  const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const canEdit = isIT || Boolean(permissions?.edit_clients);
+  const canView = isIT || Boolean(permissions?.view_clients);
+  const canExport = isIT || Boolean(permissions?.export_data);
 
   if (!canView) {
     return (
@@ -1131,6 +1157,7 @@ export default function ClientDataView() {
           <ClientTable
             clients={dbClients}
             canEdit={canEdit}
+            canExport={canExport}
             searchQuery={searchQuery}
             onSearchChange={(q) => { setSearchQuery(q); }}
             dateFilter={dateFilter}

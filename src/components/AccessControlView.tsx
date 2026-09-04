@@ -539,13 +539,35 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       });
 
       for (const entry of upserts) {
-        if (entry.id) {
-          await supabase
+        let recordId = entry.id;
+
+        // If ID not set in matrix, check database to prevent duplicate key violations
+        if (!recordId) {
+          const { data: existing } = await supabase
             .from('access_permissions')
-            .update({ permissions: entry.permissions })
-            .eq('id', entry.id);
+            .select('id')
+            .eq('target_type', entry.target_type)
+            .eq('target_id', entry.target_id)
+            .maybeSingle();
+
+          if (existing?.id) {
+            recordId = existing.id;
+            entry.id = existing.id;
+          }
+        }
+
+        if (recordId) {
+          const { error: updateErr } = await supabase
+            .from('access_permissions')
+            .update({
+              permissions: entry.permissions,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', recordId);
+
+          if (updateErr) throw updateErr;
         } else {
-          const { data: newRecord } = await supabase
+          const { data: newRecord, error: insertErr } = await supabase
             .from('access_permissions')
             .insert({
               target_type: entry.target_type,
@@ -555,6 +577,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
             .select('id')
             .single();
 
+          if (insertErr) throw insertErr;
           if (newRecord?.id) {
             entry.id = newRecord.id;
           }

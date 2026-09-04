@@ -44,7 +44,7 @@ const IT_ADMIN_PERMISSIONS: Permissions = {
 const DEFAULT_STAFF_PERMISSIONS: Permissions = {
   view_clients: false,
   edit_clients: false,
-  view_appointments: false,
+  view_appointments: true,
   manage_appointments: false,
   export_data: false,
   view_staff: false,
@@ -53,7 +53,7 @@ const DEFAULT_STAFF_PERMISSIONS: Permissions = {
   edit_attendance: false,
   view_snapshot: false,
   manage_access_control: false,
-  manage_drive: false,
+  manage_drive: true,
   manage_hr: false,
   view_claims: true,
   manage_claims: false,
@@ -104,7 +104,8 @@ export function usePermissions(initialProfile?: any) {
         }
 
         const roleName = currentProf?.role || currentProf?.roles?.role_name || '';
-        const deptName = currentProf?.department || '';
+        const deptName = currentProf?.department ? currentProf.department.trim() : '';
+        const fullName = currentProf?.full_name ? currentProf.full_name.trim() : '';
 
         const isITAdmin = 
           roleName.toLowerCase() === 'it' || 
@@ -119,11 +120,12 @@ export function usePermissions(initialProfile?: any) {
           return;
         }
 
-        // Fetch permissions for this specific user and their department
+        // Fetch permissions for this specific user (by ID or Full Name) and their department
+        const targetIds = Array.from(new Set([userId, fullName, deptName].filter(Boolean)));
         const { data, error } = await supabase
           .from('access_permissions')
           .select('*')
-          .in('target_id', [userId, deptName].filter(Boolean));
+          .in('target_id', targetIds);
 
         if (error) {
           console.warn('access_permissions table query failed', error);
@@ -132,28 +134,28 @@ export function usePermissions(initialProfile?: any) {
         let finalPerms: Permissions = { ...DEFAULT_STAFF_PERMISSIONS };
 
         if (data && data.length > 0) {
-          const deptPerms = data.find(p => p.target_type === 'department')?.permissions || {};
-          const userPerms = data.find(p => p.target_type === 'user')?.permissions || {};
+          const deptPerms = data.find(p => p.target_type === 'department' && p.target_id === deptName)?.permissions || {};
+          const userPerms = data.find(p => p.target_type === 'user' && (p.target_id === userId || p.target_id === fullName))?.permissions || {};
 
           // User-specific settings take top precedence, followed by Department template, followed by secure defaults
           finalPerms = {
-            view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? false,
-            edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? false,
-            view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? false,
-            manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? false,
-            export_data: userPerms.export_data ?? deptPerms.export_data ?? false,
-            view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? false,
-            edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? false,
-            view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? false,
-            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? false,
-            view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? false,
-            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? false,
-            manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? false,
-            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? false,
-            view_claims: userPerms.view_claims ?? deptPerms.view_claims ?? true,
-            manage_claims: userPerms.manage_claims ?? deptPerms.manage_claims ?? false,
-            view_leave: userPerms.view_leave ?? deptPerms.view_leave ?? true,
-            manage_leave: userPerms.manage_leave ?? deptPerms.manage_leave ?? false,
+            view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_clients,
+            edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.edit_clients,
+            view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? DEFAULT_STAFF_PERMISSIONS.view_appointments,
+            manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? DEFAULT_STAFF_PERMISSIONS.manage_appointments,
+            export_data: userPerms.export_data ?? deptPerms.export_data ?? DEFAULT_STAFF_PERMISSIONS.export_data,
+            view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? DEFAULT_STAFF_PERMISSIONS.view_staff,
+            edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? DEFAULT_STAFF_PERMISSIONS.edit_staff,
+            view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? DEFAULT_STAFF_PERMISSIONS.view_attendance,
+            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? DEFAULT_STAFF_PERMISSIONS.edit_attendance,
+            view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? DEFAULT_STAFF_PERMISSIONS.view_snapshot,
+            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? DEFAULT_STAFF_PERMISSIONS.manage_access_control,
+            manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? DEFAULT_STAFF_PERMISSIONS.manage_drive,
+            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? DEFAULT_STAFF_PERMISSIONS.manage_hr,
+            view_claims: userPerms.view_claims ?? deptPerms.view_claims ?? DEFAULT_STAFF_PERMISSIONS.view_claims,
+            manage_claims: userPerms.manage_claims ?? deptPerms.manage_claims ?? DEFAULT_STAFF_PERMISSIONS.manage_claims,
+            view_leave: userPerms.view_leave ?? deptPerms.view_leave ?? DEFAULT_STAFF_PERMISSIONS.view_leave,
+            manage_leave: userPerms.manage_leave ?? deptPerms.manage_leave ?? DEFAULT_STAFF_PERMISSIONS.manage_leave,
           };
         }
 

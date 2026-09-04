@@ -4,6 +4,7 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { sanitizeInput } from '../utils/security';
 import { usePermissions } from '../hooks/usePermissions';
+import PermissionDenied from './PermissionDenied';
 
 interface ClaimSystemViewProps {
   profile?: any;
@@ -590,11 +591,33 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-indigo-600 dark:border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="text-sm font-semibold text-slate-600 dark:text-zinc-400">
           {t('common', 'loading', lang)}
         </p>
       </div>
+    );
+  }
+
+  if (mode === 'admin' && !isApprover) {
+    return (
+      <PermissionDenied
+        title={isBm ? 'Akses Pentadbiran Tuntutan Terhad' : 'Claims Administration Access Restricted'}
+        message={isBm
+          ? 'Akaun anda tidak mempunyai kebenaran untuk meluluskan atau mentadbir tuntutan kakitangan. Sila hubungi Pentadbir Sistem jika anda memerlukan akses ini.'
+          : 'Your account does not have permission to review or administer employee claims. Please contact your System Administrator if you require access.'}
+      />
+    );
+  }
+
+  if (mode === 'staff' && !permissions?.view_claims) {
+    return (
+      <PermissionDenied
+        title={isBm ? 'Akses Sistem Tuntutan Terhad' : 'Claims Module Access Restricted'}
+        message={isBm
+          ? 'Akaun anda tidak mempunyai kebenaran untuk mengakses sistem tuntutan perbelanjaan. Sila hubungi Pentadbir Sistem jika anda memerlukan akses.'
+          : 'Your account does not have permission to access the claims module. Please contact your System Administrator if you require access.'}
+      />
     );
   }
 

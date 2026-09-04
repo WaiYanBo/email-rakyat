@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { t } from '../../lib/portalI18n';
 import { usePortalLanguage } from '../../hooks/usePortalLanguage';
+import { usePermissions } from '../../hooks/usePermissions';
+import PermissionDenied from '../PermissionDenied';
 
 export interface Appointment {
   id: string;
@@ -32,9 +34,57 @@ interface ClientOption {
   type: 'potential' | 'active';
 }
 
+// ─── 12-HOUR TIME PARSING & NORMALIZATION ENGINE ───────────────────────────
+// Converts any 12H time string ("09:00 AM", "1:00 PM", "11:30 am", "12:00 PM") to total minutes from midnight (0 - 1439)
+export const parseTimeToMinutes = (timeStr: string = ''): number => {
+  if (!timeStr) return 0;
+  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
+  if (!match) return 0;
+  let h = parseInt(match[1], 10);
+  const m = match[2] ? parseInt(match[2], 10) : 0;
+  const period = match[3]?.toLowerCase() || '';
+
+  const isPM = period.includes('pm') || period.includes('petang') || period.includes('malam');
+  const isAM = period.includes('am') || period.includes('pagi');
+
+  if (isPM && h < 12) {
+    h += 12;
+  } else if (isAM && h === 12) {
+    h = 0;
+  } else if (!isPM && !isAM && h >= 12 && h < 24) {
+    // Already in 24h format e.g. 13:00 -> 1:00 PM
+  }
+  return h * 60 + m;
+};
+
+// Standardizes time strictly to 12-Hour format "hh:mm AM/PM"
+export const formatToStandard12H = (timeStr: string = ''): string => {
+  if (!timeStr) return '11:00 AM';
+  const totalMins = parseTimeToMinutes(timeStr);
+  let h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+};
+
+// Formats any Date object to local YYYY-MM-DD string without UTC timezone offset corruption
+export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export default function AppointmentsView() {
   // Global synchronized portal language hook
   const { lang, setLang } = usePortalLanguage();
+  const { profile, permissions, loading: loadingPerms } = usePermissions();
+
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const canView = permissions?.view_appointments ?? true;
+  const canManage = permissions?.manage_appointments ?? true;
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +113,7 @@ export default function AppointmentsView() {
     client_phone: '+60 ',
     client_id: '',
     potential_client_id: '',
-    appointment_date: new Date().toISOString().split('T')[0],
+    appointment_date: formatDateToYYYYMMDD(new Date()),
     appointment_time: '11:00 AM',
     case_category: 'Loan Shark',
     custom_category: '',
@@ -373,6 +423,65 @@ Temujanji anda bersama ER Advocacy telah dijadualkan seperti butiran berikut:
 Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terima kasih.`;
   };
 
+  // Helper for Group WhatsApp Broadcast (Rescheduled)
+  const generateWhatsAppRescheduleGroupMessage = (apt: {
+    client_name: string;
+    appointment_date: string;
+    appointment_time: string;
+    case_category: string;
+    pic_name: string;
+  }) => {
+    let formattedDate = apt.appointment_date;
+    if (apt.appointment_date && apt.appointment_date.includes('-')) {
+      const parts = apt.appointment_date.split('-');
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+
+    return `*🔔 ER Advocacy Client Appointment [JADUAL SEMULA / RESCHEDULED]*
+* Client: ${apt.client_name || '-'}
+* Tarikh Baharu / New Date: ${formattedDate}
+* Masa Baharu / New Time: ${apt.appointment_time || '-'}
+* Kategori / Category: ${apt.case_category || '-'}
+* PIC: ${apt.pic_name || '-'}
+
+Sila kemas kini jadual anda. Please update your schedule. Thank you.`;
+  };
+
+  // Helper for Client WhatsApp Reschedule Notice
+  const generateClientRescheduleMessage = (apt: Appointment) => {
+    let formattedDate = apt.appointment_date;
+    if (apt.appointment_date && apt.appointment_date.includes('-')) {
+      const parts = apt.appointment_date.split('-');
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+
+    if (lang === 'en') {
+      return `Dear ${apt.client_name},
+
+Kindly be informed that your consultation appointment with ER Advocacy has been RESCHEDULED to:
+📅 New Date: ${formattedDate}
+⏰ New Time: ${apt.appointment_time}
+🏢 Location / Mode: ${apt.location || 'ER Advocacy Office'}
+👤 Officer In Charge: ${apt.pic_name}
+
+Please let us know if this timing works for you. Thank you.`;
+    }
+
+    return `Salam sejahtera ${apt.client_name},
+
+Dimaklumkan bahawa temujanji konsultasi anda bersama ER Advocacy telah DIJADUALKAN SEMULA seperti butiran berikut:
+📅 Tarikh Baharu: ${formattedDate}
+⏰ Masa Baharu: ${apt.appointment_time}
+🏢 Mod / Lokasi: ${apt.location || 'Pejabat ER Advocacy'}
+👤 PIC Bertugas: ${apt.pic_name}
+
+Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
+  };
+
   // 1-Click WhatsApp Group Broadcast Action
   const handleShareToWhatsAppGroup = (apt: {
     client_name: string;
@@ -382,6 +491,25 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
     pic_name: string;
   }) => {
     const text = generateWhatsAppGroupMessage(apt);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    setCopyFeedback(apt.client_name);
+    setTimeout(() => setCopyFeedback(null), 3500);
+
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // 1-Click WhatsApp Group Reschedule Broadcast Action
+  const handleShareRescheduleToWhatsAppGroup = (apt: {
+    client_name: string;
+    appointment_date: string;
+    appointment_time: string;
+    case_category: string;
+    pic_name: string;
+  }) => {
+    const text = generateWhatsAppRescheduleGroupMessage(apt);
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
     }
@@ -408,9 +536,25 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
     }
   };
 
-  // Filtered Appointments
+  // 1-Click Client Reschedule Notice Action
+  const handleSendClientRescheduleNotice = (apt: Appointment) => {
+    const cleanPhone = (apt.client_phone || '').replace(/[^0-9]/g, '');
+    const text = generateClientRescheduleMessage(apt);
+    
+    if (cleanPhone) {
+      const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+      window.open(whatsappUrl, '_blank');
+    } else {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      }
+      alert(t('appointments', 'noPhoneMsg', lang));
+    }
+  };
+
+  // Filtered & Chronologically Sorted (12-Hour) Appointments
   const filteredAppointments = useMemo(() => {
-    return appointments.filter(apt => {
+    const list = appointments.filter(apt => {
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -441,11 +585,92 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
 
       return true;
     });
+
+    // Strictly 12-Hour Chronological Sort: Date ASC -> Time (Minutes from midnight) ASC -> Client Name ASC
+    return list.sort((a, b) => {
+      if (a.appointment_date !== b.appointment_date) {
+        return a.appointment_date.localeCompare(b.appointment_date);
+      }
+      const diff = parseTimeToMinutes(a.appointment_time) - parseTimeToMinutes(b.appointment_time);
+      if (diff !== 0) return diff;
+      return (a.client_name || '').localeCompare(b.client_name || '');
+    });
   }, [appointments, searchQuery, filterPIC, filterCategory, filterStatus]);
+
+  // Reactive Clash Detection Set (Identifies appointments that share Date, Time Slot, and PIC)
+  const clashingAppointmentIds = useMemo(() => {
+    const clashSet = new Set<string>();
+    const activeList = appointments.filter(a => a.status !== 'Cancelled');
+    
+    const slotMap = new Map<string, Appointment[]>();
+    activeList.forEach(apt => {
+      const timeMinutes = parseTimeToMinutes(apt.appointment_time);
+      const picKey = (apt.pic_name || '').toLowerCase().trim();
+      const key = `${apt.appointment_date}_${timeMinutes}_${picKey}`;
+      const arr = slotMap.get(key) || [];
+      arr.push(apt);
+      slotMap.set(key, arr);
+    });
+
+    slotMap.forEach((apts) => {
+      if (apts.length > 1) {
+        apts.forEach(a => clashSet.add(a.id));
+      }
+    });
+
+    return clashSet;
+  }, [appointments]);
+
+  // Live Modal Clash Detector (Purely advisory warning banner, does not block booking)
+  const formClashAppointment = useMemo(() => {
+    if (!formData.appointment_date || !formData.appointment_time) return null;
+    const currentFormMins = parseTimeToMinutes(formData.appointment_time);
+    const currentPic = (formData.is_custom_pic ? formData.custom_pic : formData.pic_name || '').toLowerCase().trim();
+    
+    return appointments.find(a => {
+      if (isEditModalOpen && activeAppointment && a.id === activeAppointment.id) return false;
+      if (a.status === 'Cancelled') return false;
+      if (a.appointment_date !== formData.appointment_date) return false;
+      const aMins = parseTimeToMinutes(a.appointment_time);
+      const aPic = (a.pic_name || '').toLowerCase().trim();
+      return aMins === currentFormMins && (currentPic ? aPic === currentPic : true);
+    });
+  }, [formData.appointment_date, formData.appointment_time, formData.pic_name, formData.custom_pic, formData.is_custom_pic, appointments, isEditModalOpen, activeAppointment]);
+
+  // ─── PENDING OUTCOME RESOLUTION (Past Date OR Today >= Scheduled Time + 3 Hours) ──────
+  const [hidePendingOutcomeBanner, setHidePendingOutcomeBanner] = useState(false);
+  const [expandedPendingOutcome, setExpandedPendingOutcome] = useState(true);
+
+  const pendingOutcomeAppointments = useMemo(() => {
+    const todayStr = formatDateToYYYYMMDD(new Date());
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const BUFFER_MINUTES = 3 * 60; // 3 hours window after appointment time
+
+    return appointments.filter(a => {
+      // Only track active consultations that are still awaiting a final outcome
+      if (a.status !== 'Scheduled' && a.status !== 'In Progress') return false;
+
+      // Case 1: Past Date (e.g. yesterday or earlier)
+      if (a.appointment_date < todayStr) {
+        return true;
+      }
+
+      // Case 2: Today and at least 3 hours have passed since scheduled time
+      if (a.appointment_date === todayStr) {
+        const scheduledMins = parseTimeToMinutes(a.appointment_time);
+        if (currentMins >= scheduledMins + BUFFER_MINUTES) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [appointments]);
 
   // Summary Metrics
   const metrics = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatDateToYYYYMMDD(new Date());
     
     // Calculate week start and end
     const now = new Date();
@@ -550,6 +775,17 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
     return `${m} ${y}`;
   }, [currentDate, calendarView, lang]);
 
+  // Navigate directly to Day View when clicking on a calendar day
+  const handleSelectDayView = (dateStr: string) => {
+    if (!dateStr) return;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      // Create local date object at noon (12:00) to prevent any boundary shift
+      setCurrentDate(new Date(y, m - 1, d, 12, 0, 0));
+      setCalendarView('day');
+    }
+  };
+
   // Open Add Modal
   const handleOpenAddModal = (initialDate?: string) => {
     setFormData({
@@ -557,7 +793,7 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
       client_phone: '+60 ',
       client_id: '',
       potential_client_id: '',
-      appointment_date: initialDate || new Date().toISOString().split('T')[0],
+      appointment_date: initialDate || formatDateToYYYYMMDD(new Date()),
       appointment_time: '11:00 AM',
       case_category: 'Loan Shark',
       custom_category: '',
@@ -649,7 +885,7 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
         client_id: formData.client_id || null,
         potential_client_id: formData.potential_client_id || null,
         appointment_date: formData.appointment_date,
-        appointment_time: formData.appointment_time.trim() || '11:00 AM',
+        appointment_time: formatToStandard12H(formData.appointment_time),
         case_category: finalCategory,
         pic_name: finalPIC,
         location: formData.location,
@@ -680,13 +916,23 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
 
       // If user requested Share to WhatsApp Group, trigger 1-click broadcast immediately!
       if (shareToGroup) {
-        handleShareToWhatsAppGroup({
-          client_name: payload.client_name,
-          appointment_date: payload.appointment_date,
-          appointment_time: payload.appointment_time,
-          case_category: payload.case_category,
-          pic_name: payload.pic_name
-        });
+        if (isEditModalOpen) {
+          handleShareRescheduleToWhatsAppGroup({
+            client_name: payload.client_name,
+            appointment_date: payload.appointment_date,
+            appointment_time: payload.appointment_time,
+            case_category: payload.case_category,
+            pic_name: payload.pic_name
+          });
+        } else {
+          handleShareToWhatsAppGroup({
+            client_name: payload.client_name,
+            appointment_date: payload.appointment_date,
+            appointment_time: payload.appointment_time,
+            case_category: payload.case_category,
+            pic_name: payload.pic_name
+          });
+        }
       }
     } catch (err: any) {
       console.error('Error saving appointment:', err);
@@ -779,6 +1025,17 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
     setTimeout(() => setSqlCopySuccess(false), 3000);
   };
 
+  if (!loadingPerms && !canView) {
+    return (
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Temujanji Klien Terhad' : 'Client Appointments Access Restricted'}
+        message={lang === 'bm'
+          ? 'Akaun anda tidak mempunyai kebenaran untuk melihat atau menguruskan temujanji klien. Sila hubungi Pentadbir Sistem jika anda memerlukan akses.'
+          : 'Your account does not have permission to view or manage client appointments. Please contact your System Administrator if you require access.'}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full space-y-4">
       {/* Toast Feedback */}
@@ -809,6 +1066,124 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
           >
             {sqlCopySuccess ? t('appointments', 'sqlCopied', lang) : t('appointments', 'copySql', lang)}
           </button>
+        </div>
+      )}
+
+      {/* ─── PENDING OUTCOME RESOLUTION BANNER (Option 1: 3+ Hours Window & Reschedule Option) ─── */}
+      {pendingOutcomeAppointments.length > 0 && !hidePendingOutcomeBanner && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm space-y-2.5 sm:space-y-3 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-xs sm:text-sm flex-shrink-0">
+                ⏳
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1">
+                    <span>{t('appointments', 'pendingOutcomeTitle', lang)}</span>
+                  </h4>
+                  <span className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-amber-500 text-slate-950 font-mono">
+                    {pendingOutcomeAppointments.length}
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 hidden sm:block">
+                  {t('appointments', 'pendingOutcomeSub', lang)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setExpandedPendingOutcome(!expandedPendingOutcome)}
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-amber-500/20 text-slate-500 dark:text-zinc-400 text-xs font-bold transition-colors cursor-pointer"
+                title={expandedPendingOutcome ? 'Collapse' : 'Expand'}
+              >
+                {expandedPendingOutcome ? '▲' : '▼'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setHidePendingOutcomeBanner(true)}
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-amber-500/20 text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                title="Dismiss for this session"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Pending Appointments Cards List */}
+          {expandedPendingOutcome && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 pt-0.5">
+              {pendingOutcomeAppointments.map(apt => (
+                <div
+                  key={apt.id}
+                  className="bg-white/95 dark:bg-gray-900/95 border border-amber-500/30 rounded-xl p-2.5 sm:p-3 shadow-xs space-y-2 flex flex-col justify-between"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                          📅 {apt.appointment_date} • ⏰ {apt.appointment_time}
+                        </span>
+                      </div>
+                      <h5 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
+                        {apt.client_name}
+                      </h5>
+                      <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                        <span>👤 {apt.pic_name}</span>
+                        <span>•</span>
+                        <span className="truncate">🏷️ {apt.case_category}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 1-Click Action Buttons - Responsive 2x2 grid on mobile */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
+                    {/* Selesai / Completed */}
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(apt, 'Completed')}
+                      className="py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>✓</span>
+                      <span>{t('appointments', 'quickCompleted', lang)}</span>
+                    </button>
+
+                    {/* Batal / Cancelled */}
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(apt, 'Cancelled')}
+                      className="py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>✕</span>
+                      <span>{t('appointments', 'quickCancelled', lang)}</span>
+                    </button>
+
+                    {/* Tidak Hadir / No-Show */}
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus(apt, 'No-Show')}
+                      className="py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-zinc-100 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>🚫</span>
+                      <span>{t('appointments', 'quickNoShow', lang)}</span>
+                    </button>
+
+                    {/* Jadual Semula / Reschedule */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditModal(apt)}
+                      className="py-1.5 px-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-[10px] sm:text-[11px] font-black transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>🗓️</span>
+                      <span>{t('appointments', 'quickReschedule', lang)}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -866,77 +1241,77 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
       {/* Main Calendar Card Container */}
       <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
         {/* Top Header & Calendar Controls */}
-        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+        <div className="p-2.5 sm:p-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
           {/* Left: Date Navigation */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
-            <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-start">
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm">
               <button
                 onClick={handlePrevDate}
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
                 title="Previous"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <button
                 onClick={handleToday}
-                className="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                className="px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 {t('appointments', 'today', lang)}
               </button>
               <button
                 onClick={handleNextDate}
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
                 title="Next"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
 
-            <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h3 className="text-sm sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
               {headerDateTitle}
             </h3>
           </div>
 
           {/* Right: View Switchers (Month, Week, Day, List) + Language Switcher + Add Button */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto justify-between lg:justify-end overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 justify-between sm:justify-end overflow-x-auto scrollbar-none">
             {/* View Mode Toggle */}
-            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
+            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm flex-shrink-0">
               <button
                 onClick={() => setCalendarView('month')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'month' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'month' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                {t('appointments', 'monthView', lang)}
+                {lang === 'bm' ? 'Bulan' : 'Month'}
               </button>
               <button
                 onClick={() => setCalendarView('week')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'week' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'week' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                {t('appointments', 'weekView', lang)}
+                {lang === 'bm' ? 'Minggu' : 'Week'}
               </button>
               <button
                 onClick={() => setCalendarView('day')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'day' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'day' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                {t('appointments', 'dayView', lang)}
+                {lang === 'bm' ? 'Hari' : 'Day'}
               </button>
               <button
                 onClick={() => setCalendarView('list')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'list' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${calendarView === 'list' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                {t('appointments', 'listView', lang)}
+                {lang === 'bm' ? 'Senarai' : 'List'}
               </button>
             </div>
 
             {/* Quick Language Toggle Button Group */}
-            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
+            <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 sm:p-1 shadow-sm flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setLang('en')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'en' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'en' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
                 title="Switch to English"
               >
                 EN
@@ -944,7 +1319,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               <button
                 type="button"
                 onClick={() => setLang('bm')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'bm' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'bm' ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
                 title="Tukar ke Bahasa Melayu"
               >
                 BM
@@ -954,12 +1329,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
             {/* + Add Appointment Button */}
             <button
               onClick={() => handleOpenAddModal()}
-              className="px-3.5 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-400 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 flex-shrink-0"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black dark:hover:bg-yellow-400 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1 flex-shrink-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              <span>{t('appointments', 'newAppointment', lang)}</span>
+              <span className="hidden sm:inline">{t('appointments', 'newAppointment', lang)}</span>
+              <span className="sm:hidden">{lang === 'bm' ? 'Temujanji' : 'New'}</span>
             </button>
           </div>
         </div>
@@ -1055,7 +1431,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                   const daysInPrevMonth = new Date(year, month, 0).getDate();
 
                   const cells = [];
-                  const todayStr = new Date().toISOString().split('T')[0];
+                  const todayStr = formatDateToYYYYMMDD(new Date());
 
                   // 1. Previous Month Spillover Days
                   for (let i = startDayIndex - 1; i >= 0; i--) {
@@ -1104,41 +1480,52 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                     return (
                       <div
                         key={cell.dateStr}
-                        onClick={() => handleOpenAddModal(cell.dateStr)}
-                        className={`min-h-[85px] sm:min-h-[115px] p-1.5 sm:p-2 transition-colors cursor-pointer hover:bg-slate-50/90 dark:hover:bg-zinc-800/40 flex flex-col justify-between group ${cell.isToday ? 'bg-indigo-50/40 dark:bg-yellow-500/5' : 'bg-white dark:bg-gray-900'}`}
+                        onClick={() => handleSelectDayView(cell.dateStr)}
+                        className={`min-h-[72px] sm:min-h-[110px] p-1 sm:p-2 transition-colors cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/60 flex flex-col justify-between group ${cell.isToday ? 'bg-indigo-50/40 dark:bg-yellow-500/5' : 'bg-white dark:bg-gray-900'}`}
+                        title={lang === 'bm' ? `Klik untuk lihat jadual penuh (${cell.dateStr})` : `Click to view day timeline (${cell.dateStr})`}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[11px] sm:text-xs font-bold font-mono ${cell.isToday ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black' : 'text-slate-700 dark:text-zinc-300'}`}>
+                        <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                          <span className={`inline-flex items-center justify-center w-4 h-4 sm:w-6 sm:h-6 rounded-full text-[10px] sm:text-xs font-bold font-mono ${cell.isToday ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black' : 'text-slate-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-yellow-400'}`}>
                             {cell.dayNum}
                           </span>
                           {dayApts.length > 0 && (
-                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-zinc-500">
-                              {dayApts.length} {lang === 'bm' ? 'janji' : 'apt'}
+                            <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-400 dark:text-zinc-500">
+                              {dayApts.length}<span className="hidden sm:inline"> {lang === 'bm' ? 'janji' : 'apt'}</span>
                             </span>
                           )}
                         </div>
 
                         {/* Appointments Pills in this Day */}
-                        <div className="space-y-1 flex-1 overflow-hidden">
-                          {dayApts.slice(0, 3).map((apt) => (
-                            <div
-                              key={apt.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveAppointment(apt);
-                                setIsViewModalOpen(true);
-                              }}
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-semibold truncate transition-all shadow-xs border ${apt.status === 'Completed' ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800' : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800'}`}
-                              title={`${apt.appointment_time} - ${apt.client_name} (${apt.pic_name})`}
-                            >
-                              <span className="font-mono opacity-80 mr-1">{apt.appointment_time}</span>
-                              <span>{apt.client_name}</span>
-                            </div>
-                          ))}
+                        <div className="space-y-0.5 sm:space-y-1 flex-1 overflow-hidden">
+                          {dayApts.slice(0, 2).map((apt) => {
+                            const isClash = clashingAppointmentIds.has(apt.id);
+                            return (
+                              <div
+                                key={apt.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveAppointment(apt);
+                                  setIsViewModalOpen(true);
+                                }}
+                                className={`px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold truncate transition-all shadow-xs border ${
+                                  isClash
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700'
+                                    : apt.status === 'Completed'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                                    : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800'
+                                }`}
+                                title={`${isClash ? '[CLASH / PERTINDIHAN] ' : ''}${apt.appointment_time} - ${apt.client_name} (${apt.pic_name})`}
+                              >
+                                {isClash && <span className="mr-0.5 text-amber-600 dark:text-amber-400 font-bold">⚠️</span>}
+                                <span className="font-mono opacity-80 mr-0.5 sm:mr-1">{apt.appointment_time.slice(0, 5)}</span>
+                                <span className="hidden sm:inline">{apt.client_name}</span>
+                              </div>
+                            );
+                          })}
 
-                          {dayApts.length > 3 && (
-                            <div className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 text-center">
-                              {t('appointments', 'moreApts', lang).replace('{count}', String(dayApts.length - 3))}
+                          {dayApts.length > 2 && (
+                            <div className="text-[8px] sm:text-[9px] font-bold text-slate-400 dark:text-zinc-500 text-center">
+                              +{dayApts.length - 2}
                             </div>
                           )}
                         </div>
@@ -1160,7 +1547,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                   startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
 
                   const weekDays = [];
-                  const todayStr = new Date().toISOString().split('T')[0];
+                  const todayStr = formatDateToYYYYMMDD(new Date());
 
                   for (let i = 0; i < 7; i++) {
                     const d = new Date(startOfWeek);
@@ -1187,48 +1574,68 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
 
                     return (
                       <div key={col.dateStr} className="flex flex-col min-h-[450px]">
-                        {/* Day Header */}
-                        <div className={`p-3 text-center border-b border-slate-200 dark:border-gray-800 ${col.isToday ? 'bg-indigo-50/80 dark:bg-yellow-500/10' : 'bg-slate-50/60 dark:bg-gray-900/60'}`}>
+                        {/* Day Header - Click to switch to Day View */}
+                        <div 
+                          onClick={() => handleSelectDayView(col.dateStr)}
+                          className={`p-3 text-center border-b border-slate-200 dark:border-gray-800 cursor-pointer hover:bg-slate-100/90 dark:hover:bg-zinc-800/80 transition-colors ${col.isToday ? 'bg-indigo-50/80 dark:bg-yellow-500/10' : 'bg-slate-50/60 dark:bg-gray-900/60'}`}
+                          title={lang === 'bm' ? `Klik untuk lihat jadual penuh (${col.dateStr})` : `Click to view day timeline (${col.dateStr})`}
+                        >
                           <div className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase">{col.dayLabel}</div>
                           <div className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-extrabold font-mono mt-0.5 ${col.isToday ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black' : 'text-slate-800 dark:text-zinc-100'}`}>
                             {col.dayNum}
                           </div>
                         </div>
 
-                        {/* Appointments Stack */}
+                        {/* Appointments Stack - Click switches to Day View */}
                         <div
-                          onClick={() => handleOpenAddModal(col.dateStr)}
-                          className="flex-1 p-2 space-y-2 cursor-pointer hover:bg-slate-50/40 dark:hover:bg-zinc-900/30 transition-colors"
+                          onClick={() => handleSelectDayView(col.dateStr)}
+                          className="flex-1 p-2 space-y-2 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-zinc-900/50 transition-colors"
+                          title={lang === 'bm' ? `Klik untuk lihat jadual penuh (${col.dateStr})` : `Click to view day timeline (${col.dateStr})`}
                         >
                           {colApts.length > 0 ? (
-                            colApts.map(apt => (
-                              <div
-                                key={apt.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveAppointment(apt);
-                                  setIsViewModalOpen(true);
-                                }}
-                                className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-2.5 shadow-sm space-y-1.5 hover:border-indigo-400 dark:hover:border-yellow-500 transition-all cursor-pointer"
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-yellow-400">
-                                    ⏰ {apt.appointment_time}
-                                  </span>
-                                  {getStatusBadge(apt.status)}
+                            colApts.map(apt => {
+                              const isClash = clashingAppointmentIds.has(apt.id);
+                              return (
+                                <div
+                                  key={apt.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveAppointment(apt);
+                                    setIsViewModalOpen(true);
+                                  }}
+                                  className={`bg-white dark:bg-gray-800 border ${
+                                    isClash
+                                      ? 'border-amber-400 dark:border-amber-500 ring-1 ring-amber-400/40 bg-amber-50/20 dark:bg-amber-950/20'
+                                      : 'border-slate-200 dark:border-gray-700'
+                                  } rounded-xl p-2.5 shadow-sm space-y-1.5 hover:border-indigo-400 dark:hover:border-yellow-500 transition-all cursor-pointer`}
+                                >
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-yellow-400 flex items-center gap-1">
+                                      {isClash && <span title="Time slot clash with same PIC" className="text-amber-500 font-extrabold">⚠️</span>}
+                                      <span>⏰ {apt.appointment_time}</span>
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      {isClash && (
+                                        <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                          {t('appointments', 'timeClash', lang)}
+                                        </span>
+                                      )}
+                                      {getStatusBadge(apt.status)}
+                                    </div>
+                                  </div>
+                                  <h5 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                                    {apt.client_name}
+                                  </h5>
+                                  <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center justify-between">
+                                    <span>🏷️ {apt.case_category}</span>
+                                    <span>👤 {apt.pic_name}</span>
+                                  </div>
                                 </div>
-                                <h5 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
-                                  {apt.client_name}
-                                </h5>
-                                <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center justify-between">
-                                  <span>🏷️ {apt.case_category}</span>
-                                  <span>👤 {apt.pic_name}</span>
-                                </div>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <div className="h-full flex items-center justify-center text-[11px] text-slate-300 dark:text-zinc-700 italic">
-                              {t('appointments', 'add', lang)}
+                              {lang === 'bm' ? '— Tiada temujanji —' : '— No appointments —'}
                             </div>
                           )}
                         </div>
@@ -1251,12 +1658,12 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                   <p className="text-xs text-slate-500 dark:text-zinc-400">
                     {t('appointments', 'scheduledCount', lang).replace(
                       '{count}',
-                      String(filteredAppointments.filter(a => a.appointment_date === currentDate.toISOString().split('T')[0]).length)
+                      String(filteredAppointments.filter(a => a.appointment_date === formatDateToYYYYMMDD(currentDate)).length)
                     )}
                   </p>
                 </div>
                 <button
-                  onClick={() => handleOpenAddModal(currentDate.toISOString().split('T')[0])}
+                  onClick={() => handleOpenAddModal(formatDateToYYYYMMDD(currentDate))}
                   className="px-3 py-1.5 bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-400 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors"
                 >
                   {t('appointments', 'addSlotToday', lang)}
@@ -1266,7 +1673,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               {/* Day Schedule Cards */}
               <div className="space-y-3">
                 {(() => {
-                  const activeDateStr = currentDate.toISOString().split('T')[0];
+                  const activeDateStr = formatDateToYYYYMMDD(currentDate);
                   const dayApts = filteredAppointments.filter(a => a.appointment_date === activeDateStr);
 
                   if (dayApts.length === 0) {
@@ -1277,78 +1684,94 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                     );
                   }
 
-                  return dayApts.map((apt) => (
-                    <div
-                      key={apt.id}
-                      className="border border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-800/30 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black">
-                              ⏰ {apt.appointment_time}
+                  return dayApts.map((apt) => {
+                    const isClash = clashingAppointmentIds.has(apt.id);
+                    return (
+                      <div
+                        key={apt.id}
+                        className={`border ${
+                          isClash
+                            ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/30 bg-amber-50/20 dark:bg-amber-950/20'
+                            : 'border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-800/30'
+                        } rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-extrabold bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black flex items-center gap-1">
+                                {isClash && <span>⚠️</span>}
+                                <span>⏰ {apt.appointment_time}</span>
+                              </span>
+                              <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                                {apt.client_name}
+                              </h4>
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-zinc-400 flex items-center gap-3 pt-0.5">
+                              {apt.client_phone && <span>📞 {apt.client_phone}</span>}
+                              <span>📍 {apt.location}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {isClash && (
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                {t('appointments', 'timeClash', lang)}
+                              </span>
+                            )}
+                            {getStatusBadge(apt.status)}
+                          </div>
+                        </div>
+
+                        {/* Details 2-col */}
+                        <div className="grid grid-cols-2 gap-2 text-xs bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-slate-100 dark:border-gray-800">
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                              {t('appointments', 'category', lang)}
                             </span>
-                            <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                              {apt.client_name}
-                            </h4>
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200">{apt.case_category}</span>
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-zinc-400 flex items-center gap-3 pt-0.5">
-                            {apt.client_phone && <span>📞 {apt.client_phone}</span>}
-                            <span>📍 {apt.location}</span>
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                              {t('appointments', 'pic', lang)}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200">👤 {apt.pic_name}</span>
                           </div>
                         </div>
-                        {getStatusBadge(apt.status)}
-                      </div>
 
-                      {/* Details 2-col */}
-                      <div className="grid grid-cols-2 gap-2 text-xs bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-slate-100 dark:border-gray-800">
-                        <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                            {t('appointments', 'category', lang)}
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-zinc-200">{apt.case_category}</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                            {t('appointments', 'pic', lang)}
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-zinc-200">👤 {apt.pic_name}</span>
-                        </div>
-                      </div>
-
-                      {apt.notes && (
-                        <div className="text-xs text-slate-600 dark:text-zinc-300 bg-amber-50/60 dark:bg-amber-950/20 p-2.5 rounded-xl italic border border-amber-100 dark:border-amber-900/30">
-                          "{apt.notes}"
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <button
-                          onClick={() => handleShareToWhatsAppGroup(apt)}
-                          className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                        >
-                          <span>📢</span>
-                          <span>{t('appointments', 'copyGroupFormat', lang)}</span>
-                        </button>
-                        {apt.client_phone && (
-                          <button
-                            onClick={() => handleSendClientReminder(apt)}
-                            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                          >
-                            <span>💬</span>
-                            <span>{t('appointments', 'sendClientReminder', lang)}</span>
-                          </button>
+                        {apt.notes && (
+                          <div className="text-xs text-slate-600 dark:text-zinc-300 bg-amber-50/60 dark:bg-amber-950/20 p-2.5 rounded-xl italic border border-amber-100 dark:border-amber-900/30">
+                            "{apt.notes}"
+                          </div>
                         )}
-                        <button
-                          onClick={() => handleOpenEditModal(apt)}
-                          className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all"
-                        >
-                          ✏️ {t('appointments', 'edit', lang)}
-                        </button>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <button
+                            onClick={() => handleShareToWhatsAppGroup(apt)}
+                            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                          >
+                            <span>📢</span>
+                            <span>{t('appointments', 'copyGroupFormat', lang)}</span>
+                          </button>
+                          {apt.client_phone && (
+                            <button
+                              onClick={() => handleSendClientReminder(apt)}
+                              className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                            >
+                              <span>💬</span>
+                              <span>{t('appointments', 'sendClientReminder', lang)}</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleOpenEditModal(apt)}
+                            className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                          >
+                            <span>🗓️</span>
+                            <span>{t('appointments', 'reschedule', lang)}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ));
+                    );
+                  });
                 })()}
               </div>
             </div>
@@ -1360,60 +1783,74 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               {/* Mobile Cards for Phones */}
               <div className="block md:hidden space-y-3">
                 {filteredAppointments.length > 0 ? (
-                  filteredAppointments.map(apt => (
-                    <div
-                      key={apt.id}
-                      className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800 pb-2.5">
-                        <div className="space-y-0.5">
-                          <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-yellow-400">
-                            📅 {apt.appointment_date} • ⏰ {apt.appointment_time}
-                          </span>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                            {apt.client_name}
-                          </h4>
-                          {apt.client_phone && (
-                            <div className="text-xs font-mono text-slate-500 dark:text-zinc-400">
-                              📞 {apt.client_phone}
-                            </div>
-                          )}
+                  filteredAppointments.map(apt => {
+                    const isClash = clashingAppointmentIds.has(apt.id);
+                    return (
+                      <div
+                        key={apt.id}
+                        className={`bg-white dark:bg-gray-900 border ${
+                          isClash ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/20' : 'border-slate-200 dark:border-gray-800'
+                        } rounded-2xl p-4 shadow-sm space-y-3`}
+                      >
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800 pb-2.5">
+                          <div className="space-y-0.5">
+                            <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-yellow-400 flex items-center gap-1">
+                              {isClash && <span className="text-amber-500 font-extrabold">⚠️</span>}
+                              <span>📅 {apt.appointment_date} • ⏰ {apt.appointment_time}</span>
+                            </span>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                              {apt.client_name}
+                            </h4>
+                            {apt.client_phone && (
+                              <div className="text-xs font-mono text-slate-500 dark:text-zinc-400">
+                                📞 {apt.client_phone}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            {isClash && (
+                              <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                {t('appointments', 'timeClash', lang)}
+                              </span>
+                            )}
+                            {getStatusBadge(apt.status)}
+                          </div>
                         </div>
-                        {getStatusBadge(apt.status)}
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
-                        <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                            {t('appointments', 'category', lang)}
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-zinc-200">{apt.case_category}</span>
+                        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                              {t('appointments', 'category', lang)}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200">{apt.case_category}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                              {t('appointments', 'pic', lang)}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200">👤 {apt.pic_name}</span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                            {t('appointments', 'pic', lang)}
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-zinc-200">👤 {apt.pic_name}</span>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          onClick={() => handleShareToWhatsAppGroup(apt)}
-                          className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm"
-                        >
-                          <span>📢</span>
-                          <span>{t('appointments', 'groupBroadcast', lang)}</span>
-                        </button>
-                        <button
-                          onClick={() => handleOpenEditModal(apt)}
-                          className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold"
-                        >
-                          ✏️
-                        </button>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => handleShareToWhatsAppGroup(apt)}
+                            className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm"
+                          >
+                            <span>📢</span>
+                            <span>{t('appointments', 'groupBroadcast', lang)}</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenEditModal(apt)}
+                            className="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 rounded-xl text-xs font-bold flex items-center gap-1"
+                          >
+                            <span>🗓️</span>
+                            <span>{t('appointments', 'reschedule', lang)}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
                     {t('appointments', 'noAppointments', lang)}
@@ -1437,57 +1874,69 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-gray-800">
                     {filteredAppointments.length > 0 ? (
-                      filteredAppointments.map(apt => (
-                        <tr key={apt.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors">
-                          <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200 font-bold">
-                            <div>{apt.appointment_date}</div>
-                            <div className="text-[11px] text-indigo-600 dark:text-yellow-400 font-semibold">{apt.appointment_time}</div>
-                          </td>
-                          <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
-                            {apt.client_name}
-                          </td>
-                          <td className="px-4 py-3.5 font-mono text-slate-600 dark:text-zinc-400">
-                            {apt.client_phone || '-'}
-                          </td>
-                          <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-medium">
-                            {apt.case_category}
-                          </td>
-                          <td className="px-4 py-3.5 font-semibold text-slate-800 dark:text-zinc-200">
-                            👤 {apt.pic_name}
-                          </td>
-                          <td className="px-4 py-3.5">
-                            {getStatusBadge(apt.status)}
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => handleShareToWhatsAppGroup(apt)}
-                                className="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-xs flex items-center gap-1"
-                                title={t('appointments', 'copyGroupFormat', lang)}
-                              >
-                                <span>📢</span>
-                                <span>{t('appointments', 'groupBroadcast', lang)}</span>
-                              </button>
-                              {apt.client_phone && (
+                      filteredAppointments.map(apt => {
+                        const isClash = clashingAppointmentIds.has(apt.id);
+                        return (
+                          <tr key={apt.id} className={`hover:bg-slate-50/80 dark:hover:bg-zinc-800/40 transition-colors ${isClash ? 'bg-amber-50/30 dark:bg-amber-950/15' : ''}`}>
+                            <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200 font-bold">
+                              <div>{apt.appointment_date}</div>
+                              <div className="text-[11px] text-indigo-600 dark:text-yellow-400 font-semibold flex items-center gap-1">
+                                {isClash && <span title="Time slot clash with same PIC" className="text-amber-500 font-bold">⚠️</span>}
+                                <span>{apt.appointment_time}</span>
+                                {isClash && (
+                                  <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                                    {t('appointments', 'timeClash', lang)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
+                              {apt.client_name}
+                            </td>
+                            <td className="px-4 py-3.5 font-mono text-slate-600 dark:text-zinc-400">
+                              {apt.client_phone || '-'}
+                            </td>
+                            <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-medium">
+                              {apt.case_category}
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold text-slate-800 dark:text-zinc-200">
+                              👤 {apt.pic_name}
+                            </td>
+                            <td className="px-4 py-3.5">
+                              {getStatusBadge(apt.status)}
+                            </td>
+                            <td className="px-4 py-3.5 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
                                 <button
-                                  onClick={() => handleSendClientReminder(apt)}
-                                  className="h-7 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold transition-all shadow-xs flex items-center gap-1"
-                                  title={t('appointments', 'sendClientReminder', lang)}
+                                  onClick={() => handleShareToWhatsAppGroup(apt)}
+                                  className="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-xs flex items-center gap-1"
+                                  title={t('appointments', 'copyGroupFormat', lang)}
                                 >
-                                  <span>💬</span>
+                                  <span>📢</span>
+                                  <span>{t('appointments', 'groupBroadcast', lang)}</span>
                                 </button>
-                              )}
-                              <button
-                                onClick={() => handleOpenEditModal(apt)}
-                                className="h-7 px-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 font-bold transition-all"
-                                title={t('appointments', 'edit', lang)}
-                              >
-                                ✏️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                                {apt.client_phone && (
+                                  <button
+                                    onClick={() => handleSendClientReminder(apt)}
+                                    className="h-7 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-bold transition-all shadow-xs flex items-center gap-1"
+                                    title={t('appointments', 'sendClientReminder', lang)}
+                                  >
+                                    <span>💬</span>
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleOpenEditModal(apt)}
+                                  className="h-7 px-2.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 font-bold transition-all flex items-center gap-1"
+                                  title={t('appointments', 'reschedule', lang)}
+                                >
+                                  <span>🗓️</span>
+                                  <span>{t('appointments', 'reschedule', lang)}</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={7} className="px-4 py-12 text-center text-slate-400 dark:text-zinc-500 font-semibold">
@@ -1515,10 +1964,10 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {isEditModalOpen ? t('appointments', 'editAppointment', lang) : t('appointments', 'newAppointment', lang)}
+                    {isEditModalOpen ? t('appointments', 'rescheduleAppointment', lang) : t('appointments', 'newAppointment', lang)}
                   </h3>
                   <p className="text-[11px] text-slate-400 dark:text-zinc-500">
-                    {t('appointments', 'modalSubtitle', lang)}
+                    {isEditModalOpen ? t('appointments', 'rescheduleSubtitle', lang) : t('appointments', 'modalSubtitle', lang)}
                   </p>
                 </div>
               </div>
@@ -1784,6 +2233,23 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                   />
                 </div>
 
+                {/* Live Non-blocking Time Clash Advisory Banner */}
+                {formClashAppointment && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200 animate-in fade-in">
+                    <span className="text-base flex-shrink-0">⚠️</span>
+                    <div className="space-y-0.5">
+                      <span className="font-bold block text-amber-900 dark:text-amber-300">
+                        {t('appointments', 'timeClash', lang)}
+                      </span>
+                      <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-200/90">
+                        {t('appointments', 'clashNotice', lang)
+                          .replace('{pic}', formClashAppointment.pic_name || '-')
+                          .replace('{time}', formClashAppointment.appointment_time || '-')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Template Preview Box */}
                 <div className="bg-slate-50 dark:bg-gray-800/60 p-3 rounded-xl border border-slate-200 dark:border-gray-700 space-y-1">
                   <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
@@ -1803,27 +2269,37 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
             </div>
 
             {/* Modal Actions (Fixed at bottom) */}
-            <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 flex-shrink-0 bg-slate-50 dark:bg-gray-900/90 flex flex-col sm:flex-row items-center gap-2">
-              {/* 1-Click Save & Share WhatsApp */}
+            <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 flex-shrink-0 bg-slate-50 dark:bg-gray-900/90 flex flex-col sm:flex-row items-center justify-between gap-2">
               <button
                 type="button"
-                disabled={submitting}
-                onClick={() => handleSubmitForm(true)}
-                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }}
+                className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-zinc-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                <span>📢</span>
-                <span>{submitting ? t('appointments', 'saving', lang) : t('appointments', 'saveAndShareWhatsApp', lang)}</span>
+                {t('appointments', 'cancel', lang)}
               </button>
 
-              {/* Save Only */}
-              <button
-                type="button"
-                disabled={submitting}
-                onClick={() => handleSubmitForm(false)}
-                className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 font-bold text-xs transition-colors disabled:opacity-50"
-              >
-                {t('appointments', 'saveOnly', lang)}
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto flex-1 sm:justify-end">
+                {/* Save Only / Save Reschedule */}
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handleSubmitForm(false)}
+                  className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-gray-700 font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isEditModalOpen ? t('appointments', 'saveReschedule', lang) : t('appointments', 'saveOnly', lang)}
+                </button>
+
+                {/* 1-Click Save & Share WhatsApp / Reschedule & Share WhatsApp */}
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handleSubmitForm(true)}
+                  className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>📢</span>
+                  <span>{submitting ? t('appointments', 'saving', lang) : (isEditModalOpen ? t('appointments', 'rescheduleAndShareWhatsApp', lang) : t('appointments', 'saveAndShareWhatsApp', lang))}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1848,7 +2324,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider">
-                      Schedule Appointment
+                      {lang === 'bm' ? 'Jadualkan Temujanji' : 'Schedule Appointment'}
                     </span>
                     <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-amber-950/80 text-amber-300 border border-amber-800">
                       LIVE
@@ -2105,15 +2581,24 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               </div>
             </div>
 
-            {/* Confirm Button (Signature Golden Gradient) */}
-            <button
-              type="button"
-              onClick={() => setShowGrabTimePicker(false)}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer flex-shrink-0 active:scale-[0.99]"
-            >
-              <span>✓</span>
-              <span>{lang === 'bm' ? `Sahkan Masa: ${pickerHour}:${pickerMinute} ${pickerPeriod}` : `Confirm Time: ${pickerHour}:${pickerMinute} ${pickerPeriod}`}</span>
-            </button>
+            {/* Action Buttons: Batal / Cancel & Selesai / Done */}
+            <div className="flex items-center gap-2 w-full flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowGrabTimePicker(false)}
+                className="py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+              >
+                {t('appointments', 'cancel', lang)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowGrabTimePicker(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+              >
+                <span>✓</span>
+                <span>{lang === 'bm' ? `Selesai: ${pickerHour}:${pickerMinute} ${pickerPeriod}` : `Done: ${pickerHour}:${pickerMinute} ${pickerPeriod}`}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2181,6 +2666,23 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                 </div>
               </div>
 
+              {/* Clash Alert in View Modal */}
+              {clashingAppointmentIds.has(activeAppointment.id) && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
+                  <span className="text-base flex-shrink-0">⚠️</span>
+                  <div>
+                    <span className="font-bold block text-amber-900 dark:text-amber-300">
+                      {t('appointments', 'timeClash', lang)}
+                    </span>
+                    <span className="text-[11px] text-amber-800/90 dark:text-amber-200/90">
+                      {lang === 'bm'
+                        ? `Terdapat temujanji lain pada tarikh & masa yang sama bersama ${activeAppointment.pic_name}.`
+                        : `Another appointment is scheduled at this exact date & time with ${activeAppointment.pic_name}.`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Contact Info */}
               <div className="flex items-center justify-between text-xs bg-indigo-50/50 dark:bg-yellow-500/5 p-3 rounded-xl border border-indigo-100 dark:border-yellow-500/20">
                 <div>
@@ -2222,20 +2724,29 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => handleShareToWhatsAppGroup(activeAppointment)}
-                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>📢</span>
                   <span>{t('appointments', 'copyGroupFormat', lang)}</span>
                 </button>
 
                 {activeAppointment.client_phone && (
-                  <button
-                    onClick={() => handleSendClientReminder(activeAppointment)}
-                    className="w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2"
-                  >
-                    <span>💬</span>
-                    <span>{t('appointments', 'sendClientReminder', lang)}</span>
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleSendClientReminder(activeAppointment)}
+                      className="w-full py-2 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>💬</span>
+                      <span>{t('appointments', 'sendClientReminder', lang)}</span>
+                    </button>
+                    <button
+                      onClick={() => handleSendClientRescheduleNotice(activeAppointment)}
+                      className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🗓️</span>
+                      <span>{t('appointments', 'sendClientReschedule', lang)}</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -2246,7 +2757,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                 {activeAppointment.status !== 'Completed' && (
                   <button
                     onClick={() => handleUpdateStatus(activeAppointment, 'Completed')}
-                    className="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100"
+                    className="px-2.5 py-1.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 rounded-lg text-xs font-bold hover:bg-emerald-100 cursor-pointer"
                   >
                     {t('appointments', 'markCompleted', lang)}
                   </button>
@@ -2254,26 +2765,28 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                 {activeAppointment.status !== 'Cancelled' && (
                   <button
                     onClick={() => handleUpdateStatus(activeAppointment, 'Cancelled')}
-                    className="px-2.5 py-1.5 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100"
+                    className="px-2.5 py-1.5 bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100 cursor-pointer"
                   >
                     {t('appointments', 'markCancelled', lang)}
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => {
                     setIsViewModalOpen(false);
                     handleOpenEditModal(activeAppointment);
                   }}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-lg text-xs font-bold"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                 >
-                  ✏️ {t('appointments', 'edit', lang)}
+                  <span>🗓️</span>
+                  <span>{t('appointments', 'reschedule', lang)}</span>
                 </button>
                 <button
                   onClick={() => handleDelete(activeAppointment)}
-                  className="px-2.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 rounded-lg text-xs font-bold"
+                  className="px-2.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 rounded-lg text-xs font-bold cursor-pointer"
+                  title="Delete"
                 >
                   🗑️
                 </button>

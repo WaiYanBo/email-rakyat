@@ -8,6 +8,7 @@ import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { ErrorBoundary } from './ErrorBoundary';
 import { policeLocations } from '../utils/policeLocations';
+import PermissionDenied from './PermissionDenied';
 const DateInput = ({ name, label, defaultValue, lang, required }: { name: string; label: string; defaultValue: string; lang: 'en' | 'bm'; required?: boolean }) => {
   const [val, setVal] = useState(defaultValue || '');
   const dateRef = useRef<HTMLInputElement>(null);
@@ -1099,9 +1100,12 @@ export default function ClientDataView() {
 
   if (!canView) {
     return (
-      <div className="p-8 md:p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
-        <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">{t('common', 'accessDenied', lang)}</h2>
-      </div>
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Pangkalan Data Klien Terhad' : 'Client Database Access Restricted'}
+        message={lang === 'bm'
+          ? 'Akaun anda tidak mempunyai kebenaran untuk melihat pangkalan data klien. Sila hubungi Pentadbir Sistem untuk memohon akses.'
+          : 'Your account does not have permission to view the client database. Please contact your System Administrator to request access.'}
+      />
     );
   }
 

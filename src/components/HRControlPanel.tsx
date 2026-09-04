@@ -8,6 +8,8 @@ import PublicHolidaysView from './PublicHolidaysView';
 import LeaveSystemView from './LeaveSystemView';
 import ClaimSystemView from './ClaimSystemView';
 
+import PermissionDenied from './PermissionDenied';
+
 type HRTab = 'attendance' | 'holidays' | 'leave' | 'claims';
 
 export default function HRControlPanel() {
@@ -71,15 +73,16 @@ export default function HRControlPanel() {
   }
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const hasAccess = profile?.department === 'Human Resources' || isIT;
+  const hasAccess = permissions?.manage_hr || isIT;
 
   if (!hasAccess) {
     return (
-      <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
-        <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">
-          {t('common', 'accessDenied', lang)}
-        </h2>
-      </div>
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Panel Kawalan HR Terhad' : 'HR Control Panel Access Restricted'}
+        message={lang === 'bm'
+          ? 'Akaun anda tidak mempunyai kebenaran untuk menguruskan fungsi Sumber Manusia (HR). Sila hubungi Pentadbir Sistem jika anda memerlukan akses.'
+          : 'Your account does not have permission to manage Human Resources functions. Please contact your System Administrator if you require access.'}
+      />
     );
   }
 

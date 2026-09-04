@@ -5,6 +5,7 @@ import { sanitizeInput, isValidEmail, isStrongPassword } from '../utils/security
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
+import PermissionDenied from './PermissionDenied';
 
 export type EmploymentType = 'Contract of Service' | 'Contract for Service' | 'Internship';
 
@@ -587,7 +588,7 @@ export default function ReportsView() {
     }
   };
 
-  if (loading) {
+  if (loading || permsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-indigo-600 font-semibold animate-pulse text-lg tracking-wide">
@@ -597,16 +598,18 @@ export default function ReportsView() {
     );
   }
 
-  const hasFullAccess = permissions?.view_staff || false;
-  const canEditStaff = permissions?.edit_staff || false;
+  const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const hasFullAccess = permissions?.view_staff || isIT;
+  const canEditStaff = permissions?.edit_staff || isIT;
 
   if (!hasFullAccess) {
     return (
-      <div className="p-12 rounded-2xl bg-white dark:bg-gray-900/50 border border-rose-200 dark:border-rose-950/20 shadow-sm text-center mt-12">
-        <h2 className="text-lg font-bold text-rose-600 dark:text-rose-455 mb-2">
-          {t('common', 'accessDenied', lang)}
-        </h2>
-      </div>
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Laporan Staf Terhad' : 'Staff Reports Access Restricted'}
+        message={lang === 'bm'
+          ? 'Akaun anda tidak mempunyai kebenaran untuk melihat laporan dan direktori staf syarikat. Sila hubungi Pentadbir Sistem jika anda memerlukan akses.'
+          : 'Your account does not have permission to view staff reports and company directory. Please contact your System Administrator if you require access.'}
+      />
     );
   }
 

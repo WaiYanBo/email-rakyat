@@ -358,6 +358,7 @@ export default function PortalSidebar() {
     if (!profile) return [];
 
     const canViewClients = permissions?.view_clients || false;
+    const canViewAppointments = permissions?.view_appointments ?? canViewClients;
     const canViewReports = permissions?.view_staff || false;
     const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
     const canViewAttendance = permissions?.view_attendance || isIT;
@@ -392,7 +393,9 @@ export default function PortalSidebar() {
           </svg>
         )
       });
-      /* Temporarily commented out for maintenance / access restriction
+    }
+
+    if (canViewAppointments) {
       items.push({
         label: t('sidebar', 'navAppointments', lang),
         path: '/portal/temujanji',
@@ -403,7 +406,6 @@ export default function PortalSidebar() {
           </svg>
         )
       });
-      */
     }
 
     if (canViewReports) {

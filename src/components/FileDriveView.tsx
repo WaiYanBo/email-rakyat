@@ -3,6 +3,7 @@ import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
+import PermissionDenied from './PermissionDenied';
 
 // A simple utility to format bytes
 function formatBytes(bytes: number, decimals = 2) {
@@ -1703,6 +1704,29 @@ export default function FileDriveView() {
       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
     </svg>
   );
+  const isIT = userProfile?.department?.toLowerCase() === 'it' || userProfile?.role?.toLowerCase() === 'it' || userProfile?.role?.toLowerCase() === 'it admin';
+  const hasDriveAccess = permissions?.manage_drive || isIT;
+
+  if (permsLoading || (loading && !userProfile)) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-indigo-600 dark:text-yellow-500 font-semibold animate-pulse text-lg tracking-wide">
+          {t('common', 'loading', lang)}
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasDriveAccess) {
+    return (
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Pemacu Syarikat Terhad' : 'Company Drive Access Restricted'}
+        message={lang === 'bm'
+          ? 'Akaun anda tidak diberikan kebenaran untuk mengakses Pemacu Syarikat. Sila hubungi Pentadbir Sistem jika anda memerlukan kebenaran ini.'
+          : 'Your account has not been granted permission to access the Company Drive. Please contact your System Administrator if you need access.'}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 md:space-y-8 animate-page-transition pt-12 md:pt-0 h-full flex flex-col">

@@ -41,29 +41,31 @@ const IT_ADMIN_PERMISSIONS: Permissions = {
   manage_leave: true,
 };
 
+const DEFAULT_STAFF_PERMISSIONS: Permissions = {
+  view_clients: false,
+  edit_clients: false,
+  view_appointments: false,
+  manage_appointments: false,
+  export_data: false,
+  view_staff: false,
+  edit_staff: false,
+  view_attendance: false,
+  edit_attendance: false,
+  view_snapshot: false,
+  manage_access_control: false,
+  manage_drive: false,
+  manage_hr: false,
+  view_claims: true,
+  manage_claims: false,
+  view_leave: true,
+  manage_leave: false,
+};
+
 // In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
 const permissionsCache: Record<string, Permissions> = {};
 
 export function usePermissions(profile: any) {
-  const [permissions, setPermissions] = useState<Permissions>({
-    view_clients: true,
-    edit_clients: true,
-    view_appointments: true,
-    manage_appointments: false,
-    export_data: true,
-    view_staff: true,
-    edit_staff: true,
-    view_attendance: true,
-    edit_attendance: false,
-    view_snapshot: true,
-    manage_access_control: false,
-    manage_drive: true,
-    manage_hr: true,
-    view_claims: true,
-    manage_claims: false,
-    view_leave: true,
-    manage_leave: false,
-  });
+  const [permissions, setPermissions] = useState<Permissions>(DEFAULT_STAFF_PERMISSIONS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -126,8 +128,17 @@ export function usePermissions(profile: any) {
           }
         }
 
-        if (!userId && !role) {
-          if (isMounted) setLoading(false);
+        const isITAdmin = 
+          role?.toLowerCase() === 'it' || 
+          role?.toLowerCase() === 'it admin' || 
+          department?.toLowerCase() === 'it';
+
+        if (isITAdmin) {
+          if (isMounted) {
+            setPermissions(IT_ADMIN_PERMISSIONS);
+            setLoading(false);
+          }
+          if (userId) permissionsCache[userId] = IT_ADMIN_PERMISSIONS;
           return;
         }
 
@@ -140,58 +151,32 @@ export function usePermissions(profile: any) {
           console.warn('access_permissions table query failed', error);
         }
 
-        let finalPerms: Permissions = {
-          view_clients: true,
-          edit_clients: true,
-          view_appointments: true,
-          manage_appointments: false,
-          export_data: true,
-          view_staff: true,
-          edit_staff: true,
-          view_attendance: true,
-          edit_attendance: false,
-          view_snapshot: true,
-          manage_access_control: false,
-          manage_drive: true,
-          manage_hr: true,
-          view_claims: true,
-          manage_claims: false,
-          view_leave: true,
-          manage_leave: false,
-        };
+        let finalPerms: Permissions = { ...DEFAULT_STAFF_PERMISSIONS };
 
         if (data && data.length > 0) {
           const deptPerms = data.find(p => p.target_type === 'department')?.permissions || {};
           const userPerms = data.find(p => p.target_type === 'user')?.permissions || {};
 
+          // User-specific settings take top precedence, followed by Department template, followed by secure defaults
           finalPerms = {
-            view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? finalPerms.view_clients,
-            edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? finalPerms.edit_clients,
-            view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? finalPerms.view_appointments,
-            manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? (userPerms.edit_clients ?? deptPerms.edit_clients ?? false),
-            export_data: userPerms.export_data ?? deptPerms.export_data ?? true,
-            view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? finalPerms.view_staff,
-            edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? finalPerms.edit_staff,
-            view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? finalPerms.view_attendance,
-            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? finalPerms.edit_attendance,
-            view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? finalPerms.view_snapshot,
-            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? finalPerms.manage_access_control,
-            manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? finalPerms.manage_drive,
-            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? finalPerms.manage_hr,
+            view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? false,
+            edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? false,
+            view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? false,
+            manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? false,
+            export_data: userPerms.export_data ?? deptPerms.export_data ?? false,
+            view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? false,
+            edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? false,
+            view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? false,
+            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? false,
+            view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? false,
+            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? false,
+            manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? false,
+            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? false,
             view_claims: userPerms.view_claims ?? deptPerms.view_claims ?? true,
-            manage_claims: userPerms.manage_claims ?? deptPerms.manage_claims ?? (userPerms.manage_hr ?? deptPerms.manage_hr ?? false),
+            manage_claims: userPerms.manage_claims ?? deptPerms.manage_claims ?? false,
             view_leave: userPerms.view_leave ?? deptPerms.view_leave ?? true,
-            manage_leave: userPerms.manage_leave ?? deptPerms.manage_leave ?? (userPerms.manage_hr ?? deptPerms.manage_hr ?? false),
+            manage_leave: userPerms.manage_leave ?? deptPerms.manage_leave ?? false,
           };
-        }
-
-        const isITAdmin = 
-          role?.toLowerCase() === 'it' || 
-          role?.toLowerCase() === 'it admin' || 
-          department?.toLowerCase() === 'it';
-
-        if (isITAdmin) {
-          finalPerms = IT_ADMIN_PERMISSIONS;
         }
 
         if (isMounted) {

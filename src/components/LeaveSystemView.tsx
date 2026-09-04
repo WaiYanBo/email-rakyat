@@ -5,6 +5,7 @@ import { t } from '../lib/portalI18n';
 import type { Language } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { calculateLeaveAccrual, type AccrualCalculation } from './ReportsView';
+import PermissionDenied from './PermissionDenied';
 
 interface LeaveBalance {
   annual_total: number;
@@ -727,6 +728,18 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         );
     }
   };
+
+  const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
+  if (isContractor || !permissions?.view_leave) {
+    return (
+      <PermissionDenied
+        title={lang === 'bm' ? 'Akses Cuti Dihadkan' : 'Leave Module Access Restricted'}
+        message={lang === 'bm'
+          ? 'Modul cuti dihadkan untuk peranan anda atau akaun anda tidak mempunyai kebenaran akses. Sila hubungi HR atau Pentadbir Sistem.'
+          : 'The leave module is restricted for your role or your account has not been granted leave access. Please contact HR or your System Administrator.'}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">

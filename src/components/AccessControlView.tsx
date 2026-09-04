@@ -96,14 +96,12 @@ const Toggle = ({ checked, onChange, disabled = false }: { checked: boolean; onC
     type="button"
     disabled={disabled}
     onClick={onChange}
-    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-      disabled ? 'opacity-40 cursor-not-allowed' : ''
-    } ${checked ? 'bg-indigo-600 dark:bg-yellow-500' : 'bg-slate-300 dark:bg-gray-700'}`}
+    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${disabled ? 'opacity-40 cursor-not-allowed' : ''
+      } ${checked ? 'bg-indigo-600 dark:bg-yellow-500' : 'bg-slate-300 dark:bg-gray-700'}`}
   >
     <span
-      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-        checked ? 'translate-x-4' : 'translate-x-0'
-      }`}
+      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-4' : 'translate-x-0'
+        }`}
     />
   </button>
 );
@@ -165,7 +163,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       const depts = Array.from(new Set(activeProfiles.map(p => p.department).filter(Boolean)))
         .filter(d => !EXCLUDED_DEPT_KEYWORDS.includes(d.trim().toLowerCase())) as string[];
-      
+
       setDepartments(depts);
       setUsers(activeProfiles);
 
@@ -679,11 +677,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold animate-bounce-in ${
-            toastMessage.type === 'success'
+          className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold animate-bounce-in ${toastMessage.type === 'success'
               ? 'bg-emerald-700 text-white border-emerald-600'
               : 'bg-rose-700 text-white border-rose-600'
-          }`}
+            }`}
         >
           <span>{toastMessage.text}</span>
         </div>
@@ -714,11 +711,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           <button
             onClick={handleSave}
             disabled={saving || unsavedCount === 0}
-            className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${
-              unsavedCount > 0
+            className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${unsavedCount > 0
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black shadow-md cursor-pointer'
                 : 'bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed opacity-60'
-            }`}
+              }`}
           >
             {saving ? (
               <>
@@ -737,16 +733,15 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       {/* Main Container */}
       <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
-        
+
         {/* Filter Mode Selector */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-zinc-800 pb-4">
           <button
             onClick={() => setFilterType('staff')}
-            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
-              filterType === 'staff'
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${filterType === 'staff'
                 ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
+              }`}
           >
             <span>{isBm ? 'Kakitangan Individu' : 'Individual Staff'}</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20 font-bold">
@@ -756,11 +751,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
           <button
             onClick={() => setFilterType('department')}
-            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
-              filterType === 'department'
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${filterType === 'department'
                 ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
+              }`}
           >
             <span>{isBm ? 'Seluruh Jabatan' : 'Department Wide'}</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-black/20 font-bold">
@@ -770,11 +764,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
           <button
             onClick={() => setFilterType('feature')}
-            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${
-              filterType === 'feature'
+            className={`px-4 py-2 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center justify-center gap-2 flex-1 sm:flex-none cursor-pointer ${filterType === 'feature'
                 ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
+              }`}
           >
             <span>{isBm ? 'Ciri-Ciri Portal' : 'Portal Features'}</span>
           </button>
@@ -802,11 +795,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
                 <button
                   onClick={() => setDeptFilterPill('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                    deptFilterPill === 'all'
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${deptFilterPill === 'all'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                       : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {isBm ? 'Semua' : 'All'}
                 </button>
@@ -814,11 +806,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   <button
                     key={d}
                     onClick={() => setDeptFilterPill(d)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                      deptFilterPill === d
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${deptFilterPill === d
                         ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-slate-950'
                         : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
-                    }`}
+                      }`}
                   >
                     {d}
                   </button>

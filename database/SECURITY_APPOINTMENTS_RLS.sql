@@ -1,42 +1,9 @@
 -- ==============================================================================
--- SCHEMA MIGRATION: CLIENT APPOINTMENTS TABLE
+-- SCHEMA MIGRATION & SECURITY HARDENING: CLIENT APPOINTMENTS RLS
 -- ==============================================================================
--- Table: public.appointments
--- Stores scheduled client consultation meetings, linked with Active / Potential clients.
+-- Hardens public.appointments table with role & permission based RLS policies.
+-- Prevents unauthorized tampering and enforces audit trail integrity.
 -- ==============================================================================
-
-CREATE TABLE IF NOT EXISTS public.appointments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    
-    -- Client Information
-    client_name TEXT NOT NULL,
-    client_phone TEXT,
-    client_ic TEXT,
-    client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
-    potential_client_id UUID REFERENCES public.potential_clients(id) ON DELETE SET NULL,
-    
-    -- Appointment Schedule Details
-    appointment_date DATE NOT NULL,
-    appointment_time TEXT NOT NULL, -- e.g. "11:00 AM" or "11:00 pagi"
-    
-    -- Case & Staff Details
-    case_category TEXT NOT NULL DEFAULT 'Loan Shark',
-    pic_name TEXT NOT NULL,         -- Name of the officer in charge (e.g. Mr. Jazz, Azizul)
-    location TEXT NOT NULL DEFAULT 'Office Consultation', -- Office Consultation, Phone Call, Google Meet, On-Site
-    
-    -- Status & Notes
-    status TEXT NOT NULL DEFAULT 'Scheduled', -- 'Scheduled', 'In Progress', 'Completed', 'Cancelled', 'No-Show'
-    notes TEXT,
-    
-    -- Metadata
-    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    created_by_name TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Enable RLS
-ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
 -- 1. Helper function for appointment permissions
 CREATE OR REPLACE FUNCTION public.has_appointment_permission(u_id UUID, perm_type TEXT)
@@ -61,16 +28,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create Policies for Authenticated Portal Staff
+-- 2. Ensure table schema has client_ic and all audit fields
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS client_ic TEXT;
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS created_by_name TEXT;
+
+-- 3. Enable RLS
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+
+-- Drop insecure legacy policies
 DROP POLICY IF EXISTS "Authenticated users can view appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Authenticated users can insert appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Authenticated users can update appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Authenticated users can delete appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Authenticated users can manage appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Appointments SELECT Policy" ON public.appointments;
 DROP POLICY IF EXISTS "Appointments INSERT Policy" ON public.appointments;
 DROP POLICY IF EXISTS "Appointments UPDATE Policy" ON public.appointments;
 DROP POLICY IF EXISTS "Appointments DELETE Policy" ON public.appointments;
 
+-- 4. Create Granular & Hardened RLS Policies
+-- SELECT: Users with view_appointments or manage_appointments
 CREATE POLICY "Appointments SELECT Policy"
     ON public.appointments FOR SELECT
     TO authenticated
@@ -79,6 +57,7 @@ CREATE POLICY "Appointments SELECT Policy"
       OR public.has_appointment_permission(auth.uid(), 'manage_appointments')
     );
 
+-- INSERT: Users with manage_appointments permission
 CREATE POLICY "Appointments INSERT Policy"
     ON public.appointments FOR INSERT
     TO authenticated
@@ -86,6 +65,7 @@ CREATE POLICY "Appointments INSERT Policy"
       public.has_appointment_permission(auth.uid(), 'manage_appointments')
     );
 
+-- UPDATE: Users with manage_appointments permission
 CREATE POLICY "Appointments UPDATE Policy"
     ON public.appointments FOR UPDATE
     TO authenticated
@@ -96,6 +76,7 @@ CREATE POLICY "Appointments UPDATE Policy"
       public.has_appointment_permission(auth.uid(), 'manage_appointments')
     );
 
+-- DELETE: Users with manage_appointments permission
 CREATE POLICY "Appointments DELETE Policy"
     ON public.appointments FOR DELETE
     TO authenticated
@@ -103,13 +84,13 @@ CREATE POLICY "Appointments DELETE Policy"
       public.has_appointment_permission(auth.uid(), 'manage_appointments')
     );
 
--- Indexes for lightning fast calendar & filter queries
+-- 5. Indexes for fast lookup
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON public.appointments(appointment_date);
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON public.appointments(status);
 CREATE INDEX IF NOT EXISTS idx_appointments_pic ON public.appointments(pic_name);
 CREATE INDEX IF NOT EXISTS idx_appointments_created_at ON public.appointments(created_at DESC);
 
--- Enable Realtime safely (idempotent, prevents 42710 error if already added)
+-- 6. Enable Realtime safely (idempotent, prevents 42710 error if already added)
 DO $$
 BEGIN
   IF NOT EXISTS (

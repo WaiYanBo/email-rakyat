@@ -77,6 +77,17 @@ export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
   return `${y}-${m}-${day}`;
 };
 
+// Converts appointment date (YYYY-MM-DD) and appointment time string to exact epoch millisecond timestamp
+export const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = ''): number => {
+  if (!dateStr) return 0;
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return 0;
+  const totalMins = parseTimeToMinutes(timeStr);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  return new Date(parts[0], parts[1] - 1, parts[2], h, m, 0, 0).getTime();
+};
+
 export default function AppointmentsView() {
   // Global synchronized portal language hook
   const { lang, setLang } = usePortalLanguage();
@@ -103,11 +114,12 @@ export default function AppointmentsView() {
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
+    if (searchQuery.trim()) count++;
     if (filterPIC !== 'all') count++;
     if (filterCategory !== 'all') count++;
     if (filterStatus !== 'all') count++;
     return count;
-  }, [filterPIC, filterCategory, filterStatus]);
+  }, [searchQuery, filterPIC, filterCategory, filterStatus]);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -119,6 +131,7 @@ export default function AppointmentsView() {
   const [formData, setFormData] = useState({
     client_name: '',
     client_phone: '+60 ',
+    client_ic: '',
     client_id: '',
     potential_client_id: '',
     appointment_date: formatDateToYYYYMMDD(new Date()),
@@ -289,7 +302,7 @@ export default function AppointmentsView() {
           .from('potential_clients')
           .select('id, full_name, phone_number, ic_number, case_category')
           .order('full_name', { ascending: true })
-          .limit(150);
+          .limit(1000);
 
         if (potData) {
           potData.forEach(p => {
@@ -311,7 +324,7 @@ export default function AppointmentsView() {
           .from('clients')
           .select('id, NAME, "PHONE NUMBER", "IC NUMBER", "CASE CATEGORY"')
           .order('NAME', { ascending: true })
-          .limit(150);
+          .limit(1000);
 
         if (actData) {
           actData.forEach((c: any) => {
@@ -336,7 +349,7 @@ export default function AppointmentsView() {
     loadClients();
   }, [lang]);
 
-  // Fetch Appointments
+  // Fetch Appointments (Optimized with smart query limit to protect memory & responsiveness)
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -346,7 +359,8 @@ export default function AppointmentsView() {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .order('appointment_date', { ascending: true });
+        .order('appointment_date', { ascending: true })
+        .limit(1500);
 
       if (error) {
         if (error.code === '42P01' || error.message?.toLowerCase().includes('does not exist')) {
@@ -605,74 +619,76 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     });
   }, [appointments, searchQuery, filterPIC, filterCategory, filterStatus]);
 
-  // Reactive Clash Detection Set (Identifies appointments that share Date, Time Slot, and PIC)
+  // Reactive Clash Detection Set (Identifies appointments overlapping within 45 mins for the same PIC, including cross-midnight schedules)
   const clashingAppointmentIds = useMemo(() => {
     const clashSet = new Set<string>();
     const activeList = appointments.filter(a => a.status !== 'Cancelled');
+    const MS_45_MIN = 45 * 60 * 1000;
     
-    const slotMap = new Map<string, Appointment[]>();
-    activeList.forEach(apt => {
-      const timeMinutes = parseTimeToMinutes(apt.appointment_time);
-      const picKey = (apt.pic_name || '').toLowerCase().trim();
-      const key = `${apt.appointment_date}_${timeMinutes}_${picKey}`;
-      const arr = slotMap.get(key) || [];
-      arr.push(apt);
-      slotMap.set(key, arr);
-    });
-
-    slotMap.forEach((apts) => {
-      if (apts.length > 1) {
-        apts.forEach(a => clashSet.add(a.id));
+    for (let i = 0; i < activeList.length; i++) {
+      for (let j = i + 1; j < activeList.length; j++) {
+        const a1 = activeList[i];
+        const a2 = activeList[j];
+        const pic1 = (a1.pic_name || '').toLowerCase().trim();
+        const pic2 = (a2.pic_name || '').toLowerCase().trim();
+        if (pic1 && pic1 === pic2) {
+          const ts1 = getAppointmentTimestamp(a1.appointment_date, a1.appointment_time);
+          const ts2 = getAppointmentTimestamp(a2.appointment_date, a2.appointment_time);
+          // Flag overlap across midnight and all calendar boundaries if within 45 minutes
+          if (ts1 > 0 && ts2 > 0 && Math.abs(ts1 - ts2) < MS_45_MIN) {
+            clashSet.add(a1.id);
+            clashSet.add(a2.id);
+          }
+        }
       }
-    });
+    }
 
     return clashSet;
   }, [appointments]);
 
-  // Live Modal Clash Detector (Purely advisory warning banner, does not block booking)
+  // Live Modal Clash Detector (Advisory warning banner for overlapping timeslots within 45 mins, handling midnight transitions)
   const formClashAppointment = useMemo(() => {
     if (!formData.appointment_date || !formData.appointment_time) return null;
-    const currentFormMins = parseTimeToMinutes(formData.appointment_time);
+    const currentFormTs = getAppointmentTimestamp(formData.appointment_date, formData.appointment_time);
     const currentPic = (formData.is_custom_pic ? formData.custom_pic : formData.pic_name || '').toLowerCase().trim();
+    const MS_45_MIN = 45 * 60 * 1000;
     
     return appointments.find(a => {
       if (isEditModalOpen && activeAppointment && a.id === activeAppointment.id) return false;
       if (a.status === 'Cancelled') return false;
-      if (a.appointment_date !== formData.appointment_date) return false;
-      const aMins = parseTimeToMinutes(a.appointment_time);
       const aPic = (a.pic_name || '').toLowerCase().trim();
-      return aMins === currentFormMins && (currentPic ? aPic === currentPic : true);
+      const picMatch = currentPic ? aPic === currentPic : true;
+      if (!picMatch) return false;
+      const aTs = getAppointmentTimestamp(a.appointment_date, a.appointment_time);
+      return aTs > 0 && currentFormTs > 0 && Math.abs(aTs - currentFormTs) < MS_45_MIN;
     });
   }, [formData.appointment_date, formData.appointment_time, formData.pic_name, formData.custom_pic, formData.is_custom_pic, appointments, isEditModalOpen, activeAppointment]);
 
-  // ─── PENDING OUTCOME RESOLUTION (Past Date OR Today >= Scheduled Time + 3 Hours) ──────
+  // ─── PENDING OUTCOME RESOLUTION (Scheduled Timestamp + 3-Hour Buffer Elapsed) ──────
   const [hidePendingOutcomeBanner, setHidePendingOutcomeBanner] = useState(false);
   const [expandedPendingOutcome, setExpandedPendingOutcome] = useState(true);
 
   const pendingOutcomeAppointments = useMemo(() => {
-    const todayStr = formatDateToYYYYMMDD(new Date());
     const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
-    const BUFFER_MINUTES = 3 * 60; // 3 hours window after appointment time
+    const BUFFER_MS = 3 * 60 * 60 * 1000; // 3 hours window after appointment scheduled start
 
     return appointments.filter(a => {
       // Only track active consultations that are still awaiting a final outcome
       if (a.status !== 'Scheduled' && a.status !== 'In Progress') return false;
+      if (!a.appointment_date) return false;
 
-      // Case 1: Past Date (e.g. yesterday or earlier)
-      if (a.appointment_date < todayStr) {
-        return true;
-      }
+      const parts = a.appointment_date.split('-').map(Number);
+      if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return false;
+      const [y, m, d] = parts;
+      const scheduledMins = parseTimeToMinutes(a.appointment_time);
+      const hour = Math.floor(scheduledMins / 60);
+      const min = scheduledMins % 60;
 
-      // Case 2: Today and at least 3 hours have passed since scheduled time
-      if (a.appointment_date === todayStr) {
-        const scheduledMins = parseTimeToMinutes(a.appointment_time);
-        if (currentMins >= scheduledMins + BUFFER_MINUTES) {
-          return true;
-        }
-      }
+      // Construct accurate Date object in local time to robustly handle midnight/day-rollovers
+      const scheduledDate = new Date(y, m - 1, d, hour, min, 0, 0);
+      const thresholdDate = new Date(scheduledDate.getTime() + BUFFER_MS);
 
-      return false;
+      return now >= thresholdDate;
     });
   }, [appointments]);
 
@@ -803,6 +819,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setFormData({
       client_name: '',
       client_phone: '+60 ',
+      client_ic: '',
       client_id: '',
       potential_client_id: '',
       appointment_date: initialDate || formatDateToYYYYMMDD(new Date()),
@@ -823,7 +840,14 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   // Autofill client fields when chosen from dropdown
   const handleSelectClientOption = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVal = e.target.value;
-    if (!selectedVal) return;
+    if (!selectedVal) {
+      setFormData(prev => ({
+        ...prev,
+        client_id: '',
+        potential_client_id: ''
+      }));
+      return;
+    }
 
     const opt = clientOptions.find(o => `${o.type}_${o.id}` === selectedVal);
     if (opt) {
@@ -831,11 +855,27 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         ...prev,
         client_name: opt.name.replace(/\s*\(.*?\)/g, '').trim(),
         client_phone: opt.phone || prev.client_phone,
+        client_ic: opt.ic || prev.client_ic,
         case_category: opt.category || prev.case_category,
         client_id: opt.type === 'active' ? opt.id : '',
         potential_client_id: opt.type === 'potential' ? opt.id : ''
       }));
     }
+  };
+
+  // Handle client name manual typing to prevent linked ID desync
+  const handleClientNameChange = (newName: string) => {
+    setFormData(prev => {
+      // Check if user changed the name away from an autofilled client
+      const hadAutofilled = Boolean(prev.client_id || prev.potential_client_id);
+      return {
+        ...prev,
+        client_name: newName,
+        // Clear linked IDs if the user edits or changes the client name to avoid wrong DB relation
+        client_id: hadAutofilled && prev.client_name !== newName ? '' : prev.client_id,
+        potential_client_id: hadAutofilled && prev.client_name !== newName ? '' : prev.potential_client_id
+      };
+    });
   };
 
   // Open Edit Modal (Restricted to canManage)
@@ -852,6 +892,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setFormData({
       client_name: apt.client_name || '',
       client_phone: apt.client_phone || '+60 ',
+      client_ic: apt.client_ic || '',
       client_id: apt.client_id || '',
       potential_client_id: apt.potential_client_id || '',
       appointment_date: apt.appointment_date || '',
@@ -884,14 +925,26 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       return;
     }
 
+    // Guard against empty Custom Category
+    if (formData.is_custom_category && !formData.custom_category.trim()) {
+      alert(lang === 'bm' ? 'Sila taip nama kategori tersuai anda.' : 'Please enter your custom case category name.');
+      return;
+    }
+
+    // Guard against empty Custom PIC (prevents accidental misassignment)
+    if (formData.is_custom_pic && !formData.custom_pic.trim()) {
+      alert(lang === 'bm' ? 'Sila taip nama pegawai / PIC tersuai anda.' : 'Please enter the custom officer / PIC name.');
+      return;
+    }
+
     try {
       setSubmitting(true);
       const finalCategory = formData.is_custom_category
-        ? formData.custom_category.trim() || 'Other'
+        ? formData.custom_category.trim()
         : formData.case_category;
 
       const finalPIC = formData.is_custom_pic
-        ? formData.custom_pic.trim() || 'Azizul'
+        ? formData.custom_pic.trim()
         : formData.pic_name;
 
       let cleanPhone = formData.client_phone ? formData.client_phone.trim() : '';
@@ -899,9 +952,10 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         cleanPhone = '';
       }
 
-      const payload = {
+      const payload: any = {
         client_name: formData.client_name.trim(),
-        client_phone: cleanPhone,
+        client_phone: cleanPhone || null,
+        client_ic: formData.client_ic?.trim() || null,
         client_id: formData.client_id || null,
         potential_client_id: formData.potential_client_id || null,
         appointment_date: formData.appointment_date,
@@ -922,6 +976,10 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
 
         if (error) throw error;
       } else {
+        // Enforce audit trail metadata on new appointments
+        payload.created_by = profile?.id || null;
+        payload.created_by_name = profile?.full_name || 'Staff User';
+
         const { error } = await supabase
           .from('appointments')
           .insert([payload]);
@@ -1004,6 +1062,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       }
     } catch (err: any) {
       console.error('Error updating status:', err);
+      alert(`${lang === 'bm' ? 'Gagal mengemas kini status temujanji' : 'Failed to update appointment status'}: ${err.message || 'Error'}`);
     }
   };
 
@@ -1030,6 +1089,7 @@ CREATE TABLE IF NOT EXISTS public.appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_name TEXT NOT NULL,
     client_phone TEXT,
+    client_ic TEXT,
     client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
     potential_client_id UUID REFERENCES public.potential_clients(id) ON DELETE SET NULL,
     appointment_date DATE NOT NULL,
@@ -1046,8 +1106,48 @@ CREATE TABLE IF NOT EXISTS public.appointments (
 );
 
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated users can manage appointments" ON public.appointments FOR ALL TO authenticated USING (true) WITH CHECK (true);
-ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
+
+CREATE OR REPLACE FUNCTION public.has_appointment_permission(u_id UUID, perm_type TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.profiles p
+    JOIN public.roles r ON p.role_id = r.id
+    WHERE p.id = u_id AND r.role_name IN ('IT Admin', 'HR', 'CFO', 'Director', 'BOD')
+  ) THEN RETURN TRUE; END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.access_permissions
+    WHERE (target_type = 'user' AND target_id = u_id::text AND (permissions->>perm_type)::boolean = true)
+       OR (target_type = 'department' AND target_id = (SELECT department FROM public.profiles WHERE id = u_id) AND (permissions->>perm_type)::boolean = true)
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE POLICY "Appointments SELECT Policy" ON public.appointments FOR SELECT TO authenticated
+  USING (public.has_appointment_permission(auth.uid(), 'view_appointments') OR public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+
+CREATE POLICY "Appointments INSERT Policy" ON public.appointments FOR INSERT TO authenticated
+  WITH CHECK (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+
+CREATE POLICY "Appointments UPDATE Policy" ON public.appointments FOR UPDATE TO authenticated
+  USING (public.has_appointment_permission(auth.uid(), 'manage_appointments'))
+  WITH CHECK (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+
+CREATE POLICY "Appointments DELETE Policy" ON public.appointments FOR DELETE TO authenticated
+  USING (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+      AND schemaname = 'public' 
+      AND tablename = 'appointments'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;
+  END IF;
+END $$;`;
     navigator.clipboard.writeText(sql);
     setSqlCopySuccess(true);
     setTimeout(() => setSqlCopySuccess(false), 3000);
@@ -2283,7 +2383,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;`;
                     type="text"
                     placeholder={lang === 'bm' ? 'cth: Mohd Amirul' : 'e.g. Mohd Amirul'}
                     value={formData.client_name}
-                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                    onChange={(e) => handleClientNameChange(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     required
                   />

@@ -39,8 +39,18 @@ Disallow: /
 User-agent: SentiBot
 Disallow: /
 
+# Allow social media bots for link previews (WhatsApp, FB, Twitter/X, Telegram)
 User-agent: facebookexternalhit
-Disallow: /
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
 
 User-agent: *
 Disallow: /portal/

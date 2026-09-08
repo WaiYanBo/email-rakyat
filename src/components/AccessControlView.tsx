@@ -791,22 +791,22 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       )}
 
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <div className="min-w-0 flex-1">
           <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
             {t('accessControl', 'matrixTitle', lang)}
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs md:text-sm text-slate-500 dark:text-zinc-400 mt-1 max-w-2xl leading-relaxed">
             {t('accessControl', 'matrixSubtitle', lang)}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full md:w-auto">
+        <div className="flex items-center gap-2.5 flex-shrink-0 w-full md:w-auto justify-end">
           {unsavedCount > 0 && (
             <button
               onClick={handleDiscard}
               disabled={saving}
-              className="flex-1 md:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="flex-1 md:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-xs"
             >
               {t('accessControl', 'discardBtn', lang)}
             </button>
@@ -815,7 +815,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           <button
             onClick={handleSave}
             disabled={saving || unsavedCount === 0}
-            className={`flex-1 md:flex-none px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 ${unsavedCount > 0
+            className={`flex-1 md:flex-none px-4 sm:px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${unsavedCount > 0
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black shadow-md cursor-pointer'
                 : 'bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed opacity-60'
               }`}
@@ -881,14 +881,14 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         {filterType === 'staff' && (
           <div className="space-y-6">
             {/* Search & Department Filter Bar */}
-            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-              <div className="relative flex-1">
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+              <div className="relative flex-1 min-w-[220px] max-w-md">
                 <input
                   type="text"
                   placeholder={t('accessControl', 'searchStaffPlaceholder', lang)}
                   value={staffSearch}
                   onChange={(e) => setStaffSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-yellow-500"
                 />
                 <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -896,12 +896,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               </div>
 
               {/* Department filter pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-thin">
                 <button
                   onClick={() => setDeptFilterPill('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${deptFilterPill === 'all'
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all flex-shrink-0 ${deptFilterPill === 'all'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                      : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
                     }`}
                 >
                   {isBm ? 'Semua' : 'All'}
@@ -910,9 +910,9 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   <button
                     key={d}
                     onClick={() => setDeptFilterPill(d)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${deptFilterPill === d
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all flex-shrink-0 ${deptFilterPill === d
                         ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-slate-950'
-                        : 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-zinc-400 hover:bg-slate-200'
+                        : 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
                       }`}
                   >
                     {d}

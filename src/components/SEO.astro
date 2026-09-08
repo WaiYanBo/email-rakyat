@@ -1,69 +1,128 @@
 ---
 interface Props {
-	title?: string;
-	description?: string;
-    image?: string;
-    url?: string | URL;
-    noindex?: boolean; // New: Allows hiding specific pages (like 404) from Google
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string | URL;
+  noindex?: boolean;
+  keywords?: string;
+  type?: 'website' | 'article';
 }
 
 const {
-    title,
-    description,
-    image = "/logo.png", // Fallback to logo if no specific image provided
-    url = Astro.url,
-    noindex = false
+  title,
+  description,
+  image = "/logo.png",
+  url = Astro.url,
+  noindex = false,
+  keywords,
+  type = 'website'
 } = Astro.props;
 
-const siteTitle = "Email Rakyat | Advokasi & Rundingan Hutang";
-const siteDescription = description || "Portal rasmi aduan dan bantuan mangsa Ah Long & Scam. Kami melindungi privasi dan hak anda.";
+const siteTitle = "Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah | Email Rakyat";
+const defaultDescription = "Pusat advokasi & khidmat nasihat profesional mangsa Ah Long, pinjaman wang tanpa lesen, gangguan debt collector agresif, dan aduan salah laku syarikat kredit komuniti (KPKT) di Malaysia. Selesai masalah secara sah dan berintegriti.";
+const siteDescription = description || defaultDescription;
 
-// Ensure image URL is absolute (Required for LinkedIn/Facebook/WhatsApp previews)
+// Real Malaysian high-intent user search queries
+const defaultKeywords = "bantuan mangsa ah long, cara setel hutang ah long, kena ugut ah long apa nak buat, ah long ugut sebar gambar, lapor polis ah long, selesai hutang ah long cara sah, gangguan debt collector, cara hadapi pengutip hutang, aduan kredit komuniti kpkt, rundingan hutang lapuk, bantuan advokasi pengguna malaysia, raja emel bantuan mangsa ah long, khidmat nasihat hutang percuma, debt settlement malaysia";
+const pageKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
+
+// Absolute Social Image URL
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || Astro.url).href;
 
-// JSON-LD Schema: Tells Google this is an Organization
-// JSON-LD Schema: Enhanced for Local Service
-const schema = JSON.stringify({
+// JSON-LD Schemas: Legal & Advocacy Service + Local Business + Breadcrumb
+const schemaOrg = {
   "@context": "https://schema.org",
-  "@type": "ProfessionalService", // More specific than Organization
-  "name": "Email Rakyat",
-  "alternateName": "Pusat Aduan Ah Long",
-  "url": import.meta.env.SITE,
-  "logo": new URL("/logo.png", Astro.site || Astro.url).href,
-  "description": siteDescription,
-  "priceRange": "$", // Required for some service schemas (indicates affordable/free consultation)
-  "address": {
-    "@type": "PostalAddress",
-    "addressCountry": "MY"
-  },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "telephone": "+601163623282",
-    "contactType": "emergency", // Tells Google this is urgent help
-    "areaServed": "MY",
-    "availableLanguage": ["Malay", "English"]
-  }
-});
+  "@graph": [
+    {
+      "@type": "LegalService",
+      "@id": "https://e-rakyat.com/#organization",
+      "name": "Team Email Rakyat",
+      "alternateName": ["Email Rakyat", "Pusat Advokasi & Bantuan Mangsa Ah Long Malaysia", "Team Raja Emel"],
+      "url": "https://e-rakyat.com",
+      "logo": new URL("/logo.png", Astro.site || Astro.url).href,
+      "image": socialImageURL,
+      "description": siteDescription,
+      "priceRange": "Free Consultation / Khidmat Nasihat",
+      "areaServed": [
+        {
+          "@type": "Country",
+          "name": "Malaysia"
+        }
+      ],
+      "knowsLanguage": ["ms", "en", "zh"],
+      "serviceType": [
+        "Khidmat Nasihat Mangsa Ah Long",
+        "Advokasi & Perlindungan Hak Pengguna",
+        "Penyelesaian Gangguan Debt Collector",
+        "Aduan Salah Laku Syarikat Kredit Komuniti KPKT",
+        "Bantuan Draf Laporan Polis & Kertas Siasatan"
+      ],
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "telephone": "+6012-6232949",
+          "contactType": "emergency",
+          "contactOption": "TollFree",
+          "areaServed": "MY",
+          "availableLanguage": ["Malay", "English"]
+        }
+      ],
+      "sameAs": [
+        "https://www.tiktok.com/@teamemail.rakyat",
+        "https://WaiYanTeamEmailRakyat.wasap.my"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://e-rakyat.com/#website",
+      "url": "https://e-rakyat.com",
+      "name": "Email Rakyat",
+      "description": "Portal Rasmi Advokasi & Bantuan Mangsa Ah Long Malaysia",
+      "publisher": {
+        "@id": "https://e-rakyat.com/#organization"
+      },
+      "inLanguage": "ms-MY"
+    }
+  ]
+};
 ---
 <title>{title || siteTitle}</title>
+<meta name="title" content={title || siteTitle} />
 <meta name="description" content={siteDescription} />
-<link rel="canonical" href={url} />
-<meta name="theme-color" content="#111827" /> {noindex ? (
-    <meta name="robots" content="noindex, nofollow" />
+<meta name="keywords" content={pageKeywords} />
+<meta name="author" content="Team Email Rakyat" />
+<link rel="canonical" href={canonicalURL} />
+<meta name="theme-color" content="#111827" />
+
+{/* Language Alternates */}
+<link rel="alternate" hreflang="ms-MY" href={canonicalURL} />
+<link rel="alternate" hreflang="x-default" href={canonicalURL} />
+
+{noindex ? (
+  <meta name="robots" content="noindex, nofollow" />
 ) : (
-    <meta name="robots" content="index, follow" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 )}
 
+{/* OpenGraph / Facebook / WhatsApp */}
 <meta property="og:site_name" content="Email Rakyat" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content={url} />
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title || siteTitle} />
 <meta property="og:description" content={siteDescription} />
 <meta property="og:image" content={socialImageURL} />
+<meta property="og:image:alt" content="Team Email Rakyat - Advokasi & Bantuan Mangsa Ah Long" />
+<meta property="og:locale" content="ms_MY" />
 
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content={title || siteTitle} />
-<meta property="twitter:description" content={siteDescription} />
-<meta property="twitter:image" content={socialImageURL} />
+{/* Twitter Cards */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={title || siteTitle} />
+<meta name="twitter:description" content={siteDescription} />
+<meta name="twitter:image" content={socialImageURL} />
+<meta name="twitter:image:alt" content="Team Email Rakyat" />
 
-<script type="application/ld+json" set:html={schema} />
+{/* Structured Data (JSON-LD) */}
+<script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />

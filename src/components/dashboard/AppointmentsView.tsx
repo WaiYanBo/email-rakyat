@@ -385,6 +385,44 @@ export default function AppointmentsView() {
     fetchAppointments();
   }, []);
 
+  // Handle cross-navigation from Potential Clients / Active Clients (Autofill & Auto-open Add Modal)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'new' || params.get('schedule') === 'true') {
+        const clientName = params.get('clientName') || params.get('name') || '';
+        const phone = params.get('phone') || '';
+        const ic = params.get('ic') || '';
+        const category = params.get('category') || 'Loan Shark';
+        const clientId = params.get('clientId') || '';
+        const clientType = params.get('clientType') || '';
+
+        const standardCategories = ['Loan Shark', 'Ah Long', 'Kredit Komuniti', 'Bank', 'Scam Victim', 'Kemalangan', 'Tuntutan Sivil'];
+        const isCustomCat = Boolean(category && !standardCategories.includes(category));
+
+        setFormData(prev => ({
+          ...prev,
+          client_name: clientName || prev.client_name,
+          client_phone: phone || (prev.client_phone || '+60 '),
+          client_ic: ic || prev.client_ic,
+          case_category: isCustomCat ? 'Custom' : (category || prev.case_category),
+          custom_category: isCustomCat ? category : '',
+          is_custom_category: isCustomCat,
+          client_id: clientType === 'active' ? clientId : '',
+          potential_client_id: clientType === 'potential' ? clientId : '',
+          appointment_date: formatDateToYYYYMMDD(new Date())
+        }));
+
+        setIsAddModalOpen(true);
+        // Clean URL query params without page reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (e) {
+      console.error('Error parsing appointment URL params:', e);
+    }
+  }, []);
+
   // Format Helper for Group WhatsApp Broadcast
   const generateWhatsAppGroupMessage = (apt: {
     client_name: string;

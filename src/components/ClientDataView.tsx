@@ -1588,6 +1588,13 @@ export default function ClientDataView() {
                     {t('clients', 'editData', lang)}
                   </button>
                 )}
+                <a
+                  href={`/portal/temujanji?action=new&clientType=active&clientId=${viewingClient.id}&clientName=${encodeURIComponent(viewingClient.NAME || '')}&phone=${encodeURIComponent(viewingClient['PHONE NUMBER'] || '')}&ic=${encodeURIComponent(viewingClient['IC NUMBER'] || '')}&category=${encodeURIComponent(viewingClient['CASE CATEGORY'] || '')}`}
+                  className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center justify-center gap-1.5 min-h-[48px]"
+                >
+                  <span>📅</span>
+                  <span>{lang === 'bm' ? 'Jadualkan Temujanji' : 'Schedule Appointment'}</span>
+                </a>
                 <button
                   onClick={handleCloseViewModal}
                   className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white transition-colors min-h-[48px]"

@@ -1551,7 +1551,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
               <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
                 <div className="flex items-center gap-2 flex-wrap">
                   <a
-                    href="/portal/temujanji"
+                    href={`/portal/temujanji?action=new&clientType=potential&clientId=${activeClient.id}&clientName=${encodeURIComponent(activeClient.full_name || '')}&phone=${encodeURIComponent(activeClient.phone_number || '')}&ic=${encodeURIComponent(activeClient.ic_number || '')}&category=${encodeURIComponent(activeClient.case_category || '')}`}
                     className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
                   >
                     <span>📅</span>

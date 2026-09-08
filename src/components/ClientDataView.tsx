@@ -428,6 +428,38 @@ export default function ClientDataView() {
   const [storageFolders, setStorageFolders] = useState<string[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
+  const canViewClients = isIT || Boolean(permissions?.view_clients);
+  const canEditClients = isIT || Boolean(permissions?.edit_clients);
+  const canViewLoD = isIT || Boolean(permissions?.view_lod);
+  const canManageLoD = isIT || Boolean(permissions?.manage_lod);
+  const canViewPotential = isIT || Boolean(permissions?.view_potential_clients);
+  const canManagePotential = isIT || Boolean(permissions?.manage_potential_clients);
+  const canExport = isIT || Boolean(permissions?.export_data);
+
+  const hasAnyClientAccess = canViewClients || canViewLoD || canViewPotential;
+
+  // Dynamically adjust viewMode if user lacks permission for the current active tab
+  useEffect(() => {
+    if (permsLoading) return;
+    if (viewMode === 'standard' || viewMode === 'expanded') {
+      if (!canViewClients) {
+        if (canViewLoD) setViewMode('lod');
+        else if (canViewPotential) setViewMode('potential');
+      }
+    } else if (viewMode === 'lod') {
+      if (!canViewLoD) {
+        if (canViewClients) setViewMode('standard');
+        else if (canViewPotential) setViewMode('potential');
+      }
+    } else if (viewMode === 'potential') {
+      if (!canViewPotential) {
+        if (canViewClients) setViewMode('standard');
+        else if (canViewLoD) setViewMode('lod');
+      }
+    }
+  }, [permsLoading, canViewClients, canViewLoD, canViewPotential, viewMode]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const searchVal = params.get('search') || params.get('q');
@@ -519,10 +551,9 @@ export default function ClientDataView() {
           }
         }
 
-        const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-        const canViewClients = isIT || Boolean(permissions?.view_clients);
+        const canFetchClients = canViewClients || canViewLoD;
 
-        if (canViewClients) {
+        if (canFetchClients) {
           let query = supabase.from('clients');
 
           query = query.select('*', { count: 'exact' });
@@ -641,9 +672,8 @@ export default function ClientDataView() {
   }, [permissions, searchQuery, dateFilter, viewMode, storageFolders, refreshTrigger]);
 
   const handleOpenAddModal = () => {
-    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-    const canEditClient = isIT || Boolean(permissions?.edit_clients);
-    if (!canEditClient) {
+    const canAdd = viewMode === 'lod' ? canManageLoD : canEditClients;
+    if (!canAdd) {
       alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menambah klien.' : 'Access denied: You do not have permission to add clients.');
       return;
     }
@@ -663,9 +693,8 @@ export default function ClientDataView() {
     setIsModalOpen(true);
   };
   const handleOpenEditModal = async (client: any) => {
-    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-    const canEditClient = isIT || Boolean(permissions?.edit_clients);
-    if (!canEditClient) {
+    const canEditAny = viewMode === 'lod' ? canManageLoD : (canEditClients || canManageLoD);
+    if (!canEditAny) {
       alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengemas kini maklumat klien.' : 'Access denied: You do not have permission to edit clients.');
       return;
     }
@@ -938,6 +967,10 @@ export default function ClientDataView() {
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isIT && !canEditClients && !canManageLoD) {
+      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menyimpan maklumat klien.' : 'Access denied: You do not have permission to save client data.');
+      return;
+    }
     setIsSaving(true);
 
     const formData = new FormData(e.target as HTMLFormElement);
@@ -1119,18 +1152,13 @@ export default function ClientDataView() {
     );
   }
 
-  const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const canEdit = isIT || Boolean(permissions?.edit_clients);
-  const canView = isIT || Boolean(permissions?.view_clients);
-  const canExport = isIT || Boolean(permissions?.export_data);
-
-  if (!canView) {
+  if (!permsLoading && !hasAnyClientAccess) {
     return (
       <PermissionDenied
         title={lang === 'bm' ? 'Akses Pangkalan Data Klien Terhad' : 'Client Database Access Restricted'}
         message={lang === 'bm'
-          ? 'Akaun anda tidak mempunyai kebenaran untuk melihat pangkalan data klien. Sila hubungi Pentadbir Sistem untuk memohon akses.'
-          : 'Your account does not have permission to view the client database. Please contact your System Administrator to request access.'}
+          ? 'Akaun anda tidak mempunyai kebenaran untuk melihat modul klien atau sub-halamannya. Sila hubungi Pentadbir Sistem untuk memohon akses.'
+          : 'Your account does not have permission to view the client module or any of its sections. Please contact your System Administrator to request access.'}
       />
     );
   }
@@ -1143,7 +1171,7 @@ export default function ClientDataView() {
             {t('clients', 'pageTitle', lang)}
           </h1>
           <p className="text-sm text-slate-500 dark:text-zinc-400 font-medium">
-            {canEdit ? t('clients', 'manageSubtitle', lang) : t('clients', 'viewSubtitle', lang)}
+            {canEditClients || canManageLoD || canManagePotential ? t('clients', 'manageSubtitle', lang) : t('clients', 'viewSubtitle', lang)}
           </p>
         </div>
 
@@ -1156,7 +1184,12 @@ export default function ClientDataView() {
           )}
           <ClientTable
             clients={dbClients}
-            canEdit={canEdit}
+            canEdit={canEditClients}
+            canViewClients={canViewClients}
+            canViewLoD={canViewLoD}
+            canManageLoD={canManageLoD}
+            canViewPotential={canViewPotential}
+            canManagePotential={canManagePotential}
             canExport={canExport}
             searchQuery={searchQuery}
             onSearchChange={(q) => { setSearchQuery(q); }}

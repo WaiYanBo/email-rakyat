@@ -272,7 +272,7 @@ export default function AppointmentsView() {
           .from('profiles')
           .select('full_name, status')
           .order('full_name', { ascending: true });
-        
+
         const defaultStaff = ['Azizul', 'Mr. Jazz', 'Shazz', 'Shahniza', 'Shahrizul Azri'];
         if (!error && data) {
           const names = data
@@ -546,7 +546,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   const handleSendClientReminder = (apt: Appointment) => {
     const cleanPhone = (apt.client_phone || '').replace(/[^0-9]/g, '');
     const text = generateClientReminderMessage(apt);
-    
+
     if (cleanPhone) {
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
       window.open(whatsappUrl, '_blank');
@@ -562,7 +562,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   const handleSendClientRescheduleNotice = (apt: Appointment) => {
     const cleanPhone = (apt.client_phone || '').replace(/[^0-9]/g, '');
     const text = generateClientRescheduleMessage(apt);
-    
+
     if (cleanPhone) {
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
       window.open(whatsappUrl, '_blank');
@@ -624,7 +624,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     const clashSet = new Set<string>();
     const activeList = appointments.filter(a => a.status !== 'Cancelled');
     const MS_45_MIN = 45 * 60 * 1000;
-    
+
     for (let i = 0; i < activeList.length; i++) {
       for (let j = i + 1; j < activeList.length; j++) {
         const a1 = activeList[i];
@@ -652,7 +652,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     const currentFormTs = getAppointmentTimestamp(formData.appointment_date, formData.appointment_time);
     const currentPic = (formData.is_custom_pic ? formData.custom_pic : formData.pic_name || '').toLowerCase().trim();
     const MS_45_MIN = 45 * 60 * 1000;
-    
+
     return appointments.find(a => {
       if (isEditModalOpen && activeAppointment && a.id === activeAppointment.id) return false;
       if (a.status === 'Cancelled') return false;
@@ -695,7 +695,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   // Summary Metrics
   const metrics = useMemo(() => {
     const todayStr = formatDateToYYYYMMDD(new Date());
-    
+
     // Calculate week start and end
     const now = new Date();
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon = 0
@@ -1618,11 +1618,10 @@ END $$;`;
               <button
                 type="button"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                  showMobileFilters || activeFilterCount > 0
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-xs'
-                    : 'bg-slate-50 dark:bg-gray-800/80 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-gray-700'
-                }`}
+                className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${showMobileFilters || activeFilterCount > 0
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-xs'
+                  : 'bg-slate-50 dark:bg-gray-800/80 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-gray-700'
+                  }`}
               >
                 <span>⚙️</span>
                 <span>{lang === 'bm' ? 'Tapis' : 'Filter'}</span>
@@ -1866,13 +1865,12 @@ END $$;`;
                                   setActiveAppointment(apt);
                                   setIsViewModalOpen(true);
                                 }}
-                                className={`px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold truncate transition-all shadow-xs border ${
-                                  isClash
-                                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700'
-                                    : apt.status === 'Completed'
+                                className={`px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold truncate transition-all shadow-xs border ${isClash
+                                  ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700'
+                                  : apt.status === 'Completed'
                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
                                     : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-200 dark:border-indigo-800'
-                                }`}
+                                  }`}
                                 title={`${isClash ? '[CLASH / PERTINDIHAN] ' : ''}${apt.appointment_time} - ${apt.client_name} (${apt.pic_name})`}
                               >
                                 {isClash && <span className="mr-0.5 text-amber-600 dark:text-amber-400 font-bold">⚠️</span>}
@@ -1934,7 +1932,7 @@ END $$;`;
                     return (
                       <div key={col.dateStr} className="flex flex-col min-h-[450px]">
                         {/* Day Header - Click to switch to Day View */}
-                        <div 
+                        <div
                           onClick={() => handleSelectDayView(col.dateStr)}
                           className={`p-3 text-center border-b border-slate-200 dark:border-gray-800 cursor-pointer hover:bg-slate-100/90 dark:hover:bg-zinc-800/80 transition-colors ${col.isToday ? 'bg-indigo-50/80 dark:bg-yellow-500/10' : 'bg-slate-50/60 dark:bg-gray-900/60'}`}
                           title={lang === 'bm' ? `Klik untuk lihat jadual penuh (${col.dateStr})` : `Click to view day timeline (${col.dateStr})`}
@@ -1962,11 +1960,10 @@ END $$;`;
                                     setActiveAppointment(apt);
                                     setIsViewModalOpen(true);
                                   }}
-                                  className={`bg-white dark:bg-gray-800 border ${
-                                    isClash
-                                      ? 'border-amber-400 dark:border-amber-500 ring-1 ring-amber-400/40 bg-amber-50/20 dark:bg-amber-950/20'
-                                      : 'border-slate-200 dark:border-gray-700'
-                                  } rounded-xl p-2.5 shadow-sm space-y-1.5 hover:border-indigo-400 dark:hover:border-yellow-500 transition-all cursor-pointer`}
+                                  className={`bg-white dark:bg-gray-800 border ${isClash
+                                    ? 'border-amber-400 dark:border-amber-500 ring-1 ring-amber-400/40 bg-amber-50/20 dark:bg-amber-950/20'
+                                    : 'border-slate-200 dark:border-gray-700'
+                                    } rounded-xl p-2.5 shadow-sm space-y-1.5 hover:border-indigo-400 dark:hover:border-yellow-500 transition-all cursor-pointer`}
                                 >
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-yellow-400 flex items-center gap-1">
@@ -2050,11 +2047,10 @@ END $$;`;
                     return (
                       <div
                         key={apt.id}
-                        className={`border ${
-                          isClash
-                            ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/30 bg-amber-50/20 dark:bg-amber-950/20'
-                            : 'border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-800/30'
-                        } rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all`}
+                        className={`border ${isClash
+                          ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/30 bg-amber-50/20 dark:bg-amber-950/20'
+                          : 'border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-800/30'
+                          } rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
@@ -2151,9 +2147,8 @@ END $$;`;
                     return (
                       <div
                         key={apt.id}
-                        className={`bg-white dark:bg-gray-900 border ${
-                          isClash ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/20' : 'border-slate-200 dark:border-gray-800'
-                        } rounded-2xl p-4 shadow-sm space-y-3`}
+                        className={`bg-white dark:bg-gray-900 border ${isClash ? 'border-amber-400 dark:border-amber-500/80 ring-1 ring-amber-400/20' : 'border-slate-200 dark:border-gray-800'
+                          } rounded-2xl p-4 shadow-sm space-y-3`}
                       >
                         <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800 pb-2.5">
                           <div className="space-y-0.5">
@@ -2451,7 +2446,7 @@ END $$;`;
                     </div>
 
                     {/* Clicking anywhere on this input or box opens the clock immediately */}
-                    <div 
+                    <div
                       onClick={() => { if (!showGrabTimePicker) toggleGrabTimePicker(); }}
                       className="relative cursor-pointer group"
                     >
@@ -2489,11 +2484,10 @@ END $$;`;
                       key={tStr}
                       type="button"
                       onClick={() => handleSelectPresetTime(tStr)}
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-colors cursor-pointer ${
-                        formData.appointment_time === tStr
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                      }`}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-colors cursor-pointer ${formData.appointment_time === tStr
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                        }`}
                     >
                       {tStr}
                     </button>
@@ -2676,11 +2670,11 @@ END $$;`;
 
       {/* ─── CLIENT APPOINTMENT TIME PICKER MODAL (SIGNATURE GOLDEN THEME) ─── */}
       {showGrabTimePicker && (
-        <div 
+        <div
           className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setShowGrabTimePicker(false)}
         >
-          <div 
+          <div
             className="bg-slate-900 border border-amber-500/40 rounded-3xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-3.5 animate-in zoom-in-95 duration-200 text-white overscroll-contain flex flex-col shadow-amber-500/10"
             onClick={(e) => e.stopPropagation()}
           >
@@ -2804,7 +2798,7 @@ END $$;`;
                   <div className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 h-11 border-y-2 border-amber-400 bg-amber-400/15 rounded-xl z-10 shadow-lg shadow-amber-500/20" />
 
                   {/* HOUR DRUM */}
-                  <div 
+                  <div
                     onWheel={(e) => {
                       e.preventDefault();
                       spinHour(e.deltaY > 0 ? 1 : -1);
@@ -2833,7 +2827,7 @@ END $$;`;
                   </div>
 
                   {/* MINUTE DRUM */}
-                  <div 
+                  <div
                     onWheel={(e) => {
                       e.preventDefault();
                       spinMinute(e.deltaY > 0 ? 1 : -1);
@@ -2862,7 +2856,7 @@ END $$;`;
                   </div>
 
                   {/* PERIOD DRUM (Centered font-mono typography matching Hour & Minute) */}
-                  <div 
+                  <div
                     onWheel={(e) => {
                       e.preventDefault();
                       spinPeriod();
@@ -2938,11 +2932,10 @@ END $$;`;
                     key={preset}
                     type="button"
                     onClick={() => handleSelectPresetTime(preset)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                      formData.appointment_time === preset
-                        ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/25 ring-1 ring-amber-300'
-                        : 'bg-slate-800/90 hover:bg-amber-950/50 text-slate-300 hover:text-amber-400 border border-slate-700/80'
-                    }`}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${formData.appointment_time === preset
+                      ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/25 ring-1 ring-amber-300'
+                      : 'bg-slate-800/90 hover:bg-amber-950/50 text-slate-300 hover:text-amber-400 border border-slate-700/80'
+                      }`}
                   >
                     {preset}
                   </button>

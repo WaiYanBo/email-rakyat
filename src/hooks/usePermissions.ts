@@ -4,6 +4,10 @@ import { supabase, getCurrentSession } from '../lib/supabase';
 export interface Permissions {
   view_clients: boolean;
   edit_clients: boolean;
+  view_lod: boolean;
+  manage_lod: boolean;
+  view_potential_clients: boolean;
+  manage_potential_clients: boolean;
   view_appointments: boolean;
   manage_appointments: boolean;
   export_data: boolean;
@@ -24,6 +28,10 @@ export interface Permissions {
 const IT_ADMIN_PERMISSIONS: Permissions = {
   view_clients: true,
   edit_clients: true,
+  view_lod: true,
+  manage_lod: true,
+  view_potential_clients: true,
+  manage_potential_clients: true,
   view_appointments: true,
   manage_appointments: true,
   export_data: true,
@@ -44,6 +52,10 @@ const IT_ADMIN_PERMISSIONS: Permissions = {
 const DEFAULT_STAFF_PERMISSIONS: Permissions = {
   view_clients: false,
   edit_clients: false,
+  view_lod: false,
+  manage_lod: false,
+  view_potential_clients: false,
+  manage_potential_clients: false,
   view_appointments: true,
   manage_appointments: false,
   export_data: false,
@@ -141,6 +153,10 @@ export function usePermissions(initialProfile?: any) {
           finalPerms = {
             view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_clients,
             edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.edit_clients,
+            view_lod: userPerms.view_lod ?? deptPerms.view_lod ?? userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_lod,
+            manage_lod: userPerms.manage_lod ?? deptPerms.manage_lod ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_lod,
+            view_potential_clients: userPerms.view_potential_clients ?? deptPerms.view_potential_clients ?? userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_potential_clients,
+            manage_potential_clients: userPerms.manage_potential_clients ?? deptPerms.manage_potential_clients ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_potential_clients,
             view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? DEFAULT_STAFF_PERMISSIONS.view_appointments,
             manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? DEFAULT_STAFF_PERMISSIONS.manage_appointments,
             export_data: userPerms.export_data ?? deptPerms.export_data ?? DEFAULT_STAFF_PERMISSIONS.export_data,

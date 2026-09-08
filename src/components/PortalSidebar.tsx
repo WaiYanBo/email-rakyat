@@ -364,7 +364,7 @@ export default function PortalSidebar() {
       profile?.roles?.role_name?.toLowerCase() === 'it' ||
       profile?.roles?.role_name?.toLowerCase() === 'it admin';
 
-    const canViewClients = isIT || Boolean(permissions?.view_clients);
+    const canViewClients = isIT || Boolean(permissions?.view_clients || permissions?.view_lod || permissions?.view_potential_clients);
     const canViewAppointments = isIT || Boolean(permissions?.view_appointments);
     const canViewReports = isIT || Boolean(permissions?.view_snapshot || permissions?.view_staff);
     const canViewAttendance = isIT || Boolean(permissions?.view_attendance);

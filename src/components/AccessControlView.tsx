@@ -11,6 +11,10 @@ export interface PermissionEntry {
   permissions: {
     view_clients: boolean;
     edit_clients: boolean;
+    view_lod: boolean;
+    manage_lod: boolean;
+    view_potential_clients: boolean;
+    manage_potential_clients: boolean;
     view_appointments: boolean;
     manage_appointments: boolean;
     export_data: boolean;
@@ -32,6 +36,10 @@ export interface PermissionEntry {
 const DEFAULT_DEPT_PERMISSIONS: PermissionEntry['permissions'] = {
   view_clients: false,
   edit_clients: false,
+  view_lod: false,
+  manage_lod: false,
+  view_potential_clients: false,
+  manage_potential_clients: false,
   view_appointments: true,
   manage_appointments: false,
   export_data: false,
@@ -63,7 +71,7 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
     id: 'clients',
     titleEn: 'Clients, Cases & Appointments',
     titleBm: 'Klien, Kes & Temujanji',
-    features: ['view_clients', 'edit_clients', 'view_appointments', 'manage_appointments', 'export_data'],
+    features: ['view_clients', 'edit_clients', 'view_lod', 'manage_lod', 'view_potential_clients', 'manage_potential_clients', 'view_appointments', 'manage_appointments', 'export_data'],
   },
   {
     id: 'hr_staff',
@@ -192,6 +200,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           permissions: {
             view_clients: null as any,
             edit_clients: null as any,
+            view_lod: null as any,
+            manage_lod: null as any,
+            view_potential_clients: null as any,
+            manage_potential_clients: null as any,
             view_appointments: null as any,
             manage_appointments: null as any,
             export_data: null as any,
@@ -315,6 +327,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: true,
           edit_clients: true,
+          view_lod: true,
+          manage_lod: true,
+          view_potential_clients: true,
+          manage_potential_clients: true,
           view_appointments: true,
           manage_appointments: true,
           export_data: true,
@@ -336,6 +352,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: true,
           edit_clients: true,
+          view_lod: true,
+          manage_lod: true,
+          view_potential_clients: true,
+          manage_potential_clients: true,
           view_appointments: true,
           manage_appointments: true,
           export_data: true,
@@ -357,6 +377,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: false,
           edit_clients: false,
+          view_lod: false,
+          manage_lod: false,
+          view_potential_clients: false,
+          manage_potential_clients: false,
           view_appointments: true,
           manage_appointments: false,
           export_data: true,
@@ -378,6 +402,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: false,
           edit_clients: false,
+          view_lod: false,
+          manage_lod: false,
+          view_potential_clients: false,
+          manage_potential_clients: false,
           view_appointments: true,
           manage_appointments: false,
           export_data: false,
@@ -399,6 +427,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: true,
           edit_clients: false,
+          view_lod: true,
+          manage_lod: false,
+          view_potential_clients: true,
+          manage_potential_clients: false,
           view_appointments: true,
           manage_appointments: false,
           export_data: false,
@@ -420,6 +452,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         presetPerms = {
           view_clients: false,
           edit_clients: false,
+          view_lod: false,
+          manage_lod: false,
+          view_potential_clients: false,
+          manage_potential_clients: false,
           view_appointments: false,
           manage_appointments: false,
           export_data: false,
@@ -602,6 +638,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     switch (f) {
       case 'view_clients': return t('accessControl', 'colViewClients', lang);
       case 'edit_clients': return t('accessControl', 'colEditClients', lang);
+      case 'view_lod': return t('accessControl', 'colViewLoD', lang);
+      case 'manage_lod': return t('accessControl', 'colManageLoD', lang);
+      case 'view_potential_clients': return t('accessControl', 'colViewPotentialClients', lang);
+      case 'manage_potential_clients': return t('accessControl', 'colManagePotentialClients', lang);
       case 'view_appointments': return t('accessControl', 'colViewAppointments', lang);
       case 'manage_appointments': return t('accessControl', 'colManageAppointments', lang);
       case 'export_data': return t('accessControl', 'colExportData', lang);
@@ -625,6 +665,10 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     switch (f) {
       case 'view_clients': return t('accessControl', 'colViewClientsDesc', lang);
       case 'edit_clients': return t('accessControl', 'colEditClientsDesc', lang);
+      case 'view_lod': return t('accessControl', 'colViewLoDDesc', lang);
+      case 'manage_lod': return t('accessControl', 'colManageLoDDesc', lang);
+      case 'view_potential_clients': return t('accessControl', 'colViewPotentialClientsDesc', lang);
+      case 'manage_potential_clients': return t('accessControl', 'colManagePotentialClientsDesc', lang);
       case 'view_appointments': return t('accessControl', 'colViewAppointmentsDesc', lang);
       case 'manage_appointments': return t('accessControl', 'colManageAppointmentsDesc', lang);
       case 'export_data': return t('accessControl', 'colExportDataDesc', lang);
@@ -664,7 +708,7 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   const allFilteredFeatures = useMemo(() => {
     const list: PermissionKey[] = [
-      'view_clients', 'edit_clients', 'view_appointments', 'manage_appointments', 'export_data',
+      'view_clients', 'edit_clients', 'view_lod', 'manage_lod', 'view_potential_clients', 'manage_potential_clients', 'view_appointments', 'manage_appointments', 'export_data',
       'view_staff', 'edit_staff', 'manage_hr',
       'view_attendance', 'edit_attendance',
       'view_claims', 'manage_claims', 'view_leave', 'manage_leave',

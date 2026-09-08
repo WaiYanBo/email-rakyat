@@ -481,6 +481,11 @@ const formatLodClient = (client: any, lang: string) => {
 export default function ClientTable({
   clients,
   canEdit,
+  canViewClients = true,
+  canViewLoD = true,
+  canManageLoD = true,
+  canViewPotential = true,
+  canManagePotential = true,
   canExport = false,
   searchQuery,
   onSearchChange,
@@ -496,6 +501,11 @@ export default function ClientTable({
 }: {
   clients: any[],
   canEdit: boolean,
+  canViewClients?: boolean,
+  canViewLoD?: boolean,
+  canManageLoD?: boolean,
+  canViewPotential?: boolean,
+  canManagePotential?: boolean,
   canExport?: boolean,
   searchQuery: string,
   onSearchChange: (q: string) => void,
@@ -933,34 +943,42 @@ export default function ClientTable({
 
 
         <div className="flex border-b border-slate-200 dark:border-gray-800 px-2 sm:px-4 bg-slate-50/50 dark:bg-gray-900/80 overflow-x-auto scrollbar-none gap-0.5 sm:gap-1">
-          <button
-            onClick={() => onViewModeChange('standard')}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-          >
-            {t('clients', 'standardView', lang)}
-          </button>
-          <button
-            onClick={() => onViewModeChange('expanded')}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-          >
-            {lang === 'bm' ? 'Pandangan Lanjut' : 'Expanded View'}
-          </button>
-          <button
-            onClick={() => onViewModeChange('lod')}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'lod' ? 'border-rose-600 text-rose-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-          >
-            {lang === 'bm' ? 'Surat Tuntutan (LoD)' : 'Letter of Demand (LoD)'}
-          </button>
-          <button
-            onClick={() => onViewModeChange('potential')}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'potential' ? 'border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-          >
-            ★ {t('clients', 'potentialClients', lang)}
-          </button>
+          {canViewClients && (
+            <>
+              <button
+                onClick={() => onViewModeChange('standard')}
+                className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'standard' ? 'border-indigo-600 text-indigo-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+              >
+                {t('clients', 'standardView', lang)}
+              </button>
+              <button
+                onClick={() => onViewModeChange('expanded')}
+                className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'expanded' ? 'border-cyan-600 text-cyan-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+              >
+                {lang === 'bm' ? 'Pandangan Lanjut' : 'Expanded View'}
+              </button>
+            </>
+          )}
+          {canViewLoD && (
+            <button
+              onClick={() => onViewModeChange('lod')}
+              className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'lod' ? 'border-rose-600 text-rose-600 dark:border-yellow-500 dark:text-yellow-500' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            >
+              {lang === 'bm' ? 'Surat Tuntutan (LoD)' : 'Letter of Demand (LoD)'}
+            </button>
+          )}
+          {canViewPotential && (
+            <button
+              onClick={() => onViewModeChange('potential')}
+              className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${viewMode === 'potential' ? 'border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            >
+              ★ {t('clients', 'potentialClients', lang)}
+            </button>
+          )}
         </div>
 
         {viewMode === 'potential' ? (
-          <PotentialClientsView canEdit={canEdit} onClientConverted={onClientConverted} />
+          <PotentialClientsView canEdit={canManagePotential} onClientConverted={onClientConverted} />
         ) : (
           <>
             <div className="p-3 sm:p-4 border-b border-cyan-700 dark:border-yellow-500/50 bg-cyan-600 dark:bg-gray-900 flex-shrink-0">
@@ -996,7 +1014,7 @@ export default function ClientTable({
                 </>
               )}
 
-              {canEdit && (
+              {(viewMode === 'lod' ? canManageLoD : canEdit) && (
                 <button
                   onClick={onAddClick}
                   className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[42px] sm:h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50 flex-shrink-0"
@@ -1144,7 +1162,7 @@ export default function ClientTable({
                         <span>📄</span>
                         <span>{t('clients', 'viewDoc', lang)}</span>
                       </button>
-                      {canEdit && (
+                      {canManageLoD && (
                         <button
                           onClick={() => onEditClick(client)}
                           className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
@@ -1371,7 +1389,7 @@ export default function ClientTable({
                           >
                             {t('clients', 'viewDoc', lang)}
                           </button>
-                          {canEdit && (
+                          {canManageLoD && (
                             <button
                               onClick={() => onEditClick(client)}
                               className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"

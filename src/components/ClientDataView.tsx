@@ -431,6 +431,7 @@ export default function ClientDataView() {
   const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
   const canViewClients = isIT || Boolean(permissions?.view_clients || permissions?.edit_clients);
   const canEditClients = isIT || Boolean(permissions?.edit_clients);
+  const canEdit = canEditClients;
   const canViewLoD = isIT || Boolean(permissions?.view_lod || permissions?.manage_lod);
   const canManageLoD = isIT || Boolean(permissions?.manage_lod);
   const canViewPotential = isIT || Boolean(permissions?.view_potential_clients || permissions?.manage_potential_clients);

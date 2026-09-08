@@ -27,7 +27,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
 
   // State
   const [profile, setProfile] = useState<any>(initialProfile || null);
-  const { permissions } = usePermissions(profile);
+  const { permissions, isITAdmin, loading: permsLoading } = usePermissions(profile);
   const [isApprover, setIsApprover] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -610,7 +610,8 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     );
   }
 
-  if (mode === 'staff' && !permissions?.view_claims) {
+  const canViewClaims = Boolean(isITAdmin || permissions?.view_claims || permissions?.manage_claims || isApprover);
+  if (mode === 'staff' && !canViewClaims) {
     return (
       <PermissionDenied
         title={isBm ? 'Akses Sistem Tuntutan Terhad' : 'Claims Module Access Restricted'}

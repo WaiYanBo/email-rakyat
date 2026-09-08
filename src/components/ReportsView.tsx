@@ -599,8 +599,8 @@ export default function ReportsView() {
   }
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const hasFullAccess = permissions?.view_staff || isIT;
-  const canEditStaff = permissions?.edit_staff || isIT;
+  const hasFullAccess = Boolean(permissions?.view_staff || permissions?.edit_staff || permissions?.view_snapshot || isIT);
+  const canEditStaff = Boolean(permissions?.edit_staff || isIT);
 
   if (!hasFullAccess) {
     return (

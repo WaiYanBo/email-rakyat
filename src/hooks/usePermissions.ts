@@ -150,28 +150,37 @@ export function usePermissions(initialProfile?: any) {
           const userPerms = data.find(p => p.target_type === 'user' && (p.target_id === userId || p.target_id === fullName))?.permissions || {};
 
           // User-specific settings take top precedence, followed by Department template, followed by secure defaults
+          const viewPot = userPerms.view_potential_clients ?? deptPerms.view_potential_clients ?? (userPerms.manage_potential_clients || deptPerms.manage_potential_clients ? true : (userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_potential_clients));
+          const managePot = userPerms.manage_potential_clients ?? deptPerms.manage_potential_clients ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_potential_clients;
+
+          const viewLod = userPerms.view_lod ?? deptPerms.view_lod ?? (userPerms.manage_lod || deptPerms.manage_lod ? true : (userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_lod));
+          const manageLod = userPerms.manage_lod ?? deptPerms.manage_lod ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_lod;
+
+          const viewCli = userPerms.view_clients ?? deptPerms.view_clients ?? (userPerms.edit_clients || deptPerms.edit_clients ? true : DEFAULT_STAFF_PERMISSIONS.view_clients);
+          const editCli = userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.edit_clients;
+
           finalPerms = {
-            view_clients: userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_clients,
-            edit_clients: userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.edit_clients,
-            view_lod: userPerms.view_lod ?? deptPerms.view_lod ?? userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_lod,
-            manage_lod: userPerms.manage_lod ?? deptPerms.manage_lod ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_lod,
-            view_potential_clients: userPerms.view_potential_clients ?? deptPerms.view_potential_clients ?? userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_potential_clients,
-            manage_potential_clients: userPerms.manage_potential_clients ?? deptPerms.manage_potential_clients ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_potential_clients,
-            view_appointments: userPerms.view_appointments ?? deptPerms.view_appointments ?? DEFAULT_STAFF_PERMISSIONS.view_appointments,
-            manage_appointments: userPerms.manage_appointments ?? deptPerms.manage_appointments ?? DEFAULT_STAFF_PERMISSIONS.manage_appointments,
-            export_data: userPerms.export_data ?? deptPerms.export_data ?? DEFAULT_STAFF_PERMISSIONS.export_data,
-            view_staff: userPerms.view_staff ?? deptPerms.view_staff ?? DEFAULT_STAFF_PERMISSIONS.view_staff,
-            edit_staff: userPerms.edit_staff ?? deptPerms.edit_staff ?? DEFAULT_STAFF_PERMISSIONS.edit_staff,
-            view_attendance: userPerms.view_attendance ?? deptPerms.view_attendance ?? DEFAULT_STAFF_PERMISSIONS.view_attendance,
-            edit_attendance: userPerms.edit_attendance ?? deptPerms.edit_attendance ?? DEFAULT_STAFF_PERMISSIONS.edit_attendance,
-            view_snapshot: userPerms.view_snapshot ?? deptPerms.view_snapshot ?? DEFAULT_STAFF_PERMISSIONS.view_snapshot,
-            manage_access_control: userPerms.manage_access_control ?? deptPerms.manage_access_control ?? DEFAULT_STAFF_PERMISSIONS.manage_access_control,
-            manage_drive: userPerms.manage_drive ?? deptPerms.manage_drive ?? DEFAULT_STAFF_PERMISSIONS.manage_drive,
-            manage_hr: userPerms.manage_hr ?? deptPerms.manage_hr ?? DEFAULT_STAFF_PERMISSIONS.manage_hr,
-            view_claims: userPerms.view_claims ?? deptPerms.view_claims ?? DEFAULT_STAFF_PERMISSIONS.view_claims,
-            manage_claims: userPerms.manage_claims ?? deptPerms.manage_claims ?? DEFAULT_STAFF_PERMISSIONS.manage_claims,
-            view_leave: userPerms.view_leave ?? deptPerms.view_leave ?? DEFAULT_STAFF_PERMISSIONS.view_leave,
-            manage_leave: userPerms.manage_leave ?? deptPerms.manage_leave ?? DEFAULT_STAFF_PERMISSIONS.manage_leave,
+            view_clients: Boolean(viewCli || editCli),
+            edit_clients: Boolean(editCli),
+            view_lod: Boolean(viewLod || manageLod),
+            manage_lod: Boolean(manageLod),
+            view_potential_clients: Boolean(viewPot || managePot),
+            manage_potential_clients: Boolean(managePot),
+            view_appointments: Boolean((userPerms.view_appointments ?? deptPerms.view_appointments ?? (userPerms.manage_appointments || deptPerms.manage_appointments ? true : DEFAULT_STAFF_PERMISSIONS.view_appointments)) || (userPerms.manage_appointments ?? deptPerms.manage_appointments)),
+            manage_appointments: Boolean(userPerms.manage_appointments ?? deptPerms.manage_appointments ?? DEFAULT_STAFF_PERMISSIONS.manage_appointments),
+            export_data: Boolean(userPerms.export_data ?? deptPerms.export_data ?? DEFAULT_STAFF_PERMISSIONS.export_data),
+            view_staff: Boolean((userPerms.view_staff ?? deptPerms.view_staff ?? (userPerms.edit_staff || deptPerms.edit_staff ? true : DEFAULT_STAFF_PERMISSIONS.view_staff)) || (userPerms.edit_staff ?? deptPerms.edit_staff)),
+            edit_staff: Boolean(userPerms.edit_staff ?? deptPerms.edit_staff ?? DEFAULT_STAFF_PERMISSIONS.edit_staff),
+            view_attendance: Boolean((userPerms.view_attendance ?? deptPerms.view_attendance ?? (userPerms.edit_attendance || deptPerms.edit_attendance ? true : DEFAULT_STAFF_PERMISSIONS.view_attendance)) || (userPerms.edit_attendance ?? deptPerms.edit_attendance)),
+            edit_attendance: Boolean(userPerms.edit_attendance ?? deptPerms.edit_attendance ?? DEFAULT_STAFF_PERMISSIONS.edit_attendance),
+            view_snapshot: Boolean(userPerms.view_snapshot ?? deptPerms.view_snapshot ?? DEFAULT_STAFF_PERMISSIONS.view_snapshot),
+            manage_access_control: Boolean(userPerms.manage_access_control ?? deptPerms.manage_access_control ?? DEFAULT_STAFF_PERMISSIONS.manage_access_control),
+            manage_drive: Boolean(userPerms.manage_drive ?? deptPerms.manage_drive ?? DEFAULT_STAFF_PERMISSIONS.manage_drive),
+            manage_hr: Boolean(userPerms.manage_hr ?? deptPerms.manage_hr ?? DEFAULT_STAFF_PERMISSIONS.manage_hr),
+            view_claims: Boolean((userPerms.view_claims ?? deptPerms.view_claims ?? (userPerms.manage_claims || deptPerms.manage_claims ? true : DEFAULT_STAFF_PERMISSIONS.view_claims)) || (userPerms.manage_claims ?? deptPerms.manage_claims)),
+            manage_claims: Boolean(userPerms.manage_claims ?? deptPerms.manage_claims ?? DEFAULT_STAFF_PERMISSIONS.manage_claims),
+            view_leave: Boolean((userPerms.view_leave ?? deptPerms.view_leave ?? (userPerms.manage_leave || deptPerms.manage_leave ? true : DEFAULT_STAFF_PERMISSIONS.view_leave)) || (userPerms.manage_leave ?? deptPerms.manage_leave)),
+            manage_leave: Boolean(userPerms.manage_leave ?? deptPerms.manage_leave ?? DEFAULT_STAFF_PERMISSIONS.manage_leave),
           };
         }
 

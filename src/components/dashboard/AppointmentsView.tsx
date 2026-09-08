@@ -93,7 +93,7 @@ export default function AppointmentsView() {
   const { lang, setLang } = usePortalLanguage();
   const { profile, permissions, isITAdmin, loading: loadingPerms } = usePermissions();
 
-  const canView = isITAdmin || Boolean(permissions?.view_appointments);
+  const canView = isITAdmin || Boolean(permissions?.view_appointments || permissions?.manage_appointments);
   const canManage = isITAdmin || Boolean(permissions?.manage_appointments);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);

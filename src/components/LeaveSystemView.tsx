@@ -730,7 +730,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   };
 
   const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
-  if (isContractor || !permissions?.view_leave) {
+  const canAccessLeave = Boolean(isIT || isApprover || permissions?.view_leave || permissions?.manage_leave);
+  if (isContractor || !canAccessLeave) {
     return (
       <PermissionDenied
         title={lang === 'bm' ? 'Akses Cuti Dihadkan' : 'Leave Module Access Restricted'}

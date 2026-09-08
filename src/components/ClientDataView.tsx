@@ -429,28 +429,28 @@ export default function ClientDataView() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const canViewClients = isIT || Boolean(permissions?.view_clients);
+  const canViewClients = isIT || Boolean(permissions?.view_clients || permissions?.edit_clients);
   const canEditClients = isIT || Boolean(permissions?.edit_clients);
-  const canViewLoD = isIT || Boolean(permissions?.view_lod);
+  const canViewLoD = isIT || Boolean(permissions?.view_lod || permissions?.manage_lod);
   const canManageLoD = isIT || Boolean(permissions?.manage_lod);
-  const canViewPotential = isIT || Boolean(permissions?.view_potential_clients);
+  const canViewPotential = isIT || Boolean(permissions?.view_potential_clients || permissions?.manage_potential_clients);
   const canManagePotential = isIT || Boolean(permissions?.manage_potential_clients);
   const canExport = isIT || Boolean(permissions?.export_data);
 
-  const hasAnyClientAccess = canViewClients || canViewLoD || canViewPotential;
+  const hasAnyClientAccess = canViewClients || canViewLoD || canViewPotential || canEditClients || canManageLoD || canManagePotential;
 
   // Dynamically adjust viewMode if user lacks permission for the current active tab
   useEffect(() => {
     if (permsLoading) return;
     if (viewMode === 'standard' || viewMode === 'expanded') {
       if (!canViewClients) {
-        if (canViewLoD) setViewMode('lod');
-        else if (canViewPotential) setViewMode('potential');
+        if (canViewPotential) setViewMode('potential');
+        else if (canViewLoD) setViewMode('lod');
       }
     } else if (viewMode === 'lod') {
       if (!canViewLoD) {
-        if (canViewClients) setViewMode('standard');
-        else if (canViewPotential) setViewMode('potential');
+        if (canViewPotential) setViewMode('potential');
+        else if (canViewClients) setViewMode('standard');
       }
     } else if (viewMode === 'potential') {
       if (!canViewPotential) {

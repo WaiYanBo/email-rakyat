@@ -265,19 +265,33 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     const userKey = `user_${userId}`;
     const userVal = permissionsMatrix[userKey]?.permissions?.[module];
     if (userVal === true || userVal === false) {
-      return userVal;
+      if (userVal === true) return true;
     }
 
     const userObj = users.find(u => u.id === userId);
+    let deptVal: boolean | null = null;
     if (userObj?.department) {
       const deptKey = `dept_${userObj.department}`;
-      const deptVal = permissionsMatrix[deptKey]?.permissions?.[module];
-      if (deptVal === true || deptVal === false) {
-        return deptVal;
+      const dVal = permissionsMatrix[deptKey]?.permissions?.[module];
+      if (dVal === true || dVal === false) {
+        deptVal = dVal;
       }
     }
 
-    return DEFAULT_DEPT_PERMISSIONS[module] ?? false;
+    const effective = userVal !== null && userVal !== undefined ? userVal : (deptVal !== null ? deptVal : (DEFAULT_DEPT_PERMISSIONS[module] ?? false));
+    if (effective) return true;
+
+    // If checking a view permission, also check if user has the corresponding manage permission
+    if (module === 'view_potential_clients' && getEffectivePermission(userId, 'manage_potential_clients')) return true;
+    if (module === 'view_lod' && getEffectivePermission(userId, 'manage_lod')) return true;
+    if (module === 'view_clients' && getEffectivePermission(userId, 'edit_clients')) return true;
+    if (module === 'view_staff' && getEffectivePermission(userId, 'edit_staff')) return true;
+    if (module === 'view_attendance' && getEffectivePermission(userId, 'edit_attendance')) return true;
+    if (module === 'view_claims' && getEffectivePermission(userId, 'manage_claims')) return true;
+    if (module === 'view_leave' && getEffectivePermission(userId, 'manage_leave')) return true;
+    if (module === 'view_appointments' && getEffectivePermission(userId, 'manage_appointments')) return true;
+
+    return false;
   };
 
   // Helper: check if a user permission is an override vs department default
@@ -303,14 +317,37 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         nextVal = current === true ? false : true;
       }
 
+      const updatedPermissions = {
+        ...entry.permissions,
+        [module]: nextVal
+      };
+
+      // Automatic cascading for paired view/manage permissions
+      if (nextVal === true) {
+        if (module === 'manage_potential_clients') updatedPermissions.view_potential_clients = true;
+        if (module === 'manage_lod') updatedPermissions.view_lod = true;
+        if (module === 'edit_clients') updatedPermissions.view_clients = true;
+        if (module === 'edit_staff') updatedPermissions.view_staff = true;
+        if (module === 'edit_attendance') updatedPermissions.view_attendance = true;
+        if (module === 'manage_claims') updatedPermissions.view_claims = true;
+        if (module === 'manage_leave') updatedPermissions.view_leave = true;
+        if (module === 'manage_appointments') updatedPermissions.view_appointments = true;
+      } else {
+        if (module === 'view_potential_clients') updatedPermissions.manage_potential_clients = false;
+        if (module === 'view_lod') updatedPermissions.manage_lod = false;
+        if (module === 'view_clients') updatedPermissions.edit_clients = false;
+        if (module === 'view_staff') updatedPermissions.edit_staff = false;
+        if (module === 'view_attendance') updatedPermissions.edit_attendance = false;
+        if (module === 'view_claims') updatedPermissions.manage_claims = false;
+        if (module === 'view_leave') updatedPermissions.manage_leave = false;
+        if (module === 'view_appointments') updatedPermissions.manage_appointments = false;
+      }
+
       const newMatrix = {
         ...prev,
         [key]: {
           ...entry,
-          permissions: {
-            ...entry.permissions,
-            [module]: nextVal
-          }
+          permissions: updatedPermissions
         }
       };
 

@@ -73,7 +73,7 @@ export default function HRControlPanel() {
   }
 
   const isIT = profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-  const hasAccess = permissions?.manage_hr || isIT;
+  const hasAccess = Boolean(permissions?.manage_hr || permissions?.view_staff || permissions?.edit_staff || permissions?.view_attendance || permissions?.edit_attendance || isIT);
 
   if (!hasAccess) {
     return (

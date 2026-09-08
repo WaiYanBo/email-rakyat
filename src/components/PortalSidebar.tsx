@@ -364,14 +364,14 @@ export default function PortalSidebar() {
       profile?.roles?.role_name?.toLowerCase() === 'it' ||
       profile?.roles?.role_name?.toLowerCase() === 'it admin';
 
-    const canViewClients = isIT || Boolean(permissions?.view_clients || permissions?.view_lod || permissions?.view_potential_clients);
-    const canViewAppointments = isIT || Boolean(permissions?.view_appointments);
-    const canViewReports = isIT || Boolean(permissions?.view_snapshot || permissions?.view_staff);
-    const canViewAttendance = isIT || Boolean(permissions?.view_attendance);
-    const canManageHR = isIT || Boolean(permissions?.manage_hr || permissions?.view_staff);
+    const canViewClients = isIT || Boolean(permissions?.view_clients || permissions?.edit_clients || permissions?.view_lod || permissions?.manage_lod || permissions?.view_potential_clients || permissions?.manage_potential_clients);
+    const canViewAppointments = isIT || Boolean(permissions?.view_appointments || permissions?.manage_appointments);
+    const canViewReports = isIT || Boolean(permissions?.view_snapshot || permissions?.view_staff || permissions?.edit_staff);
+    const canViewAttendance = isIT || Boolean(permissions?.view_attendance || permissions?.edit_attendance);
+    const canManageHR = isIT || Boolean(permissions?.manage_hr || permissions?.view_staff || permissions?.edit_staff);
     const canManageDrive = isIT || Boolean(permissions?.manage_drive);
-    const canViewLeave = isIT || Boolean(permissions?.view_leave);
-    const canViewClaims = isIT || Boolean(permissions?.view_claims);
+    const canViewLeave = isIT || Boolean(permissions?.view_leave || permissions?.manage_leave);
+    const canViewClaims = isIT || Boolean(permissions?.view_claims || permissions?.manage_claims);
 
     const activeClass = 'bg-indigo-50/70 text-indigo-750 border-indigo-600 dark:bg-yellow-500/10 dark:text-yellow-500 dark:border-yellow-500';
 

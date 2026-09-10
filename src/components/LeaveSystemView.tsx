@@ -67,7 +67,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const { lang } = usePortalLanguage() as { lang: Language };
   const { permissions } = usePermissions(profile);
   const [activeSubTab, setActiveSubTab] = useState<'myleaves' | 'dashboard'>('myleaves');
-  const [dashboardSubTab, setDashboardSubTab] = useState<'pending' | 'balances' | 'calendar'>('pending');
+  const [dashboardSubTab, setDashboardSubTab] = useState<'pending' | 'history' | 'balances' | 'calendar'>('pending');
 
   // Employee states
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
@@ -92,7 +92,36 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const [pendingRequests, setPendingRequests] = useState<LeaveRequest[]>([]);
   const [staffBalances, setStaffBalances] = useState<StaffBalanceWithProfile[]>([]);
   const [approvedRequests, setApprovedRequests] = useState<LeaveRequest[]>([]);
+  const [allStaffRequests, setAllStaffRequests] = useState<LeaveRequest[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
+
+  // Staff Leave History filters
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
+  const [historyStaffFilter, setHistoryStaffFilter] = useState('ALL');
+  const [historyDeptFilter, setHistoryDeptFilter] = useState('ALL');
+  const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL');
+
+  // Proof / MC Document Preview Modal state
+  const [proofModal, setProofModal] = useState<{
+    isOpen: boolean;
+    url: string | null;
+    title: string;
+    fileName: string;
+    isImage: boolean;
+    isPdf: boolean;
+    loading: boolean;
+    error: string | null;
+  }>({
+    isOpen: false,
+    url: null,
+    title: '',
+    fileName: '',
+    isImage: false,
+    isPdf: false,
+    loading: false,
+    error: null,
+  });
 
   // Rejection modal states
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -116,8 +145,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const userDept = (profile?.department || '').toLowerCase();
   const isIT = userDept === 'it' || userRole.includes('IT');
   const isExecutive = ['CEO', 'CFO', 'COO', 'CPO', 'DIRECTOR', 'CHAIRMAN', 'PRESIDENT', 'MANAGEMENT'].includes(userRole);
-  const isHR = userDept === 'human resources' || userRole.includes('HR') || userRole.includes('HUMAN RESOURCE');
-  const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff || permissions?.manage_leave);
+  const isHR = userDept.includes('human') || userDept.includes('hr') || userRole.includes('HR') || userRole.includes('HUMAN RESOURCE');
+  const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff || permissions?.view_staff || permissions?.manage_leave || permissions?.view_leave);
 
   // Approvers who can view the admin tabs
   const isApprover = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');
@@ -303,6 +332,17 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       if (approvedError) console.warn('Approved calendar fetch warning:', approvedError);
       const activeApproved = (approvedData || []).filter((r: any) => r.profiles?.status !== 'Resigned' && r.profiles?.status !== 'Terminated');
       setApprovedRequests(activeApproved);
+
+      // 4. Fetch ALL leave requests across staff for Staff Leave History registry
+      const { data: allReqData, error: allReqError } = await supabase
+        .from('leave_requests')
+        .select('*, profiles!profile_id(id, full_name, department, status), approver:profiles!approved_by(full_name, roles(role_name))')
+        .order('created_at', { ascending: false });
+
+      if (allReqError) {
+        console.warn('All leave requests fetch warning:', allReqError);
+      }
+      setAllStaffRequests(allReqData || []);
     } catch (err) {
       console.error('Error loading admin leave data:', err);
     } finally {
@@ -570,17 +610,76 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     }
   };
 
-  const handleDownloadProof = async (path: string) => {
+  const handleDownloadProof = async (path: string, customTitle?: string) => {
+    if (!path) return;
+
+    let cleanPath = path.trim();
+    if (cleanPath.includes('/leave_attachments/')) {
+      cleanPath = cleanPath.split('/leave_attachments/')[1];
+    } else if (cleanPath.startsWith('leave_attachments/')) {
+      cleanPath = cleanPath.replace(/^leave_attachments\//, '');
+    }
+    cleanPath = cleanPath.replace(/^\/+/, '');
+
+    const fileExt = cleanPath.split('.').pop()?.toLowerCase() || '';
+    const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(fileExt);
+    const isPdfDoc = fileExt === 'pdf';
+    const displayName = cleanPath.split('/').pop() || 'Proof Document';
+
+    setProofModal({
+      isOpen: true,
+      url: null,
+      title: customTitle || (isPdfDoc ? 'Medical Certificate (PDF)' : 'Medical Certificate / Proof (MC)'),
+      fileName: displayName,
+      isImage: isImg,
+      isPdf: isPdfDoc,
+      loading: true,
+      error: null,
+    });
+
     try {
+      let resolvedUrl: string | null = null;
       const { data, error } = await supabase.storage
         .from('leave_attachments')
-        .createSignedUrl(path, 300);
-      if (error) throw error;
+        .createSignedUrl(cleanPath, 3600);
+
       if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+        resolvedUrl = data.signedUrl;
+      } else {
+        const { data: pubData } = supabase.storage
+          .from('leave_attachments')
+          .getPublicUrl(cleanPath);
+        if (pubData?.publicUrl) {
+          resolvedUrl = pubData.publicUrl;
+        }
       }
-    } catch (err) {
-      console.error('Error fetching download link:', err);
+
+      if (!resolvedUrl) throw new Error(error?.message || 'Unable to generate access URL');
+
+      setProofModal(prev => ({
+        ...prev,
+        url: resolvedUrl,
+        loading: false,
+        error: null,
+      }));
+    } catch (err: any) {
+      console.error('Error opening proof attachment:', err);
+      if (path.startsWith('http')) {
+        setProofModal(prev => ({
+          ...prev,
+          url: path,
+          loading: false,
+          error: null,
+        }));
+      } else {
+        setProofModal(prev => ({
+          ...prev,
+          loading: false,
+          error: lang === 'bm'
+            ? 'Tidak dapat memuatkan dokumen bukti MC. Sila pastikan SQL patch FIX_HR_LEAVE_AND_MC_PERMISSIONS.sql telah dijalankan.'
+            : 'Unable to load MC proof document. Please ensure FIX_HR_LEAVE_AND_MC_PERMISSIONS.sql has been executed.',
+        }));
+      }
     }
   };
 
@@ -728,6 +827,50 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         );
     }
   };
+
+  // Staff Leave History filter derivations
+  const uniqueDepartments = Array.from(
+    new Set(allStaffRequests.map((r) => r.profiles?.department).filter(Boolean))
+  ) as string[];
+
+  const staffOptions = Array.from(
+    new Map(
+      allStaffRequests
+        .filter((r) => r.profiles?.full_name)
+        .map((r) => [r.profile_id, { id: r.profile_id, name: r.profiles?.full_name || 'Staff', dept: r.profiles?.department || '' }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  const filteredHistory = allStaffRequests.filter((req) => {
+    // 1. Search term
+    if (historySearchTerm.trim()) {
+      const q = historySearchTerm.toLowerCase();
+      const staffName = (req.profiles?.full_name || '').toLowerCase();
+      const deptName = (req.profiles?.department || '').toLowerCase();
+      const reasonText = (req.reason || '').toLowerCase();
+      const lType = (req.leave_type || '').toLowerCase();
+      if (!staffName.includes(q) && !deptName.includes(q) && !reasonText.includes(q) && !lType.includes(q)) {
+        return false;
+      }
+    }
+    // 2. Staff filter
+    if (historyStaffFilter !== 'ALL' && req.profile_id !== historyStaffFilter) {
+      return false;
+    }
+    // 3. Department filter
+    if (historyDeptFilter !== 'ALL' && req.profiles?.department !== historyDeptFilter) {
+      return false;
+    }
+    // 4. Leave Type filter
+    if (historyTypeFilter !== 'ALL' && req.leave_type !== historyTypeFilter) {
+      return false;
+    }
+    // 5. Status filter
+    if (historyStatusFilter !== 'ALL' && req.status !== historyStatusFilter) {
+      return false;
+    }
+    return true;
+  });
 
   const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
   const canAccessLeave = Boolean(isIT || isApprover || permissions?.view_leave || permissions?.manage_leave);
@@ -1148,6 +1291,15 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               {lang === 'bm' ? 'Kelulusan' : 'Approvals'} ({pendingRequests.length})
             </button>
             <button
+              onClick={() => setDashboardSubTab('history')}
+              className={`px-3.5 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-initial text-center ${dashboardSubTab === 'history'
+                  ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                }`}
+            >
+              📋 {t('leave', 'tabStaffHistory', lang)} ({allStaffRequests.length})
+            </button>
+            <button
               onClick={() => setDashboardSubTab('balances')}
               className={`px-3.5 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-initial text-center ${dashboardSubTab === 'balances'
                   ? 'bg-indigo-600 text-white dark:bg-yellow-500 dark:text-black shadow-sm'
@@ -1313,6 +1465,293 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               </button>
                             </div>
                           )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Staff Leave History Tab */}
+              {dashboardSubTab === 'history' && (
+                <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-6">
+                  {/* Header & Metric Counters */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                        <span>{t('leave', 'tabStaffHistory', lang)}</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          {filteredHistory.length}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
+                        {lang === 'bm'
+                          ? 'Rekod lengkap permohonan cuti, lampiran sijil MC, status kelulusan, dan maklumat pelulus untuk semua staf.'
+                          : 'Complete historical registry of all employee leave applications, MC attachments, approval statuses, and approver audit trail.'}
+                      </p>
+                    </div>
+
+                    {/* Quick Stat Badges */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>{filteredHistory.filter(r => r.status === 'Approved').length} {lang === 'bm' ? 'Diluluskan' : 'Approved'}</span>
+                      </span>
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>{filteredHistory.filter(r => r.status === 'Pending').length} {lang === 'bm' ? 'Menunggu' : 'Pending'}</span>
+                      </span>
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 flex items-center gap-1.5">
+                        <span>🩺</span>
+                        <span>{filteredHistory.filter(r => r.leave_type === 'Sick' || r.leave_type === 'Hospitalisation').length} {lang === 'bm' ? 'Cuti Sakit/MC' : 'Sick/MC'}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Filter Bar Controls */}
+                  <div className="bg-slate-50/80 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* Search by Staff Name / Reason */}
+                      <div className="sm:col-span-2 lg:col-span-1">
+                        <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
+                          🔍 {lang === 'bm' ? 'Carian' : 'Search'}
+                        </label>
+                        <input
+                          type="text"
+                          value={historySearchTerm}
+                          onChange={(e) => setHistorySearchTerm(e.target.value)}
+                          placeholder={t('leave', 'searchStaffHistory', lang)}
+                          className="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+
+                      {/* Filter by Staff Member */}
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
+                          👤 {t('leave', 'filterStaff', lang)}
+                        </label>
+                        <select
+                          value={historyStaffFilter}
+                          onChange={(e) => setHistoryStaffFilter(e.target.value)}
+                          className="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="ALL">{t('leave', 'allStaff', lang)}</option>
+                          {staffOptions.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} {s.dept ? `(${s.dept})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Filter by Leave Type */}
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
+                          📋 {t('leave', 'filterType', lang)}
+                        </label>
+                        <select
+                          value={historyTypeFilter}
+                          onChange={(e) => setHistoryTypeFilter(e.target.value)}
+                          className="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="ALL">{t('leave', 'allTypes', lang)}</option>
+                          <option value="Sick">🩺 {t('leave', 'sick', lang)} (MC)</option>
+                          <option value="Annual">🌴 {t('leave', 'annual', lang)}</option>
+                          <option value="Hospitalisation">🏥 {t('leave', 'hospitalisation', lang)}</option>
+                          <option value="Maternity">👶 {t('leave', 'maternity', lang)}</option>
+                          <option value="Paternity">👨‍🍼 {t('leave', 'paternity', lang)}</option>
+                          <option value="Compassionate">🕯️ {t('leave', 'compassionate', lang)}</option>
+                          <option value="Marriage">💍 {t('leave', 'marriage', lang)}</option>
+                          <option value="Emergency">🚨 {t('leave', 'emergency', lang)}</option>
+                          <option value="Unpaid">⏳ {t('leave', 'unpaid', lang)}</option>
+                        </select>
+                      </div>
+
+                      {/* Filter by Status */}
+                      <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
+                          🏷️ {t('leave', 'filterStatus', lang)}
+                        </label>
+                        <select
+                          value={historyStatusFilter}
+                          onChange={(e) => setHistoryStatusFilter(e.target.value)}
+                          className="w-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="ALL">{t('leave', 'allStatuses', lang)}</option>
+                          <option value="Approved">{t('leave', 'statusApproved', lang)}</option>
+                          <option value="Pending">{t('leave', 'statusPending', lang)}</option>
+                          <option value="Rejected">{t('leave', 'statusRejected', lang)}</option>
+                          <option value="Cancelled">{t('leave', 'statusCancelled', lang)}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Reset Filters & Department Filter row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-200/50 dark:border-zinc-800/50">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider whitespace-nowrap">
+                          🏢 {t('leave', 'filterDept', lang)}:
+                        </label>
+                        <select
+                          value={historyDeptFilter}
+                          onChange={(e) => setHistoryDeptFilter(e.target.value)}
+                          className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold rounded-lg py-1 px-2.5 focus:outline-none"
+                        >
+                          <option value="ALL">{t('leave', 'allDepartments', lang)}</option>
+                          {uniqueDepartments.map((dept) => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {(historySearchTerm || historyStaffFilter !== 'ALL' || historyDeptFilter !== 'ALL' || historyTypeFilter !== 'ALL' || historyStatusFilter !== 'ALL') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHistorySearchTerm('');
+                            setHistoryStaffFilter('ALL');
+                            setHistoryDeptFilter('ALL');
+                            setHistoryTypeFilter('ALL');
+                            setHistoryStatusFilter('ALL');
+                          }}
+                          className="text-xs text-indigo-600 dark:text-yellow-400 hover:underline font-bold self-end sm:self-auto"
+                        >
+                          ✕ {lang === 'bm' ? 'Kosongkan Semua Tapisan' : 'Clear All Filters'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* List of Leave Applications */}
+                  {filteredHistory.length === 0 ? (
+                    <div className="p-12 text-center bg-slate-50 dark:bg-zinc-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 space-y-2">
+                      <span className="text-3xl block">📋</span>
+                      <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+                        {t('leave', 'noStaffRecordsFound', lang)}
+                      </h4>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-sm mx-auto">
+                        {lang === 'bm'
+                          ? 'Tiada rekod cuti ditemui yang sepadan dengan tapisan semasa. Cuba ubah atau kosongkan carian.'
+                          : 'No staff leave requests found matching the current filters. Try changing or clearing your search.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {filteredHistory.map((item) => (
+                        <div
+                          key={`history-${item.id}`}
+                          className="bg-white dark:bg-zinc-900/70 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between space-y-3.5"
+                        >
+                          {/* Staff Header + Leave Type & Status */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-yellow-400 dark:to-yellow-600 text-white dark:text-black font-black flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                                {item.profiles?.full_name ? item.profiles.full_name.slice(0, 2).toUpperCase() : 'ST'}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                                  {item.profiles?.full_name || 'Staff Member'}
+                                </h4>
+                                <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium block mt-0.5">
+                                  {item.profiles?.department || 'General'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                              <span className="px-2.5 py-1 rounded-lg text-[11px] font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                {t('leave', item.leave_type.toLowerCase(), lang)}
+                                {item.session_type !== 'Full Day' && ` (${item.session_type})`}
+                              </span>
+                              {getStatusBadge(item.status)}
+                            </div>
+                          </div>
+
+                          {/* Date Range & Duration */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'startDate', lang)}
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono block mt-0.5">
+                                📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'endDate', lang)}
+                              </span>
+                              <span className="font-bold text-slate-800 dark:text-zinc-200 font-mono block mt-0.5">
+                                📅 {new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                                {t('leave', 'colDuration', lang)}
+                              </span>
+                              <span className="font-black text-amber-500 dark:text-amber-400 text-sm block mt-0.5">
+                                ⏱️ {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Reason */}
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                              <span>💬</span>
+                              <span>{t('leave', 'reason', lang)}:</span>
+                            </span>
+                            <div className="p-3 bg-slate-50 dark:bg-zinc-950/90 border border-slate-200/90 dark:border-zinc-800 rounded-xl text-xs text-slate-800 dark:text-zinc-200 leading-relaxed break-words whitespace-pre-wrap select-text">
+                              {item.reason ? item.reason : <span className="italic text-slate-400">{lang === 'bm' ? 'Tiada catatan.' : 'No reason provided.'}</span>}
+                            </div>
+                          </div>
+
+                          {/* Approver Audit & Rejection Alert */}
+                          {(item.status === 'Approved' || item.status === 'Rejected') && item.approver && (
+                            <div className="text-[11px] text-slate-500 dark:text-zinc-400 bg-slate-50/70 dark:bg-zinc-950/50 p-2.5 rounded-xl border border-slate-150 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2">
+                              <span>
+                                {item.status === 'Approved' ? '✓ Diluluskan oleh / Approved by' : '✕ Ditolak oleh / Rejected by'}:{' '}
+                                <strong className="text-slate-800 dark:text-zinc-200">{item.approver.full_name}</strong>
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400">
+                                {new Date(item.created_at).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+                          )}
+
+                          {item.status === 'Rejected' && item.rejection_reason && (
+                            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                              <span className="text-[10px] font-black uppercase tracking-wider block mb-0.5">⚠️ Sebab Penolakan:</span>
+                              "{item.rejection_reason}"
+                            </div>
+                          )}
+
+                          {/* PROOF OF MC ATTACHMENT BUTTON */}
+                          <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between gap-3">
+                            <div>
+                              {item.attachment_url ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadProof(item.attachment_url!, `${item.profiles?.full_name || 'Staff'} - ${item.leave_type} MC Proof`)}
+                                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                                >
+                                  <span>📎</span>
+                                  <span>{lang === 'bm' ? 'Lihat Bukti MC / Lampiran' : 'View MC Proof / Document'}</span>
+                                </button>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 dark:text-zinc-500 italic">
+                                  {lang === 'bm' ? 'Tiada lampiran difailkan' : 'No attachment uploaded'}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Applied Date */}
+                            <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
+                              {new Date(item.created_at).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1671,6 +2110,101 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           </div>
 
                         </div>
+
+                        {/* Individual Employee Leave History */}
+                        <div className="pt-6 border-t border-slate-200 dark:border-zinc-800 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                                <span>📋 {t('leave', 'individualHistoryTitle', lang)}</span>
+                                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
+                                  {allStaffRequests.filter(r => r.profile_id === (currentRecord.profile_id || currentRecord.profiles?.id || selectedStaffBalanceId)).length}
+                                </span>
+                              </h4>
+                              <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                                {lang === 'bm'
+                                  ? `Semua rekod cuti yang pernah dimohon oleh ${currentRecord.profiles?.full_name}.`
+                                  : `All historical leave requests submitted by ${currentRecord.profiles?.full_name}.`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {(() => {
+                            const empRequests = allStaffRequests.filter(r => r.profile_id === (currentRecord.profile_id || currentRecord.profiles?.id || selectedStaffBalanceId));
+                            if (empRequests.length === 0) {
+                              return (
+                                <div className="p-6 text-center text-slate-400 dark:text-zinc-500 italic bg-white dark:bg-zinc-900/60 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-xs">
+                                  {lang === 'bm' ? 'Tiada rekod cuti ditemui untuk kakitangan ini.' : 'No past leave records found for this employee.'}
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="space-y-3">
+                                {empRequests.map(item => (
+                                  <div
+                                    key={`emp-req-${item.id}`}
+                                    className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-xl p-3.5 space-y-3 shadow-xs"
+                                  >
+                                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                          {t('leave', item.leave_type.toLowerCase(), lang)}
+                                          {item.session_type !== 'Full Day' && ` (${item.session_type})`}
+                                        </span>
+                                        <span className="font-bold text-xs text-slate-700 dark:text-zinc-300">
+                                          ⏱️ {item.total_days} {item.total_days === 1 ? t('leave', 'day', lang) : t('leave', 'days', lang)}
+                                        </span>
+                                      </div>
+                                      <div>{getStatusBadge(item.status)}</div>
+                                    </div>
+
+                                    {/* Date range */}
+                                    <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-150 dark:border-zinc-800/80">
+                                      <span>📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                      <span>→</span>
+                                      <span>{new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                    </div>
+
+                                    {/* Reason */}
+                                    {item.reason && (
+                                      <div className="text-xs bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-150 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 whitespace-pre-wrap">
+                                        <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block mb-0.5">💬 {t('leave', 'reason', lang)}:</span>
+                                        {item.reason}
+                                      </div>
+                                    )}
+
+                                    {/* Approver & MC Proof Footer */}
+                                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800/60 flex-wrap">
+                                      <div className="text-[11px] text-slate-500 dark:text-zinc-400">
+                                        {item.status === 'Approved' && item.approver && (
+                                          <span>✓ {lang === 'bm' ? 'Diluluskan oleh' : 'Approved by'}: <strong>{item.approver.full_name}</strong></span>
+                                        )}
+                                        {item.status === 'Rejected' && item.rejection_reason && (
+                                          <span className="text-rose-600 dark:text-rose-400">✕ {item.rejection_reason}</span>
+                                        )}
+                                        {item.status === 'Pending' && (
+                                          <span className="text-amber-500 font-semibold">⏳ {lang === 'bm' ? 'Menunggu Kelulusan' : 'Pending Review'}</span>
+                                        )}
+                                      </div>
+
+                                      {item.attachment_url && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDownloadProof(item.attachment_url!, `${currentRecord.profiles?.full_name || 'Staff'} - ${item.leave_type} MC Proof`)}
+                                          className="px-2.5 py-1 text-[11px] bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-200 dark:border-indigo-800 font-bold transition-all inline-flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <span>📎</span>
+                                          <span>{lang === 'bm' ? 'Lihat Bukti MC' : 'View MC Proof'}</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </div>
                     );
                   })()}
@@ -1748,6 +2282,120 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         </div>
       )}
 
+      {/* Proof / MC Document Preview Modal */}
+      {proofModal.isOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-zinc-800">
+            {/* Modal Header */}
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-950/60">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">🩺</span>
+                <div>
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm sm:text-base">
+                    {proofModal.title || t('leave', 'proofPreviewTitle', lang)}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-500 truncate max-w-xs sm:max-w-md">
+                    {proofModal.fileName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProofModal(prev => ({ ...prev, isOpen: false, url: null, error: null }))}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-200/60 dark:bg-zinc-800 transition-colors cursor-pointer"
+                title={t('leave', 'closePreview', lang)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto min-h-[320px] max-h-[65vh] flex flex-col items-center justify-center bg-slate-100/50 dark:bg-zinc-950/40">
+              {proofModal.loading && (
+                <div className="flex flex-col items-center gap-3 py-12">
+                  <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent dark:border-yellow-500 dark:border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-bold text-slate-600 dark:text-zinc-300">
+                    {t('leave', 'loadingBalances', lang)}
+                  </p>
+                </div>
+              )}
+
+              {proofModal.error && (
+                <div className="p-6 text-center max-w-md space-y-3">
+                  <span className="text-3xl block">⚠️</span>
+                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                    {proofModal.error}
+                  </p>
+                  <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+                    {lang === 'bm'
+                      ? 'Sila pastikan skrip SQL FIX_HR_LEAVE_AND_MC_PERMISSIONS.sql telah dijalankan di Supabase SQL Editor.'
+                      : 'Please ensure FIX_HR_LEAVE_AND_MC_PERMISSIONS.sql has been executed in Supabase SQL Editor.'}
+                  </p>
+                </div>
+              )}
+
+              {!proofModal.loading && !proofModal.error && proofModal.url && (
+                <div className="w-full flex flex-col items-center justify-center">
+                  {proofModal.isPdf ? (
+                    <div className="w-full h-[55vh] rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white">
+                      <iframe
+                        src={`${proofModal.url}#toolbar=1`}
+                        className="w-full h-full border-0"
+                        title="Medical Certificate PDF"
+                      />
+                    </div>
+                  ) : (
+                    <div className="max-h-[55vh] flex items-center justify-center rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-slate-900/10 dark:bg-black/40 p-2">
+                      <img
+                        src={proofModal.url}
+                        alt="Medical Certificate Proof"
+                        className="max-h-[52vh] w-auto max-w-full object-contain rounded-xl shadow-md"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900">
+              <span className="text-[11px] text-slate-400 dark:text-zinc-500 hidden sm:inline">
+                🔒 Antigravity Secure Document Viewer
+              </span>
+              <div className="flex items-center gap-2.5 ml-auto">
+                {proofModal.url && (
+                  <>
+                    <a
+                      href={proofModal.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 text-xs font-bold text-slate-700 dark:text-zinc-200 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-all inline-flex items-center gap-1.5"
+                    >
+                      <span>↗</span>
+                      <span>{t('leave', 'openInNewTab', lang)}</span>
+                    </a>
+                    <a
+                      href={proofModal.url}
+                      download={proofModal.fileName}
+                      className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:text-black rounded-xl transition-all inline-flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span>⬇</span>
+                      <span>{t('leave', 'downloadProof', lang)}</span>
+                    </a>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setProofModal(prev => ({ ...prev, isOpen: false, url: null, error: null }))}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  {t('leave', 'closePreview', lang)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -12,12 +12,20 @@ import {
   checkAndDispatchDueFollowUps,
   checkAndDispatchUpcomingAlerts,
   playNotificationChime,
+  playUrgentAlertChime,
   unlockAudio,
   isIOS,
   isStandalonePWA,
   sendUniversalDeviceNotification,
+  startTitleFlashing,
+  stopTitleFlashing,
+  snoozeAppointmentAlert,
+  parseTimeToMinutes,
   type AlertTriggerResult
 } from '../../lib/notificationService';
+
+// Re-export parseTimeToMinutes for full backward compatibility across the app
+export { parseTimeToMinutes };
 
 export interface Appointment {
   id: string;
@@ -51,29 +59,6 @@ interface ClientOption {
   category?: string;
   type: 'potential' | 'active';
 }
-
-// ─── 12-HOUR TIME PARSING & NORMALIZATION ENGINE ───────────────────────────
-// Converts any 12H time string ("09:00 AM", "1:00 PM", "11:30 am", "12:00 PM") to total minutes from midnight (0 - 1439)
-export const parseTimeToMinutes = (timeStr: string = ''): number => {
-  if (!timeStr) return 0;
-  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
-  if (!match) return 0;
-  let h = parseInt(match[1], 10);
-  const m = match[2] ? parseInt(match[2], 10) : 0;
-  const period = match[3]?.toLowerCase() || '';
-
-  const isPM = period.includes('pm') || period.includes('petang') || period.includes('malam');
-  const isAM = period.includes('am') || period.includes('pagi');
-
-  if (isPM && h < 12) {
-    h += 12;
-  } else if (isAM && h === 12) {
-    h = 0;
-  } else if (!isPM && !isAM && h >= 12 && h < 24) {
-    // Already in 24h format e.g. 13:00 -> 1:00 PM
-  }
-  return h * 60 + m;
-};
 
 // Standardizes time strictly to 12-Hour format "hh:mm AM/PM"
 export const formatToStandard12H = (timeStr: string = ''): string => {
@@ -160,6 +145,13 @@ export default function AppointmentsView() {
 
   const handleDismissAlert = (id: string) => {
     setActiveAlerts(prev => prev.filter(a => a.id !== id));
+    stopTitleFlashing();
+  };
+
+  const handleSnoozeAlert = (aptId: string) => {
+    if (aptId) snoozeAppointmentAlert(aptId, 5);
+    setActiveAlerts(prev => prev.filter(a => a.appointment?.id !== aptId));
+    stopTitleFlashing();
   };
 
   // Form State
@@ -443,26 +435,33 @@ export default function AppointmentsView() {
     }
   };
 
-  // 30-Second heartbeat interval to check for 15-minute upcoming meetings while active in portal
+  // Synchronize local in-page alert banner with global PortalAlertSystem events
   useEffect(() => {
-    if (appointments.length > 0) {
-      runAlertsCheck(appointments);
-      const interval = setInterval(() => {
-        runAlertsCheck(appointments);
-      }, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [appointments, lang]);
+    const handlePortalAlerts = (e: any) => {
+      if (e?.detail?.alerts && Array.isArray(e.detail.alerts)) {
+        setActiveAlerts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const additions = e.detail.alerts.filter((n: any) => !existingIds.has(n.id));
+          return additions.length > 0 ? [...prev, ...additions] : prev;
+        });
+      }
+    };
+    window.addEventListener('portalAppointmentAlert', handlePortalAlerts);
+    return () => window.removeEventListener('portalAppointmentAlert', handlePortalAlerts);
+  }, []);
 
   // Instant test trigger for user verification (pops up immediately with sound chime)
   const handleTriggerTestAlert = async () => {
     // 1. Immediately unlock mobile audio stream on user touch/click gesture
     unlockAudio();
 
-    // 2. Play high-volume chime & trigger physical haptic vibration
-    playNotificationChime();
+    // 2. Play urgent 3-cycle alarm chime & trigger physical haptic vibration
+    playUrgentAlertChime(3);
 
-    // 3. Request native notification permission on direct user touch if not yet granted
+    // 3. Start flashing browser tab title
+    startTitleFlashing(lang === 'bm' ? 'UJI TEMUJANJI: Siti Nurhaliza' : 'TEST ALERT: Siti Nurhaliza');
+
+    // 4. Request native notification permission on direct user touch if not yet granted
     if (isNotificationSupported() && getNotificationPermission() === 'default') {
       const granted = await requestNotificationPermission();
       setNotifPermissionState(granted ? 'granted' : 'denied');
@@ -491,6 +490,7 @@ export default function AppointmentsView() {
       timeStr: mockApt.appointment_time,
       category: mockApt.case_category,
       phone: mockApt.client_phone,
+      location: mockApt.location,
       minutesLeft: 15,
       notes: mockApt.notes,
       appointment: mockApt
@@ -498,7 +498,12 @@ export default function AppointmentsView() {
 
     setActiveAlerts(prev => [mockAlert, ...prev]);
 
-    // Also dispatch OS device notification if permitted
+    // 5. Trigger the rich Urgent Alert Modal across portal
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('triggerGlobalTestAlert', { detail: mockAlert }));
+    }
+
+    // 6. Also dispatch OS device notification if permitted
     sendUniversalDeviceNotification(
       lang === 'bm' ? 'Temujanji dalam 15 minit: Siti Nurhaliza' : 'Meeting in 15 mins: Siti Nurhaliza',
       lang === 'bm' ? 'Konsultasi bersama Azizul pada 11:45 AM (Loan Shark).' : 'Consultation with Azizul at 11:45 AM (Loan Shark).',
@@ -1653,27 +1658,40 @@ END $$;`;
       {activeAlerts.length > 0 && (
         <div className="space-y-2.5 z-30">
           {activeAlerts.map((alert) => {
+            const isNow = alert.type === 'starting_now';
             const isUpcoming = alert.type === 'upcoming_15m';
             return (
               <div
                 key={alert.id}
                 className={`relative overflow-hidden rounded-2xl border p-4 shadow-xl transition-all animate-in fade-in slide-in-from-top-4 duration-300 ${
-                  isUpcoming
+                  isNow
+                    ? 'bg-gradient-to-r from-red-500/20 via-red-500/10 to-orange-500/15 border-red-400/50 text-red-950 dark:text-red-100 shadow-red-950/20'
+                    : isUpcoming
                     ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/15 border-amber-400/40 text-amber-950 dark:text-amber-100'
                     : 'bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-indigo-500/15 border-cyan-400/40 text-cyan-950 dark:text-cyan-100'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 w-3 h-3 rounded-full flex-shrink-0 animate-pulse ${
-                      isUpcoming ? 'bg-amber-500 ring-4 ring-amber-400/30' : 'bg-cyan-500 ring-4 ring-cyan-400/30'
+                    <div className={`mt-0.5 w-3.5 h-3.5 rounded-full flex-shrink-0 animate-ping ${
+                      isNow
+                        ? 'bg-red-500 ring-4 ring-red-400/40'
+                        : isUpcoming
+                        ? 'bg-amber-500 ring-4 ring-amber-400/30'
+                        : 'bg-cyan-500 ring-4 ring-cyan-400/30'
                     }`} />
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full ${
-                          isUpcoming ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300' : 'bg-cyan-500/20 text-cyan-800 dark:text-cyan-300'
+                        <span className={`text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full ${
+                          isNow
+                            ? 'bg-red-500/25 text-red-800 dark:text-red-300 border border-red-500/30'
+                            : isUpcoming
+                            ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300'
+                            : 'bg-cyan-500/20 text-cyan-800 dark:text-cyan-300'
                         }`}>
-                          {isUpcoming
+                          {isNow
+                            ? (lang === 'bm' ? 'Temujanji Bermula Sekarang!' : 'Meeting Starting Now!')
+                            : isUpcoming
                             ? (lang === 'bm' ? `Temujanji Dalam ${alert.minutesLeft ?? 15} Minit` : `Meeting in ${alert.minutesLeft ?? 15} Mins`)
                             : (lang === 'bm' ? 'Tindakan Susulan Hari Ini' : 'Follow-Up Due Today')}
                         </span>
@@ -1689,6 +1707,9 @@ END $$;`;
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{alert.picName}</span>
                         {' '}&bull;{' '}
                         <span>{alert.category}</span>
+                        {alert.location && (
+                          <span> &bull; {alert.location}</span>
+                        )}
                         {alert.notes && (
                           <span className="italic text-slate-500 dark:text-slate-400"> &mdash; "{alert.notes}"</span>
                         )}
@@ -1696,7 +1717,7 @@ END $$;`;
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0 flex-wrap">
                     {alert.appointment && (
                       <button
                         type="button"
@@ -1715,6 +1736,16 @@ END $$;`;
                       >
                         WhatsApp
                       </a>
+                    )}
+                    {alert.appointment && (
+                      <button
+                        type="button"
+                        onClick={() => handleSnoozeAlert(alert.appointment.id || alert.id)}
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white/40 dark:bg-zinc-800/60 hover:bg-white/60 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300 transition-all shadow-xs cursor-pointer"
+                        title={lang === 'bm' ? 'Tangguh notifikasi selama 5 minit' : 'Snooze alert for 5 minutes'}
+                      >
+                        {lang === 'bm' ? 'Tangguh 5m' : 'Snooze 5m'}
+                      </button>
                     )}
                     <button
                       type="button"

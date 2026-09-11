@@ -350,7 +350,67 @@ export const playNotificationChime = () => {
 };
 
 /**
+ * Plays an urgent multi-cycle alarm chime (3 rings spaced apart)
+ * with aggressive haptic vibration to ensure the user notices the alert immediately.
+ */
+export const playUrgentAlertChime = (repeatCount: number = 3) => {
+  if (typeof window === 'undefined') return;
+  let count = 0;
+  playNotificationChime();
+  count++;
+
+  const timer = setInterval(() => {
+    if (count >= repeatCount) {
+      clearInterval(timer);
+      return;
+    }
+    playNotificationChime();
+    count++;
+  }, 900);
+};
+
+/**
+ * Tab Title Flashing Engine
+ * Alternates browser tab title with an urgent alarm icon so users in background tabs notice immediately.
+ */
+let titleFlashInterval: any = null;
+let originalDocumentTitle: string = '';
+
+export const startTitleFlashing = (alertText: string) => {
+  if (typeof document === 'undefined') return;
+  if (titleFlashInterval) clearInterval(titleFlashInterval);
+  originalDocumentTitle = document.title;
+  let toggle = false;
+  titleFlashInterval = setInterval(() => {
+    document.title = toggle ? `🚨 ${alertText}` : originalDocumentTitle;
+    toggle = !toggle;
+  }, 1000);
+};
+
+export const stopTitleFlashing = () => {
+  if (typeof document === 'undefined') return;
+  if (titleFlashInterval) {
+    clearInterval(titleFlashInterval);
+    titleFlashInterval = null;
+  }
+  if (originalDocumentTitle) {
+    document.title = originalDocumentTitle;
+  }
+};
+
+/**
+ * Snoozes an appointment reminder for N minutes (default 5 minutes)
+ */
+export const snoozeAppointmentAlert = (appointmentId: string, minutes: number = 5) => {
+  if (typeof window === 'undefined') return;
+  const snoozeUntil = Date.now() + minutes * 60 * 1000;
+  sessionStorage.setItem(`snoozed-until-${appointmentId}`, String(snoozeUntil));
+  stopTitleFlashing();
+};
+
+/**
  * Universal Device Notification Dispatcher with fast Service Worker timeout
+ * Configured for maximum Android & Desktop visibility (Heads-up pop-down alert)
  */
 export const sendUniversalDeviceNotification = async (
   title: string,
@@ -367,10 +427,14 @@ export const sendUniversalDeviceNotification = async (
     icon: '/logo.png',
     badge: '/logo.png',
     tag,
-    vibrate: [300, 100, 300, 100, 300], // Distinct alert vibration pattern on Android
+    vibrate: [500, 150, 500, 150, 500, 150, 500], // Strong urgent vibration pattern
     silent: false, // Forces device notification sound
-    renotify: true,
-    requireInteraction: true,
+    renotify: true, // Wakes screen & forces new alert
+    requireInteraction: true, // Pinned on screen until user interacts with it
+    timestamp: Date.now(),
+    actions: [
+      { action: 'open', title: 'Buka Dosier / Open' }
+    ],
     data: { url }
   };
 
@@ -403,9 +467,10 @@ export const sendUniversalDeviceNotification = async (
 };
 
 /**
- * Helper to parse time string to total minutes from midnight (0-1439)
+/**
+ * Helper to parse any 12H time string ("09:00 AM", "11:30 pagi", "1:00 PM") to total minutes from midnight (0-1439)
  */
-const parseTimeToMins = (timeStr: string = ''): number => {
+export const parseTimeToMinutes = (timeStr: string = ''): number => {
   if (!timeStr) return 0;
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
   if (!match) return 0;
@@ -426,19 +491,22 @@ const parseTimeToMins = (timeStr: string = ''): number => {
 
 export interface AlertTriggerResult {
   id: string;
-  type: 'upcoming_15m' | 'followup_due';
+  type: 'upcoming_15m' | 'starting_now' | 'followup_due';
   clientName: string;
   picName: string;
   timeStr: string;
   category: string;
   notes?: string;
   phone?: string;
+  location?: string;
   minutesLeft?: number;
   appointment: any;
 }
 
 /**
- * Monitors today's appointments and triggers alerts 15 minutes before the scheduled meeting.
+ * Monitors today's appointments and triggers multi-stage alerts:
+ * 1. 15 Minutes Before: Warning reminder
+ * 2. 0 Minutes (At Time / NOW): Urgent "Meeting Starting Now" alarm
  */
 export const checkAndDispatchUpcomingAlerts = async (
   appointments: any[],
@@ -457,30 +525,89 @@ export const checkAndDispatchUpcomingAlerts = async (
   );
 
   for (const apt of activeTodayApts) {
-    const aptMins = parseTimeToMins(apt.appointment_time);
+    // Check if user snoozed this appointment
+    if (typeof window !== 'undefined') {
+      const snoozedUntilStr = sessionStorage.getItem(`snoozed-until-${apt.id}`);
+      if (snoozedUntilStr && Date.now() < parseInt(snoozedUntilStr, 10)) {
+        continue;
+      }
+    }
+
+    const aptMins = parseTimeToMinutes(apt.appointment_time);
     const minutesLeft = aptMins - currentTotalMins;
 
-    // Alert if within 0 to 15 minutes before meeting starts (or up to 5 minutes after start)
-    if (minutesLeft >= -5 && minutesLeft <= 15) {
-      const storageKey = `alerted-upcoming-15m-${apt.id}-${todayStr}`;
-      const alreadyAlerted = typeof window !== 'undefined' && sessionStorage.getItem(storageKey);
+    // ── STAGE 2: EXACT MEETING TIME (0m to -5m / Starting Now) ──
+    if (minutesLeft <= 0 && minutesLeft >= -5) {
+      const nowKey = `alerted-now-${apt.id}-${todayStr}`;
+      const alreadyAlertedNow = typeof window !== 'undefined' && sessionStorage.getItem(nowKey);
 
-      if (!alreadyAlerted) {
+      if (!alreadyAlertedNow) {
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem(storageKey, 'true');
+          sessionStorage.setItem(nowKey, 'true');
         }
 
-        // 1. Play Audio Chime
-        playNotificationChime();
+        // 1. Play Urgent 3-Cycle Alarm Sound & Vibration
+        playUrgentAlertChime(3);
 
-        // 2. Dispatch Device Notification
-        const minText = minutesLeft <= 1
-          ? (lang === 'bm' ? 'sekarang / kurang 1 minit' : 'now / in 1 min')
-          : (lang === 'bm' ? `dalam ${minutesLeft} minit` : `in ${minutesLeft} mins`);
+        // 2. Start Flashing Browser Tab Title
+        startTitleFlashing(
+          lang === 'bm'
+            ? `TEMUJANJI SEKARANG: ${apt.client_name}`
+            : `MEETING NOW: ${apt.client_name}`
+        );
+
+        // 3. Dispatch High-Priority Heads-Up Device Notification
+        const title = lang === 'bm'
+          ? `🚨 TEMUJANJI BERMULA SEKARANG: ${apt.client_name}`
+          : `🚨 MEETING STARTING NOW: ${apt.client_name}`;
+
+        const body = lang === 'bm'
+          ? `Masa temujanji (${apt.appointment_time}) telah tiba! Konsultasi ${apt.case_category || 'Am'} bersama ${apt.pic_name} sedang bermula.`
+          : `Meeting time (${apt.appointment_time}) has arrived! Consultation for ${apt.case_category || 'General'} with ${apt.pic_name} is starting now.`;
+
+        sendUniversalDeviceNotification(title, body, `now-${apt.id}`);
+
+        triggered.push({
+          id: `${apt.id}-now`,
+          type: 'starting_now',
+          clientName: apt.client_name,
+          picName: apt.pic_name,
+          timeStr: apt.appointment_time,
+          category: apt.case_category || 'General',
+          notes: apt.notes,
+          phone: apt.client_phone,
+          location: apt.location,
+          minutesLeft: 0,
+          appointment: apt
+        });
+      }
+    }
+    // ── STAGE 1: 15 MINUTES BEFORE MEETING (1m to 15m) ──
+    else if (minutesLeft > 0 && minutesLeft <= 15) {
+      const earlyKey = `alerted-15m-${apt.id}-${todayStr}`;
+      const alreadyAlerted15m = typeof window !== 'undefined' && sessionStorage.getItem(earlyKey);
+
+      if (!alreadyAlerted15m) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(earlyKey, 'true');
+        }
+
+        // 1. Play Urgent 3-Cycle Chime
+        playUrgentAlertChime(3);
+
+        // 2. Start Flashing Browser Tab Title
+        startTitleFlashing(
+          lang === 'bm'
+            ? `[15 MINIT] ${apt.client_name}`
+            : `[15 MINS] ${apt.client_name}`
+        );
+
+        // 3. Dispatch Device Notification
+        const minText = lang === 'bm' ? `dalam ${minutesLeft} minit` : `in ${minutesLeft} mins`;
 
         const title = lang === 'bm'
-          ? `Temujanji ${minText}: ${apt.client_name}`
-          : `Meeting ${minText}: ${apt.client_name}`;
+          ? `⏰ Temujanji ${minText}: ${apt.client_name}`
+          : `⏰ Meeting ${minText}: ${apt.client_name}`;
 
         const body = lang === 'bm'
           ? `Konsultasi bersama ${apt.pic_name} pada ${apt.appointment_time} (${apt.case_category || 'Am'}).`
@@ -489,7 +616,7 @@ export const checkAndDispatchUpcomingAlerts = async (
         sendUniversalDeviceNotification(title, body, `upcoming-${apt.id}`);
 
         triggered.push({
-          id: apt.id,
+          id: `${apt.id}-15m`,
           type: 'upcoming_15m',
           clientName: apt.client_name,
           picName: apt.pic_name,
@@ -497,7 +624,8 @@ export const checkAndDispatchUpcomingAlerts = async (
           category: apt.case_category || 'General',
           notes: apt.notes,
           phone: apt.client_phone,
-          minutesLeft: Math.max(0, minutesLeft),
+          location: apt.location,
+          minutesLeft,
           appointment: apt
         });
       }
@@ -534,7 +662,7 @@ export const checkAndDispatchDueFollowUps = async (
         localStorage.setItem(storageKey, 'true');
       }
 
-      playNotificationChime();
+      playUrgentAlertChime(2);
 
       await sendFollowUpDeviceNotification({
         id: apt.id,
@@ -547,14 +675,15 @@ export const checkAndDispatchDueFollowUps = async (
       }, lang);
 
       triggered.push({
-        id: apt.id,
+        id: `${apt.id}-followup`,
         type: 'followup_due',
         clientName: apt.client_name,
         picName: apt.pic_name,
-        timeStr: apt.follow_up_time || 'Hari Ini',
+        timeStr: apt.follow_up_time || (lang === 'bm' ? 'Hari Ini' : 'Today'),
         category: apt.case_category || 'General',
         notes: apt.follow_up_notes,
         phone: apt.client_phone,
+        location: apt.location,
         appointment: apt
       });
     }

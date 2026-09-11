@@ -12,6 +12,9 @@ import {
   checkAndDispatchDueFollowUps,
   checkAndDispatchUpcomingAlerts,
   playNotificationChime,
+  unlockAudio,
+  isIOS,
+  isStandalonePWA,
   sendUniversalDeviceNotification,
   type AlertTriggerResult
 } from '../../lib/notificationService';
@@ -152,6 +155,8 @@ export default function AppointmentsView() {
 
   // Real-Time In-App Alert Toasts (15-Min Upcoming Meetings & Due Follow-Ups)
   const [activeAlerts, setActiveAlerts] = useState<AlertTriggerResult[]>([]);
+  const [showIosGuide, setShowIosGuide] = useState<boolean>(false);
+  const [notifPermissionState, setNotifPermissionState] = useState<NotificationPermission>('default');
 
   const handleDismissAlert = (id: string) => {
     setActiveAlerts(prev => prev.filter(a => a.id !== id));
@@ -450,8 +455,21 @@ export default function AppointmentsView() {
   }, [appointments, lang]);
 
   // Instant test trigger for user verification (pops up immediately with sound chime)
-  const handleTriggerTestAlert = () => {
+  const handleTriggerTestAlert = async () => {
+    // 1. Immediately unlock mobile audio stream on user touch/click gesture
+    unlockAudio();
+
+    // 2. Play high-volume chime & trigger physical haptic vibration
     playNotificationChime();
+
+    // 3. Request native notification permission on direct user touch if not yet granted
+    if (isNotificationSupported() && getNotificationPermission() === 'default') {
+      const granted = await requestNotificationPermission();
+      setNotifPermissionState(granted ? 'granted' : 'denied');
+    } else if (!isNotificationSupported() && isIOS() && !isStandalonePWA()) {
+      setShowIosGuide(true);
+    }
+
     const mockApt: Appointment = {
       id: `test-${Date.now()}`,
       client_name: 'Siti Nurhaliza (Sample Client)',
@@ -488,14 +506,43 @@ export default function AppointmentsView() {
     );
   };
 
+  const handleRequestPermission = async () => {
+    unlockAudio();
+    playNotificationChime();
+    if (isNotificationSupported()) {
+      const granted = await requestNotificationPermission();
+      setNotifPermissionState(granted ? 'granted' : 'denied');
+      if (granted) {
+        runAlertsCheck(appointments);
+      }
+    } else if (isIOS() && !isStandalonePWA()) {
+      setShowIosGuide(true);
+    }
+  };
+
   useEffect(() => {
     fetchAppointments();
-    if (isNotificationSupported() && getNotificationPermission() === 'default') {
-      requestNotificationPermission().then((granted) => {
-        if (granted) {
-          runAlertsCheck(appointments);
+    if (typeof window !== 'undefined') {
+      if (isNotificationSupported()) {
+        const currentPerm = getNotificationPermission();
+        setNotifPermissionState(currentPerm);
+        if (currentPerm === 'default') {
+          requestNotificationPermission().then((granted) => {
+            setNotifPermissionState(granted ? 'granted' : 'denied');
+            if (granted) {
+              runAlertsCheck(appointments);
+            }
+          });
         }
-      });
+      }
+
+      // Check if user is on iPhone Safari (not yet added to Home Screen as PWA)
+      if (isIOS() && !isStandalonePWA()) {
+        const dismissed = sessionStorage.getItem('dismiss_ios_pwa_guide');
+        if (!dismissed) {
+          setShowIosGuide(true);
+        }
+      }
     }
   }, []);
 
@@ -1517,6 +1564,91 @@ END $$;`;
 
   return (
     <div className="flex flex-col h-full w-full space-y-4">
+      {/* iOS Safari Home Screen Setup Guide (Apple Web Push requires Home Screen PWA on iOS 16.4+) */}
+      {showIosGuide && (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/10 p-4 shadow-lg backdrop-blur-md transition-all animate-in fade-in slide-in-from-top-3 z-30">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-800 dark:text-amber-300">
+                    Apple iPhone / iPad
+                  </span>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {lang === 'bm' ? 'Panduan Notifikasi Peranti iPhone (iOS)' : 'iPhone Device Alerts Setup (iOS)'}
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {lang === 'bm'
+                    ? 'Apple iOS memerlukan portal ini ditambah ke Skrin Utama (Home Screen) untuk membolehkan notifikasi sistem:'
+                    : 'Apple iOS requires adding this portal to your Home Screen to enable system notifications:'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <div className="p-2.5 rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-amber-500/20 flex items-start gap-2 shadow-xs">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center flex-shrink-0">1</span>
+                    <span>{lang === 'bm' ? 'Tekan butang Kongsi (Share) di Safari' : 'Tap the Safari Share button at bottom'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-amber-500/20 flex items-start gap-2 shadow-xs">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center flex-shrink-0">2</span>
+                    <span>{lang === 'bm' ? 'Pilih "Tambah ke Skrin Utama" (Add to Home Screen)' : 'Select "Add to Home Screen"'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-amber-500/20 flex items-start gap-2 shadow-xs">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center flex-shrink-0">3</span>
+                    <span>{lang === 'bm' ? 'Buka dari Skrin Utama & benarkan notifikasi' : 'Open from Home Screen & allow alerts'}</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-amber-700 dark:text-amber-400/90 pt-0.5">
+                  {lang === 'bm'
+                    ? 'Nota: Makluman temujanji 15 minit & bunyi loceng tetap aktif di dalam skrin ini secara automatik.'
+                    : 'Note: In-portal 15-minute appointment banners & audio chimes remain active automatically while using the portal.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowIosGuide(false);
+                sessionStorage.setItem('dismiss_ios_pwa_guide', 'true');
+              }}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold leading-none flex-shrink-0"
+              aria-label="Tutup"
+              title={lang === 'bm' ? 'Tutup panduan' : 'Dismiss guide'}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* One-Tap Notification Permission Request Bar (Android / Desktop / PWA) */}
+      {isNotificationSupported() && notifPermissionState === 'default' && (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 z-20">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+            <p className="text-xs text-slate-700 dark:text-slate-200 font-medium">
+              {lang === 'bm'
+                ? 'Aktifkan notifikasi peranti untuk mendengar loceng dan menerima peringatan temujanji 15 minit.'
+                : 'Enable device alerts to hear audio chimes and receive 15-minute meeting reminders.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRequestPermission}
+            className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm cursor-pointer self-end sm:self-center flex-shrink-0 flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span>{lang === 'bm' ? 'Aktifkan Notifikasi' : 'Enable Alerts'}</span>
+          </button>
+        </div>
+      )}
+
       {/* Real-Time Floating In-App Alert Banners (15-Min Upcoming Meetings & Due Follow-Ups) */}
       {activeAlerts.length > 0 && (
         <div className="space-y-2.5 z-30">

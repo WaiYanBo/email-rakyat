@@ -4,6 +4,18 @@
  * (Chrome/Edge Android, Samsung Internet, iOS Safari 16.4+ standalone PWA, Desktop)
  */
 
+export const isIOS = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+export const isStandalonePWA = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return (window.navigator as any).standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+};
+
 export const isNotificationSupported = (): boolean => {
   return typeof window !== 'undefined' && 'Notification' in window;
 };
@@ -14,7 +26,19 @@ export const getNotificationPermission = (): NotificationPermission => {
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (!isNotificationSupported()) return false;
+  if (!isNotificationSupported()) {
+    // If on iPhone in regular Safari browser tab, explain Apple's requirement
+    if (isIOS() && !isStandalonePWA()) {
+      if (typeof window !== 'undefined') {
+        alert(
+          window.location.search.includes('lang=bm')
+            ? 'Untuk Pengguna iPhone: Apple memerlukan laman ini ditambah ke Skrin Utama (Home Screen) untuk membolehkan notifikasi. Sila tekan ikon Kongsi (Share) di Safari dan pilih "Tambah ke Skrin Utama" (Add to Home Screen).'
+            : 'For iPhone Users: Apple iOS requires adding this portal to your Home Screen to enable notifications. In Safari, tap the Share icon and select "Add to Home Screen".'
+        );
+      }
+    }
+    return false;
+  }
   try {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
@@ -51,11 +75,15 @@ export const sendFollowUpDeviceNotification = async (
     ? `Konsultasi ${payload.category} bersama ${payload.picName}${timeStr}.${payload.notes ? ' Catatan: ' + payload.notes : ''}`
     : `${payload.category} consultation with ${payload.picName}${timeStr}.${payload.notes ? ' Note: ' + payload.notes : ''}`;
 
-  const options: NotificationOptions = {
+  const options: any = {
     body,
     icon: '/logo.png',
     badge: '/logo.png',
     tag: `followup-${payload.id}`,
+    vibrate: [300, 100, 300, 100, 300],
+    silent: false,
+    renotify: true,
+    requireInteraction: true,
     data: {
       url: '/portal/temujanji',
       appointmentId: payload.id
@@ -152,43 +180,173 @@ export const sendConfirmationDeviceNotification = async (
 };
 
 /**
- * Native Web Audio API Chime (Two-Tone D5 -> A5 Harmonic)
- * Runs entirely on-device without external MP3 assets
+ * Audio Engine & Chime Player
+ * Employs a multi-tiered mobile audio pipeline:
+ * 1. Persistent pre-loaded HTML5 Audio element (routes through Android/iOS media stream)
+ * 2. Pre-decoded Web Audio API AudioBuffer for instant zero-latency playback
+ * 3. High-volume dual-tone harmonic oscillator synthesis fallback
+ * 4. Device haptic vibration via navigator.vibrate()
  */
-export const playNotificationChime = () => {
+let globalAudioCtx: AudioContext | null = null;
+let cachedAudioBuffer: AudioBuffer | null = null;
+let persistentAudioEl: HTMLAudioElement | null = null;
+
+// Initialize persistent audio element on script load
+if (typeof window !== 'undefined') {
+  try {
+    persistentAudioEl = new Audio('/sounds/chime.wav');
+    persistentAudioEl.preload = 'auto';
+    persistentAudioEl.volume = 1.0;
+  } catch (_e) {}
+}
+
+export const unlockAudio = () => {
   if (typeof window === 'undefined') return;
   try {
+    // 1. Warm up & authorize persistent HTML5 Audio
+    if (!persistentAudioEl) {
+      persistentAudioEl = new Audio('/sounds/chime.wav');
+      persistentAudioEl.preload = 'auto';
+    }
+    persistentAudioEl.volume = 0.001;
+    persistentAudioEl.play().then(() => {
+      persistentAudioEl?.pause();
+      if (persistentAudioEl) {
+        persistentAudioEl.currentTime = 0;
+        persistentAudioEl.volume = 1.0;
+      }
+    }).catch(() => {});
+
+    // 2. Unlock & Resume Web Audio Context
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
+    if (AudioCtx) {
+      if (!globalAudioCtx) {
+        globalAudioCtx = new AudioCtx();
+      }
+      if (globalAudioCtx.state === 'suspended') {
+        globalAudioCtx.resume().catch(() => {});
+      }
 
-    // First Tone: 587.33 Hz (D5)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(587.33, now);
-    gain1.gain.setValueAtTime(0.2, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.35);
+      // Pre-fetch and decode audio buffer for zero-latency playback
+      if (!cachedAudioBuffer && globalAudioCtx) {
+        fetch('/sounds/chime.wav')
+          .then(res => res.arrayBuffer())
+          .then(buf => globalAudioCtx!.decodeAudioData(buf))
+          .then(decoded => {
+            cachedAudioBuffer = decoded;
+          })
+          .catch(() => {});
+      }
+    }
+  } catch (_e) {}
+};
 
-    // Second Tone: 880 Hz (A5)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(880, now + 0.12);
-    gain2.gain.setValueAtTime(0.25, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.55);
-  } catch (_e) {
-    // Audio autoplay restrictions before first user gesture
-  }
+// Automatically bind audio unlock to the first user gesture
+if (typeof window !== 'undefined') {
+  const handleInteraction = () => {
+    unlockAudio();
+    window.removeEventListener('click', handleInteraction);
+    window.removeEventListener('touchstart', handleInteraction);
+    window.removeEventListener('touchend', handleInteraction);
+    window.removeEventListener('pointerdown', handleInteraction);
+  };
+  window.addEventListener('click', handleInteraction, { once: true, passive: true });
+  window.addEventListener('touchstart', handleInteraction, { once: true, passive: true });
+  window.addEventListener('touchend', handleInteraction, { once: true, passive: true });
+  window.addEventListener('pointerdown', handleInteraction, { once: true, passive: true });
+}
+
+export const playNotificationChime = () => {
+  if (typeof window === 'undefined') return;
+
+  // 1. Physical Haptic Vibration on Android and supported mobile devices
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate([300, 100, 300, 100, 300]);
+    }
+  } catch (_vErr) {}
+
+  // 2. Play HTML5 Audio element
+  try {
+    if (!persistentAudioEl) {
+      persistentAudioEl = new Audio('/sounds/chime.wav');
+      persistentAudioEl.preload = 'auto';
+    }
+    persistentAudioEl.currentTime = 0;
+    persistentAudioEl.volume = 1.0;
+    const p = persistentAudioEl.play();
+    if (p !== undefined) {
+      p.catch(() => {
+        // Fallback: Create and play fresh audio instance
+        try {
+          const fresh = new Audio('/sounds/chime.wav');
+          fresh.volume = 1.0;
+          fresh.play().catch(() => {});
+        } catch (_fErr) {}
+      });
+    }
+  } catch (_err) {}
+
+  // 3. Play pre-decoded AudioBuffer or synthesize via Web Audio API
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = globalAudioCtx || new AudioCtx();
+      if (!globalAudioCtx) globalAudioCtx = ctx;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      if (cachedAudioBuffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = cachedAudioBuffer;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 1.0;
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        source.start(0);
+      } else {
+        // Fallback: High-clarity dual-tone bell chime (880Hz A5 -> 1175Hz D6 with harmonics)
+        const now = ctx.currentTime;
+
+        // Tone 1: 880Hz + 1760Hz
+        const osc1 = ctx.createOscillator();
+        const osc1Harm = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(880, now);
+        osc1Harm.type = 'sine';
+        osc1Harm.frequency.setValueAtTime(1760, now);
+        gain1.gain.setValueAtTime(0.7, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc1.connect(gain1);
+        osc1Harm.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1Harm.start(now);
+        osc1.stop(now + 0.4);
+        osc1Harm.stop(now + 0.4);
+
+        // Tone 2: 1174.66Hz + 2349Hz (starting at 0.14s)
+        const osc2 = ctx.createOscillator();
+        const osc2Harm = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1174.66, now + 0.14);
+        osc2Harm.type = 'sine';
+        osc2Harm.frequency.setValueAtTime(2349.32, now + 0.14);
+        gain2.gain.setValueAtTime(0.8, now + 0.14);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+        osc2.connect(gain2);
+        osc2Harm.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.14);
+        osc2Harm.start(now + 0.14);
+        osc2.stop(now + 0.65);
+        osc2Harm.stop(now + 0.65);
+      }
+    }
+  } catch (_e) {}
 };
 
 /**
@@ -204,11 +362,15 @@ export const sendUniversalDeviceNotification = async (
     return false;
   }
 
-  const options: NotificationOptions = {
+  const options: any = {
     body,
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/logo.png',
+    badge: '/logo.png',
     tag,
+    vibrate: [300, 100, 300, 100, 300], // Distinct alert vibration pattern on Android
+    silent: false, // Forces device notification sound
+    renotify: true,
+    requireInteraction: true,
     data: { url }
   };
 

@@ -490,7 +490,7 @@ Please take note. Thank you.`;
 
 Your consultation appointment with ER Advocacy has been scheduled as follows:
 Date: ${formattedDate}
-⏰ Time: ${apt.appointment_time}
+Time: ${apt.appointment_time}
 Location / Mode: ${apt.location || 'ER Advocacy Office'}
 Officer In Charge: ${apt.pic_name}
 
@@ -501,7 +501,7 @@ Please let us know if you have any questions or require rescheduling. Thank you.
 
 Temujanji anda bersama ER Advocacy telah dijadualkan seperti butiran berikut:
 Tarikh: ${formattedDate}
-⏰ Masa: ${apt.appointment_time}
+Masa: ${apt.appointment_time}
 Mod / Lokasi: ${apt.location || 'Pejabat ER Advocacy'}
 PIC Bertugas: ${apt.pic_name}
 
@@ -549,7 +549,7 @@ Sila kemas kini jadual anda. Please update your schedule. Thank you.`;
 
 Kindly be informed that your consultation appointment with ER Advocacy has been RESCHEDULED to:
 New Date: ${formattedDate}
-⏰ New Time: ${apt.appointment_time}
+New Time: ${apt.appointment_time}
 Location / Mode: ${apt.location || 'ER Advocacy Office'}
 Officer In Charge: ${apt.pic_name}
 
@@ -560,7 +560,7 @@ Please let us know if this timing works for you. Thank you.`;
 
 Dimaklumkan bahawa temujanji konsultasi anda bersama ER Advocacy telah DIJADUALKAN SEMULA seperti butiran berikut:
 Tarikh Baharu: ${formattedDate}
-⏰ Masa Baharu: ${apt.appointment_time}
+Masa Baharu: ${apt.appointment_time}
 Mod / Lokasi: ${apt.location || 'Pejabat ER Advocacy'}
 PIC Bertugas: ${apt.pic_name}
 
@@ -1450,7 +1450,7 @@ END $$;`;
 
           {/* Pending Appointments Cards List */}
           {expandedPendingOutcome && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5 pt-0.5">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 sm:gap-2.5 pt-0.5">
               {pendingOutcomeAppointments.map(apt => (
                 <div
                   key={apt.id}
@@ -1474,42 +1474,42 @@ END $$;`;
                     </div>
                   </div>
 
-                  {/* 1-Click Action Buttons - Responsive 2x2 grid on mobile */}
+                  {/* 1-Click Action Buttons - Responsive 2x2 grid on mobile/narrow, 4 in row on wide */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
                     {/* Selesai / Completed */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'Completed')}
-                      className="py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer min-w-0"
                     >
-                      <span>{t('appointments', 'quickCompleted', lang)}</span>
+                      <span className="truncate">{t('appointments', 'quickCompleted', lang)}</span>
                     </button>
 
                     {/* Batal / Cancelled */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'Cancelled')}
-                      className="py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1.5 px-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer min-w-0"
                     >
-                      <span>{t('appointments', 'quickCancelled', lang)}</span>
+                      <span className="truncate">{t('appointments', 'quickCancelled', lang)}</span>
                     </button>
 
                     {/* Tidak Hadir / No-Show */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'No-Show')}
-                      className="py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-zinc-100 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1.5 px-2 bg-slate-700 hover:bg-slate-800 text-zinc-100 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer min-w-0"
                     >
-                      <span>{t('appointments', 'quickNoShow', lang)}</span>
+                      <span className="truncate">{t('appointments', 'quickNoShow', lang)}</span>
                     </button>
 
                     {/* Jadual Semula / Reschedule */}
                     <button
                       type="button"
                       onClick={() => handleOpenEditModal(apt)}
-                      className="py-1.5 px-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-[10px] sm:text-[11px] font-black transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1.5 px-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-[10px] sm:text-[11px] font-black transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer min-w-0"
                     >
-                      <span>{t('appointments', 'quickReschedule', lang)}</span>
+                      <span className="truncate">{t('appointments', 'quickReschedule', lang)}</span>
                     </button>
                   </div>
                 </div>
@@ -1634,7 +1634,7 @@ END $$;`;
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
             {dueFollowUps.map((apt) => (
               <div
                 key={apt.id}
@@ -1785,46 +1785,61 @@ END $$;`;
             </div>
           </div>
 
-          {/* ─── DESKTOP CONTROLS (Spacious Horizontal Header) ─── */}
-          <div className="hidden sm:flex items-center justify-between gap-3">
-            {/* Left: Date Navigation */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
-                <button
-                  onClick={handlePrevDate}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
-                  title="Previous"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleToday}
-                  className="px-3 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  {t('appointments', 'today', lang)}
-                </button>
-                <button
-                  onClick={handleNextDate}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
-                  title="Next"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+          {/* ─── DESKTOP CONTROLS (Responsive Header) ─── */}
+          <div className="hidden sm:flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+            {/* Row 1 on tablet / Left side on xl: Date Navigation + Date Title + New Appointment (tablet) */}
+            <div className="flex items-center justify-between gap-3 w-full xl:w-auto">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
+                  <button
+                    onClick={handlePrevDate}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                    title="Previous"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleToday}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    {t('appointments', 'today', lang)}
+                  </button>
+                  <button
+                    onClick={handleNextDate}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+                    title="Next"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                  {headerDateTitle}
+                </h3>
               </div>
 
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                {headerDateTitle}
-              </h3>
+              {/* + Add Appointment Button (Visible on sm to lg screens in Row 1) */}
+              {canManage && (
+                <button
+                  onClick={() => handleOpenAddModal()}
+                  className="xl:hidden px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>{t('appointments', 'newAppointment', lang)}</span>
+                </button>
+              )}
             </div>
 
-            {/* Right: View Switchers + Language Switcher + Add Button */}
-            <div className="flex items-center gap-2">
+            {/* Row 2 on tablet / Right side on xl: View Switchers + Language Switcher + Alerts + Add Button (xl) */}
+            <div className="flex flex-wrap items-center justify-between xl:justify-end gap-2 w-full xl:w-auto">
               {/* View Mode Tabs */}
-              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
+              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
                 <button
                   onClick={() => setCalendarView('month')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${calendarView === 'month' ? 'bg-amber-500 text-slate-950 font-black shadow-sm' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'}`}
@@ -1851,56 +1866,58 @@ END $$;`;
                 </button>
               </div>
 
-              {/* Language Switcher */}
-              <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => setLang('en')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'en' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
-                  title="Switch to English"
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang('bm')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'bm' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
-                  title="Tukar ke Bahasa Melayu"
-                >
-                  BM
-                </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Language Switcher */}
+                <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setLang('en')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'en' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                    title="Switch to English"
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLang('bm')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${lang === 'bm' ? 'bg-amber-500 text-slate-950 font-black shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400'}`}
+                    title="Tukar ke Bahasa Melayu"
+                  >
+                    BM
+                  </button>
+                </div>
+
+                {/* Device Alert Permission / Status */}
+                {isNotificationSupported() && (
+                  <button
+                    type="button"
+                    onClick={handleEnableNotifications}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-xs cursor-pointer flex-shrink-0 ${
+                      notificationPermission === 'granted'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                        : 'bg-white dark:bg-gray-900 text-cyan-800 dark:text-cyan-300 border-slate-200 dark:border-gray-800 hover:border-cyan-400'
+                    }`}
+                    title={notificationPermission === 'granted' ? 'Device notifications enabled' : 'Enable device notifications for follow-up reminders'}
+                  >
+                    {notificationPermission === 'granted'
+                      ? t('appointments', 'notificationsEnabled', lang)
+                      : t('appointments', 'enableNotifications', lang)}
+                  </button>
+                )}
+
+                {/* + Add Appointment Button (Desktop xl screens) */}
+                {canManage && (
+                  <button
+                    onClick={() => handleOpenAddModal()}
+                    className="hidden xl:flex px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-sm items-center gap-1.5 cursor-pointer flex-shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>{t('appointments', 'newAppointment', lang)}</span>
+                  </button>
+                )}
               </div>
-
-              {/* Device Alert Permission / Status */}
-              {isNotificationSupported() && (
-                <button
-                  type="button"
-                  onClick={handleEnableNotifications}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-xs cursor-pointer ${
-                    notificationPermission === 'granted'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
-                      : 'bg-white dark:bg-gray-900 text-cyan-800 dark:text-cyan-300 border-slate-200 dark:border-gray-800 hover:border-cyan-400'
-                  }`}
-                  title={notificationPermission === 'granted' ? 'Device notifications enabled' : 'Enable device notifications for follow-up reminders'}
-                >
-                  {notificationPermission === 'granted'
-                    ? t('appointments', 'notificationsEnabled', lang)
-                    : t('appointments', 'enableNotifications', lang)}
-                </button>
-              )}
-
-              {/* + Add Appointment Button (Protected) */}
-              {canManage && (
-                <button
-                  onClick={() => handleOpenAddModal()}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>{t('appointments', 'newAppointment', lang)}</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -2001,8 +2018,8 @@ END $$;`;
             )}
           </div>
 
-          {/* Desktop 4-Column Filter Grid */}
-          <div className="hidden sm:grid grid-cols-4 gap-2">
+          {/* Desktop Filter Grid - 2 columns on tablet/laptop, 4 on wide desktop */}
+          <div className="hidden sm:grid grid-cols-2 xl:grid-cols-4 gap-2">
             {/* Search Input */}
             <div className="relative">
               <input
@@ -2241,7 +2258,7 @@ END $$;`;
 
           {/* 2. WEEK VIEW */}
           {calendarView === 'week' && (
-            <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm overflow-x-auto scrollbar-thin">
               <div className="grid grid-cols-7 divide-x divide-slate-200 dark:divide-gray-800 min-w-[700px]">
                 {(() => {
                   const dayOfWeek = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
@@ -2313,7 +2330,7 @@ END $$;`;
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-yellow-400 flex items-center gap-1">
                                       {isClash && <span className="text-[8px] font-black uppercase text-amber-600 dark:text-amber-400 bg-amber-200/60 dark:bg-amber-900/60 px-1 py-0.2 rounded">CLASH</span>}
-                                      <span>⏰ {apt.appointment_time}</span>
+                                      <span>{apt.appointment_time}</span>
                                     </span>
                                     <div className="flex items-center gap-1">
                                       {isClash && (
@@ -2932,7 +2949,9 @@ END $$;`;
                         onClick={toggleGrabTimePicker}
                         className="text-[11px] text-amber-500 dark:text-amber-400 hover:text-amber-300 hover:underline font-bold flex items-center gap-1 cursor-pointer"
                       >
-                        <span>⏰</span>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <span>{lang === 'bm' ? 'Pilih Waktu' : 'Pick Time'}</span>
                       </button>
                     </div>
@@ -2960,7 +2979,9 @@ END $$;`;
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-700 text-slate-500 dark:text-zinc-300 group-hover:text-amber-500 transition-colors text-base cursor-pointer"
                         title={lang === 'bm' ? 'Buka penetapan waktu' : 'Open time dial'}
                       >
-                        ⏰
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       </button>
                     </div>
                   </div>

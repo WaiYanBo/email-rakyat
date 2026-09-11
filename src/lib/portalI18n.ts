@@ -879,6 +879,7 @@ export const translations = {
     quickCompleted: { en: 'Completed', bm: 'Selesai' },
     quickCancelled: { en: 'Cancelled', bm: 'Batal' },
     quickNoShow: { en: 'No-Show', bm: 'Tidak Hadir' },
+    quickReschedule: { en: 'Reschedule', bm: 'Jadual Semula' },
     allResolved: { en: 'All past appointments are up-to-date!', bm: 'Semua temujanji terdahulu telah dikemas kini!' },
     followUpModalTitle: { en: 'Schedule Follow-Up Consultation', bm: 'Jadualkan Konsultasi Susulan' },
     followUpModalSubtitle: { en: 'Appointment marked as Completed. Please set a follow-up reminder date for this client.', bm: 'Temujanji ditandakan sebagai Selesai. Sila tetapkan tarikh peringatan susulan untuk klien ini.' },

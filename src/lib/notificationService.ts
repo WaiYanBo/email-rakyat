@@ -152,17 +152,208 @@ export const sendConfirmationDeviceNotification = async (
 };
 
 /**
+ * Native Web Audio API Chime (Two-Tone D5 -> A5 Harmonic)
+ * Runs entirely on-device without external MP3 assets
+ */
+export const playNotificationChime = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    // First Tone: 587.33 Hz (D5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now);
+    gain1.gain.setValueAtTime(0.2, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Second Tone: 880 Hz (A5)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880, now + 0.12);
+    gain2.gain.setValueAtTime(0.25, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.55);
+  } catch (_e) {
+    // Audio autoplay restrictions before first user gesture
+  }
+};
+
+/**
+ * Universal Device Notification Dispatcher with fast Service Worker timeout
+ */
+export const sendUniversalDeviceNotification = async (
+  title: string,
+  body: string,
+  tag: string,
+  url: string = '/portal/temujanji'
+): Promise<boolean> => {
+  if (!isNotificationSupported() || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  const options: NotificationOptions = {
+    body,
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag,
+    data: { url }
+  };
+
+  try {
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 400))
+        ]);
+        if (reg && 'showNotification' in reg) {
+          await reg.showNotification(title, options);
+          return true;
+        }
+      } catch (_e) {}
+    }
+
+    if ('Notification' in window) {
+      const n = new Notification(title, options);
+      n.onclick = () => {
+        window.focus();
+        window.location.href = url;
+      };
+      return true;
+    }
+  } catch (err) {
+    console.warn('Failed to dispatch universal notification:', err);
+  }
+  return false;
+};
+
+/**
+ * Helper to parse time string to total minutes from midnight (0-1439)
+ */
+const parseTimeToMins = (timeStr: string = ''): number => {
+  if (!timeStr) return 0;
+  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
+  if (!match) return 0;
+  let h = parseInt(match[1], 10);
+  const m = match[2] ? parseInt(match[2], 10) : 0;
+  const period = match[3]?.toLowerCase() || '';
+
+  const isPM = period.includes('pm') || period.includes('petang') || period.includes('malam');
+  const isAM = period.includes('am') || period.includes('pagi');
+
+  if (isPM && h < 12) {
+    h += 12;
+  } else if (isAM && h === 12) {
+    h = 0;
+  }
+  return h * 60 + m;
+};
+
+export interface AlertTriggerResult {
+  id: string;
+  type: 'upcoming_15m' | 'followup_due';
+  clientName: string;
+  picName: string;
+  timeStr: string;
+  category: string;
+  notes?: string;
+  phone?: string;
+  minutesLeft?: number;
+  appointment: any;
+}
+
+/**
+ * Monitors today's appointments and triggers alerts 15 minutes before the scheduled meeting.
+ */
+export const checkAndDispatchUpcomingAlerts = async (
+  appointments: any[],
+  lang: 'en' | 'bm' = 'en'
+): Promise<AlertTriggerResult[]> => {
+  const triggered: AlertTriggerResult[] = [];
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${y}-${m}-${d}`;
+  const currentTotalMins = now.getHours() * 60 + now.getMinutes();
+
+  const activeTodayApts = appointments.filter(
+    (a) => a.appointment_date === todayStr && a.status !== 'Cancelled' && a.status !== 'Completed'
+  );
+
+  for (const apt of activeTodayApts) {
+    const aptMins = parseTimeToMins(apt.appointment_time);
+    const minutesLeft = aptMins - currentTotalMins;
+
+    // Alert if within 0 to 15 minutes before meeting starts (or up to 5 minutes after start)
+    if (minutesLeft >= -5 && minutesLeft <= 15) {
+      const storageKey = `alerted-upcoming-15m-${apt.id}-${todayStr}`;
+      const alreadyAlerted = typeof window !== 'undefined' && sessionStorage.getItem(storageKey);
+
+      if (!alreadyAlerted) {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(storageKey, 'true');
+        }
+
+        // 1. Play Audio Chime
+        playNotificationChime();
+
+        // 2. Dispatch Device Notification
+        const minText = minutesLeft <= 1
+          ? (lang === 'bm' ? 'sekarang / kurang 1 minit' : 'now / in 1 min')
+          : (lang === 'bm' ? `dalam ${minutesLeft} minit` : `in ${minutesLeft} mins`);
+
+        const title = lang === 'bm'
+          ? `Temujanji ${minText}: ${apt.client_name}`
+          : `Meeting ${minText}: ${apt.client_name}`;
+
+        const body = lang === 'bm'
+          ? `Konsultasi bersama ${apt.pic_name} pada ${apt.appointment_time} (${apt.case_category || 'Am'}).`
+          : `Consultation with ${apt.pic_name} at ${apt.appointment_time} (${apt.case_category || 'General'}).`;
+
+        sendUniversalDeviceNotification(title, body, `upcoming-${apt.id}`);
+
+        triggered.push({
+          id: apt.id,
+          type: 'upcoming_15m',
+          clientName: apt.client_name,
+          picName: apt.pic_name,
+          timeStr: apt.appointment_time,
+          category: apt.case_category || 'General',
+          notes: apt.notes,
+          phone: apt.client_phone,
+          minutesLeft: Math.max(0, minutesLeft),
+          appointment: apt
+        });
+      }
+    }
+  }
+
+  return triggered;
+};
+
+/**
  * Checks all appointments and dispatches device notifications for due follow-ups.
- * Uses localStorage cache to ensure notifications are triggered only once per day per client.
+ * Returns triggered follow-ups for in-app alert display.
  */
 export const checkAndDispatchDueFollowUps = async (
   appointments: any[],
   lang: 'en' | 'bm' = 'en'
-): Promise<number> => {
-  if (!isNotificationSupported() || Notification.permission !== 'granted') {
-    return 0;
-  }
-
+): Promise<AlertTriggerResult[]> => {
+  const triggered: AlertTriggerResult[] = [];
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -172,29 +363,40 @@ export const checkAndDispatchDueFollowUps = async (
     return isPending && apt.follow_up_date <= todayStr;
   });
 
-  let dispatchedCount = 0;
-
   for (const apt of dueAppointments) {
     const storageKey = `notified-followup-${apt.id}-${todayStr}`;
-    if (localStorage.getItem(storageKey)) {
-      continue; // Already notified today
-    }
+    const alreadyNotified = typeof window !== 'undefined' && localStorage.getItem(storageKey);
 
-    const success = await sendFollowUpDeviceNotification({
-      id: apt.id,
-      clientName: apt.client_name,
-      category: apt.case_category || 'General',
-      picName: apt.pic_name,
-      followUpDate: apt.follow_up_date,
-      followUpTime: apt.follow_up_time,
-      notes: apt.follow_up_notes
-    }, lang);
+    if (!alreadyNotified) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, 'true');
+      }
 
-    if (success) {
-      localStorage.setItem(storageKey, 'true');
-      dispatchedCount++;
+      playNotificationChime();
+
+      await sendFollowUpDeviceNotification({
+        id: apt.id,
+        clientName: apt.client_name,
+        category: apt.case_category || 'General',
+        picName: apt.pic_name,
+        followUpDate: apt.follow_up_date,
+        followUpTime: apt.follow_up_time,
+        notes: apt.follow_up_notes
+      }, lang);
+
+      triggered.push({
+        id: apt.id,
+        type: 'followup_due',
+        clientName: apt.client_name,
+        picName: apt.pic_name,
+        timeStr: apt.follow_up_time || 'Hari Ini',
+        category: apt.case_category || 'General',
+        notes: apt.follow_up_notes,
+        phone: apt.client_phone,
+        appointment: apt
+      });
     }
   }
 
-  return dispatchedCount;
+  return triggered;
 };

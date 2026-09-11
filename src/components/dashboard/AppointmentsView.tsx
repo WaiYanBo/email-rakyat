@@ -9,7 +9,11 @@ import {
   isNotificationSupported,
   getNotificationPermission,
   requestNotificationPermission,
-  checkAndDispatchDueFollowUps
+  checkAndDispatchDueFollowUps,
+  checkAndDispatchUpcomingAlerts,
+  playNotificationChime,
+  sendUniversalDeviceNotification,
+  type AlertTriggerResult
 } from '../../lib/notificationService';
 
 export interface Appointment {
@@ -146,6 +150,13 @@ export default function AppointmentsView() {
   const [followUpNotes, setFollowUpNotes] = useState<string>('');
   const [followUpSaving, setFollowUpSaving] = useState<boolean>(false);
 
+  // Real-Time In-App Alert Toasts (15-Min Upcoming Meetings & Due Follow-Ups)
+  const [activeAlerts, setActiveAlerts] = useState<AlertTriggerResult[]>([]);
+
+  const handleDismissAlert = (id: string) => {
+    setActiveAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
   // Form State
   const [formData, setFormData] = useState({
     client_name: '',
@@ -171,6 +182,9 @@ export default function AppointmentsView() {
   const [submitting, setSubmitting] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [sqlCopySuccess, setSqlCopySuccess] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
 
   // ─── GRAB-STYLE SCHEDULE RIDE TIME PICKER STATE ──────────────────────────
   const [showGrabTimePicker, setShowGrabTimePicker] = useState(false);
@@ -260,12 +274,12 @@ export default function AppointmentsView() {
   };
 
   const spinHour = (direction: -1 | 1) => {
-    const nextH = direction === -1 ? getPrevHour(pickerHour) : getNextHour(pickerHour);
+    const nextH = direction === 1 ? getNextHour(pickerHour) : getPrevHour(pickerHour);
     handleSelectHour(nextH);
   };
 
   const spinMinute = (direction: -1 | 1) => {
-    const nextM = direction === -1 ? getPrevMinute(pickerMinute) : getNextMinute(pickerMinute);
+    const nextM = direction === 1 ? getNextMinute(pickerMinute) : getPrevMinute(pickerMinute);
     handleSelectMinute(nextM);
   };
 
@@ -392,8 +406,8 @@ export default function AppointmentsView() {
       }
 
       setAppointments(data || []);
-      // Check and dispatch mobile / browser device notifications for due follow-ups
-      checkAndDispatchDueFollowUps(data || [], lang);
+      // Check and dispatch 15-minute upcoming alerts and due follow-ups
+      runAlertsCheck(data || []);
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
       setFetchError(err.message || 'Failed to load appointments');
@@ -402,12 +416,84 @@ export default function AppointmentsView() {
     }
   };
 
+  // Real-time alert checker for 15-minute upcoming meetings and due follow-ups
+  const runAlertsCheck = async (dataList: Appointment[]) => {
+    if (!dataList || dataList.length === 0) return;
+    try {
+      const [upcomingAlerts, followUpAlerts] = await Promise.all([
+        checkAndDispatchUpcomingAlerts(dataList, lang),
+        checkAndDispatchDueFollowUps(dataList, lang)
+      ]);
+
+      const allNew = [...upcomingAlerts, ...followUpAlerts];
+      if (allNew.length > 0) {
+        setActiveAlerts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const additions = allNew.filter(n => !existingIds.has(n.id));
+          return [...prev, ...additions];
+        });
+      }
+    } catch (err) {
+      console.warn('Error running alert checks:', err);
+    }
+  };
+
+  // 30-Second heartbeat interval to check for 15-minute upcoming meetings while active in portal
+  useEffect(() => {
+    if (appointments.length > 0) {
+      runAlertsCheck(appointments);
+      const interval = setInterval(() => {
+        runAlertsCheck(appointments);
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [appointments, lang]);
+
+  // Instant test trigger for user verification (pops up immediately with sound chime)
+  const handleTriggerTestAlert = () => {
+    playNotificationChime();
+    const mockApt: Appointment = {
+      id: `test-${Date.now()}`,
+      client_name: 'Siti Nurhaliza (Sample Client)',
+      appointment_date: formatDateToYYYYMMDD(new Date()),
+      appointment_time: '11:45 AM',
+      case_category: 'Loan Shark',
+      pic_name: 'Azizul',
+      client_phone: '+60123456789',
+      location: 'Office Consultation',
+      status: 'Scheduled',
+      notes: 'Sample test consultation 15-minute reminder'
+    };
+
+    const mockAlert: AlertTriggerResult = {
+      id: `test-alert-${Date.now()}`,
+      type: 'upcoming_15m',
+      clientName: mockApt.client_name,
+      picName: mockApt.pic_name,
+      timeStr: mockApt.appointment_time,
+      category: mockApt.case_category,
+      phone: mockApt.client_phone,
+      minutesLeft: 15,
+      notes: mockApt.notes,
+      appointment: mockApt
+    };
+
+    setActiveAlerts(prev => [mockAlert, ...prev]);
+
+    // Also dispatch OS device notification if permitted
+    sendUniversalDeviceNotification(
+      lang === 'bm' ? 'Temujanji dalam 15 minit: Siti Nurhaliza' : 'Meeting in 15 mins: Siti Nurhaliza',
+      lang === 'bm' ? 'Konsultasi bersama Azizul pada 11:45 AM (Loan Shark).' : 'Consultation with Azizul at 11:45 AM (Loan Shark).',
+      `test-alert-${Date.now()}`
+    );
+  };
+
   useEffect(() => {
     fetchAppointments();
     if (isNotificationSupported() && getNotificationPermission() === 'default') {
       requestNotificationPermission().then((granted) => {
         if (granted) {
-          checkAndDispatchDueFollowUps(appointments, lang);
+          runAlertsCheck(appointments);
         }
       });
     }
@@ -1104,25 +1190,44 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   };
 
   // Delete Appointment (Restricted to canManage)
-  const handleDelete = async (apt: Appointment) => {
+  const handleDelete = (apt: Appointment) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk memadam temujanji.' : 'Access Restricted: You do not have permission to delete appointments.');
       return;
     }
-    const confirmMsg = t('appointments', 'deleteConfirm', lang).replace('{name}', apt.client_name);
-    if (!confirm(confirmMsg)) return;
+    setAppointmentToDelete(apt);
+  };
 
+  const confirmExecuteDelete = async () => {
+    if (!appointmentToDelete) return;
     try {
+      setIsDeleting(true);
+      const targetId = appointmentToDelete.id;
+      const clientName = appointmentToDelete.client_name;
+
       const { error } = await supabase
         .from('appointments')
         .delete()
-        .eq('id', apt.id);
+        .eq('id', targetId);
 
       if (error) throw error;
+
+      // Optimistically remove from state immediately for snappy UX
+      setAppointments(prev => prev.filter(a => a.id !== targetId));
+      setAppointmentToDelete(null);
       setIsViewModalOpen(false);
+
+      // Trigger success feedback toast
+      setDeleteFeedback(clientName);
+      setTimeout(() => setDeleteFeedback(null), 3500);
+
+      // Background refresh to ensure consistency
       await fetchAppointments();
     } catch (err: any) {
-      alert(`${lang === 'bm' ? 'Gagal memadam temujanji' : 'Failed to delete appointment'}: ${err.message}`);
+      console.error('Error deleting appointment:', err);
+      alert(`${lang === 'bm' ? 'Gagal memadam temujanji' : 'Failed to delete appointment'}: ${err.message || 'Error'}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1313,33 +1418,75 @@ ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.has_appointment_permission(u_id UUID, perm_type TEXT)
 RETURNS BOOLEAN AS $$
+DECLARE
+  v_department TEXT;
+  v_full_name TEXT;
 BEGIN
+  SELECT department, full_name INTO v_department, v_full_name
+  FROM public.profiles
+  WHERE id = u_id;
+
   IF EXISTS (
     SELECT 1 FROM public.profiles p
-    JOIN public.roles r ON p.role_id = r.id
-    WHERE p.id = u_id AND r.role_name IN ('IT Admin', 'HR', 'CFO', 'Director', 'BOD')
+    LEFT JOIN public.roles r ON p.role_id = r.id
+    WHERE p.id = u_id
+      AND (
+        r.role_name IN ('IT Admin', 'HR', 'HR Manager', 'HR Executive', 'CFO', 'CEO', 'Chairman', 'COO', 'General Manager', 'Head of Department', 'Director', 'Admin', 'Management', 'BOD')
+        OR p.department ILIKE '%human resource%'
+        OR p.department ILIKE '%hr%'
+        OR p.department ILIKE '%it%'
+        OR r.role_name ILIKE '%hr%'
+        OR r.role_name ILIKE '%admin%'
+      )
   ) THEN RETURN TRUE; END IF;
 
   RETURN EXISTS (
     SELECT 1 FROM public.access_permissions
-    WHERE (target_type = 'user' AND target_id = u_id::text AND (permissions->>perm_type)::boolean = true)
-       OR (target_type = 'department' AND target_id = (SELECT department FROM public.profiles WHERE id = u_id) AND (permissions->>perm_type)::boolean = true)
+    WHERE (
+      (target_type = 'user' AND (target_id = u_id::text OR (v_full_name IS NOT NULL AND target_id = v_full_name)))
+      OR (target_type = 'department' AND v_department IS NOT NULL AND LOWER(TRIM(target_id)) = LOWER(TRIM(v_department)))
+    )
+    AND (
+      (permissions->>perm_type)::boolean = true
+      OR permissions->>perm_type = 'true'
+      OR (permissions->>'manage_appointments')::boolean = true
+    )
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE POLICY "Appointments SELECT Policy" ON public.appointments FOR SELECT TO authenticated
-  USING (public.has_appointment_permission(auth.uid(), 'view_appointments') OR public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+  USING (
+    public.has_appointment_permission(auth.uid(), 'view_appointments')
+    OR public.has_appointment_permission(auth.uid(), 'manage_appointments')
+    OR created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.department ILIKE '%it%' OR p.department ILIKE '%management%'))
+  );
 
 CREATE POLICY "Appointments INSERT Policy" ON public.appointments FOR INSERT TO authenticated
-  WITH CHECK (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+  WITH CHECK (
+    public.has_appointment_permission(auth.uid(), 'manage_appointments')
+    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.department ILIKE '%it%' OR p.department ILIKE '%management%'))
+  );
 
 CREATE POLICY "Appointments UPDATE Policy" ON public.appointments FOR UPDATE TO authenticated
-  USING (public.has_appointment_permission(auth.uid(), 'manage_appointments'))
-  WITH CHECK (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+  USING (
+    public.has_appointment_permission(auth.uid(), 'manage_appointments')
+    OR created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.department ILIKE '%it%' OR p.department ILIKE '%management%'))
+  )
+  WITH CHECK (
+    public.has_appointment_permission(auth.uid(), 'manage_appointments')
+    OR created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.department ILIKE '%it%' OR p.department ILIKE '%management%'))
+  );
 
 CREATE POLICY "Appointments DELETE Policy" ON public.appointments FOR DELETE TO authenticated
-  USING (public.has_appointment_permission(auth.uid(), 'manage_appointments'));
+  USING (
+    public.has_appointment_permission(auth.uid(), 'manage_appointments')
+    OR created_by = auth.uid()
+    OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.department ILIKE '%it%' OR p.department ILIKE '%management%'))
+  );
 
 DO $$
 BEGIN
@@ -1370,13 +1517,106 @@ END $$;`;
 
   return (
     <div className="flex flex-col h-full w-full space-y-4">
+      {/* Real-Time Floating In-App Alert Banners (15-Min Upcoming Meetings & Due Follow-Ups) */}
+      {activeAlerts.length > 0 && (
+        <div className="space-y-2.5 z-30">
+          {activeAlerts.map((alert) => {
+            const isUpcoming = alert.type === 'upcoming_15m';
+            return (
+              <div
+                key={alert.id}
+                className={`relative overflow-hidden rounded-2xl border p-4 shadow-xl transition-all animate-in fade-in slide-in-from-top-4 duration-300 ${
+                  isUpcoming
+                    ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/15 border-amber-400/40 text-amber-950 dark:text-amber-100'
+                    : 'bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-indigo-500/15 border-cyan-400/40 text-cyan-950 dark:text-cyan-100'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 w-3 h-3 rounded-full flex-shrink-0 animate-pulse ${
+                      isUpcoming ? 'bg-amber-500 ring-4 ring-amber-400/30' : 'bg-cyan-500 ring-4 ring-cyan-400/30'
+                    }`} />
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full ${
+                          isUpcoming ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300' : 'bg-cyan-500/20 text-cyan-800 dark:text-cyan-300'
+                        }`}>
+                          {isUpcoming
+                            ? (lang === 'bm' ? `Temujanji Dalam ${alert.minutesLeft ?? 15} Minit` : `Meeting in ${alert.minutesLeft ?? 15} Mins`)
+                            : (lang === 'bm' ? 'Tindakan Susulan Hari Ini' : 'Follow-Up Due Today')}
+                        </span>
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                          {alert.timeStr}
+                        </span>
+                      </div>
+                      <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
+                        {alert.clientName}
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                        {lang === 'bm' ? 'Pegawai Bertugas (PIC): ' : 'PIC: '}
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">{alert.picName}</span>
+                        {' '}&bull;{' '}
+                        <span>{alert.category}</span>
+                        {alert.notes && (
+                          <span className="italic text-slate-500 dark:text-slate-400"> &mdash; "{alert.notes}"</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
+                    {alert.appointment && (
+                      <button
+                        type="button"
+                        onClick={() => openDossierModal(alert.appointment)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:opacity-90 transition-all shadow-sm cursor-pointer"
+                      >
+                        {lang === 'bm' ? 'Buka Dosier' : 'Open Dossier'}
+                      </button>
+                    )}
+                    {alert.phone && (
+                      <a
+                        href={`https://wa.me/${alert.phone.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+                      >
+                        WhatsApp
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDismissAlert(alert.id)}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer text-xs font-bold"
+                      aria-label="Tutup"
+                      title={lang === 'bm' ? 'Tutup' : 'Dismiss'}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Toast Feedback */}
       {copyFeedback && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce border border-emerald-400">
-          
           <div>
             <div className="font-bold text-xs">{t('appointments', 'broadcastCopied', lang)}</div>
             <div className="text-[11px] opacity-90">{t('appointments', 'readyToPaste', lang)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Feedback Toast */}
+      {deleteFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 border border-rose-400">
+          <div>
+            <div className="font-bold text-xs">{t('appointments', 'deleteSuccess', lang)}</div>
+            <div className="text-[11px] opacity-90">{deleteFeedback}</div>
           </div>
         </div>
       )}
@@ -1766,6 +2006,16 @@ END $$;`;
                   BM
                 </button>
               </div>
+
+              {/* Test Alert Button (Mobile) */}
+              <button
+                type="button"
+                onClick={handleTriggerTestAlert}
+                className="h-9 px-2.5 rounded-xl text-xs font-bold border border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
+                title={lang === 'bm' ? 'Uji Penggera 15 Minit' : 'Test 15-Min Alert'}
+              >
+                {lang === 'bm' ? 'Uji Notifikasi' : 'Test Alert'}
+              </button>
             </div>
           </div>
 
@@ -1870,6 +2120,17 @@ END $$;`;
                     BM
                   </button>
                 </div>
+
+                {/* Test Alert Button (Desktop) */}
+                <button
+                  type="button"
+                  onClick={handleTriggerTestAlert}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
+                  title={lang === 'bm' ? 'Uji Penggera 15 Minit' : 'Test 15-Min Alert'}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                  <span>{lang === 'bm' ? 'Uji Notifikasi (15m)' : 'Test Alert (15m)'}</span>
+                </button>
 
                 {/* + Add Appointment Button (Desktop xl screens) */}
                 {canManage && (
@@ -3244,17 +3505,17 @@ END $$;`;
                 <div className="grid grid-cols-3 gap-2 mb-1.5">
                   <button
                     type="button"
-                    onClick={() => spinHour(-1)}
+                    onClick={() => spinHour(1)}
                     className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/60 text-slate-400 hover:text-amber-400 text-xs font-black transition-colors flex items-center justify-center cursor-pointer border border-slate-800 active:scale-95"
-                    title={lang === 'bm' ? 'Pusing Jam Naik' : 'Spin Hour Up'}
+                    title={lang === 'bm' ? 'Tambah Jam (+1)' : 'Add Hour (+1)'}
                   >
                     +
                   </button>
                   <button
                     type="button"
-                    onClick={() => spinMinute(-1)}
+                    onClick={() => spinMinute(1)}
                     className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/60 text-slate-400 hover:text-amber-400 text-xs font-black transition-colors flex items-center justify-center cursor-pointer border border-slate-800 active:scale-95"
-                    title={lang === 'bm' ? 'Pusing Minit Naik' : 'Spin Minute Up'}
+                    title={lang === 'bm' ? 'Tambah Minit (+5)' : 'Add Minute (+5)'}
                   >
                     +
                   </button>
@@ -3277,16 +3538,16 @@ END $$;`;
                   <div
                     onWheel={(e) => {
                       e.preventDefault();
-                      spinHour(e.deltaY > 0 ? 1 : -1);
+                      spinHour(e.deltaY < 0 ? 1 : -1);
                     }}
                     className="h-full flex flex-col justify-between items-center select-none cursor-pointer"
                   >
                     <button
                       type="button"
-                      onClick={() => spinHour(-1)}
+                      onClick={() => spinHour(1)}
                       className="h-8 w-full text-xs font-mono font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center justify-center"
                     >
-                      {getPrevHour(pickerHour)}
+                      {getNextHour(pickerHour)}
                     </button>
                     <div className="h-11 w-full flex items-center justify-center relative z-20">
                       <span className="text-2xl font-black font-mono tracking-wider text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">
@@ -3295,10 +3556,10 @@ END $$;`;
                     </div>
                     <button
                       type="button"
-                      onClick={() => spinHour(1)}
+                      onClick={() => spinHour(-1)}
                       className="h-8 w-full text-xs font-mono font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center justify-center"
                     >
-                      {getNextHour(pickerHour)}
+                      {getPrevHour(pickerHour)}
                     </button>
                   </div>
 
@@ -3306,16 +3567,16 @@ END $$;`;
                   <div
                     onWheel={(e) => {
                       e.preventDefault();
-                      spinMinute(e.deltaY > 0 ? 1 : -1);
+                      spinMinute(e.deltaY < 0 ? 1 : -1);
                     }}
                     className="h-full flex flex-col justify-between items-center select-none cursor-pointer"
                   >
                     <button
                       type="button"
-                      onClick={() => spinMinute(-1)}
+                      onClick={() => spinMinute(1)}
                       className="h-8 w-full text-xs font-mono font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center justify-center"
                     >
-                      {getPrevMinute(pickerMinute)}
+                      {getNextMinute(pickerMinute)}
                     </button>
                     <div className="h-11 w-full flex items-center justify-center relative z-20">
                       <span className="text-2xl font-black font-mono tracking-wider text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">
@@ -3324,10 +3585,10 @@ END $$;`;
                     </div>
                     <button
                       type="button"
-                      onClick={() => spinMinute(1)}
+                      onClick={() => spinMinute(-1)}
                       className="h-8 w-full text-xs font-mono font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center justify-center"
                     >
-                      {getNextMinute(pickerMinute)}
+                      {getPrevMinute(pickerMinute)}
                     </button>
                   </div>
 
@@ -3348,10 +3609,7 @@ END $$;`;
                       <span>{pickerPeriod === 'AM' ? 'PM' : 'AM'}</span>
                     </button>
 
-                    <div className="h-11 w-full flex items-center justify-center gap-1.5 relative z-20">
-                      <span className="text-xs">
-                        {pickerPeriod}
-                      </span>
+                    <div className="h-11 w-full flex items-center justify-center relative z-20">
                       <span className="text-2xl font-black font-mono tracking-wider text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">
                         {pickerPeriod}
                       </span>
@@ -3371,17 +3629,17 @@ END $$;`;
                 <div className="grid grid-cols-3 gap-2 mt-1.5 text-center">
                   <button
                     type="button"
-                    onClick={() => spinHour(1)}
+                    onClick={() => spinHour(-1)}
                     className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/60 text-slate-400 hover:text-amber-400 text-xs font-black transition-colors flex items-center justify-center cursor-pointer border border-slate-800 active:scale-95"
-                    title={lang === 'bm' ? 'Pusing Jam Turun' : 'Spin Hour Down'}
+                    title={lang === 'bm' ? 'Kurang Jam (-1)' : 'Subtract Hour (-1)'}
                   >
                     -
                   </button>
                   <button
                     type="button"
-                    onClick={() => spinMinute(1)}
+                    onClick={() => spinMinute(-1)}
                     className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-amber-950/60 text-slate-400 hover:text-amber-400 text-xs font-black transition-colors flex items-center justify-center cursor-pointer border border-slate-800 active:scale-95"
-                    title={lang === 'bm' ? 'Pusing Minit Turun' : 'Spin Minute Down'}
+                    title={lang === 'bm' ? 'Kurang Minit (-5)' : 'Subtract Minute (-5)'}
                   >
                     -
                   </button>
@@ -3979,6 +4237,66 @@ END $$;`;
                   {followUpSaving ? t('appointments', 'saving', lang) : t('appointments', 'saveFollowUpAndComplete', lang)}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── IN-APP DELETE CONFIRMATION MODAL ─── */}
+      {appointmentToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                  {t('appointments', 'deleteModalTitle', lang)}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                  {t('appointments', 'deleteModalDesc', lang)}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/70 dark:border-zinc-700/60 rounded-xl space-y-1 text-xs">
+              <div className="font-extrabold text-slate-900 dark:text-white">
+                {appointmentToDelete.client_name}
+              </div>
+              <div className="text-slate-500 dark:text-zinc-400 font-mono">
+                {appointmentToDelete.appointment_date} &bull; {appointmentToDelete.appointment_time}
+              </div>
+              <div className="text-slate-600 dark:text-zinc-300 font-medium">
+                {t('appointments', 'pic', lang)}: <span className="font-bold">{appointmentToDelete.pic_name}</span>
+                {' '}&bull;{' '}
+                <span>{appointmentToDelete.case_category}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 justify-end pt-1">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setAppointmentToDelete(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+              >
+                {t('appointments', 'cancel', lang)}
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={confirmExecuteDelete}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                {isDeleting ? (
+                  <span>{t('appointments', 'deleting', lang)}</span>
+                ) : (
+                  <span>{t('appointments', 'deleteConfirmBtn', lang)}</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

@@ -63,24 +63,90 @@ export const sendFollowUpDeviceNotification = async (
   };
 
   try {
-    // 1. Try Service Worker Notification (Primary for mobile PWA)
+    // 1. Try Service Worker Notification (Primary for mobile PWA, with 400ms timeout to avoid hanging)
     if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      if (reg && 'showNotification' in reg) {
-        await reg.showNotification(title, options);
-        return true;
+      try {
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 400))
+        ]);
+        if (reg && 'showNotification' in reg) {
+          await reg.showNotification(title, options);
+          return true;
+        }
+      } catch (swErr) {
+        console.warn('Service worker notification error, falling back:', swErr);
       }
     }
 
     // 2. Fallback to standard Window Notification
-    const n = new Notification(title, options);
-    n.onclick = () => {
-      window.focus();
-      window.location.href = '/portal/temujanji';
-    };
-    return true;
+    if ('Notification' in window) {
+      const n = new Notification(title, options);
+      n.onclick = () => {
+        window.focus();
+        window.location.href = '/portal/temujanji';
+      };
+      return true;
+    }
+    return false;
   } catch (err) {
     console.warn('Failed to dispatch device notification:', err);
+    return false;
+  }
+};
+
+/**
+ * Sends an immediate test/confirmation notification when user enables device alerts
+ */
+export const sendConfirmationDeviceNotification = async (
+  lang: 'en' | 'bm' = 'en'
+): Promise<boolean> => {
+  if (!isNotificationSupported() || Notification.permission !== 'granted') {
+    return false;
+  }
+
+  const title = lang === 'bm'
+    ? 'Notifikasi Peranti Diaktifkan'
+    : 'Device Alerts Activated';
+
+  const body = lang === 'bm'
+    ? 'Peringatan temujanji susulan kini aktif! Anda akan menerima makluman pada pagi tarikh susulan klien.'
+    : 'Follow-up alerts are now active! You will be notified on the morning of scheduled client follow-ups.';
+
+  const options: NotificationOptions = {
+    body,
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag: 'alerts-activated-confirmation'
+  };
+
+  try {
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 400))
+        ]);
+        if (reg && 'showNotification' in reg) {
+          await reg.showNotification(title, options);
+          return true;
+        }
+      } catch (swErr) {
+        console.warn('Service worker confirmation error, falling back:', swErr);
+      }
+    }
+
+    if ('Notification' in window) {
+      const n = new Notification(title, options);
+      n.onclick = () => {
+        window.focus();
+        window.location.href = '/portal/temujanji';
+      };
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.warn('Failed to dispatch confirmation notification:', err);
     return false;
   }
 };

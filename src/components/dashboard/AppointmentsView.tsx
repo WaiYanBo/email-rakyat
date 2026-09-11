@@ -145,7 +145,6 @@ export default function AppointmentsView() {
   const [followUpTime, setFollowUpTime] = useState<string>('10:00 AM');
   const [followUpNotes, setFollowUpNotes] = useState<string>('');
   const [followUpSaving, setFollowUpSaving] = useState<boolean>(false);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -405,8 +404,12 @@ export default function AppointmentsView() {
 
   useEffect(() => {
     fetchAppointments();
-    if (isNotificationSupported()) {
-      setNotificationPermission(getNotificationPermission());
+    if (isNotificationSupported() && getNotificationPermission() === 'default') {
+      requestNotificationPermission().then((granted) => {
+        if (granted) {
+          checkAndDispatchDueFollowUps(appointments, lang);
+        }
+      });
     }
   }, []);
 
@@ -1267,15 +1270,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Enable Mobile / Browser System Notifications
-  const handleEnableNotifications = async () => {
-    const granted = await requestNotificationPermission();
-    setNotificationPermission(granted ? 'granted' : 'denied');
-    if (granted) {
-      checkAndDispatchDueFollowUps(appointments, lang);
-    }
-  };
-
   // Status Badge Colors with dynamic language localization
   const getStatusBadge = (status: Appointment['status']) => {
     switch (status) {
@@ -1622,16 +1616,6 @@ END $$;`;
                 {t('appointments', 'followUpBannerSub', lang)}
               </p>
             </div>
-
-            {isNotificationSupported() && notificationPermission !== 'granted' && (
-              <button
-                type="button"
-                onClick={handleEnableNotifications}
-                className="self-start sm:self-auto px-3 py-1.5 bg-cyan-700 hover:bg-cyan-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-              >
-                {t('appointments', 'enableNotifications', lang)}
-              </button>
-            )}
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
@@ -1886,24 +1870,6 @@ END $$;`;
                     BM
                   </button>
                 </div>
-
-                {/* Device Alert Permission / Status */}
-                {isNotificationSupported() && (
-                  <button
-                    type="button"
-                    onClick={handleEnableNotifications}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-xs cursor-pointer flex-shrink-0 ${
-                      notificationPermission === 'granted'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
-                        : 'bg-white dark:bg-gray-900 text-cyan-800 dark:text-cyan-300 border-slate-200 dark:border-gray-800 hover:border-cyan-400'
-                    }`}
-                    title={notificationPermission === 'granted' ? 'Device notifications enabled' : 'Enable device notifications for follow-up reminders'}
-                  >
-                    {notificationPermission === 'granted'
-                      ? t('appointments', 'notificationsEnabled', lang)
-                      : t('appointments', 'enableNotifications', lang)}
-                  </button>
-                )}
 
                 {/* + Add Appointment Button (Desktop xl screens) */}
                 {canManage && (

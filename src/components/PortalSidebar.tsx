@@ -77,6 +77,13 @@ export default function PortalSidebar() {
       });
     }
     setLoading(false);
+
+    // Automatically prompt for notification permission as soon as staff uses ER Portal Web App
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        Notification.requestPermission().catch(() => {});
+      } catch (_e) {}
+    }
   };
 
   useEffect(() => {

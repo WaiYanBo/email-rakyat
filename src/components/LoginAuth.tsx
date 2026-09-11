@@ -119,6 +119,14 @@ export default function LoginAuth() {
         }
 
         clearRateLimit(trimmedEmail); // Reset on success
+
+        // Automatically prompt for notification permission as soon as staff logs into ER Portal Web App
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+          try {
+            await Notification.requestPermission();
+          } catch (_e) {}
+        }
+
         await new Promise((r) => setTimeout(r, 100));
         window.location.href = '/portal';
       }

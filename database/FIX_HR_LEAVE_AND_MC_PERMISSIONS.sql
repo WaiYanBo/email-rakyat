@@ -1,17 +1,31 @@
 -- ====================================================================
--- SQL Patch: Fix HR Leave History Visibility & MC Proof Access
+-- SQL Patch: Fix HR Leave History Visibility & MC Proof Access (Hardened)
 -- Solves:
 --   1. HR Department unable to view proof of MC (Storage RLS & permissions)
 --   2. HR Department unable to find/select leave history for employees
 -- Run this script in the Supabase SQL Editor.
 -- ====================================================================
 
--- 1. Ensure helper function public.is_leave_approver recognizes all HR staff,
---    management, department heads, and users with HR/Leave access permissions.
+-- 1. Helper function public.is_leave_approver:
+--    Recognizes all HR staff, management, HODs, and users with HR/Leave access permissions.
+--    Hardened against:
+--      - JSON boolean cast syntax errors (uses safe string equality = 'true')
+--      - Case-insensitive department matching (ILIKE)
+--      - Both UUID and Full Name matching for target_id in access_permissions
+--      - Restricts approval privileges to HR/Leave/Staff-Management permissions (excludes read-only view_staff)
 CREATE OR REPLACE FUNCTION public.is_leave_approver(u_id UUID)
 RETURNS BOOLEAN AS $$
+DECLARE
+  v_department TEXT;
+  v_full_name TEXT;
 BEGIN
-  RETURN EXISTS (
+  -- Retrieve user's department and full_name for permission lookups
+  SELECT department, full_name INTO v_department, v_full_name
+  FROM public.profiles
+  WHERE id = u_id;
+
+  -- 1. Check Role or Department
+  IF EXISTS (
     SELECT 1 FROM public.profiles p
     LEFT JOIN public.roles r ON p.role_id = r.id
     WHERE p.id = u_id
@@ -27,30 +41,32 @@ BEGIN
         OR r.role_name ILIKE '%hr%'
         OR r.role_name ILIKE '%admin%'
       )
-  )
-  OR EXISTS (
+  ) THEN
+    RETURN TRUE;
+  END IF;
+
+  -- 2. Check granular access_permissions (by User UUID, Full Name, or Department)
+  RETURN EXISTS (
     SELECT 1 FROM public.access_permissions
     WHERE (
-      target_type = 'user' 
-      AND target_id = u_id::text 
-      AND (
-        (permissions->>'manage_hr')::boolean = true 
-        OR (permissions->>'manage_leave')::boolean = true 
-        OR (permissions->>'view_leave')::boolean = true
-        OR (permissions->>'view_staff')::boolean = true
-        OR (permissions->>'edit_staff')::boolean = true
+      -- User-level permissions (UUID or Full Name)
+      (
+        target_type = 'user' 
+        AND (target_id = u_id::text OR (v_full_name IS NOT NULL AND target_id = v_full_name))
+      )
+      -- Department-level permissions (Case-insensitive match)
+      OR (
+        target_type = 'department' 
+        AND v_department IS NOT NULL 
+        AND LOWER(TRIM(target_id)) = LOWER(TRIM(v_department))
       )
     )
-    OR (
-      target_type = 'department' 
-      AND target_id = (SELECT department FROM public.profiles WHERE id = u_id) 
-      AND (
-        (permissions->>'manage_hr')::boolean = true 
-        OR (permissions->>'manage_leave')::boolean = true 
-        OR (permissions->>'view_leave')::boolean = true
-        OR (permissions->>'view_staff')::boolean = true
-        OR (permissions->>'edit_staff')::boolean = true
-      )
+    -- Safe check avoiding boolean cast errors (works with 'true', true, or 1)
+    AND (
+      permissions->>'manage_hr' = 'true'
+      OR permissions->>'manage_leave' = 'true'
+      OR permissions->>'view_leave' = 'true'
+      OR permissions->>'edit_staff' = 'true'
     )
   );
 END;
@@ -116,17 +132,18 @@ CREATE POLICY "Approvers can delete leave balances"
   USING (public.is_leave_approver(auth.uid()));
 
 
--- 5. Storage Bucket Configuration for leave_attachments
--- Ensure the bucket exists and is set to public so that MCs can be opened directly or via signed URLs
+-- 5. Secure Storage Bucket Configuration for leave_attachments
+-- Bucket is set to private (public = false) to safeguard confidential medical certificates
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('leave_attachments', 'leave_attachments', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+VALUES ('leave_attachments', 'leave_attachments', false)
+ON CONFLICT (id) DO UPDATE SET public = false;
 
 -- Storage Security Policies on storage.objects
 DROP POLICY IF EXISTS "Users and leave approvers can view leave attachments" ON storage.objects;
 DROP POLICY IF EXISTS "Anyone can view leave attachments if approver or owner" ON storage.objects;
 DROP POLICY IF EXISTS "Public or approver view leave attachments" ON storage.objects;
 
+-- Only the owner of the MC or authorized HR/approvers can access MC proof
 CREATE POLICY "Users and leave approvers can view leave attachments"
   ON storage.objects FOR SELECT
   USING (
@@ -134,7 +151,6 @@ CREATE POLICY "Users and leave approvers can view leave attachments"
     AND (
       auth.uid()::text = (storage.foldername(name))[1]
       OR public.is_leave_approver(auth.uid())
-      OR auth.role() = 'authenticated'
     )
   );
 

@@ -238,6 +238,41 @@ export default function PortalSidebar() {
         });
       }
 
+      // 4. Fetch due appointment follow-ups (follow_up_date <= today and pending)
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: followUps } = await supabase
+          .from('appointments')
+          .select('id, client_name, case_category, pic_name, follow_up_date, follow_up_time, follow_up_notes, follow_up_status')
+          .lte('follow_up_date', todayStr)
+          .order('follow_up_date', { ascending: false })
+          .limit(10);
+
+        if (followUps) {
+          followUps.forEach((f: any) => {
+            if (!f.follow_up_status || f.follow_up_status === 'pending') {
+              list.push({
+                id: `followup-${f.id}`,
+                title: lang === 'bm' ? `Peringatan Susulan: ${f.client_name}` : `Follow-Up Reminder: ${f.client_name}`,
+                author: f.pic_name || 'Staff',
+                message: lang === 'bm'
+                  ? `Susulan bagi kes ${f.case_category} dijadualkan hari ini bersama ${f.pic_name}.`
+                  : `Follow-up consultation for ${f.case_category} scheduled today with ${f.pic_name}.`,
+                content: lang === 'bm'
+                  ? `Maklumat Susulan Klien:\n\n• Nama Klien: ${f.client_name}\n• Kategori Kes: ${f.case_category}\n• Pegawai (PIC): ${f.pic_name}\n• Tarikh Susulan: ${f.follow_up_date} ${f.follow_up_time || ''}\n• Catatan: ${f.follow_up_notes || 'Tiada catatan'}`
+                  : `Client Follow-Up Details:\n\n• Client Name: ${f.client_name}\n• Case Category: ${f.case_category}\n• Officer (PIC): ${f.pic_name}\n• Follow-Up Date: ${f.follow_up_date} ${f.follow_up_time || ''}\n• Objectives: ${f.follow_up_notes || 'None'}`,
+                date: f.follow_up_date || todayStr,
+                type: 'appointment_followup',
+                link: '/portal/temujanji',
+                icon: ''
+              });
+            }
+          });
+        }
+      } catch (fErr) {
+        // Table or column might not exist yet before migration
+      }
+
       // Sort notifications by date descending
       list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setNotifications(list);

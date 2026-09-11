@@ -1,9 +1,3 @@
-/**
- * Notification Service for Client Consultations & Follow-Up System
- * Supports HTML5 Web Notification API and PWA Service Worker Notifications
- * (Chrome/Edge Android, Samsung Internet, iOS Safari 16.4+ standalone PWA, Desktop)
- */
-
 export const isIOS = (): boolean => {
   if (typeof window === 'undefined') return false;
   return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -27,7 +21,6 @@ export const getNotificationPermission = (): NotificationPermission => {
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (!isNotificationSupported()) {
-    // If on iPhone in regular Safari browser tab, explain Apple's requirement
     if (isIOS() && !isStandalonePWA()) {
       if (typeof window !== 'undefined') {
         alert(
@@ -91,7 +84,6 @@ export const sendFollowUpDeviceNotification = async (
   };
 
   try {
-    // 1. Try Service Worker Notification (Primary for mobile PWA, with 400ms timeout to avoid hanging)
     if ('serviceWorker' in navigator) {
       try {
         const reg = await Promise.race([
@@ -107,7 +99,6 @@ export const sendFollowUpDeviceNotification = async (
       }
     }
 
-    // 2. Fallback to standard Window Notification
     if ('Notification' in window) {
       const n = new Notification(title, options);
       n.onclick = () => {
@@ -123,9 +114,6 @@ export const sendFollowUpDeviceNotification = async (
   }
 };
 
-/**
- * Sends an immediate test/confirmation notification when user enables device alerts
- */
 export const sendConfirmationDeviceNotification = async (
   lang: 'en' | 'bm' = 'en'
 ): Promise<boolean> => {
@@ -179,19 +167,10 @@ export const sendConfirmationDeviceNotification = async (
   }
 };
 
-/**
- * Audio Engine & Chime Player
- * Employs a multi-tiered mobile audio pipeline:
- * 1. Persistent pre-loaded HTML5 Audio element (routes through Android/iOS media stream)
- * 2. Pre-decoded Web Audio API AudioBuffer for instant zero-latency playback
- * 3. High-volume dual-tone harmonic oscillator synthesis fallback
- * 4. Device haptic vibration via navigator.vibrate()
- */
 let globalAudioCtx: AudioContext | null = null;
 let cachedAudioBuffer: AudioBuffer | null = null;
 let persistentAudioEl: HTMLAudioElement | null = null;
 
-// Initialize persistent audio element on script load
 if (typeof window !== 'undefined') {
   try {
     persistentAudioEl = new Audio('/sounds/chime.wav');
@@ -203,7 +182,6 @@ if (typeof window !== 'undefined') {
 export const unlockAudio = () => {
   if (typeof window === 'undefined') return;
   try {
-    // 1. Warm up & authorize persistent HTML5 Audio
     if (!persistentAudioEl) {
       persistentAudioEl = new Audio('/sounds/chime.wav');
       persistentAudioEl.preload = 'auto';
@@ -217,7 +195,6 @@ export const unlockAudio = () => {
       }
     }).catch(() => {});
 
-    // 2. Unlock & Resume Web Audio Context
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (AudioCtx) {
       if (!globalAudioCtx) {
@@ -227,7 +204,6 @@ export const unlockAudio = () => {
         globalAudioCtx.resume().catch(() => {});
       }
 
-      // Pre-fetch and decode audio buffer for zero-latency playback
       if (!cachedAudioBuffer && globalAudioCtx) {
         fetch('/sounds/chime.wav')
           .then(res => res.arrayBuffer())
@@ -241,7 +217,6 @@ export const unlockAudio = () => {
   } catch (_e) {}
 };
 
-// Automatically bind audio unlock to the first user gesture
 if (typeof window !== 'undefined') {
   const handleInteraction = () => {
     unlockAudio();
@@ -259,14 +234,12 @@ if (typeof window !== 'undefined') {
 export const playNotificationChime = () => {
   if (typeof window === 'undefined') return;
 
-  // 1. Physical Haptic Vibration on Android and supported mobile devices
   try {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate([300, 100, 300, 100, 300]);
     }
   } catch (_vErr) {}
 
-  // 2. Play HTML5 Audio element
   try {
     if (!persistentAudioEl) {
       persistentAudioEl = new Audio('/sounds/chime.wav');
@@ -277,7 +250,6 @@ export const playNotificationChime = () => {
     const p = persistentAudioEl.play();
     if (p !== undefined) {
       p.catch(() => {
-        // Fallback: Create and play fresh audio instance
         try {
           const fresh = new Audio('/sounds/chime.wav');
           fresh.volume = 1.0;
@@ -287,7 +259,6 @@ export const playNotificationChime = () => {
     }
   } catch (_err) {}
 
-  // 3. Play pre-decoded AudioBuffer or synthesize via Web Audio API
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (AudioCtx) {
@@ -306,10 +277,8 @@ export const playNotificationChime = () => {
         gainNode.connect(ctx.destination);
         source.start(0);
       } else {
-        // Fallback: High-clarity dual-tone bell chime (880Hz A5 -> 1175Hz D6 with harmonics)
         const now = ctx.currentTime;
 
-        // Tone 1: 880Hz + 1760Hz
         const osc1 = ctx.createOscillator();
         const osc1Harm = ctx.createOscillator();
         const gain1 = ctx.createGain();
@@ -327,7 +296,6 @@ export const playNotificationChime = () => {
         osc1.stop(now + 0.4);
         osc1Harm.stop(now + 0.4);
 
-        // Tone 2: 1174.66Hz + 2349Hz (starting at 0.14s)
         const osc2 = ctx.createOscillator();
         const osc2Harm = ctx.createOscillator();
         const gain2 = ctx.createGain();
@@ -349,10 +317,6 @@ export const playNotificationChime = () => {
   } catch (_e) {}
 };
 
-/**
- * Plays an urgent multi-cycle alarm chime (3 rings spaced apart)
- * with aggressive haptic vibration to ensure the user notices the alert immediately.
- */
 export const playUrgentAlertChime = (repeatCount: number = 3) => {
   if (typeof window === 'undefined') return;
   let count = 0;
@@ -369,10 +333,6 @@ export const playUrgentAlertChime = (repeatCount: number = 3) => {
   }, 900);
 };
 
-/**
- * Tab Title Flashing Engine
- * Alternates browser tab title with an urgent alarm icon so users in background tabs notice immediately.
- */
 let titleFlashInterval: any = null;
 let originalDocumentTitle: string = '';
 
@@ -398,9 +358,6 @@ export const stopTitleFlashing = () => {
   }
 };
 
-/**
- * Snoozes an appointment reminder for N minutes (default 5 minutes)
- */
 export const snoozeAppointmentAlert = (appointmentId: string, minutes: number = 5) => {
   if (typeof window === 'undefined') return;
   const snoozeUntil = Date.now() + minutes * 60 * 1000;
@@ -408,10 +365,6 @@ export const snoozeAppointmentAlert = (appointmentId: string, minutes: number = 
   stopTitleFlashing();
 };
 
-/**
- * Universal Device Notification Dispatcher with fast Service Worker timeout
- * Configured for maximum Android & Desktop visibility (Heads-up pop-down alert)
- */
 export const sendUniversalDeviceNotification = async (
   title: string,
   body: string,
@@ -427,10 +380,10 @@ export const sendUniversalDeviceNotification = async (
     icon: '/logo.png',
     badge: '/logo.png',
     tag,
-    vibrate: [500, 150, 500, 150, 500, 150, 500], // Strong urgent vibration pattern
-    silent: false, // Forces device notification sound
-    renotify: true, // Wakes screen & forces new alert
-    requireInteraction: true, // Pinned on screen until user interacts with it
+    vibrate: [500, 150, 500, 150, 500, 150, 500],
+    silent: false,
+    renotify: true,
+    requireInteraction: true,
     timestamp: Date.now(),
     actions: [
       { action: 'open', title: 'Buka Dosier / Open' }
@@ -466,10 +419,6 @@ export const sendUniversalDeviceNotification = async (
   return false;
 };
 
-/**
-/**
- * Helper to parse any 12H time string ("09:00 AM", "11:30 pagi", "1:00 PM") to total minutes from midnight (0-1439)
- */
 export const parseTimeToMinutes = (timeStr: string = ''): number => {
   if (!timeStr) return 0;
   const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
@@ -503,11 +452,6 @@ export interface AlertTriggerResult {
   appointment: any;
 }
 
-/**
- * Monitors today's appointments and triggers multi-stage alerts:
- * 1. 15 Minutes Before: Warning reminder
- * 2. 0 Minutes (At Time / NOW): Urgent "Meeting Starting Now" alarm
- */
 export const checkAndDispatchUpcomingAlerts = async (
   appointments: any[],
   lang: 'en' | 'bm' = 'en'
@@ -525,7 +469,6 @@ export const checkAndDispatchUpcomingAlerts = async (
   );
 
   for (const apt of activeTodayApts) {
-    // Check if user snoozed this appointment
     if (typeof window !== 'undefined') {
       const snoozedUntilStr = sessionStorage.getItem(`snoozed-until-${apt.id}`);
       if (snoozedUntilStr && Date.now() < parseInt(snoozedUntilStr, 10)) {
@@ -536,7 +479,6 @@ export const checkAndDispatchUpcomingAlerts = async (
     const aptMins = parseTimeToMinutes(apt.appointment_time);
     const minutesLeft = aptMins - currentTotalMins;
 
-    // ── STAGE 2: EXACT MEETING TIME (0m to -5m / Starting Now) ──
     if (minutesLeft <= 0 && minutesLeft >= -5) {
       const nowKey = `alerted-now-${apt.id}-${todayStr}`;
       const alreadyAlertedNow = typeof window !== 'undefined' && sessionStorage.getItem(nowKey);
@@ -546,17 +488,14 @@ export const checkAndDispatchUpcomingAlerts = async (
           sessionStorage.setItem(nowKey, 'true');
         }
 
-        // 1. Play Urgent 3-Cycle Alarm Sound & Vibration
         playUrgentAlertChime(3);
 
-        // 2. Start Flashing Browser Tab Title
         startTitleFlashing(
           lang === 'bm'
             ? `TEMUJANJI SEKARANG: ${apt.client_name}`
             : `MEETING NOW: ${apt.client_name}`
         );
 
-        // 3. Dispatch High-Priority Heads-Up Device Notification
         const title = lang === 'bm'
           ? `🚨 TEMUJANJI BERMULA SEKARANG: ${apt.client_name}`
           : `🚨 MEETING STARTING NOW: ${apt.client_name}`;
@@ -581,9 +520,7 @@ export const checkAndDispatchUpcomingAlerts = async (
           appointment: apt
         });
       }
-    }
-    // ── STAGE 1: 15 MINUTES BEFORE MEETING (1m to 15m) ──
-    else if (minutesLeft > 0 && minutesLeft <= 15) {
+    } else if (minutesLeft > 0 && minutesLeft <= 15) {
       const earlyKey = `alerted-15m-${apt.id}-${todayStr}`;
       const alreadyAlerted15m = typeof window !== 'undefined' && sessionStorage.getItem(earlyKey);
 
@@ -592,17 +529,14 @@ export const checkAndDispatchUpcomingAlerts = async (
           sessionStorage.setItem(earlyKey, 'true');
         }
 
-        // 1. Play Urgent 3-Cycle Chime
         playUrgentAlertChime(3);
 
-        // 2. Start Flashing Browser Tab Title
         startTitleFlashing(
           lang === 'bm'
             ? `[15 MINIT] ${apt.client_name}`
             : `[15 MINS] ${apt.client_name}`
         );
 
-        // 3. Dispatch Device Notification
         const minText = lang === 'bm' ? `dalam ${minutesLeft} minit` : `in ${minutesLeft} mins`;
 
         const title = lang === 'bm'
@@ -635,10 +569,6 @@ export const checkAndDispatchUpcomingAlerts = async (
   return triggered;
 };
 
-/**
- * Checks all appointments and dispatches device notifications for due follow-ups.
- * Returns triggered follow-ups for in-app alert display.
- */
 export const checkAndDispatchDueFollowUps = async (
   appointments: any[],
   lang: 'en' | 'bm' = 'en'

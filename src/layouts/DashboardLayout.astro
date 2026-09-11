@@ -11,13 +11,8 @@ const { title } = Astro.props;
 ---
 
 <Layout title={title}>
-  <!-- Sidebar component is fixed positioned -->
   <PortalSidebar client:only="react" />
-
-  <!-- Global Real-Time Appointment Alert System (15-min, NOW, Follow-Ups across entire portal) -->
   <PortalAlertSystem client:only="react" />
-
-  <!-- Main Content - Shifted right on desktop to account for fixed sidebar -->
   <main class="min-h-[100dvh] md:ml-64 pb-[calc(5rem+env(safe-area-inset-bottom))] px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 py-6 sm:py-8 md:py-10 animate-fade-in transition-all duration-300">
     <slot />
   </main>

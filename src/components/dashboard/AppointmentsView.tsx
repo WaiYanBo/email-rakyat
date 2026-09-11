@@ -24,7 +24,6 @@ import {
   type AlertTriggerResult
 } from '../../lib/notificationService';
 
-// Re-export parseTimeToMinutes for full backward compatibility across the app
 export { parseTimeToMinutes };
 
 export interface Appointment {
@@ -60,7 +59,6 @@ interface ClientOption {
   type: 'potential' | 'active';
 }
 
-// Standardizes time strictly to 12-Hour format "hh:mm AM/PM"
 export const formatToStandard12H = (timeStr: string = ''): string => {
   if (!timeStr) return '11:00 AM';
   const totalMins = parseTimeToMinutes(timeStr);
@@ -72,7 +70,6 @@ export const formatToStandard12H = (timeStr: string = ''): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
 };
 
-// Formats any Date object to local YYYY-MM-DD string without UTC timezone offset corruption
 export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -80,7 +77,6 @@ export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
   return `${y}-${m}-${day}`;
 };
 
-// Converts appointment date (YYYY-MM-DD) and appointment time string to exact epoch millisecond timestamp
 export const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = ''): number => {
   if (!dateStr) return 0;
   const parts = dateStr.split('-').map(Number);
@@ -92,7 +88,6 @@ export const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = 
 };
 
 export default function AppointmentsView() {
-  // Global synchronized portal language hook
   const { lang, setLang } = usePortalLanguage();
   const { profile, permissions, isITAdmin, loading: loadingPerms } = usePermissions();
 
@@ -104,11 +99,9 @@ export default function AppointmentsView() {
   const [tableMissingError, setTableMissingError] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // View Mode: Month, Week, Day, List
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day' | 'list'>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPIC, setFilterPIC] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -124,21 +117,18 @@ export default function AppointmentsView() {
     return count;
   }, [searchQuery, filterPIC, filterCategory, filterStatus]);
 
-  // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
   const [dayOverviewDate, setDayOverviewDate] = useState<string | null>(null);
 
-  // Follow-Up Prompt & Alert State
   const [followUpModalAppointment, setFollowUpModalAppointment] = useState<Appointment | null>(null);
   const [followUpDate, setFollowUpDate] = useState<string>('');
   const [followUpTime, setFollowUpTime] = useState<string>('10:00 AM');
   const [followUpNotes, setFollowUpNotes] = useState<string>('');
   const [followUpSaving, setFollowUpSaving] = useState<boolean>(false);
 
-  // Real-Time In-App Alert Toasts (15-Min Upcoming Meetings & Due Follow-Ups)
   const [activeAlerts, setActiveAlerts] = useState<AlertTriggerResult[]>([]);
   const [showIosGuide, setShowIosGuide] = useState<boolean>(false);
   const [notifPermissionState, setNotifPermissionState] = useState<NotificationPermission>('default');
@@ -154,7 +144,6 @@ export default function AppointmentsView() {
     stopTitleFlashing();
   };
 
-  // Form State
   const [formData, setFormData] = useState({
     client_name: '',
     client_phone: '+60 ',
@@ -183,7 +172,6 @@ export default function AppointmentsView() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
 
-  // ─── GRAB-STYLE SCHEDULE RIDE TIME PICKER STATE ──────────────────────────
   const [showGrabTimePicker, setShowGrabTimePicker] = useState(false);
   const [pickerHour, setPickerHour] = useState('11');
   const [pickerMinute, setPickerMinute] = useState('00');
@@ -194,7 +182,6 @@ export default function AppointmentsView() {
 
   const toggleGrabTimePicker = () => {
     if (!showGrabTimePicker) {
-      // Parse current typed appointment_time to sync with picker rollers
       const timeStr = formData.appointment_time || '11:00 AM';
       const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm|pagi|petang|malam)?/i);
       if (match) {
@@ -239,7 +226,6 @@ export default function AppointmentsView() {
     setFormData(prev => ({ ...prev, appointment_time: newTime }));
   };
 
-  // Luggage Lock Offset & Spin Helpers (Ensures selected item is ALWAYS centered)
   const getPrevHour = (current: string) => {
     const h = parseInt(current, 10) || 12;
     const prev = h === 1 ? 12 : h - 1;
@@ -257,7 +243,6 @@ export default function AppointmentsView() {
     if (m % 5 === 0) {
       return String((m - 5 + 60) % 60).padStart(2, '0');
     }
-    // Nearest multiple of 5 below (e.g. 11 -> 10)
     return String(Math.floor(m / 5) * 5).padStart(2, '0');
   };
 
@@ -266,7 +251,6 @@ export default function AppointmentsView() {
     if (m % 5 === 0) {
       return String((m + 5) % 60).padStart(2, '0');
     }
-    // Nearest multiple of 5 above (e.g. 11 -> 15)
     return String((Math.ceil(m / 5) * 5) % 60).padStart(2, '0');
   };
 
@@ -294,7 +278,6 @@ export default function AppointmentsView() {
     }
   };
 
-  // Fetch Staff List from profiles for PIC dropdown (excluding resigned)
   useEffect(() => {
     async function loadStaff() {
       try {
@@ -321,13 +304,11 @@ export default function AppointmentsView() {
     loadStaff();
   }, []);
 
-  // Load Client Options (both Potential Clients and Active Clients) for autofill
   useEffect(() => {
     async function loadClients() {
       try {
         const options: ClientOption[] = [];
 
-        // 1. Potential Clients
         const { data: potData } = await supabase
           .from('potential_clients')
           .select('id, full_name, phone_number, ic_number, case_category')
@@ -349,7 +330,6 @@ export default function AppointmentsView() {
           });
         }
 
-        // 2. Active Clients
         const { data: actData } = await supabase
           .from('clients')
           .select('id, NAME, "PHONE NUMBER", "IC NUMBER", "CASE CATEGORY"')
@@ -379,7 +359,6 @@ export default function AppointmentsView() {
     loadClients();
   }, [lang]);
 
-  // Fetch Appointments (Optimized with smart query limit to protect memory & responsiveness)
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -403,7 +382,6 @@ export default function AppointmentsView() {
       }
 
       setAppointments(data || []);
-      // Check and dispatch 15-minute upcoming alerts and due follow-ups
       runAlertsCheck(data || []);
     } catch (err: any) {
       console.error('Error fetching appointments:', err);
@@ -413,7 +391,6 @@ export default function AppointmentsView() {
     }
   };
 
-  // Real-time alert checker for 15-minute upcoming meetings and due follow-ups
   const runAlertsCheck = async (dataList: Appointment[]) => {
     if (!dataList || dataList.length === 0) return;
     try {
@@ -435,7 +412,6 @@ export default function AppointmentsView() {
     }
   };
 
-  // Synchronize local in-page alert banner with global PortalAlertSystem events
   useEffect(() => {
     const handlePortalAlerts = (e: any) => {
       if (e?.detail?.alerts && Array.isArray(e.detail.alerts)) {
@@ -450,18 +426,13 @@ export default function AppointmentsView() {
     return () => window.removeEventListener('portalAppointmentAlert', handlePortalAlerts);
   }, []);
 
-  // Instant test trigger for user verification (pops up immediately with sound chime)
   const handleTriggerTestAlert = async () => {
-    // 1. Immediately unlock mobile audio stream on user touch/click gesture
     unlockAudio();
 
-    // 2. Play urgent 3-cycle alarm chime & trigger physical haptic vibration
     playUrgentAlertChime(3);
 
-    // 3. Start flashing browser tab title
     startTitleFlashing(lang === 'bm' ? 'UJI TEMUJANJI: Siti Nurhaliza' : 'TEST ALERT: Siti Nurhaliza');
 
-    // 4. Request native notification permission on direct user touch if not yet granted
     if (isNotificationSupported() && getNotificationPermission() === 'default') {
       const granted = await requestNotificationPermission();
       setNotifPermissionState(granted ? 'granted' : 'denied');
@@ -498,12 +469,10 @@ export default function AppointmentsView() {
 
     setActiveAlerts(prev => [mockAlert, ...prev]);
 
-    // 5. Trigger the rich Urgent Alert Modal across portal
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('triggerGlobalTestAlert', { detail: mockAlert }));
     }
 
-    // 6. Also dispatch OS device notification if permitted
     sendUniversalDeviceNotification(
       lang === 'bm' ? 'Temujanji dalam 15 minit: Siti Nurhaliza' : 'Meeting in 15 mins: Siti Nurhaliza',
       lang === 'bm' ? 'Konsultasi bersama Azizul pada 11:45 AM (Loan Shark).' : 'Consultation with Azizul at 11:45 AM (Loan Shark).',
@@ -541,7 +510,6 @@ export default function AppointmentsView() {
         }
       }
 
-      // Check if user is on iPhone Safari (not yet added to Home Screen as PWA)
       if (isIOS() && !isStandalonePWA()) {
         const dismissed = sessionStorage.getItem('dismiss_ios_pwa_guide');
         if (!dismissed) {
@@ -551,7 +519,6 @@ export default function AppointmentsView() {
     }
   }, []);
 
-  // Handle cross-navigation from Potential Clients / Active Clients (Autofill & Auto-open Add Modal)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -581,7 +548,6 @@ export default function AppointmentsView() {
         }));
 
         setIsAddModalOpen(true);
-        // Clean URL query params without page reload
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch (e) {
@@ -589,7 +555,6 @@ export default function AppointmentsView() {
     }
   }, []);
 
-  // Format Helper for Group WhatsApp Broadcast
   const generateWhatsAppGroupMessage = (apt: {
     client_name: string;
     appointment_date: string;
@@ -597,7 +562,6 @@ export default function AppointmentsView() {
     case_category: string;
     pic_name: string;
   }) => {
-    // Format date as DD/MM/YYYY
     let formattedDate = apt.appointment_date;
     if (apt.appointment_date && apt.appointment_date.includes('-')) {
       const parts = apt.appointment_date.split('-');
@@ -616,7 +580,6 @@ export default function AppointmentsView() {
 Please take note. Thank you.`;
   };
 
-  // Helper for Client WhatsApp Reminder (Bilingual: English & BM)
   const generateClientReminderMessage = (apt: Appointment) => {
     let formattedDate = apt.appointment_date;
     if (apt.appointment_date && apt.appointment_date.includes('-')) {
@@ -649,7 +612,6 @@ PIC Bertugas: ${apt.pic_name}
 Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terima kasih.`;
   };
 
-  // Helper for Group WhatsApp Broadcast (Rescheduled)
   const generateWhatsAppRescheduleGroupMessage = (apt: {
     client_name: string;
     appointment_date: string;
@@ -675,7 +637,6 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
 Sila kemas kini jadual anda. Please update your schedule. Thank you.`;
   };
 
-  // Helper for Client WhatsApp Reschedule Notice
   const generateClientRescheduleMessage = (apt: Appointment) => {
     let formattedDate = apt.appointment_date;
     if (apt.appointment_date && apt.appointment_date.includes('-')) {
@@ -708,7 +669,6 @@ PIC Bertugas: ${apt.pic_name}
 Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   };
 
-  // 1-Click WhatsApp Group Broadcast Action
   const handleShareToWhatsAppGroup = (apt: {
     client_name: string;
     appointment_date: string;
@@ -727,7 +687,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // 1-Click WhatsApp Group Reschedule Broadcast Action
   const handleShareRescheduleToWhatsAppGroup = (apt: {
     client_name: string;
     appointment_date: string;
@@ -746,7 +705,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // 1-Click Client Reminder Action
   const handleSendClientReminder = (apt: Appointment) => {
     const cleanPhone = (apt.client_phone || '').replace(/[^0-9]/g, '');
     const text = generateClientReminderMessage(apt);
@@ -762,7 +720,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // 1-Click Client Reschedule Notice Action
   const handleSendClientRescheduleNotice = (apt: Appointment) => {
     const cleanPhone = (apt.client_phone || '').replace(/[^0-9]/g, '');
     const text = generateClientRescheduleMessage(apt);
@@ -778,10 +735,8 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Filtered & Chronologically Sorted (12-Hour) Appointments
   const filteredAppointments = useMemo(() => {
     const list = appointments.filter(apt => {
-      // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matches =
@@ -794,17 +749,14 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         if (!matches) return false;
       }
 
-      // Filter PIC
       if (filterPIC !== 'all' && apt.pic_name !== filterPIC) {
         return false;
       }
 
-      // Filter Category
       if (filterCategory !== 'all' && apt.case_category !== filterCategory) {
         return false;
       }
 
-      // Filter Status
       if (filterStatus !== 'all' && apt.status !== filterStatus) {
         return false;
       }
@@ -812,7 +764,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       return true;
     });
 
-    // Strictly 12-Hour Chronological Sort: Date ASC -> Time (Minutes from midnight) ASC -> Client Name ASC
     return list.sort((a, b) => {
       if (a.appointment_date !== b.appointment_date) {
         return a.appointment_date.localeCompare(b.appointment_date);
@@ -823,13 +774,11 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     });
   }, [appointments, searchQuery, filterPIC, filterCategory, filterStatus]);
 
-  // Appointments for the day currently inspected via Month View "+X more" / Day Overview dialog
   const overviewDayApts = useMemo(() => {
     if (!dayOverviewDate) return [];
     return filteredAppointments.filter(a => a.appointment_date === dayOverviewDate);
   }, [dayOverviewDate, filteredAppointments]);
 
-  // Reactive Clash Detection Set (Identifies appointments overlapping within 45 mins for the same PIC, including cross-midnight schedules)
   const clashingAppointmentIds = useMemo(() => {
     const clashSet = new Set<string>();
     const activeList = appointments.filter(a => a.status !== 'Cancelled');
@@ -844,7 +793,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         if (pic1 && pic1 === pic2) {
           const ts1 = getAppointmentTimestamp(a1.appointment_date, a1.appointment_time);
           const ts2 = getAppointmentTimestamp(a2.appointment_date, a2.appointment_time);
-          // Flag overlap across midnight and all calendar boundaries if within 45 minutes
           if (ts1 > 0 && ts2 > 0 && Math.abs(ts1 - ts2) < MS_45_MIN) {
             clashSet.add(a1.id);
             clashSet.add(a2.id);
@@ -856,7 +804,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     return clashSet;
   }, [appointments]);
 
-  // Live Modal Clash Detector (Advisory warning banner for overlapping timeslots within 45 mins, handling midnight transitions)
   const formClashAppointment = useMemo(() => {
     if (!formData.appointment_date || !formData.appointment_time) return null;
     const currentFormTs = getAppointmentTimestamp(formData.appointment_date, formData.appointment_time);
@@ -876,7 +823,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
 
   const todayDateStr = useMemo(() => formatDateToYYYYMMDD(new Date()), []);
 
-  // Appointments requiring follow-up contact today or overdue
   const dueFollowUps = useMemo(() => {
     return appointments.filter((apt) => {
       if (!apt.follow_up_date) return false;
@@ -885,7 +831,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     });
   }, [appointments, todayDateStr]);
 
-  // ─── PENDING OUTCOME RESOLUTION (Scheduled Timestamp + 3-Hour Buffer Elapsed) ──────
   const [hidePendingOutcomeBanner, setHidePendingOutcomeBanner] = useState(false);
   const [expandedPendingOutcome, setExpandedPendingOutcome] = useState(true);
 
@@ -894,7 +839,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     const BUFFER_MS = 3 * 60 * 60 * 1000; // 3 hours window after appointment scheduled start
 
     return appointments.filter(a => {
-      // Only track active consultations that are still awaiting a final outcome
       if (a.status !== 'Scheduled' && a.status !== 'In Progress') return false;
       if (!a.appointment_date) return false;
 
@@ -905,7 +849,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       const hour = Math.floor(scheduledMins / 60);
       const min = scheduledMins % 60;
 
-      // Construct accurate Date object in local time to robustly handle midnight/day-rollovers
       const scheduledDate = new Date(y, m - 1, d, hour, min, 0, 0);
       const thresholdDate = new Date(scheduledDate.getTime() + BUFFER_MS);
 
@@ -913,11 +856,9 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     });
   }, [appointments]);
 
-  // Summary Metrics
   const metrics = useMemo(() => {
     const todayStr = formatDateToYYYYMMDD(new Date());
 
-    // Calculate week start and end
     const now = new Date();
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon = 0
     const startOfWeek = new Date(now);
@@ -950,7 +891,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     };
   }, [appointments]);
 
-  // Date Navigation Helpers
   const handlePrevDate = () => {
     const next = new Date(currentDate);
     if (calendarView === 'month') {
@@ -979,7 +919,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setCurrentDate(new Date());
   };
 
-  // Format Header Title based on active calendar view and selected language
   const headerDateTitle = useMemo(() => {
     const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthsBm = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
@@ -1020,18 +959,15 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     return `${m} ${y}`;
   }, [currentDate, calendarView, lang]);
 
-  // Navigate directly to Day View when clicking on a calendar day
   const handleSelectDayView = (dateStr: string) => {
     if (!dateStr) return;
     const [y, m, d] = dateStr.split('-').map(Number);
     if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
-      // Create local date object at noon (12:00) to prevent any boundary shift
       setCurrentDate(new Date(y, m - 1, d, 12, 0, 0));
       setCalendarView('day');
     }
   };
 
-  // Open Add Modal (Restricted to canManage)
   const handleOpenAddModal = (initialDate?: string) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menambah temujanji.' : 'Access Restricted: You do not have permission to add appointments.');
@@ -1058,7 +994,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setIsAddModalOpen(true);
   };
 
-  // Autofill client fields when chosen from dropdown
   const handleSelectClientOption = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedVal = e.target.value;
     if (!selectedVal) {
@@ -1084,22 +1019,18 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Handle client name manual typing to prevent linked ID desync
   const handleClientNameChange = (newName: string) => {
     setFormData(prev => {
-      // Check if user changed the name away from an autofilled client
       const hadAutofilled = Boolean(prev.client_id || prev.potential_client_id);
       return {
         ...prev,
         client_name: newName,
-        // Clear linked IDs if the user edits or changes the client name to avoid wrong DB relation
         client_id: hadAutofilled && prev.client_name !== newName ? '' : prev.client_id,
         potential_client_id: hadAutofilled && prev.client_name !== newName ? '' : prev.potential_client_id
       };
     });
   };
 
-  // Open Edit Modal (Restricted to canManage)
   const handleOpenEditModal = (apt: Appointment) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menjadual semula atau menyunting temujanji.' : 'Access Restricted: You do not have permission to reschedule or edit appointments.');
@@ -1131,7 +1062,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setIsEditModalOpen(true);
   };
 
-  // Save Appointment Form (Supports both "Save Only" and "Save & Share to WhatsApp Group")
   const handleSubmitForm = async (shareToGroup: boolean = false) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menyimpan perubahan temujanji.' : 'Access Restricted: You do not have permission to save appointment changes.');
@@ -1146,13 +1076,11 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       return;
     }
 
-    // Guard against empty Custom Category
     if (formData.is_custom_category && !formData.custom_category.trim()) {
       alert(lang === 'bm' ? 'Sila taip nama kategori tersuai anda.' : 'Please enter your custom case category name.');
       return;
     }
 
-    // Guard against empty Custom PIC (prevents accidental misassignment)
     if (formData.is_custom_pic && !formData.custom_pic.trim()) {
       alert(lang === 'bm' ? 'Sila taip nama pegawai / PIC tersuai anda.' : 'Please enter the custom officer / PIC name.');
       return;
@@ -1197,7 +1125,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
 
         if (error) throw error;
       } else {
-        // Enforce audit trail metadata on new appointments
         payload.created_by = profile?.id || null;
         payload.created_by_name = profile?.full_name || 'Staff User';
 
@@ -1208,12 +1135,10 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         if (error) throw error;
       }
 
-      // Close modal and refresh list
       setIsAddModalOpen(false);
       setIsEditModalOpen(false);
       await fetchAppointments();
 
-      // If user requested Share to WhatsApp Group, trigger 1-click broadcast immediately!
       if (shareToGroup) {
         if (isEditModalOpen) {
           handleShareRescheduleToWhatsAppGroup({
@@ -1241,7 +1166,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Delete Appointment (Restricted to canManage)
   const handleDelete = (apt: Appointment) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk memadam temujanji.' : 'Access Restricted: You do not have permission to delete appointments.');
@@ -1264,16 +1188,13 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
 
       if (error) throw error;
 
-      // Optimistically remove from state immediately for snappy UX
       setAppointments(prev => prev.filter(a => a.id !== targetId));
       setAppointmentToDelete(null);
       setIsViewModalOpen(false);
 
-      // Trigger success feedback toast
       setDeleteFeedback(clientName);
       setTimeout(() => setDeleteFeedback(null), 3500);
 
-      // Background refresh to ensure consistency
       await fetchAppointments();
     } catch (err: any) {
       console.error('Error deleting appointment:', err);
@@ -1283,14 +1204,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Quick Status Toggle (Restricted to canManage)
   const handleUpdateStatus = async (apt: Appointment, newStatus: Appointment['status']) => {
     if (!canManage) {
       alert(lang === 'bm' ? 'Akses Terhad: Anda tidak mempunyai kebenaran untuk menukar status temujanji.' : 'Access Restricted: You do not have permission to update appointment status.');
       return;
     }
 
-    // If marking as Completed, prompt for Follow-Up Date!
     if (newStatus === 'Completed') {
       setFollowUpModalAppointment(apt);
       const d = new Date();
@@ -1319,7 +1238,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Save Follow-Up Date (or complete without follow-up)
   const handleSaveFollowUp = async (includeFollowUp: boolean) => {
     if (!followUpModalAppointment) return;
     setFollowUpSaving(true);
@@ -1358,7 +1276,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         .eq('id', followUpModalAppointment.id);
 
       if (error && error.message?.toLowerCase().includes('follow_up_')) {
-        // Fallback: SQL migration hasn't been run yet in Supabase
         const notesAppend = includeFollowUp
           ? `\n[Follow-Up: ${followUpDate} ${followUpTime || '10:00 AM'}${followUpNotes ? ' - ' + followUpNotes : ''}]`
           : '';
@@ -1396,7 +1313,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Update follow-up status (mark completed or dismissed)
   const handleMarkFollowUpStatus = async (aptId: string, newFollowUpStatus: 'completed' | 'dismissed') => {
     try {
       const { error } = await supabase
@@ -1413,7 +1329,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // 1-Click WhatsApp Follow-up to Client
   const handleSendWhatsAppFollowUp = (apt: Appointment) => {
     let phone = (apt.client_phone || '').replace(/[^0-9]/g, '');
     if (!phone) {
@@ -1427,7 +1342,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Status Badge Colors with dynamic language localization
   const getStatusBadge = (status: Appointment['status']) => {
     switch (status) {
       case 'Completed':
@@ -1443,7 +1357,6 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     }
   };
 
-  // Copy SQL script for missing table fallback
   const handleCopySQL = () => {
     const sql = `-- Run this in Supabase SQL Editor:
 CREATE TABLE IF NOT EXISTS public.appointments (
@@ -1569,7 +1482,6 @@ END $$;`;
 
   return (
     <div className="flex flex-col h-full w-full space-y-4">
-      {/* iOS Safari Home Screen Setup Guide (Apple Web Push requires Home Screen PWA on iOS 16.4+) */}
       {showIosGuide && (
         <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/10 p-4 shadow-lg backdrop-blur-md transition-all animate-in fade-in slide-in-from-top-3 z-30">
           <div className="flex items-start justify-between gap-3">
@@ -1630,7 +1542,6 @@ END $$;`;
         </div>
       )}
 
-      {/* One-Tap Notification Permission Request Bar (Android / Desktop / PWA) */}
       {isNotificationSupported() && notifPermissionState === 'default' && (
         <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 z-20">
           <div className="flex items-center gap-2.5">
@@ -1654,7 +1565,6 @@ END $$;`;
         </div>
       )}
 
-      {/* Real-Time Floating In-App Alert Banners (15-Min Upcoming Meetings & Due Follow-Ups) */}
       {activeAlerts.length > 0 && (
         <div className="space-y-2.5 z-30">
           {activeAlerts.map((alert) => {
@@ -1764,7 +1674,6 @@ END $$;`;
         </div>
       )}
 
-      {/* Toast Feedback */}
       {copyFeedback && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce border border-emerald-400">
           <div>
@@ -1774,7 +1683,6 @@ END $$;`;
         </div>
       )}
 
-      {/* Delete Feedback Toast */}
       {deleteFeedback && (
         <div className="fixed bottom-6 right-6 z-50 bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 border border-rose-400">
           <div>
@@ -1784,7 +1692,6 @@ END $$;`;
         </div>
       )}
 
-      {/* Missing Table Banner */}
       {tableMissingError && (
         <div className="bg-amber-500/10 border-2 border-dashed border-amber-500/40 rounded-2xl p-4 sm:p-5 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -1804,7 +1711,6 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── PENDING OUTCOME RESOLUTION BANNER (Restricted to canManage users only) ─── */}
       {canManage && pendingOutcomeAppointments.length > 0 && !hidePendingOutcomeBanner && (
         <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm space-y-2.5 sm:space-y-3 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between gap-2">
@@ -1845,7 +1751,6 @@ END $$;`;
             </div>
           </div>
 
-          {/* Pending Appointments Cards List */}
           {expandedPendingOutcome && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 sm:gap-2.5 pt-0.5">
               {pendingOutcomeAppointments.map(apt => (
@@ -1871,9 +1776,7 @@ END $$;`;
                     </div>
                   </div>
 
-                  {/* 1-Click Action Buttons - Responsive 2x2 grid on mobile/narrow, 4 in row on wide */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1">
-                    {/* Selesai / Completed */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'Completed')}
@@ -1882,7 +1785,6 @@ END $$;`;
                       <span className="truncate">{t('appointments', 'quickCompleted', lang)}</span>
                     </button>
 
-                    {/* Batal / Cancelled */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'Cancelled')}
@@ -1891,7 +1793,6 @@ END $$;`;
                       <span className="truncate">{t('appointments', 'quickCancelled', lang)}</span>
                     </button>
 
-                    {/* Tidak Hadir / No-Show */}
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(apt, 'No-Show')}
@@ -1900,7 +1801,6 @@ END $$;`;
                       <span className="truncate">{t('appointments', 'quickNoShow', lang)}</span>
                     </button>
 
-                    {/* Jadual Semula / Reschedule */}
                     <button
                       type="button"
                       onClick={() => handleOpenEditModal(apt)}
@@ -1916,8 +1816,6 @@ END $$;`;
         </div>
       )}
 
-      {/* Metrics Summary Row: Compact Strip on Mobile, 4 Cards on Desktop */}
-      {/* 1. Mobile Compact Metrics Strip */}
       <div className="grid grid-cols-4 sm:hidden bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-2.5 shadow-xs text-center divide-x divide-slate-100 dark:divide-gray-800/80">
         <div className="px-1">
           <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tight block truncate">
@@ -1953,7 +1851,6 @@ END $$;`;
         </div>
       </div>
 
-      {/* 2. Desktop 4-Card Metrics Grid */}
       <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -2004,7 +1901,6 @@ END $$;`;
         </div>
       </div>
 
-      {/* ─── FOLLOW-UP CONSULTATIONS DUE TODAY ALERT BANNER ─── */}
       {dueFollowUps.length > 0 && (
         <div className="bg-cyan-50/80 dark:bg-cyan-950/40 border-2 border-cyan-300 dark:border-cyan-800/80 rounded-2xl p-4 shadow-sm space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyan-200 dark:border-cyan-800/60 pb-2.5">
@@ -2077,13 +1973,9 @@ END $$;`;
         </div>
       )}
 
-      {/* Main Calendar Card Container */}
       <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
-        {/* Top Header & Calendar Controls */}
         <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 space-y-2.5">
-          {/* ─── MOBILE CONTROLS (Spacious 2-Row Layout with Dropdown View Switcher) ─── */}
           <div className="sm:hidden space-y-2.5">
-            {/* Mobile Row 1: Date Navigation + Add Button (if canManage) */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 shadow-xs">
@@ -2117,7 +2009,6 @@ END $$;`;
                 </h3>
               </div>
 
-              {/* + New Button (Protected) */}
               {canManage && (
                 <button
                   onClick={() => handleOpenAddModal()}
@@ -2131,9 +2022,7 @@ END $$;`;
               )}
             </div>
 
-            {/* Mobile Row 2: Clean Dropdown View Selector (Default Month) + Language Switcher */}
             <div className="flex items-center gap-2">
-              {/* Native Dropdown for View Mode */}
               <div className="relative flex-1">
                 <select
                   value={calendarView}
@@ -2152,7 +2041,6 @@ END $$;`;
                 </div>
               </div>
 
-              {/* Language Switcher */}
               <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-0.5 shadow-xs flex-shrink-0 h-9 items-center">
                 <button
                   type="button"
@@ -2170,7 +2058,6 @@ END $$;`;
                 </button>
               </div>
 
-              {/* Test Alert Button (Mobile) */}
               <button
                 type="button"
                 onClick={handleTriggerTestAlert}
@@ -2182,9 +2069,7 @@ END $$;`;
             </div>
           </div>
 
-          {/* ─── DESKTOP CONTROLS (Responsive Header) ─── */}
           <div className="hidden sm:flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-            {/* Row 1 on tablet / Left side on xl: Date Navigation + Date Title + New Appointment (tablet) */}
             <div className="flex items-center justify-between gap-3 w-full xl:w-auto">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="flex items-center gap-1 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
@@ -2219,7 +2104,6 @@ END $$;`;
                 </h3>
               </div>
 
-              {/* + Add Appointment Button (Visible on sm to lg screens in Row 1) */}
               {canManage && (
                 <button
                   onClick={() => handleOpenAddModal()}
@@ -2233,9 +2117,7 @@ END $$;`;
               )}
             </div>
 
-            {/* Row 2 on tablet / Right side on xl: View Switchers + Language Switcher + Alerts + Add Button (xl) */}
             <div className="flex flex-wrap items-center justify-between xl:justify-end gap-2 w-full xl:w-auto">
-              {/* View Mode Tabs */}
               <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
                 <button
                   onClick={() => setCalendarView('month')}
@@ -2264,7 +2146,6 @@ END $$;`;
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Language Switcher */}
                 <div className="flex bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl p-1 shadow-sm flex-shrink-0">
                   <button
                     type="button"
@@ -2284,7 +2165,6 @@ END $$;`;
                   </button>
                 </div>
 
-                {/* Test Alert Button (Desktop) */}
                 <button
                   type="button"
                   onClick={handleTriggerTestAlert}
@@ -2295,7 +2175,6 @@ END $$;`;
                   <span>{lang === 'bm' ? 'Uji Notifikasi (15m)' : 'Test Alert (15m)'}</span>
                 </button>
 
-                {/* + Add Appointment Button (Desktop xl screens) */}
                 {canManage && (
                   <button
                     onClick={() => handleOpenAddModal()}
@@ -2312,9 +2191,7 @@ END $$;`;
           </div>
         </div>
 
-        {/* ─── FILTERS BAR (Expandable on Mobile, Grid on Desktop) ─── */}
         <div className="p-3 sm:p-3.5 border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs">
-          {/* Mobile Filter Header: Search input + Filter toggle button */}
           <div className="sm:hidden space-y-2">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -2344,7 +2221,6 @@ END $$;`;
               </button>
             </div>
 
-            {/* Expandable Filter Dropdowns on Mobile */}
             {showMobileFilters && (
               <div className="pt-2 border-t border-slate-100 dark:border-gray-800 space-y-2 animate-in fade-in slide-in-from-top-1">
                 <div className="grid grid-cols-1 gap-2">
@@ -2389,7 +2265,6 @@ END $$;`;
                   </div>
                 </div>
 
-                {/* Reset Filters on Mobile if any active */}
                 {activeFilterCount > 0 && (
                   <button
                     type="button"
@@ -2408,9 +2283,7 @@ END $$;`;
             )}
           </div>
 
-          {/* Desktop Filter Grid - 2 columns on tablet/laptop, 4 on wide desktop */}
           <div className="hidden sm:grid grid-cols-2 xl:grid-cols-4 gap-2">
-            {/* Search Input */}
             <div className="relative">
               <input
                 type="text"
@@ -2421,7 +2294,6 @@ END $$;`;
               />
             </div>
 
-            {/* PIC Filter */}
             <div>
               <select
                 value={filterPIC}
@@ -2435,7 +2307,6 @@ END $$;`;
               </select>
             </div>
 
-            {/* Category Filter */}
             <div>
               <select
                 value={filterCategory}
@@ -2452,7 +2323,6 @@ END $$;`;
               </select>
             </div>
 
-            {/* Status Filter */}
             <div>
               <select
                 value={filterStatus}
@@ -2470,12 +2340,9 @@ END $$;`;
           </div>
         </div>
 
-        {/* ─── CALENDAR VIEWS BODY ─────────────────────────────────────────── */}
         <div className="flex-1 overflow-auto bg-slate-50/50 dark:bg-black p-2 sm:p-4">
-          {/* 1. MONTH VIEW */}
           {calendarView === 'month' && (
             <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
-              {/* Day Headers (Mon - Sun) */}
               <div className="grid grid-cols-7 border-b border-slate-200 dark:border-gray-800 bg-slate-50/90 dark:bg-gray-900/90 text-center text-xs font-bold text-slate-500 dark:text-zinc-400 py-2.5">
                 <div>{lang === 'bm' ? 'Isn' : 'Mon'}</div>
                 <div>{lang === 'bm' ? 'Sel' : 'Tue'}</div>
@@ -2486,14 +2353,12 @@ END $$;`;
                 <div>{lang === 'bm' ? 'Ahd' : 'Sun'}</div>
               </div>
 
-              {/* 7x5 or 7x6 Calendar Grid */}
               <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-gray-800/60">
                 {(() => {
                   const year = currentDate.getFullYear();
                   const month = currentDate.getMonth();
 
                   const firstDayOfMonth = new Date(year, month, 1);
-                  // Monday = 0, Sunday = 6
                   const startDayIndex = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
 
                   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -2502,7 +2367,6 @@ END $$;`;
                   const cells = [];
                   const todayStr = formatDateToYYYYMMDD(new Date());
 
-                  // 1. Previous Month Spillover Days
                   for (let i = startDayIndex - 1; i >= 0; i--) {
                     const d = daysInPrevMonth - i;
                     cells.push({
@@ -2512,7 +2376,6 @@ END $$;`;
                     });
                   }
 
-                  // 2. Current Month Days
                   for (let d = 1; d <= daysInMonth; d++) {
                     const mPadded = String(month + 1).padStart(2, '0');
                     const dPadded = String(d).padStart(2, '0');
@@ -2525,7 +2388,6 @@ END $$;`;
                     });
                   }
 
-                  // 3. Next Month Spillover Days to complete grid rows
                   const remaining = (7 - (cells.length % 7)) % 7;
                   for (let d = 1; d <= remaining; d++) {
                     cells.push({
@@ -2573,7 +2435,6 @@ END $$;`;
                           )}
                         </div>
 
-                        {/* Appointments Pills in this Day */}
                         <div className="space-y-0.5 sm:space-y-1 flex-1 overflow-hidden">
                           {dayApts.slice(0, 2).map((apt) => {
                             const isClash = clashingAppointmentIds.has(apt.id);
@@ -2604,7 +2465,6 @@ END $$;`;
                             );
                           })}
 
-                          {/* Scheduled Follow-Up Badge for this date */}
                           {dayFollowUps.slice(0, 1).map((fu) => (
                             <div
                               key={`fu-${fu.id}`}
@@ -2646,7 +2506,6 @@ END $$;`;
             </div>
           )}
 
-          {/* 2. WEEK VIEW */}
           {calendarView === 'week' && (
             <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm overflow-x-auto scrollbar-thin">
               <div className="grid grid-cols-7 divide-x divide-slate-200 dark:divide-gray-800 min-w-[700px]">
@@ -2683,7 +2542,6 @@ END $$;`;
 
                     return (
                       <div key={col.dateStr} className="flex flex-col min-h-[450px]">
-                        {/* Day Header - Click to switch to Day View */}
                         <div
                           onClick={() => handleSelectDayView(col.dateStr)}
                           className={`p-3 text-center border-b border-slate-200 dark:border-gray-800 cursor-pointer hover:bg-slate-100/90 dark:hover:bg-zinc-800/80 transition-colors ${col.isToday ? 'bg-indigo-50/80 dark:bg-yellow-500/10' : 'bg-slate-50/60 dark:bg-gray-900/60'}`}
@@ -2695,7 +2553,6 @@ END $$;`;
                           </div>
                         </div>
 
-                        {/* Appointments Stack - Click switches to Day View */}
                         <div
                           onClick={() => handleSelectDayView(col.dateStr)}
                           className="flex-1 p-2 space-y-2 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-zinc-900/50 transition-colors"
@@ -2755,7 +2612,6 @@ END $$;`;
             </div>
           )}
 
-          {/* 3. DAY VIEW */}
           {calendarView === 'day' && (
             <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm p-4 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-3">
@@ -2780,7 +2636,6 @@ END $$;`;
                 )}
               </div>
 
-              {/* Day Schedule Cards */}
               <div className="space-y-3">
                 {(() => {
                   const activeDateStr = formatDateToYYYYMMDD(currentDate);
@@ -2835,7 +2690,6 @@ END $$;`;
                           </div>
                         </div>
 
-                        {/* Details 2-col */}
                         <div className="grid grid-cols-2 gap-2 text-xs bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-slate-100 dark:border-gray-800">
                           <div>
                             <span className="text-[10px] text-slate-400 uppercase font-bold block">
@@ -2857,16 +2711,13 @@ END $$;`;
                           </div>
                         )}
 
-                        {/* Actions Toolbar */}
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/60 dark:border-gray-800/60">
-                          {/* Quick Status Buttons (if canManage) */}
                           {canManage ? (
                             <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <span className="text-[10px] font-bold text-slate-400 uppercase mr-0.5">
                                 {lang === 'bm' ? 'Status:' : 'Status:'}
                               </span>
 
-                              {/* Completed button */}
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(apt, 'Completed')}
@@ -2880,7 +2731,6 @@ END $$;`;
                                 <span>{lang === 'bm' ? 'Selesai' : 'Completed'}</span>
                               </button>
 
-                              {/* No-Show button */}
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(apt, 'No-Show')}
@@ -2894,7 +2744,6 @@ END $$;`;
                                 <span>{t('appointments', 'noShow', lang)}</span>
                               </button>
 
-                              {/* Cancelled button */}
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(apt, 'Cancelled')}
@@ -2908,7 +2757,6 @@ END $$;`;
                                 <span>{t('appointments', 'cancelled', lang)}</span>
                               </button>
 
-                              {/* Revert to Scheduled if not Scheduled */}
                               {apt.status !== 'Scheduled' && (
                                 <button
                                   type="button"
@@ -2924,7 +2772,6 @@ END $$;`;
                             <div />
                           )}
 
-                          {/* Communication, Reschedule & View Dossier Actions */}
                           <div className="flex flex-wrap items-center gap-1.5 ml-auto" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
@@ -2975,10 +2822,8 @@ END $$;`;
             </div>
           )}
 
-          {/* 4. AGENDA / LIST VIEW (Desktop Table + Mobile Cards) */}
           {calendarView === 'list' && (
             <div className="space-y-3">
-              {/* Mobile Cards for Phones */}
               <div className="block md:hidden space-y-3">
                 {filteredAppointments.length > 0 ? (
                   filteredAppointments.map(apt => {
@@ -3034,7 +2879,6 @@ END $$;`;
                           </div>
                         </div>
 
-                        {/* Quick Status Buttons on Mobile Cards */}
                         {canManage && (
                           <div className="flex flex-wrap items-center gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
                             {apt.status !== 'Completed' && (
@@ -3101,7 +2945,6 @@ END $$;`;
                 )}
               </div>
 
-              {/* Desktop Table View */}
               <div className="hidden md:block bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -3217,11 +3060,9 @@ END $$;`;
         </div>
       </div>
 
-      {/* ─── ADD / EDIT APPOINTMENT MODAL ─────────────────────────────────── */}
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs">
           <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            {/* Modal Header (Fixed at top) */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 px-5 py-4 flex-shrink-0 bg-white dark:bg-gray-900">
               <div className="flex items-center gap-2.5">
                 
@@ -3243,9 +3084,7 @@ END $$;`;
               </button>
             </div>
 
-            {/* Scrollable Modal Body */}
             <div className="p-5 space-y-4 overflow-y-auto flex-1 overscroll-contain">
-              {/* Quick Autofill Selector from Database */}
               {!isEditModalOpen && clientOptions.length > 0 && (
                 <div className="bg-indigo-50/50 dark:bg-yellow-500/5 p-3 rounded-xl border border-indigo-100 dark:border-yellow-500/20 space-y-1">
                   <label className="block text-[11px] font-bold text-indigo-900 dark:text-yellow-400 uppercase tracking-wide">
@@ -3266,9 +3105,7 @@ END $$;`;
                 </div>
               )}
 
-              {/* Form Fields */}
               <div className="space-y-3.5 text-xs">
-                {/* Client Name */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
                     {t('appointments', 'clientName', lang)} <span className="text-rose-500">*</span>
@@ -3283,7 +3120,6 @@ END $$;`;
                   />
                 </div>
 
-                {/* Phone & Location in 2 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
@@ -3314,7 +3150,6 @@ END $$;`;
                   </div>
                 </div>
 
-                {/* Date & Time */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
@@ -3346,7 +3181,6 @@ END $$;`;
                       </button>
                     </div>
 
-                    {/* Clicking anywhere on this input or box opens the clock immediately */}
                     <div
                       onClick={() => { if (!showGrabTimePicker) toggleGrabTimePicker(); }}
                       className="relative cursor-pointer group"
@@ -3377,7 +3211,6 @@ END $$;`;
                   </div>
                 </div>
 
-                {/* Quick Time Pills under Date & Time */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[10px] text-slate-400 font-bold uppercase">
                     {t('appointments', 'commonTimes', lang)}
@@ -3397,7 +3230,6 @@ END $$;`;
                   ))}
                 </div>
 
-                {/* Category & PIC */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
@@ -3467,7 +3299,6 @@ END $$;`;
                   </div>
                 </div>
 
-                {/* Status */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
                     {t('appointments', 'status', lang)}
@@ -3485,7 +3316,6 @@ END $$;`;
                   </select>
                 </div>
 
-                {/* Notes */}
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400">
                     {t('appointments', 'notes', lang)}
@@ -3499,7 +3329,6 @@ END $$;`;
                   />
                 </div>
 
-                {/* Live Non-blocking Time Clash Advisory Banner */}
                 {formClashAppointment && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200 animate-in fade-in">
                     
@@ -3516,7 +3345,6 @@ END $$;`;
                   </div>
                 )}
 
-                {/* Template Preview Box */}
                 <div className="bg-slate-50 dark:bg-gray-800/60 p-3 rounded-xl border border-slate-200 dark:border-gray-700 space-y-1">
                   <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                     {t('appointments', 'whatsappGroupFormat', lang)}
@@ -3534,7 +3362,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* Modal Actions (Fixed at bottom) */}
             <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 flex-shrink-0 bg-slate-50 dark:bg-gray-900/90 flex flex-col sm:flex-row items-center justify-between gap-2">
               <button
                 type="button"
@@ -3545,7 +3372,6 @@ END $$;`;
               </button>
 
               <div className="flex items-center gap-2 w-full sm:w-auto flex-1 sm:justify-end">
-                {/* Save Only / Save Reschedule */}
                 <button
                   type="button"
                   disabled={submitting}
@@ -3555,7 +3381,6 @@ END $$;`;
                   {isEditModalOpen ? t('appointments', 'saveReschedule', lang) : t('appointments', 'saveOnly', lang)}
                 </button>
 
-                {/* 1-Click Save & Share WhatsApp / Reschedule & Share WhatsApp */}
                 <button
                   type="button"
                   disabled={submitting}
@@ -3570,7 +3395,6 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── CLIENT APPOINTMENT TIME PICKER MODAL (SIGNATURE GOLDEN THEME) ─── */}
       {showGrabTimePicker && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150"
@@ -3580,7 +3404,6 @@ END $$;`;
             className="bg-slate-900 border border-amber-500/40 rounded-3xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-3.5 animate-in zoom-in-95 duration-200 text-white overscroll-contain flex flex-col shadow-amber-500/10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with Signature Golden Theme */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-shrink-0">
               <div className="flex items-center gap-2.5">
                 
@@ -3607,7 +3430,6 @@ END $$;`;
               </button>
             </div>
 
-            {/* Editable Digital Time Display (Recessed Pill Dial) */}
             <div className="bg-slate-950/90 p-3 rounded-2xl border border-amber-500/20 text-center flex-shrink-0 shadow-inner">
               <div className="text-[10px] font-bold text-amber-400/90 uppercase tracking-widest mb-1.5 flex items-center justify-center gap-1.5">
                 
@@ -3643,7 +3465,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* ─── LUGGAGE LOCK 3D TUMBLER WHEELS (SIGNATURE GOLDEN THEME) ─── */}
             <div className="space-y-1 flex-shrink-0">
               <div className="flex items-center justify-between text-[9px] font-extrabold text-amber-400/80 uppercase tracking-wider px-1">
                 <span>{lang === 'bm' ? 'Pilihan Masa' : 'Time Selection'}</span>
@@ -3651,7 +3472,6 @@ END $$;`;
               </div>
 
               <div className="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
-                {/* 1. Column Headers (Positioned cleanly at the top of each drum) */}
                 <div className="grid grid-cols-3 gap-2 mb-1.5 text-center">
                   <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
                     {lang === 'bm' ? 'Jam' : 'Hour'}
@@ -3664,7 +3484,6 @@ END $$;`;
                   </span>
                 </div>
 
-                {/* 2. Top Stepper Row (+) */}
                 <div className="grid grid-cols-3 gap-2 mb-1.5">
                   <button
                     type="button"
@@ -3692,12 +3511,9 @@ END $$;`;
                   </button>
                 </div>
 
-                {/* 3. Drum Tumbler Box - Exactly 3 rows: Top (32px), Center (44px), Bottom (32px) = 108px Total */}
                 <div className="relative grid grid-cols-3 gap-2 h-[108px] bg-slate-900/60 rounded-xl border border-slate-800/60 overflow-hidden">
-                  {/* SIGNATURE GOLDEN SELECTION LENS BAR (Clean lens without colliding edge dots) */}
                   <div className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 h-11 border-y-2 border-amber-400 bg-amber-400/15 rounded-xl z-10 shadow-lg shadow-amber-500/20" />
 
-                  {/* HOUR DRUM */}
                   <div
                     onWheel={(e) => {
                       e.preventDefault();
@@ -3726,7 +3542,6 @@ END $$;`;
                     </button>
                   </div>
 
-                  {/* MINUTE DRUM */}
                   <div
                     onWheel={(e) => {
                       e.preventDefault();
@@ -3755,7 +3570,6 @@ END $$;`;
                     </button>
                   </div>
 
-                  {/* PERIOD DRUM (Centered font-mono typography matching Hour & Minute) */}
                   <div
                     onWheel={(e) => {
                       e.preventDefault();
@@ -3788,7 +3602,6 @@ END $$;`;
                   </div>
                 </div>
 
-                {/* 4. Bottom Stepper Row (-) */}
                 <div className="grid grid-cols-3 gap-2 mt-1.5 text-center">
                   <button
                     type="button"
@@ -3818,7 +3631,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* Popular Shortcuts (Golden Accents + Complete Malaysian Business Slot List) */}
             <div className="space-y-1.5 flex-shrink-0">
               <span className="text-[9px] font-bold text-amber-400/80 uppercase tracking-wider block">
                 {lang === 'bm' ? 'Slot Paling Popular' : 'Popular Time Slots'}
@@ -3840,7 +3652,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* Action Buttons: Batal / Cancel & Selesai / Done */}
             <div className="flex items-center gap-2 w-full flex-shrink-0">
               <button
                 type="button"
@@ -3861,11 +3672,9 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── DAY OVERVIEW MODAL (Inspecting all appointments for a day from Month View "+X more") ─── */}
       {dayOverviewDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs">
           <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-gray-800 p-4 sm:p-5 flex-shrink-0 bg-slate-50/50 dark:bg-gray-900">
               <div>
                 <div className="flex items-center gap-2">
@@ -3892,7 +3701,6 @@ END $$;`;
               </button>
             </div>
 
-            {/* Scrollable Appointment List */}
             <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1 overscroll-contain">
               {overviewDayApts.length === 0 ? (
                 <div className="py-12 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500">
@@ -3949,7 +3757,6 @@ END $$;`;
                         </div>
                       </div>
 
-                      {/* Action buttons inside Day Overview item */}
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/60 dark:border-gray-700/50">
                         <span className="text-[11px] font-bold text-indigo-600 dark:text-yellow-400 flex items-center gap-1 group-hover:underline">
                           
@@ -3993,7 +3800,6 @@ END $$;`;
               )}
             </div>
 
-            {/* Footer with switch to Day Timeline */}
             <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 bg-slate-50 dark:bg-gray-900/90 flex items-center justify-between gap-2 flex-shrink-0">
               <button
                 type="button"
@@ -4018,11 +3824,9 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── VIEW APPOINTMENT DOSSIER MODAL ──────────────────────────────── */}
       {isViewModalOpen && activeAppointment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs">
           <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            {/* Header (Fixed) */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-gray-800 p-4 sm:p-5 flex-shrink-0 bg-white dark:bg-gray-900">
               <div>
                 <div className="flex items-center gap-2">
@@ -4043,9 +3847,7 @@ END $$;`;
               </button>
             </div>
 
-            {/* Scrollable Body */}
             <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1 overscroll-contain">
-              {/* Schedule Details Grid */}
               <div className="grid grid-cols-2 gap-2.5 text-xs">
                 <div className="bg-slate-50 dark:bg-gray-800/40 p-3 rounded-xl">
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">
@@ -4081,7 +3883,6 @@ END $$;`;
                 </div>
               </div>
 
-              {/* Clash Alert in View Modal */}
               {clashingAppointmentIds.has(activeAppointment.id) && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
                   
@@ -4098,7 +3899,6 @@ END $$;`;
                 </div>
               )}
 
-              {/* Contact Info */}
               <div className="flex items-center justify-between text-xs bg-indigo-50/50 dark:bg-yellow-500/5 p-3 rounded-xl border border-indigo-100 dark:border-yellow-500/20">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">
@@ -4128,14 +3928,12 @@ END $$;`;
                 )}
               </div>
 
-              {/* Notes */}
               {activeAppointment.notes && (
                 <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 p-3 rounded-xl text-xs text-slate-700 dark:text-zinc-300 italic">
                   "{activeAppointment.notes}"
                 </div>
               )}
 
-              {/* Follow-Up Details if scheduled */}
               {activeAppointment.follow_up_date && (
                 <div className="p-3 bg-cyan-50/70 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 rounded-xl space-y-1">
                   <div className="flex items-center justify-between">
@@ -4157,7 +3955,6 @@ END $$;`;
                 </div>
               )}
 
-              {/* Quick WhatsApp Actions */}
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => handleShareToWhatsAppGroup(activeAppointment)}
@@ -4185,7 +3982,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* Footer Status & Edit Actions (Protected) */}
             <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-gray-800 flex-shrink-0 bg-slate-50 dark:bg-gray-900/90 flex items-center justify-between gap-2">
               {canManage ? (
                 <>
@@ -4266,11 +4062,9 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── SCHEDULE FOLLOW-UP CONSULTATION MODAL ─── */}
       {followUpModalAppointment && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
             <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-gray-800 pb-3">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
@@ -4289,7 +4083,6 @@ END $$;`;
               </button>
             </div>
 
-            {/* Client Context Box */}
             <div className="p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/60 rounded-xl">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-black text-slate-900 dark:text-white">
@@ -4304,9 +4097,7 @@ END $$;`;
               </div>
             </div>
 
-            {/* Form Fields */}
             <div className="space-y-3.5 text-xs">
-              {/* Follow-Up Date & Quick Presets */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 dark:text-zinc-300">
                   {t('appointments', 'followUpDate', lang)} <span className="text-rose-500">*</span>
@@ -4318,7 +4109,6 @@ END $$;`;
                   className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
 
-                {/* Quick Date Presets */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {[
                     { label: t('appointments', 'quickPreset3d', lang), days: 3 },
@@ -4342,7 +4132,6 @@ END $$;`;
                 </div>
               </div>
 
-              {/* Follow-Up Time */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 dark:text-zinc-300">
                   {t('appointments', 'followUpTime', lang)}
@@ -4356,7 +4145,6 @@ END $$;`;
                 />
               </div>
 
-              {/* Follow-Up Notes / Purpose */}
               <div className="space-y-1.5">
                 <label className="font-extrabold text-slate-700 dark:text-zinc-300">
                   {t('appointments', 'followUpNotes', lang)}
@@ -4371,7 +4159,6 @@ END $$;`;
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="pt-3 border-t border-slate-100 dark:border-gray-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
               <button
                 type="button"
@@ -4405,7 +4192,6 @@ END $$;`;
         </div>
       )}
 
-      {/* ─── IN-APP DELETE CONFIRMATION MODAL ─── */}
       {appointmentToDelete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">

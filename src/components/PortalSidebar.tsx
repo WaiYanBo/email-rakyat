@@ -78,7 +78,6 @@ export default function PortalSidebar() {
     }
     setLoading(false);
 
-    // Automatically prompt for notification permission as soon as staff uses ER Portal Web App
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       try {
         Notification.requestPermission().catch(() => {});
@@ -99,7 +98,6 @@ export default function PortalSidebar() {
     };
   }, []);
 
-  // Load read notifications from localStorage (scoped per user profile)
   useEffect(() => {
     if (!profile?.id) return;
     try {
@@ -135,7 +133,6 @@ export default function PortalSidebar() {
       const list: any[] = [];
       const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-      // 1. Fetch latest announcements (last 14 days)
       const { data: annData } = await supabase
         .from('announcements')
         .select('*')
@@ -160,9 +157,7 @@ export default function PortalSidebar() {
         });
       }
 
-      // 2. Fetch leave requests
       if (isApprover) {
-        // Management: fetch pending leaves
         const { data: pendingLeaves } = await supabase
           .from('leave_requests')
           .select('*, profiles!profile_id(full_name)')
@@ -186,7 +181,6 @@ export default function PortalSidebar() {
         }
       }
 
-      // Fetch own processed leaves (Approved / Rejected) - last 14 days only
       const { data: myLeaves } = await supabase
         .from('leave_requests')
         .select('*, approver:profiles!approved_by(full_name)')
@@ -214,7 +208,6 @@ export default function PortalSidebar() {
         });
       }
 
-      // 3. Fetch 5 most recent designated cases (where ip_pem1 = profile.name)
       const { data: casesData } = await supabase
         .from('clients')
         .select('id, NAME, "CASE CATEGORY", DATE')
@@ -245,7 +238,6 @@ export default function PortalSidebar() {
         });
       }
 
-      // 4. Fetch due appointment follow-ups (follow_up_date <= today and pending)
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         const { data: followUps } = await supabase
@@ -276,11 +268,8 @@ export default function PortalSidebar() {
             }
           });
         }
-      } catch (fErr) {
-        // Table or column might not exist yet before migration
-      }
+      } catch (fErr) {}
 
-      // Sort notifications by date descending
       list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setNotifications(list);
     } catch (err) {
@@ -582,7 +571,6 @@ export default function PortalSidebar() {
             </div>
 
             <div className="flex items-center gap-1 notification-container">
-              {/* Notification Bell Icon */}
               <div className="relative">
                 <button
                   onClick={() => setIsNotificationOpen(!isNotificationOpen)}
@@ -746,7 +734,6 @@ export default function PortalSidebar() {
             </div>
 
             <div className="flex-1 max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-gray-800/80 scrollbar-thin bg-white dark:bg-zinc-950">
-              {/* Section 1: Important & Actions */}
               <div>
                 <div className="px-4 py-2 bg-rose-50/50 dark:bg-rose-950/10 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-455 border-b border-rose-100/50 dark:border-rose-950/20 flex items-center gap-1.5 select-none">
                   <span className="text-sm">⚠️</span>
@@ -761,7 +748,6 @@ export default function PortalSidebar() {
                 )}
               </div>
 
-              {/* Section 2: General Announcements */}
               <div>
                 <div className="px-4 py-2 bg-slate-50 dark:bg-zinc-900/60 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-gray-800 flex items-center gap-1.5 select-none">
                   <span className="text-sm">📢</span>
@@ -780,11 +766,9 @@ export default function PortalSidebar() {
         );
       })()}
 
-      {/* Notification Detail Modal */}
       {selectedNotification && (
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
           <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            {/* Header */}
             <div className="p-5 border-b border-slate-100 dark:border-gray-800/80 flex items-start justify-between gap-3 bg-slate-50/70 dark:bg-zinc-900/50">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-500 flex items-center justify-center text-xl flex-shrink-0 font-bold border border-indigo-100 dark:border-yellow-500/20">
@@ -810,14 +794,12 @@ export default function PortalSidebar() {
               </button>
             </div>
 
-            {/* Body */}
             <div className="p-6 overflow-y-auto space-y-4 text-xs md:text-sm text-slate-700 dark:text-zinc-200 leading-relaxed font-medium">
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/60 dark:border-gray-800/60 font-semibold text-slate-800 dark:text-zinc-100 whitespace-pre-wrap">
                 {selectedNotification.content || selectedNotification.message}
               </div>
             </div>
 
-            {/* Footer */}
             <div className="p-4 border-t border-slate-100 dark:border-gray-800/80 bg-slate-50/70 dark:bg-zinc-900/50 flex items-center justify-between gap-3">
               <button
                 onClick={() => setSelectedNotification(null)}

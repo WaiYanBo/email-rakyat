@@ -22,7 +22,6 @@ export default function PortalAlertSystem() {
       const d = String(now.getDate()).padStart(2, '0');
       const todayStr = `${y}-${m}-${d}`;
 
-      // Fetch active appointments for today or due follow-ups
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
@@ -39,11 +38,9 @@ export default function PortalAlertSystem() {
 
       const allTriggered = [...upcoming, ...followUps];
       if (allTriggered.length > 0) {
-        // Pop up the most urgent alert on screen immediately
         const highestPriority = allTriggered.find(a => a.type === 'starting_now') || allTriggered[0];
         setModalAlert(highestPriority);
 
-        // Notify local view if on /portal/temujanji
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('portalAppointmentAlert', {
             detail: { alerts: allTriggered }
@@ -56,17 +53,14 @@ export default function PortalAlertSystem() {
   };
 
   useEffect(() => {
-    // Initial check after short delay to let session establish
     const initialTimer = setTimeout(() => {
       fetchAndCheckAlerts();
     }, 2500);
 
-    // 20-Second heartbeat interval for real-time minute accuracy
     const interval = setInterval(() => {
       fetchAndCheckAlerts();
     }, 20000);
 
-    // Listen for custom test alerts triggered by user
     const handleTestAlert = (e: any) => {
       if (e?.detail) {
         setModalAlert(e.detail);
@@ -74,7 +68,6 @@ export default function PortalAlertSystem() {
     };
     window.addEventListener('triggerGlobalTestAlert', handleTestAlert);
 
-    // Clear flashing tab title when user refocuses or clicks window
     const handleFocus = () => {
       if (!modalAlert) {
         stopTitleFlashing();
@@ -132,7 +125,6 @@ export default function PortalAlertSystem() {
             : 'bg-slate-950 border-cyan-500/50 shadow-cyan-950/50'
         }`}
       >
-        {/* Top Glowing Urgency Header Bar */}
         <div
           className={`px-5 py-4 flex items-center justify-between border-b ${
             isStartingNow
@@ -170,7 +162,6 @@ export default function PortalAlertSystem() {
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-6 space-y-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -223,7 +214,6 @@ export default function PortalAlertSystem() {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
             <button
               type="button"

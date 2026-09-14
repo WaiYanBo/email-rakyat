@@ -49,13 +49,8 @@ export function sanitizeInput(input: string, maxLength = MAX_INPUT_LENGTH): stri
     .replace(/javascript\s*:/gi, '')
     .replace(/data\s*:/gi, '')
     .replace(/vbscript\s*:/gi, '')
-    // Remove common SQLi patterns
-    .replace(/(['";\\]|--|\b(OR|AND)\b\s+\d+\s*=\s*\d+)/gi, '')
     // Remove null bytes
-    .replace(/\0/g, '')
-    // Encode remaining angle brackets (belt-and-suspenders)
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/\0/g, '');
 }
 
 /**

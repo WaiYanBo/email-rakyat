@@ -264,8 +264,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
   const getEffectivePermission = (userId: string, module: PermissionKey): boolean => {
     const userKey = `user_${userId}`;
     const userVal = permissionsMatrix[userKey]?.permissions?.[module];
-    if (userVal === true || userVal === false) {
-      if (userVal === true) return true;
+    if (typeof userVal === 'boolean') {
+      return userVal;
     }
 
     const userObj = users.find(u => u.id === userId);
@@ -273,12 +273,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     if (userObj?.department) {
       const deptKey = `dept_${userObj.department}`;
       const dVal = permissionsMatrix[deptKey]?.permissions?.[module];
-      if (dVal === true || dVal === false) {
+      if (typeof dVal === 'boolean') {
         deptVal = dVal;
       }
     }
 
-    const effective = userVal !== null && userVal !== undefined ? userVal : (deptVal !== null ? deptVal : (DEFAULT_DEPT_PERMISSIONS[module] ?? false));
+    const effective = deptVal !== null ? deptVal : (DEFAULT_DEPT_PERMISSIONS[module] ?? false);
     if (effective) return true;
 
     // If checking a view permission, also check if user has the corresponding manage permission

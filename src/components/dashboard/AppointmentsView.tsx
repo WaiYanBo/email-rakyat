@@ -23,8 +23,7 @@ import {
   parseTimeToMinutes,
   type AlertTriggerResult
 } from '../../lib/notificationService';
-
-export { parseTimeToMinutes };
+import { downloadAppointmentIcs } from '../../utils/calendarExport';
 
 export interface Appointment {
   id: string;
@@ -59,7 +58,7 @@ interface ClientOption {
   type: 'potential' | 'active';
 }
 
-export const formatToStandard12H = (timeStr: string = ''): string => {
+const formatToStandard12H = (timeStr: string = ''): string => {
   if (!timeStr) return '11:00 AM';
   const totalMins = parseTimeToMinutes(timeStr);
   let h = Math.floor(totalMins / 60);
@@ -70,14 +69,14 @@ export const formatToStandard12H = (timeStr: string = ''): string => {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
 };
 
-export const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
+const formatDateToYYYYMMDD = (d: Date = new Date()): string => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
 
-export const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = ''): number => {
+const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = ''): number => {
   if (!dateStr) return 0;
   const parts = dateStr.split('-').map(Number);
   if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return 0;
@@ -425,60 +424,6 @@ export default function AppointmentsView() {
     window.addEventListener('portalAppointmentAlert', handlePortalAlerts);
     return () => window.removeEventListener('portalAppointmentAlert', handlePortalAlerts);
   }, []);
-
-  const handleTriggerTestAlert = async () => {
-    unlockAudio();
-
-    playUrgentAlertChime(3);
-
-    startTitleFlashing(lang === 'bm' ? 'UJI TEMUJANJI: Siti Nurhaliza' : 'TEST ALERT: Siti Nurhaliza');
-
-    if (isNotificationSupported() && getNotificationPermission() === 'default') {
-      const granted = await requestNotificationPermission();
-      setNotifPermissionState(granted ? 'granted' : 'denied');
-    } else if (!isNotificationSupported() && isIOS() && !isStandalonePWA()) {
-      setShowIosGuide(true);
-    }
-
-    const mockApt: Appointment = {
-      id: `test-${Date.now()}`,
-      client_name: 'Siti Nurhaliza (Sample Client)',
-      appointment_date: formatDateToYYYYMMDD(new Date()),
-      appointment_time: '11:45 AM',
-      case_category: 'Loan Shark',
-      pic_name: 'Azizul',
-      client_phone: '+60123456789',
-      location: 'Office Consultation',
-      status: 'Scheduled',
-      notes: 'Sample test consultation 15-minute reminder'
-    };
-
-    const mockAlert: AlertTriggerResult = {
-      id: `test-alert-${Date.now()}`,
-      type: 'upcoming_15m',
-      clientName: mockApt.client_name,
-      picName: mockApt.pic_name,
-      timeStr: mockApt.appointment_time,
-      category: mockApt.case_category,
-      phone: mockApt.client_phone,
-      location: mockApt.location,
-      minutesLeft: 15,
-      notes: mockApt.notes,
-      appointment: mockApt
-    };
-
-    setActiveAlerts(prev => [mockAlert, ...prev]);
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('triggerGlobalTestAlert', { detail: mockAlert }));
-    }
-
-    sendUniversalDeviceNotification(
-      lang === 'bm' ? 'Temujanji dalam 15 minit: Siti Nurhaliza' : 'Meeting in 15 mins: Siti Nurhaliza',
-      lang === 'bm' ? 'Konsultasi bersama Azizul pada 11:45 AM (Loan Shark).' : 'Consultation with Azizul at 11:45 AM (Loan Shark).',
-      `test-alert-${Date.now()}`
-    );
-  };
 
   const handleRequestPermission = async () => {
     unlockAudio();
@@ -1637,6 +1582,19 @@ END $$;`;
                         {lang === 'bm' ? 'Buka Dosier' : 'Open Dossier'}
                       </button>
                     )}
+                    {alert.appointment && (
+                      <button
+                        type="button"
+                        onClick={() => downloadAppointmentIcs(alert.appointment)}
+                        title={lang === 'bm' ? 'Tetapkan penggera di kalendar telefon (iPhone/Android)' : 'Set native phone calendar alarm (iPhone/Android)'}
+                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                      >
+                        <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.253M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                        </svg>
+                        <span>{lang === 'bm' ? 'Penggera' : 'Alarm'}</span>
+                      </button>
+                    )}
                     {alert.phone && (
                       <a
                         href={`https://wa.me/${alert.phone.replace(/[^0-9]/g, '')}`}
@@ -2057,15 +2015,6 @@ END $$;`;
                   BM
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={handleTriggerTestAlert}
-                className="h-9 px-2.5 rounded-xl text-xs font-bold border border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
-                title={lang === 'bm' ? 'Uji Penggera 15 Minit' : 'Test 15-Min Alert'}
-              >
-                {lang === 'bm' ? 'Uji Notifikasi' : 'Test Alert'}
-              </button>
             </div>
           </div>
 
@@ -2164,16 +2113,6 @@ END $$;`;
                     BM
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleTriggerTestAlert}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
-                  title={lang === 'bm' ? 'Uji Penggera 15 Minit' : 'Test 15-Min Alert'}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                  <span>{lang === 'bm' ? 'Uji Notifikasi (15m)' : 'Test Alert (15m)'}</span>
-                </button>
 
                 {canManage && (
                   <button

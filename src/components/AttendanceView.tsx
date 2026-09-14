@@ -5,12 +5,66 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import { exportAttendanceToExcel } from '../utils/excelExport';
+
+const getLocalDateString = (d: Date = new Date()): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateSafe = (dateStr: any, locale: string) => {
+  if (!dateStr) return '-';
+  try {
+    const s = String(dateStr).trim();
+    const parts = s.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  } catch (e) {}
+  return String(dateStr);
+};
+
+const formatTimeSafe = (timeStr: any) => {
+  if (!timeStr) return '-';
+  try {
+    const s = String(timeStr).trim();
+    if (s.includes(':') && !s.includes('T')) {
+      const parts = s.split(':');
+      if (parts.length >= 2) {
+        const hh = parseInt(parts[0], 10);
+        const mm = parts[1];
+        if (!isNaN(hh)) {
+          const ampm = hh >= 12 ? 'PM' : 'AM';
+          const displayHh = hh % 12 || 12;
+          return `${String(displayHh).padStart(2, '0')}:${mm} ${ampm}`;
+        }
+      }
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+  } catch (e) {}
+  return String(timeStr);
+};
+
 export default function AttendanceView({ personalOnly = false }: { personalOnly?: boolean }) {
   const { profile, permissions, isITAdmin, loading: permsLoading } = usePermissions();
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(getLocalDateString().slice(0, 7)); // YYYY-MM
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'date' | 'month'>(personalOnly ? 'month' : 'date');
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
@@ -39,7 +93,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
       return;
     }
     setEditingRecord(record);
-    setEditDate(record.date || new Date().toISOString().split('T')[0]);
+    setEditDate(record.date || getLocalDateString());
 
     let clockInStr = '';
     if (record.clock_in_time) {
@@ -236,8 +290,8 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
             while (currentDate <= endDate) {
               const dayOfWeek = currentDate.getDay();
               // Only inject for weekdays (Mon-Fri)
-              if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                const dateStr = currentDate.toISOString().split('T')[0];
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                  const dateStr = getLocalDateString(currentDate);
                 
                 // Only add if it falls within the current filter range
                 let isWithinFilter = false;
@@ -595,52 +649,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                   </div>
                 ) : (
                   filteredRecords.map((record) => {
-                    const formatDateSafe = (dateStr: any, locale: string) => {
-                      if (!dateStr) return '-';
-                      try {
-                        const s = String(dateStr).trim();
-                        const parts = s.split('-');
-                        if (parts.length === 3) {
-                          const year = parseInt(parts[0], 10);
-                          const month = parseInt(parts[1], 10) - 1;
-                          const day = parseInt(parts[2], 10);
-                          const d = new Date(year, month, day);
-                          if (!isNaN(d.getTime())) {
-                            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-                          }
-                        }
-                        const d = new Date(s);
-                        if (!isNaN(d.getTime())) {
-                          return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-                        }
-                      } catch (e) {}
-                      return String(dateStr);
-                    };
-
-                    const formatTimeSafe = (timeStr: any) => {
-                      if (!timeStr) return '-';
-                      try {
-                        const s = String(timeStr).trim();
-                        if (s.includes(':') && !s.includes('T')) {
-                          const parts = s.split(':');
-                          if (parts.length >= 2) {
-                            const hh = parseInt(parts[0], 10);
-                            const mm = parts[1];
-                            if (!isNaN(hh)) {
-                              const ampm = hh >= 12 ? 'PM' : 'AM';
-                              const displayHh = hh % 12 || 12;
-                              return `${String(displayHh).padStart(2, '0')}:${mm} ${ampm}`;
-                            }
-                          }
-                        }
-                        const d = new Date(s);
-                        if (!isNaN(d.getTime())) {
-                          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        }
-                      } catch (e) {}
-                      return String(timeStr);
-                    };
-
                     return (
                       <div
                         key={record.id}
@@ -796,52 +804,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                       </tr>
                     ) : (
                       filteredRecords.map((record) => {
-                        const formatDateSafe = (dateStr: any, locale: string) => {
-                          if (!dateStr) return '-';
-                          try {
-                            const s = String(dateStr).trim();
-                            const parts = s.split('-');
-                            if (parts.length === 3) {
-                              const year = parseInt(parts[0], 10);
-                              const month = parseInt(parts[1], 10) - 1;
-                              const day = parseInt(parts[2], 10);
-                              const d = new Date(year, month, day);
-                              if (!isNaN(d.getTime())) {
-                                return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-                              }
-                            }
-                            const d = new Date(s);
-                            if (!isNaN(d.getTime())) {
-                              return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-                            }
-                          } catch (e) {}
-                          return String(dateStr);
-                        };
-
-                        const formatTimeSafe = (timeStr: any) => {
-                          if (!timeStr) return '-';
-                          try {
-                            const s = String(timeStr).trim();
-                            if (s.includes(':') && !s.includes('T')) {
-                              const parts = s.split(':');
-                              if (parts.length >= 2) {
-                                const hh = parseInt(parts[0], 10);
-                                const mm = parts[1];
-                                if (!isNaN(hh)) {
-                                  const ampm = hh >= 12 ? 'PM' : 'AM';
-                                  const displayHh = hh % 12 || 12;
-                                  return `${String(displayHh).padStart(2, '0')}:${mm} ${ampm}`;
-                                }
-                              }
-                            }
-                            const d = new Date(s);
-                            if (!isNaN(d.getTime())) {
-                              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            }
-                          } catch (e) {}
-                          return String(timeStr);
-                        };
-
                         return (
                           <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/40">
                             <td className="px-5 py-4">

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, getCurrentSession } from '../lib/supabase';
 import { usePortalLanguage } from '../hooks/usePortalLanguage';
-import { t } from '../lib/portalI18n';
-import { sanitizeInput } from '../utils/security';
+import { sanitizeInput, sanitizeLongText } from '../utils/security';
 import { usePermissions } from '../hooks/usePermissions';
 import PermissionDenied from './PermissionDenied';
 
@@ -20,6 +19,11 @@ interface StaffEntitlement {
   medical_used: number;
   year: number;
 }
+
+const getLocalDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export default function ClaimSystemView({ profile: initialProfile, mode = 'auto' }: ClaimSystemViewProps) {
   const { lang } = usePortalLanguage();
@@ -53,7 +57,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
 
   // Form State
   const [claimType, setClaimType] = useState<'Meal' | 'Mileage' | 'Medical' | 'Other'>('Meal');
-  const [claimDate, setClaimDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [claimDate, setClaimDate] = useState<string>(getLocalDate());
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [actualAmount, setActualAmount] = useState<string>('');
@@ -127,7 +131,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
       if (userProfile) {
         setProfile(userProfile);
 
-        const approverRoles = ['IT Admin', 'HR', 'CFO', 'CEO', 'Chairman', 'COO', 'General Manager', 'Head of Department', 'Executive'];
+        const approverRoles = ['IT Admin', 'HR', 'CFO', 'CEO', 'Chairman', 'COO', 'General Manager', 'Head of Department', 'Executive Director', 'Managing Director', 'Director', 'President'];
         const roleStr = userProfile.role || '';
         const isUserApprover = approverRoles.some(r => roleStr.toLowerCase().includes(r.toLowerCase())) ||
           userProfile.department?.toLowerCase() === 'human resources' ||
@@ -278,7 +282,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
   const openNewClaimModal = () => {
     setEditingClaim(null);
     setClaimType('Meal');
-    setClaimDate(new Date().toISOString().split('T')[0]);
+    setClaimDate(getLocalDate());
     setTitle('');
     setDescription('');
     setActualAmount('');
@@ -296,7 +300,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
   const openEditClaimModal = (claim: any) => {
     setEditingClaim(claim);
     setClaimType(claim.claim_type || 'Meal');
-    setClaimDate(claim.claim_date || new Date().toISOString().split('T')[0]);
+    setClaimDate(claim.claim_date || getLocalDate());
     setTitle(claim.title || '');
     setDescription(claim.description || '');
     setActualAmount(claim.actual_amount ? String(claim.actual_amount) : '');
@@ -402,7 +406,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         claim_type: claimType,
         claim_date: claimDate,
         title: sanitizeInput(title),
-        description: sanitizeInput(description),
+        description: sanitizeLongText(description),
         actual_amount: computedActual,
         start_location: claimType === 'Mileage' ? sanitizeInput(startLocation) : null,
         destination: claimType === 'Mileage' ? sanitizeInput(destination) : null,

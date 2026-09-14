@@ -152,7 +152,6 @@ export default function PortalSidebar() {
             date: a.scheduled_at,
             type: 'announcement',
             link: '/portal',
-            icon: '📢'
           });
         });
       }
@@ -175,7 +174,6 @@ export default function PortalSidebar() {
               date: l.created_at,
               type: 'leave_pending',
               link: '/portal/leave',
-              icon: '📝'
             });
           });
         }
@@ -203,7 +201,6 @@ export default function PortalSidebar() {
             date: l.updated_at || l.created_at,
             type: `leave_${l.status.toLowerCase()}`,
             link: '/portal/leave',
-            icon: l.status === 'Approved' ? '✅' : '❌'
           });
         });
       }
@@ -217,35 +214,42 @@ export default function PortalSidebar() {
 
       if (casesData) {
         casesData.forEach((c: any) => {
+          const clientName = c.NAME || 'Client';
           const stableDate = c.DATE
             ? (c.DATE.includes('/') ? c.DATE.split('/').reverse().join('-') : c.DATE)
-            : '2026-01-01'; // Stable date, avoid changing timestamps every 30s
+            : '2026-01-01'; // Stable date
           list.push({
             id: `case-pem1-${c.id}`,
             title: lang === 'bm' ? 'Penugasan Kes Baru' : 'Case Assigned',
             author: 'System',
             message: lang === 'bm'
-              ? `Anda telah ditugaskan sebagai PEM 1 untuk klien ${c.NAME} (${c['CASE CATEGORY']}).`
-              : `You are designated as PEM 1 for client ${c.NAME} (${c['CASE CATEGORY']}).`,
+              ? `Anda telah ditugaskan sebagai PEM 1 untuk klien ${clientName} (${c['CASE CATEGORY'] || '-'}).`
+              : `You are designated as PEM 1 for client ${clientName} (${c['CASE CATEGORY'] || '-'}).`,
             content: lang === 'bm'
-              ? `Maklumat Penugasan Kes:\n\n• Nama Klien: ${c.NAME}\n• Kategori Kes: ${c['CASE CATEGORY'] || '-'}\n• Peranan Anda: Pegawai Mengendalikan Utama (PEM 1)`
-              : `Case Designation Details:\n\n• Client Name: ${c.NAME}\n• Case Category: ${c['CASE CATEGORY'] || '-'}\n• Your Role: Officer In-Charge (PEM 1)`,
+              ? `Maklumat Penugasan Kes:\n\n• Nama Klien: ${clientName}\n• Kategori Kes: ${c['CASE CATEGORY'] || '-'}\n• Peranan Anda: Pegawai Mengendalikan Utama (PEM 1)`
+              : `Case Designation Details:\n\n• Client Name: ${clientName}\n• Case Category: ${c['CASE CATEGORY'] || '-'}\n• Your Role: Officer In-Charge (PEM 1)`,
             date: stableDate,
             type: 'case_designation',
-            link: `/portal/klien?search=${encodeURIComponent(c.NAME)}`,
-            icon: '💼'
+            link: `/portal/klien?search=${encodeURIComponent(clientName)}`,
           });
         });
       }
 
       try {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const { data: followUps } = await supabase
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        let followUpQuery = supabase
           .from('appointments')
           .select('id, client_name, case_category, pic_name, follow_up_date, follow_up_time, follow_up_notes, follow_up_status')
           .lte('follow_up_date', todayStr)
           .order('follow_up_date', { ascending: false })
           .limit(10);
+
+        if (!isApprover && profile.name) {
+          followUpQuery = followUpQuery.ilike('pic_name', profile.name);
+        }
+
+        const { data: followUps } = await followUpQuery;
 
         if (followUps) {
           followUps.forEach((f: any) => {
@@ -263,7 +267,6 @@ export default function PortalSidebar() {
                 date: f.follow_up_date || todayStr,
                 type: 'appointment_followup',
                 link: '/portal/temujanji',
-                icon: ''
               });
             }
           });
@@ -329,6 +332,60 @@ export default function PortalSidebar() {
     }
   };
 
+  const renderNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'appointment_followup':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+      case 'leave_pending':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          </div>
+        );
+      case 'leave_approved':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+      case 'leave_rejected':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        );
+      case 'case_designation':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 dark:bg-yellow-500/20 text-indigo-600 dark:text-yellow-500 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </div>
+        );
+      case 'announcement':
+      default:
+        return (
+          <div className="w-8 h-8 rounded-lg bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.45a13.722 13.722 0 01-1.343-3.692m3-8.706a13.75 13.75 0 011.66-2.043c.438-.44 1.144-.44 1.582 0l.43.43c.438.437.438 1.144 0 1.582a13.75 13.75 0 01-2.043 1.66m1.631 7.077c1.378-.718 2.61-1.63 3.65-2.704a11.968 11.968 0 002.39-3.957.75.75 0 00-.7-.996h-1.618a11.97 11.97 0 00-3.722 7.657z" />
+            </svg>
+          </div>
+        );
+    }
+  };
+
   const renderNotificationItem = (n: any) => {
     const isUnread = !readNotifications.includes(n.id);
     return (
@@ -338,7 +395,7 @@ export default function PortalSidebar() {
         className={`w-full p-3.5 text-left flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-zinc-900 border-b border-slate-100/50 dark:border-gray-900/40 ${isUnread ? 'bg-indigo-50/20 dark:bg-yellow-500/5' : ''
           }`}
       >
-        <span className="text-lg flex-shrink-0 mt-0.5">{n.icon}</span>
+        <div className="flex-shrink-0 mt-0.5">{renderNotificationIcon(n.type)}</div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start gap-1">
             <span className={`text-xs font-bold truncate ${isUnread ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-zinc-400'}`}>
@@ -715,7 +772,7 @@ export default function PortalSidebar() {
       </div>
 
       {isNotificationOpen && (() => {
-        const importantNotifications = notifications.filter(n => ['leave_pending', 'leave_approved', 'leave_rejected', 'case_designation'].includes(n.type));
+        const importantNotifications = notifications.filter(n => ['leave_pending', 'leave_approved', 'leave_rejected', 'case_designation', 'appointment_followup'].includes(n.type));
         const generalNotifications = notifications.filter(n => n.type === 'announcement');
         return (
           <div className="fixed top-16 left-4 right-4 md:left-64 md:right-auto md:w-80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-slate-200 dark:border-gray-800 rounded-2xl shadow-2xl z-[99999] overflow-hidden flex flex-col transition-all duration-300 notification-dropdown">
@@ -736,8 +793,10 @@ export default function PortalSidebar() {
             <div className="flex-1 max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-gray-800/80 scrollbar-thin bg-white dark:bg-zinc-950">
               <div>
                 <div className="px-4 py-2 bg-rose-50/50 dark:bg-rose-950/10 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-455 border-b border-rose-100/50 dark:border-rose-950/20 flex items-center gap-1.5 select-none">
-                  <span className="text-sm">⚠️</span>
-                  {lang === 'bm' ? 'Tindakan & Arahan Penting' : 'Important & Action Alerts'}
+                  <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <span>{lang === 'bm' ? 'Tindakan & Arahan Penting' : 'Important & Action Alerts'}</span>
                 </div>
                 {importantNotifications.length === 0 ? (
                   <div className="p-5 text-center text-[10px] text-slate-400 dark:text-zinc-550 italic font-medium">
@@ -750,8 +809,10 @@ export default function PortalSidebar() {
 
               <div>
                 <div className="px-4 py-2 bg-slate-50 dark:bg-zinc-900/60 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-100 dark:border-gray-800 flex items-center gap-1.5 select-none">
-                  <span className="text-sm">📢</span>
-                  {lang === 'bm' ? 'Pengumuman Am' : 'General Announcements'}
+                  <svg className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                  </svg>
+                  <span>{lang === 'bm' ? 'Pengumuman Am' : 'General Announcements'}</span>
                 </div>
                 {generalNotifications.length === 0 ? (
                   <div className="p-5 text-center text-[10px] text-slate-450 dark:text-zinc-550 italic font-medium">
@@ -771,8 +832,8 @@ export default function PortalSidebar() {
           <div className="bg-white dark:bg-zinc-950 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div className="p-5 border-b border-slate-100 dark:border-gray-800/80 flex items-start justify-between gap-3 bg-slate-50/70 dark:bg-zinc-900/50">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-500 flex items-center justify-center text-xl flex-shrink-0 font-bold border border-indigo-100 dark:border-yellow-500/20">
-                  {selectedNotification.icon}
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-yellow-500/10 text-indigo-600 dark:text-yellow-500 flex items-center justify-center flex-shrink-0 border border-indigo-100 dark:border-yellow-500/20">
+                  {renderNotificationIcon(selectedNotification.type)}
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">

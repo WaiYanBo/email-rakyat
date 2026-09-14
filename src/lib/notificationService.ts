@@ -41,6 +41,45 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   }
 };
 
+/**
+ * Automatically prompts the user for notification permissions as soon as they use the portal,
+ * ensuring prompts appear immediately and on first tap/click.
+ */
+export const initAutoNotificationRequest = () => {
+  if (typeof window === 'undefined') return;
+  if (!('Notification' in window)) return;
+
+  const tryRequest = async () => {
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (_e) {}
+    }
+  };
+
+  // 1. Try immediately on execution
+  tryRequest();
+
+  // 2. Also bind to the first user touch/click/pointer interaction across the portal
+  const onFirstInteraction = () => {
+    tryRequest();
+    window.removeEventListener('click', onFirstInteraction);
+    window.removeEventListener('touchstart', onFirstInteraction);
+    window.removeEventListener('pointerdown', onFirstInteraction);
+    window.removeEventListener('keydown', onFirstInteraction);
+  };
+
+  window.addEventListener('click', onFirstInteraction, { once: true, passive: true });
+  window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+  window.addEventListener('pointerdown', onFirstInteraction, { once: true, passive: true });
+  window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
+};
+
+// Automatically run on portal load
+if (typeof window !== 'undefined') {
+  initAutoNotificationRequest();
+}
+
 export interface FollowUpNotificationPayload {
   id: string;
   clientName: string;
@@ -231,106 +270,146 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pointerdown', handleInteraction, { once: true, passive: true });
 }
 
+export const isAlertSoundMuted = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('portal_alert_muted') === 'true';
+};
+
+export const setAlertSoundMuted = (muted: boolean) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('portal_alert_muted', String(muted));
+  window.dispatchEvent(new CustomEvent('portalAlertMuteChanged', { detail: { muted } }));
+};
+
+/**
+ * Synthesizes an elegant, soothing executive chime (warm C-major acoustic triad).
+ * Zero harsh frequencies, zero ear fatigue.
+ */
+const playSyntheticExecutiveChime = (ctx: AudioContext) => {
+  try {
+    const now = ctx.currentTime;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.32, now);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2200, now);
+
+    masterGain.connect(filter);
+    filter.connect(ctx.destination);
+
+    // Warm, pleasant 3-note executive chime: C5 (523.25 Hz), E5 (659.25 Hz), G5 (783.99 Hz)
+    const chimeNotes = [
+      { freq: 523.25, offset: 0, duration: 0.75, gain: 0.28 },
+      { freq: 659.25, offset: 0.09, duration: 0.75, gain: 0.25 },
+      { freq: 783.99, offset: 0.18, duration: 0.95, gain: 0.22 }
+    ];
+
+    chimeNotes.forEach(({ freq, offset, duration, gain }) => {
+      const osc = ctx.createOscillator();
+      const noteGain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + offset);
+
+      // Acoustic attack and smooth exponential decay
+      noteGain.gain.setValueAtTime(0.0001, now + offset);
+      noteGain.gain.exponentialRampToValueAtTime(gain, now + offset + 0.02);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
+
+      osc.connect(noteGain);
+      noteGain.connect(masterGain);
+
+      osc.start(now + offset);
+      osc.stop(now + offset + duration);
+    });
+  } catch (_e) {}
+};
+
+const playWebAudioChimeFallback = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = globalAudioCtx || new AudioCtx();
+    if (!globalAudioCtx) globalAudioCtx = ctx;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    if (cachedAudioBuffer) {
+      const source = ctx.createBufferSource();
+      source.buffer = cachedAudioBuffer;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0.6;
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.start(0);
+    } else {
+      playSyntheticExecutiveChime(ctx);
+    }
+  } catch (_e) {}
+};
+
 export const playNotificationChime = () => {
   if (typeof window === 'undefined') return;
 
+  // Respect user's mute setting
+  if (isAlertSoundMuted()) {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([150, 75, 150]);
+      }
+    } catch (_v) {}
+    return;
+  }
+
+  // Gentle vibration on supported mobile devices
   try {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate([300, 100, 300, 100, 300]);
+      navigator.vibrate([200, 80, 200]);
     }
   } catch (_vErr) {}
 
+  // Try playing the clean audio element first
   try {
     if (!persistentAudioEl) {
       persistentAudioEl = new Audio('/sounds/chime.wav');
       persistentAudioEl.preload = 'auto';
     }
     persistentAudioEl.currentTime = 0;
-    persistentAudioEl.volume = 1.0;
+    persistentAudioEl.volume = 0.65;
     const p = persistentAudioEl.play();
     if (p !== undefined) {
       p.catch(() => {
-        try {
-          const fresh = new Audio('/sounds/chime.wav');
-          fresh.volume = 1.0;
-          fresh.play().catch(() => {});
-        } catch (_fErr) {}
+        // If file playback blocked, fallback to Web Audio
+        playWebAudioChimeFallback();
       });
     }
-  } catch (_err) {}
-
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioCtx) {
-      const ctx = globalAudioCtx || new AudioCtx();
-      if (!globalAudioCtx) globalAudioCtx = ctx;
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-      }
-
-      if (cachedAudioBuffer) {
-        const source = ctx.createBufferSource();
-        source.buffer = cachedAudioBuffer;
-        const gainNode = ctx.createGain();
-        gainNode.gain.value = 1.0;
-        source.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        source.start(0);
-      } else {
-        const now = ctx.currentTime;
-
-        const osc1 = ctx.createOscillator();
-        const osc1Harm = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(880, now);
-        osc1Harm.type = 'sine';
-        osc1Harm.frequency.setValueAtTime(1760, now);
-        gain1.gain.setValueAtTime(0.7, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc1.connect(gain1);
-        osc1Harm.connect(gain1);
-        gain1.connect(ctx.destination);
-        osc1.start(now);
-        osc1Harm.start(now);
-        osc1.stop(now + 0.4);
-        osc1Harm.stop(now + 0.4);
-
-        const osc2 = ctx.createOscillator();
-        const osc2Harm = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1174.66, now + 0.14);
-        osc2Harm.type = 'sine';
-        osc2Harm.frequency.setValueAtTime(2349.32, now + 0.14);
-        gain2.gain.setValueAtTime(0.8, now + 0.14);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-        osc2.connect(gain2);
-        osc2Harm.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.start(now + 0.14);
-        osc2Harm.start(now + 0.14);
-        osc2.stop(now + 0.65);
-        osc2Harm.stop(now + 0.65);
-      }
-    }
-  } catch (_e) {}
+  } catch (_err) {
+    playWebAudioChimeFallback();
+  }
 };
 
-export const playUrgentAlertChime = (repeatCount: number = 3) => {
+export const playUrgentAlertChime = (repeatCount: number = 1) => {
   if (typeof window === 'undefined') return;
-  let count = 0;
-  playNotificationChime();
-  count++;
+  if (isAlertSoundMuted()) return;
 
-  const timer = setInterval(() => {
-    if (count >= repeatCount) {
-      clearInterval(timer);
-      return;
-    }
-    playNotificationChime();
-    count++;
-  }, 900);
+  playNotificationChime();
+
+  // If repeated, space gently by 1600ms rather than a rapid repeating siren
+  if (repeatCount > 1) {
+    let count = 1;
+    const timer = setInterval(() => {
+      if (count >= repeatCount || isAlertSoundMuted()) {
+        clearInterval(timer);
+        return;
+      }
+      playNotificationChime();
+      count++;
+    }, 1600);
+  }
 };
 
 let titleFlashInterval: any = null;

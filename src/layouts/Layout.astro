@@ -66,6 +66,21 @@ const isPortal = currentPath.startsWith('/portal');
                     if (theme === 'dark') document.documentElement.classList.add('dark');
                     else document.documentElement.classList.remove('dark');
                 } catch (e) {}
+
+                // Prompt notification permission immediately as soon as staff access or tap the portal
+                (function() {
+                    if (typeof window !== 'undefined' && 'Notification' in window) {
+                        function requestNotif() {
+                            if (Notification.permission === 'default') {
+                                Notification.requestPermission().catch(function() {});
+                            }
+                        }
+                        requestNotif();
+                        ['click', 'touchstart', 'pointerdown'].forEach(function(evt) {
+                            window.addEventListener(evt, requestNotif, { once: true, passive: true });
+                        });
+                    }
+                })();
             </script>
         )}
 

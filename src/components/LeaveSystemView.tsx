@@ -357,11 +357,18 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     holidayList: string[]
   ): number => {
     if (!startStr || !endStr) return 0;
-    const start = new Date(startStr);
-    const end = new Date(endStr);
+    const [sY, sM, sD] = startStr.split('-').map(Number);
+    const [eY, eM, eD] = endStr.split('-').map(Number);
+    if (!sY || !sM || !sD || !eY || !eM || !eD) return 0;
+
+    const start = new Date(sY, sM - 1, sD);
+    const end = new Date(eY, eM - 1, eD);
     if (end < start) return 0;
 
     if (session !== 'Full Day' && startStr === endStr) {
+      const dayOfWeek = start.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) return 0; // Weekend
+      if (holidayList.includes(startStr)) return 0; // Holiday
       return 0.5;
     }
 
@@ -370,7 +377,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     while (current <= end) {
       const dayOfWeek = current.getDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude Sat (6) and Sun (0)
-        const dateString = current.toISOString().split('T')[0];
+        const curY = current.getFullYear();
+        const curM = String(current.getMonth() + 1).padStart(2, '0');
+        const curD = String(current.getDate()).padStart(2, '0');
+        const dateString = `${curY}-${curM}-${curD}`;
         if (!holidayList.includes(dateString)) {
           count++;
         }

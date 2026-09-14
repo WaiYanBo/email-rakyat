@@ -288,6 +288,19 @@ export default function ClientDataView() {
     }
   };
 
+  const safeDecodeUri = (rawUrl: string): string => {
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
+    try {
+      return decodeURIComponent(decodeURIComponent(rawUrl));
+    } catch {
+      try {
+        return decodeURIComponent(rawUrl);
+      } catch {
+        return rawUrl;
+      }
+    }
+  };
+
   const handleViewDocument = async (e: React.MouseEvent, url: string) => {
     e.preventDefault();
     if (!url) return;
@@ -296,7 +309,7 @@ export default function ClientDataView() {
       let bucket = 'company_drive';
       let path = '';
 
-      const decodedUrl = decodeURIComponent(decodeURIComponent(url));
+      const decodedUrl = safeDecodeUri(url);
 
       if (decodedUrl.includes('company_drive/')) {
         bucket = 'company_drive';
@@ -309,6 +322,8 @@ export default function ClientDataView() {
       } else {
         path = decodedUrl;
       }
+
+      path = path.split('?')[0].split('#')[0].replace(/^\/+/, '');
 
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -340,7 +355,7 @@ export default function ClientDataView() {
       let oldPath = '';
       const url = record.drive_url;
 
-      const decodedUrl = decodeURIComponent(decodeURIComponent(url));
+      const decodedUrl = safeDecodeUri(url);
 
       if (decodedUrl.includes('company_drive/')) {
         bucket = 'company_drive';
@@ -353,6 +368,8 @@ export default function ClientDataView() {
       } else {
         oldPath = decodedUrl;
       }
+
+      oldPath = oldPath.split('?')[0].split('#')[0].replace(/^\/+/, '');
 
       let trashPath = '';
       const pathParts = oldPath.split('/');
@@ -968,178 +985,174 @@ export default function ClientDataView() {
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isIT && !canEditClients && !canManageLoD) {
+    const canSave = isIT || canEditClients || canManageLoD;
+    if (!canSave) {
       alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menyimpan maklumat klien.' : 'Access denied: You do not have permission to save client data.');
       return;
     }
     setIsSaving(true);
 
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries());
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const data = Object.fromEntries(formData.entries());
 
-    const gatheredReports = [];
-    let idx = 0;
-    while (true) {
-      const dKey = `report_date_${idx}`;
-      const nKey = `report_no_${idx}`;
-      if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey)) {
-        break;
-      }
-      const dVal = sanitizeInput((data[dKey] as string) || '', 50);
-      const nVal = sanitizeInput((data[nKey] as string) || '', 200);
-      if (dVal || nVal) {
-        gatheredReports.push({ date: dVal, no: nVal });
-      }
-      idx++;
-    }
-    const reportsJson = JSON.stringify(gatheredReports);
-
-    const gatheredIps = [];
-    let ipIdx = 0;
-    while (true) {
-      const dKey = `ip_date_${ipIdx}`;
-      const nKey = `ip_no_${ipIdx}`;
-      const pKey = `ip_pem_${ipIdx}`;
-      const oKey = `ip_officer_${ipIdx}`;
-      if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey) && !data.hasOwnProperty(pKey) && !data.hasOwnProperty(oKey)) {
-        break;
-      }
-      const dVal = sanitizeInput((data[dKey] as string) || '', 50);
-      const nVal = sanitizeInput((data[nKey] as string) || '', 200);
-      const pVal = sanitizeInput((data[pKey] as string) || '', 100);
-      const oVal = sanitizeInput((data[oKey] as string) || '', 200);
-      if (dVal || nVal || pVal || oVal) {
-        gatheredIps.push({ date: dVal, no: nVal, pem: pVal, officer: oVal });
-      }
-      ipIdx++;
-    }
-    const ipsJson = JSON.stringify(gatheredIps);
-
-    // ── Sanitize every field before touching the database ────────────────────
-    const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
-    const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
-
-    let autoTotalPaid = 0;
-    for (let i = 0; i < 10; i++) {
-      autoTotalPaid += parseSafeAmount(data[`payment_amt_${i}`]);
-    }
-    const pkg = parseSafeAmount(data['PACKAGE (RM)']);
-    const autoPending = Math.max(0, pkg - autoTotalPaid);
-
-    const getPaymentValue = (val: any) => {
-      if (val === undefined || val === null || String(val).trim() === '') return null;
-      return parseSafeAmount(val);
-    };
-
-    let rawPhone = sanitizeInput((data['PHONE NUMBER'] as string) || '', 30).trim();
-    let formattedPhone = rawPhone;
-    if (rawPhone && !rawPhone.startsWith('+')) {
-      if (rawPhone.startsWith('60')) formattedPhone = `+${rawPhone}`;
-      else if (rawPhone.startsWith('0')) formattedPhone = `+60${rawPhone.slice(1)}`;
-      else formattedPhone = `+60${rawPhone}`;
-    }
-
-    const clientPayload = {
-      No: data.No ? parseInt(data.No as string, 10) : null,
-      NAME: sanitizeInput((data.NAME as string) || '', 100),
-      'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
-      'PHONE NUMBER': formattedPhone,
-      DATE: sanitizeInput((data.DATE as string) || '', 20),
-      'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
-      // Whitelist-based: only accept known status values
-      'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
-      'TOTAL PAID (RM)': autoTotalPaid,
-      'PENDING (RM)': autoPending,
-      'PACKAGE (RM)': pkg,
-      ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
-      EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
-      REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
-      '1st PAYMENT': getPaymentValue(data['payment_amt_0']),
-      '1st PAYMENT DATE': sanitizeInput((data['payment_date_0'] as string) || '', 20),
-      '2nd PAYMENT': getPaymentValue(data['payment_amt_1']),
-      '2nd PAYMENT DATE': sanitizeInput((data['payment_date_1'] as string) || '', 20),
-      '3rd PAYMENT': getPaymentValue(data['payment_amt_2']),
-      '3rd PAYMENT DATE': sanitizeInput((data['payment_date_2'] as string) || '', 20),
-      '4th PAYMENT': getPaymentValue(data['payment_amt_3']),
-      '4th PAYMENT DATE': sanitizeInput((data['payment_date_3'] as string) || '', 20),
-      '5th PAYMENT': getPaymentValue(data['payment_amt_4']),
-      '5th PAYMENT DATE': sanitizeInput((data['payment_date_4'] as string) || '', 20),
-      '6th PAYMENT': getPaymentValue(data['payment_amt_5']),
-      '6th PAYMENT DATE': sanitizeInput((data['payment_date_5'] as string) || '', 20),
-      '7th PAYMENT': getPaymentValue(data['payment_amt_6']),
-      '7th PAYMENT DATE': sanitizeInput((data['payment_date_6'] as string) || '', 20),
-      '8th PAYMENT': getPaymentValue(data['payment_amt_7']),
-      '8th PAYMENT DATE': sanitizeInput((data['payment_date_7'] as string) || '', 20),
-      '9th PAYMENT': getPaymentValue(data['payment_amt_8']),
-      '9th PAYMENT DATE': sanitizeInput((data['payment_date_8'] as string) || '', 20),
-      '10th PAYMENT': getPaymentValue(data['payment_amt_9']),
-      '10th PAYMENT DATE': sanitizeInput((data['payment_date_9'] as string) || '', 20),
-      'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
-      'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
-      'Report': sanitizeInput((data.Report as string) || '', 500),
-      'Action Taken by police': sanitizeInput((data['Action Taken by police'] as string) || '', 500),
-      police_report_date: gatheredReports.length > 0 ? gatheredReports[0].date : '',
-      police_report_no: reportsJson,
-      ip_date: gatheredIps.length > 0 ? gatheredIps[0].date : '',
-      ip_no: ipsJson,
-      ip_pem1: gatheredIps.length > 0 ? gatheredIps[0].pem : '',
-      ip_officer: gatheredIps.length > 0 ? gatheredIps[0].officer : '',
-      report_location_balai: sanitizeInput((data.report_location_balai as string) || '', 200),
-      report_location_ipd: sanitizeInput((data.report_location_ipd as string) || '', 200),
-      report_location_ipk: sanitizeInput((data.report_location_ipk as string) || '', 200),
-      lod_date: sanitizeInput((data.lod_date as string) || '', 20),
-      lod_claim_amount: sanitizeInput((data.lod_claim_amount as string) || '', 50),
-      lod_remark: sanitizeInput((data.lod_remark as string) || '', 1000),
-    };
-
-    // Basic validation
-    if (!clientPayload.NAME) {
-      alert(lang === 'bm' ? 'Nama klien diperlukan.' : 'Client name is required.');
-      setIsSaving(false);
-      return;
-    }
-
-    // Installment dependency validation
-    for (let i = 0; i < 10; i++) {
-      const amtVal = data[`payment_amt_${i}`];
-      const dateVal = data[`payment_date_${i}`];
-      const hasAmt = amtVal !== undefined && amtVal !== null && String(amtVal).trim() !== '';
-      const hasDate = dateVal !== undefined && dateVal !== null && String(dateVal).trim() !== '';
-
-      if (hasAmt !== hasDate) {
-        const ordinal = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`;
-        if (lang === 'bm') {
-          alert(`Bagi ansuran ke-${i + 1}, sila pastikan kedua-dua Jumlah Bayaran dan Tarikh diisi.`);
-        } else {
-          alert(`For the ${ordinal} installment payment, both Payment Amount and Payment Date must be filled.`);
+      const gatheredReports = [];
+      let idx = 0;
+      while (true) {
+        const dKey = `report_date_${idx}`;
+        const nKey = `report_no_${idx}`;
+        if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey)) {
+          break;
         }
+        const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+        const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+        if (dVal || nVal) {
+          gatheredReports.push({ date: dVal, no: nVal });
+        }
+        idx++;
+      }
+      const reportsJson = JSON.stringify(gatheredReports);
+
+      const gatheredIps = [];
+      let ipIdx = 0;
+      while (true) {
+        const dKey = `ip_date_${ipIdx}`;
+        const nKey = `ip_no_${ipIdx}`;
+        const pKey = `ip_pem_${ipIdx}`;
+        const oKey = `ip_officer_${ipIdx}`;
+        if (!data.hasOwnProperty(nKey) && !data.hasOwnProperty(dKey) && !data.hasOwnProperty(pKey) && !data.hasOwnProperty(oKey)) {
+          break;
+        }
+        const dVal = sanitizeInput((data[dKey] as string) || '', 50);
+        const nVal = sanitizeInput((data[nKey] as string) || '', 200);
+        const pVal = sanitizeInput((data[pKey] as string) || '', 100);
+        const oVal = sanitizeInput((data[oKey] as string) || '', 200);
+        if (dVal || nVal || pVal || oVal) {
+          gatheredIps.push({ date: dVal, no: nVal, pem: pVal, officer: oVal });
+        }
+        ipIdx++;
+      }
+      const ipsJson = JSON.stringify(gatheredIps);
+
+      // ── Sanitize every field before touching the database ────────────────────
+      const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
+      const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
+
+      let autoTotalPaid = 0;
+      for (let i = 0; i < 10; i++) {
+        autoTotalPaid += parseSafeAmount(data[`payment_amt_${i}`]);
+      }
+      const pkg = parseSafeAmount(data['PACKAGE (RM)']);
+      const autoPending = Math.max(0, pkg - autoTotalPaid);
+
+      const getPaymentValue = (val: any) => {
+        if (val === undefined || val === null || String(val).trim() === '') return null;
+        return parseSafeAmount(val);
+      };
+
+      let rawPhone = sanitizeInput((data['PHONE NUMBER'] as string) || '', 30).trim();
+      let formattedPhone = rawPhone;
+      if (rawPhone && !rawPhone.startsWith('+')) {
+        if (rawPhone.startsWith('60')) formattedPhone = `+${rawPhone}`;
+        else if (rawPhone.startsWith('0')) formattedPhone = `+60${rawPhone.slice(1)}`;
+        else formattedPhone = `+60${rawPhone}`;
+      }
+
+      const clientName = sanitizeInput((data.NAME as string) || '', 100).trim();
+      // Basic validation
+      if (!clientName) {
+        alert(lang === 'bm' ? 'Nama klien diperlukan.' : 'Client name is required.');
         setIsSaving(false);
         return;
       }
-    }
 
-    const isIT = isITAdmin || profile?.department?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it' || profile?.role?.toLowerCase() === 'it admin';
-    const canEditClient = isIT || Boolean(permissions?.edit_clients);
-    if (!canEditClient) {
-      alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk mengemas kini maklumat klien.' : 'Access denied: You do not have permission to edit clients.');
-      setIsSaving(false);
-      return;
-    }
+      // Installment dependency validation
+      for (let i = 0; i < 10; i++) {
+        const amtVal = data[`payment_amt_${i}`];
+        const dateVal = data[`payment_date_${i}`];
+        const hasAmt = amtVal !== undefined && amtVal !== null && String(amtVal).trim() !== '';
+        const hasDate = dateVal !== undefined && dateVal !== null && String(dateVal).trim() !== '';
 
-    try {
+        if (hasAmt !== hasDate) {
+          const ordinal = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`;
+          if (lang === 'bm') {
+            alert(`Bagi ansuran ke-${i + 1}, sila pastikan kedua-dua Jumlah Bayaran dan Tarikh diisi.`);
+          } else {
+            alert(`For the ${ordinal} installment payment, both Payment Amount and Payment Date must be filled.`);
+          }
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      const clientPayload = {
+        No: data.No ? parseInt(data.No as string, 10) : null,
+        NAME: clientName,
+        'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
+        'PHONE NUMBER': formattedPhone,
+        DATE: sanitizeInput((data.DATE as string) || '', 20),
+        'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
+        // Whitelist-based: only accept known status values
+        'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
+        'TOTAL PAID (RM)': autoTotalPaid,
+        'PENDING (RM)': autoPending,
+        'PACKAGE (RM)': pkg,
+        ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
+        EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
+        REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
+        '1st PAYMENT': getPaymentValue(data['payment_amt_0']),
+        '1st PAYMENT DATE': sanitizeInput((data['payment_date_0'] as string) || '', 20),
+        '2nd PAYMENT': getPaymentValue(data['payment_amt_1']),
+        '2nd PAYMENT DATE': sanitizeInput((data['payment_date_1'] as string) || '', 20),
+        '3rd PAYMENT': getPaymentValue(data['payment_amt_2']),
+        '3rd PAYMENT DATE': sanitizeInput((data['payment_date_2'] as string) || '', 20),
+        '4th PAYMENT': getPaymentValue(data['payment_amt_3']),
+        '4th PAYMENT DATE': sanitizeInput((data['payment_date_3'] as string) || '', 20),
+        '5th PAYMENT': getPaymentValue(data['payment_amt_4']),
+        '5th PAYMENT DATE': sanitizeInput((data['payment_date_4'] as string) || '', 20),
+        '6th PAYMENT': getPaymentValue(data['payment_amt_5']),
+        '6th PAYMENT DATE': sanitizeInput((data['payment_date_5'] as string) || '', 20),
+        '7th PAYMENT': getPaymentValue(data['payment_amt_6']),
+        '7th PAYMENT DATE': sanitizeInput((data['payment_date_6'] as string) || '', 20),
+        '8th PAYMENT': getPaymentValue(data['payment_amt_7']),
+        '8th PAYMENT DATE': sanitizeInput((data['payment_date_7'] as string) || '', 20),
+        '9th PAYMENT': getPaymentValue(data['payment_amt_8']),
+        '9th PAYMENT DATE': sanitizeInput((data['payment_date_8'] as string) || '', 20),
+        '10th PAYMENT': getPaymentValue(data['payment_amt_9']),
+        '10th PAYMENT DATE': sanitizeInput((data['payment_date_9'] as string) || '', 20),
+        'Invoice Ref No': sanitizeInput((data['Invoice Ref No'] as string) || '', 100),
+        'Investigation Paper': sanitizeInput((data['Investigation Paper'] as string) || '', 500),
+        'Report': sanitizeInput((data.Report as string) || '', 500),
+        'Action Taken by police': sanitizeInput((data['Action Taken by police'] as string) || '', 500),
+        police_report_date: gatheredReports.length > 0 ? gatheredReports[0].date : '',
+        police_report_no: reportsJson,
+        ip_date: gatheredIps.length > 0 ? gatheredIps[0].date : '',
+        ip_no: ipsJson,
+        ip_pem1: gatheredIps.length > 0 ? gatheredIps[0].pem : '',
+        ip_officer: gatheredIps.length > 0 ? gatheredIps[0].officer : '',
+        report_location_balai: sanitizeInput((data.report_location_balai as string) || '', 200),
+        report_location_ipd: sanitizeInput((data.report_location_ipd as string) || '', 200),
+        report_location_ipk: sanitizeInput((data.report_location_ipk as string) || '', 200),
+        lod_date: sanitizeInput((data.lod_date as string) || '', 20),
+        lod_claim_amount: sanitizeInput((data.lod_claim_amount as string) || '', 50),
+        lod_remark: sanitizeInput((data.lod_remark as string) || '', 1000),
+      };
+
       if (editingClient && !editingClient.isVirtual) {
         const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
         if (error) throw error;
+        await writeAuditLog('UPDATE', editingClient.id, clientPayload);
       } else {
         const { error } = await supabase.from('clients').insert([clientPayload]);
         if (error) throw error;
       }
       setRefreshTrigger(prev => prev + 1);
-    } catch (_err) {
-      alert(t('clients', 'failedToSave', lang));
+      handleCloseModal();
+    } catch (err: any) {
+      console.error('Failed to save client:', err);
+      alert(t('clients', 'failedToSave', lang) + (err?.message ? `: ${err.message}` : ''));
     } finally {
       setIsSaving(false);
-      handleCloseModal();
     }
   };
 
@@ -1662,11 +1675,12 @@ export default function ClientDataView() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
 
-              <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
+              <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
                   {editingClient ? t('clients', 'editClientRecord', lang) : t('clients', 'addClient', lang)}
                 </h2>
                 <button
+                  type="button"
                   onClick={handleCloseModal}
                   className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl"
                 >
@@ -1676,57 +1690,58 @@ export default function ClientDataView() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveClient} className="flex-1 overflow-y-auto p-6 space-y-4 bg-white dark:bg-black">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* 1. Personal Information */}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-1">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'personalInfo', lang)}</h3>
-                  </div>
-
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
-                    <input type="number" name="No" defaultValue={editingClient?.No || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'nama', lang)}</label>
-                    <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'alamat', lang)}</label>
-                    <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'icNumberLabel', lang)}</label>
-                    <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {t('clients', 'phoneNumberLabel', lang)}
-                      </label>
-                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
-                        {lang === 'bm' ? 'Lalai: +60 (Boleh diedit untuk luar negara)' : 'Default: +60 (Editable for overseas)'}
-                      </span>
+              <form onSubmit={handleSaveClient} noValidate className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-black">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* 1. Personal Information */}
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-1">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'personalInfo', lang)}</h3>
                     </div>
-                    <input
-                      type="text"
-                      name="PHONE NUMBER"
-                      defaultValue={editingClient?.["PHONE NUMBER"] || '+60 '}
-                      placeholder="+60 12-345 6789"
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
-                      required
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">No</label>
+                      <input type="number" name="No" defaultValue={editingClient?.No ?? editingClient?.NO ?? ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'nama', lang)}</label>
+                      <input type="text" name="NAME" defaultValue={editingClient?.NAME || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'alamat', lang)}</label>
+                      <input type="text" name="ADDRESS" defaultValue={editingClient?.ADDRESS || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'icNumberLabel', lang)}</label>
+                      <input type="text" name="IC NUMBER" defaultValue={editingClient?.["IC NUMBER"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" required />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {t('clients', 'phoneNumberLabel', lang)}
+                        </label>
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
+                          {lang === 'bm' ? 'Lalai: +60 (Boleh diedit untuk luar negara)' : 'Default: +60 (Editable for overseas)'}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        name="PHONE NUMBER"
+                        defaultValue={editingClient?.["PHONE NUMBER"] || '+60 '}
+                        placeholder="+60 12-345 6789"
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold font-mono text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'emailLabel', lang)}</label>
+                      <input type="text" name="EMAIL" defaultValue={editingClient?.EMAIL === '-' ? '' : (editingClient?.EMAIL || '')} placeholder="client@example.com" className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <DateInput
+                      name="DATE"
+                      label={`${t('clients', 'dateLabel', lang) || (lang === 'bm' ? 'Tarikh' : 'Date')} (DD/MM/YYYY)`}
+                      defaultValue={editingClient?.DATE || ''}
+                      lang={lang}
                     />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'emailLabel', lang)}</label>
-                    <input type="email" name="EMAIL" defaultValue={editingClient?.EMAIL || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <DateInput
-                    name="DATE"
-                    label={`${t('clients', 'dateLabel', lang) || (lang === 'bm' ? 'Tarikh' : 'Date')} (DD/MM/YYYY)`}
-                    defaultValue={editingClient?.DATE || ''}
-                    lang={lang}
-                  />
 
                   {/* 2. Laporan Polis */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
@@ -2021,15 +2036,15 @@ export default function ClientDataView() {
                   </div>
                   <div className="space-y-1 sm:col-span-2">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
-                    <input type="number" name="PACKAGE (RM)" step="0.01" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    <input type="number" name="PACKAGE (RM)" step="any" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
-                    <input type="number" name="TOTAL PAID (RM)" step="0.01" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
+                    <input type="number" name="TOTAL PAID (RM)" step="any" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
                   </div>
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
-                    <input type="number" name="PENDING (RM)" step="0.01" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    <input type="number" name="PENDING (RM)" step="any" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
                   <div className="sm:col-span-2 space-y-1">
                     <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
@@ -2080,7 +2095,7 @@ export default function ClientDataView() {
                         <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
                           {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
                         </label>
-                        <input type="number" name={`payment_amt_${idx}`} step="0.01" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        <input type="number" name={`payment_amt_${idx}`} step="any" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                       </div>
                       <DateInput
                         name={`payment_date_${idx}`}
@@ -2225,34 +2240,47 @@ export default function ClientDataView() {
                   <input type="hidden" name="Report" defaultValue={editingClient?.Report || ''} />
                   <input type="hidden" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} />
 
-                  <div className="sm:col-span-2 mt-6 flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-slate-100 dark:border-gray-800/80 gap-3">
-                    <div className="w-full sm:w-auto">
-                      {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (
-                        <button
-                          type="button"
-                          onClick={handleDeleteClient}
-                          className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[48px]"
-                        >
-                          {t('clients', 'deleteClient', lang)}
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex gap-3 w-full sm:w-auto justify-end">
+                  </div>
+                </div>
+
+                {/* Sticky Modal Footer */}
+                <div className="p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
+                  <div className="w-full sm:w-auto">
+                    {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (
                       <button
                         type="button"
-                        onClick={handleCloseModal}
-                        className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[48px]"
+                        onClick={handleDeleteClient}
+                        className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/15 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/50 dark:border-rose-950/20 transition-all w-full sm:w-auto min-h-[44px]"
                       >
-                        {t('clients', 'cancel', lang)}
+                        {t('clients', 'deleteClient', lang)}
                       </button>
-                      <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white transition-colors shadow-sm w-full sm:w-auto min-h-[48px] disabled:opacity-50"
-                      >
-                        {isSaving ? t('clients', 'saving', lang) : t('clients', 'saveChanges', lang)}
-                      </button>
-                    </div>
+                    )}
+                  </div>
+                  <div className="flex gap-3 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-gray-700 transition-colors w-full sm:w-auto min-h-[44px]"
+                    >
+                      {t('clients', 'cancel', lang)}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      className="px-6 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-cyan-600 hover:bg-cyan-700 text-white dark:bg-yellow-500 dark:text-black border-0 dark:hover:bg-yellow-400 transition-colors shadow-sm w-full sm:w-auto min-h-[44px] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span>{t('clients', 'saving', lang)}</span>
+                        </>
+                      ) : (
+                        <span>{t('clients', 'saveChanges', lang)}</span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </form>

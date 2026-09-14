@@ -71,6 +71,11 @@ export default function ProfilePhotoUpload({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
+  // Sync avatarUrl whenever initialAvatarUrl prop updates from parent
+  useEffect(() => {
+    setAvatarUrl(initialAvatarUrl);
+  }, [initialAvatarUrl]);
+
   // Menu & View State
   const [showMenu, setShowMenu] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -109,6 +114,17 @@ export default function ProfilePhotoUpload({
       setShowMenu(false);
       setError(null);
 
+      // Clean up previous avatar from storage if available
+      if (avatarUrl && avatarUrl.includes('/avatars/')) {
+        try {
+          const parts = avatarUrl.split('/avatars/');
+          if (parts[1]) {
+            const oldFilePath = decodeURIComponent(parts[1].split('?')[0]);
+            await supabase.storage.from('avatars').remove([oldFilePath]);
+          }
+        } catch (_delErr) {}
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: null })
@@ -118,7 +134,8 @@ export default function ProfilePhotoUpload({
 
       setAvatarUrl(null);
       onUploadSuccess('');
-      } catch (err: any) {
+      window.dispatchEvent(new Event('profileUpdated'));
+    } catch (err: any) {
       setError(err.message || t('settings', 'removeFailed', lang));
     } finally {
       setIsUploading(false);
@@ -137,6 +154,9 @@ export default function ProfilePhotoUpload({
         return;
       }
 
+      if (selectedImage) {
+        URL.revokeObjectURL(selectedImage);
+      }
       const imageUrl = URL.createObjectURL(file);
       setSelectedImage(imageUrl);
       setShowCropModal(true);
@@ -160,61 +180,43 @@ export default function ProfilePhotoUpload({
       setIsUploading(true);
       setError(null);
 
-      // 1. Get the cropped image blob
+      // 1. Get the cropped image blob directly
       const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
       if (!croppedBlob) throw new Error(t('settings', 'cropFailed', lang));
 
-      // 2. Draw onto a BLACK background
-      const finalCanvas = document.createElement('canvas');
-      const finalCtx = finalCanvas.getContext('2d');
-      if (!finalCtx) throw new Error("Canvas error");
+      // 2. Clean up previous avatar from storage if exists
+      if (avatarUrl && avatarUrl.includes('/avatars/')) {
+        try {
+          const parts = avatarUrl.split('/avatars/');
+          if (parts[1]) {
+            const oldFilePath = decodeURIComponent(parts[1].split('?')[0]);
+            await supabase.storage.from('avatars').remove([oldFilePath]);
+          }
+        } catch (_delErr) {}
+      }
 
-      const faceImg = new Image();
-      const faceImgUrl = URL.createObjectURL(croppedBlob);
-      await new Promise((resolve, reject) => {
-        faceImg.onload = resolve;
-        faceImg.onerror = reject;
-        faceImg.src = faceImgUrl;
-      });
-
-      finalCanvas.width = faceImg.width;
-      finalCanvas.height = faceImg.height;
-
-      finalCtx.fillStyle = '#000000';
-      finalCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-      finalCtx.drawImage(faceImg, 0, 0);
-
-      URL.revokeObjectURL(faceImgUrl);
-
-      const finalUploadBlob = await new Promise<Blob>((resolve, reject) => {
-        finalCanvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error("Final canvas to blob failed"));
-        }, 'image/jpeg', 0.95);
-      });
-
-      // 4. Upload to Supabase Storage
+      // 3. Upload cleanly to Supabase Storage
       const filePath = `${userId}/avatar-${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, finalUploadBlob, {
+        .upload(filePath, croppedBlob, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) {
         throw new Error(`${t('settings', 'uploadFailed', lang)} ${uploadError.message}`);
       }
 
-      // 3. Get Public URL
+      // 4. Get Public URL
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
       const newUrl = publicUrlData.publicUrl;
 
-      // 4. Update profiles table
+      // 5. Update profiles table
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newUrl })
@@ -224,6 +226,7 @@ export default function ProfilePhotoUpload({
 
       setAvatarUrl(newUrl);
       onUploadSuccess(newUrl);
+      window.dispatchEvent(new Event('profileUpdated'));
 
       // Close Modal & Cleanup
       setShowCropModal(false);
@@ -271,6 +274,10 @@ export default function ProfilePhotoUpload({
 
           {avatarUrl ? (
             <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+          ) : userInitials ? (
+            <div className="w-full h-full flex items-center justify-center bg-indigo-600 dark:bg-yellow-500 text-white dark:text-gray-950 font-bold text-2xl uppercase tracking-wider select-none">
+              {userInitials}
+            </div>
           ) : (
             <img src="/logo.png" alt="Default Profile" className="w-full h-full object-cover" />
           )}
@@ -370,7 +377,7 @@ export default function ProfilePhotoUpload({
       {showViewModal && avatarUrl && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowViewModal(false)}>
            <div className="relative max-w-lg w-full h-auto p-4 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-             <img src={avatarUrl} alt="Profile Full" className="w-full h-auto rounded-full border-4 border-gray-800 shadow-2xl object-cover" />
+             <img src={avatarUrl} alt="Profile Full" className="w-full max-w-[320px] aspect-square rounded-full border-4 border-gray-800 shadow-2xl object-cover" />
              <button onClick={() => setShowViewModal(false)} className="mt-8 text-white/70 hover:text-white bg-gray-900/50 p-3 rounded-full backdrop-blur-md transition-colors border border-gray-700">
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

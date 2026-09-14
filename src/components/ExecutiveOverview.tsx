@@ -189,7 +189,8 @@ export default function ExecutiveOverview() {
         }
 
         // Fetch staff on leave today
-        const todayStr = new Date().toISOString().split('T')[0];
+        const nowD = new Date();
+        const todayStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')}`;
         const { count: leaveCount, error: leaveErr } = await supabase
           .from('leave_requests')
           .select('*', { count: 'exact', head: true })

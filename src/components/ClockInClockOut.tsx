@@ -5,6 +5,13 @@ import { usePortalLanguage } from '../hooks/usePortalLanguage';
 import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 
+const getLocalDateString = (d: Date = new Date()): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function ClockInClockOut() {
   const { lang } = usePortalLanguage();
   const [profile, setProfile] = useState<any>(null);
@@ -43,7 +50,7 @@ export default function ClockInClockOut() {
 
   const handleOpenEditModal = (record: any) => {
     setEditingRecord(record);
-    setEditDate(record.date || new Date().toISOString().split('T')[0]);
+    setEditDate(record.date || getLocalDateString());
 
     let clockInStr = '';
     if (record.clock_in_time) {
@@ -165,7 +172,7 @@ export default function ClockInClockOut() {
   // Fetch attendance records efficiently
   const fetchForgotClockoutRecords = async (userId?: string, isPrivileged?: boolean) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       const privileged = isPrivileged;
 
       // 1. Fetch forgot clockouts specifically (server-side filtering)
@@ -236,7 +243,7 @@ export default function ClockInClockOut() {
                const dayOfWeek = currentDate.getDay();
                // Mon-Fri only
                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                 const dateStr = currentDate.toISOString().split('T')[0];
+                 const dateStr = getLocalDateString(currentDate);
                  const existingRecord = enrichedRecords.find(r => r.user_id === leave.profile_id && r.date === dateStr);
                  if (!existingRecord) {
                    enrichedRecords.push({
@@ -323,7 +330,7 @@ export default function ClockInClockOut() {
     const colWidths = [20, 15, 15, 25];
     ws['!cols'] = colWidths.map(width => ({ wch: width }));
 
-    const filename = `Forgot_Clockouts_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `Forgot_Clockouts_Export_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -412,7 +419,7 @@ export default function ClockInClockOut() {
     const colWidths = [20, 15, 15, 15, 15, 25];
     ws['!cols'] = colWidths.map(width => ({ wch: width }));
 
-    const filename = `Working_Hours_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `Working_Hours_Export_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -569,7 +576,7 @@ export default function ClockInClockOut() {
         return;
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
 
       // Get today's active record (where clock_out_time is null)
       const { data: activeRecord } = await supabase
@@ -770,7 +777,7 @@ export default function ClockInClockOut() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       const { data: records, error } = await supabase
         .from('attendance')
         .select('*')

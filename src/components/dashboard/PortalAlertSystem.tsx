@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, getCurrentSession } from '../../lib/supabase';
 import { usePortalLanguage } from '../../hooks/usePortalLanguage';
 import {
   checkAndDispatchUpcomingAlerts,
@@ -7,27 +7,75 @@ import {
   playUrgentAlertChime,
   stopTitleFlashing,
   snoozeAppointmentAlert,
+  isAlertSoundMuted,
+  setAlertSoundMuted,
   type AlertTriggerResult
 } from '../../lib/notificationService';
+import { downloadAppointmentIcs, getGoogleCalendarLink } from '../../utils/calendarExport';
 
 export default function PortalAlertSystem() {
   const { lang } = usePortalLanguage();
   const [modalAlert, setModalAlert] = useState<AlertTriggerResult | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    setIsMuted(isAlertSoundMuted());
+    const handleMuteChange = (e: any) => {
+      if (typeof e?.detail?.muted === 'boolean') {
+        setIsMuted(e.detail.muted);
+      }
+    };
+    window.addEventListener('portalAlertMuteChanged', handleMuteChange);
+    return () => window.removeEventListener('portalAlertMuteChanged', handleMuteChange);
+  }, []);
+
+  const handleToggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    setAlertSoundMuted(next);
+  };
+
+  const handleAddToDeviceCalendar = () => {
+    if (modalAlert?.appointment) {
+      downloadAppointmentIcs(modalAlert.appointment);
+    }
+  };
 
   const fetchAndCheckAlerts = async () => {
     try {
+      const session = await getCurrentSession();
+      if (!session?.user?.id) return;
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, full_name, roles(role_name), department')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (!profileData) return;
+      const userName = profileData.full_name?.trim() || '';
+      const roleName = Array.isArray(profileData.roles) ? profileData.roles[0]?.role_name : (profileData.roles as any)?.role_name || '';
+      const isManagement = ['CEO', 'CFO', 'COO', 'CPO', 'Chairman', 'Head of Department', 'IT Admin'].includes(roleName);
+
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
       const d = String(now.getDate()).padStart(2, '0');
       const todayStr = `${y}-${m}-${d}`;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select('*')
         .or(`appointment_date.eq.${todayStr},follow_up_date.lte.${todayStr}`)
         .not('status', 'in', '("Cancelled","Completed")')
-        .limit(250);
+        .limit(100);
+
+      // Unless management, only alert the assigned PIC for their appointments
+      if (!isManagement && userName) {
+        query = query.ilike('pic_name', userName);
+      }
+
+      const { data, error } = await query;
 
       if (error || !data || data.length === 0) return;
 
@@ -48,7 +96,7 @@ export default function PortalAlertSystem() {
         }
       }
     } catch (err) {
-      console.warn('Error running global appointment alert checks:', err);
+      console.warn('Error running appointment alert checks:', err);
     }
   };
 
@@ -59,14 +107,7 @@ export default function PortalAlertSystem() {
 
     const interval = setInterval(() => {
       fetchAndCheckAlerts();
-    }, 20000);
-
-    const handleTestAlert = (e: any) => {
-      if (e?.detail) {
-        setModalAlert(e.detail);
-      }
-    };
-    window.addEventListener('triggerGlobalTestAlert', handleTestAlert);
+    }, 45000);
 
     const handleFocus = () => {
       if (!modalAlert) {
@@ -78,7 +119,6 @@ export default function PortalAlertSystem() {
     return () => {
       clearTimeout(initialTimer);
       clearInterval(interval);
-      window.removeEventListener('triggerGlobalTestAlert', handleTestAlert);
       window.removeEventListener('focus', handleFocus);
     };
   }, [lang]);
@@ -149,17 +189,47 @@ export default function PortalAlertSystem() {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleReplayChime}
-            title={lang === 'bm' ? 'Mainkan Semula Loceng' : 'Replay Alarm Sound'}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-            <span>{lang === 'bm' ? 'Bunyi' : 'Sound'}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleToggleMute}
+              title={isMuted ? (lang === 'bm' ? 'Nyahsenyap Bunyi Loceng' : 'Unmute Chime Sound') : (lang === 'bm' ? 'Senyapkan Bunyi Loceng' : 'Mute Chime Sound')}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                isMuted
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+            >
+              {isMuted ? (
+                <>
+                  <svg className="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.757 3.63 8.25 4.51 8.25H9z" />
+                  </svg>
+                  <span>{lang === 'bm' ? 'Senyap' : 'Muted'}</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 fill-none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.757 3.63 8.25 4.51 8.25H6.75z" />
+                  </svg>
+                  <span>{lang === 'bm' ? 'Loceng' : 'Chime'}</span>
+                </>
+              )}
+            </button>
+
+            {!isMuted && (
+              <button
+                type="button"
+                onClick={handleReplayChime}
+                title={lang === 'bm' ? 'Uji Bunyi Loceng' : 'Test Chime Sound'}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer flex items-center justify-center text-xs font-bold"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="p-6 space-y-4">
@@ -213,6 +283,20 @@ export default function PortalAlertSystem() {
               </div>
             )}
           </div>
+
+          {modalAlert.appointment && (
+            <button
+              type="button"
+              onClick={handleAddToDeviceCalendar}
+              title={lang === 'bm' ? 'Muat turun fail kalendar .ics dengan penggera 15 minit ke telefon anda' : 'Download .ics calendar event with 15-minute native alarm to your phone'}
+              className="w-full py-2.5 px-3 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 hover:text-white transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            >
+              <svg className="w-4 h-4 text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.253M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+              </svg>
+              <span>{lang === 'bm' ? '🔔 Tetapkan Penggera Telefon (Apple / Google Calendar)' : '🔔 Set Native Phone Alarm (Apple / Google Calendar)'}</span>
+            </button>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
             <button

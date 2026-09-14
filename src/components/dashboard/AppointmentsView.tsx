@@ -86,6 +86,36 @@ const getAppointmentTimestamp = (dateStr: string = '', timeStr: string = ''): nu
   return new Date(parts[0], parts[1] - 1, parts[2], h, m, 0, 0).getTime();
 };
 
+const PRIMARY_PICS = [
+  'Muhammad Jazli Bin Jalaluddin',
+  'Muhammad Azizul Harith Bin Azmi',
+  'Shahniza Binti Midi',
+  'Shahrizul Azri Bin Rosdi',
+  'Norsyuhada binti Othman'
+];
+
+export const normalizePicName = (name?: string | null): string => {
+  if (!name) return '';
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'mr. jazz' || lower === 'mr jazz' || lower === 'jazz') {
+    return 'Muhammad Jazli Bin Jalaluddin';
+  }
+  if (lower === 'azizul' || lower === 'mr azizul' || lower === 'mr. azizul') {
+    return 'Muhammad Azizul Harith Bin Azmi';
+  }
+  if (lower === 'shazz' || lower === 'shahniza' || lower === 'shaniza') {
+    return 'Shahniza Binti Midi';
+  }
+  if (lower === 'shah' || lower === 'shahrizul' || lower === 'shahrizul azri') {
+    return 'Shahrizul Azri Bin Rosdi';
+  }
+  if (lower === 'shyuhada' || lower === 'syuhada') {
+    return 'Norsyuhada binti Othman';
+  }
+  return trimmed;
+};
+
 export default function AppointmentsView() {
   const { lang, setLang } = usePortalLanguage();
   const { profile, permissions, isITAdmin, loading: loadingPerms } = usePermissions();
@@ -154,7 +184,7 @@ export default function AppointmentsView() {
     case_category: 'Loan Shark',
     custom_category: '',
     is_custom_category: false,
-    pic_name: 'Azizul',
+    pic_name: PRIMARY_PICS[0],
     custom_pic: '',
     is_custom_pic: false,
     location: 'Office Consultation',
@@ -162,7 +192,7 @@ export default function AppointmentsView() {
     notes: ''
   });
 
-  const [staffList, setStaffList] = useState<string[]>(['Azizul', 'Mr. Jazz', 'Shazz', 'Shahniza', 'Shahrizul Azri', 'Akmar']);
+  const [staffList, setStaffList] = useState<string[]>(PRIMARY_PICS);
   const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
@@ -285,19 +315,35 @@ export default function AppointmentsView() {
           .select('full_name, status')
           .order('full_name', { ascending: true });
 
-        const defaultStaff = ['Azizul', 'Mr. Jazz', 'Shazz', 'Shahniza', 'Shahrizul Azri'];
         if (!error && data) {
           const names = data
             .filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive')
             .map(p => p.full_name?.trim())
-            .filter((n): n is string => Boolean(n && n.length > 0));
-          const merged = Array.from(new Set([...defaultStaff, ...names]));
-          setStaffList(merged);
+            .filter((n): n is string => Boolean(n && n.length > 0 && n.toLowerCase() !== 'testing account'));
+
+          const findDbName = (regex: RegExp, fallback: string) => {
+            const found = names.find(n => regex.test(n));
+            return found || fallback;
+          };
+
+          const p1 = findDbName(/jazli/i, PRIMARY_PICS[0]);
+          const p2 = findDbName(/azizul/i, PRIMARY_PICS[1]);
+          const p3 = findDbName(/sha[h]?niza/i, PRIMARY_PICS[2]);
+          const p4 = findDbName(/shahrizul/i, PRIMARY_PICS[3]);
+          const p5 = findDbName(/syuhada/i, PRIMARY_PICS[4]);
+
+          const topFive = [p1, p2, p3, p4, p5];
+
+          const otherStaff = names
+            .filter(n => !topFive.includes(n))
+            .sort((a, b) => a.localeCompare(b));
+
+          setStaffList([...topFive, ...otherStaff]);
         } else {
-          setStaffList(defaultStaff);
+          setStaffList(PRIMARY_PICS);
         }
       } catch (err) {
-        setStaffList(['Azizul', 'Mr. Jazz', 'Shazz', 'Shahniza', 'Shahrizul Azri']);
+        setStaffList(PRIMARY_PICS);
       }
     }
     loadStaff();
@@ -694,8 +740,12 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
         if (!matches) return false;
       }
 
-      if (filterPIC !== 'all' && apt.pic_name !== filterPIC) {
-        return false;
+      if (filterPIC !== 'all') {
+        const normApt = normalizePicName(apt.pic_name);
+        const normFilter = normalizePicName(filterPIC);
+        if (apt.pic_name !== filterPIC && normApt !== normFilter) {
+          return false;
+        }
       }
 
       if (filterCategory !== 'all' && apt.case_category !== filterCategory) {
@@ -733,8 +783,8 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       for (let j = i + 1; j < activeList.length; j++) {
         const a1 = activeList[i];
         const a2 = activeList[j];
-        const pic1 = (a1.pic_name || '').toLowerCase().trim();
-        const pic2 = (a2.pic_name || '').toLowerCase().trim();
+        const pic1 = normalizePicName(a1.pic_name).toLowerCase().trim();
+        const pic2 = normalizePicName(a2.pic_name).toLowerCase().trim();
         if (pic1 && pic1 === pic2) {
           const ts1 = getAppointmentTimestamp(a1.appointment_date, a1.appointment_time);
           const ts2 = getAppointmentTimestamp(a2.appointment_date, a2.appointment_time);
@@ -752,13 +802,13 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
   const formClashAppointment = useMemo(() => {
     if (!formData.appointment_date || !formData.appointment_time) return null;
     const currentFormTs = getAppointmentTimestamp(formData.appointment_date, formData.appointment_time);
-    const currentPic = (formData.is_custom_pic ? formData.custom_pic : formData.pic_name || '').toLowerCase().trim();
+    const currentPic = normalizePicName(formData.is_custom_pic ? formData.custom_pic : formData.pic_name || '').toLowerCase().trim();
     const MS_45_MIN = 45 * 60 * 1000;
 
     return appointments.find(a => {
       if (isEditModalOpen && activeAppointment && a.id === activeAppointment.id) return false;
       if (a.status === 'Cancelled') return false;
-      const aPic = (a.pic_name || '').toLowerCase().trim();
+      const aPic = normalizePicName(a.pic_name || '').toLowerCase().trim();
       const picMatch = currentPic ? aPic === currentPic : true;
       if (!picMatch) return false;
       const aTs = getAppointmentTimestamp(a.appointment_date, a.appointment_time);
@@ -929,7 +979,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       case_category: 'Loan Shark',
       custom_category: '',
       is_custom_category: false,
-      pic_name: 'Azizul',
+      pic_name: PRIMARY_PICS[0],
       custom_pic: '',
       is_custom_pic: false,
       location: 'Office Consultation',
@@ -984,7 +1034,8 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
     setActiveAppointment(apt);
     const standardCategories = ['Loan Shark', 'Ah Long', 'Kredit Komuniti', 'Bank', 'Scam Victim', 'Kemalangan', 'Tuntutan Sivil'];
     const isCustomCat = Boolean(apt.case_category && !standardCategories.includes(apt.case_category));
-    const isCustomPIC = Boolean(apt.pic_name && !staffList.includes(apt.pic_name));
+    const normalizedPic = normalizePicName(apt.pic_name);
+    const isCustomPIC = Boolean(normalizedPic && !staffList.includes(normalizedPic));
 
     setFormData({
       client_name: apt.client_name || '',
@@ -997,7 +1048,7 @@ Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;
       case_category: isCustomCat ? 'Custom' : (apt.case_category || 'Loan Shark'),
       custom_category: isCustomCat ? apt.case_category : '',
       is_custom_category: isCustomCat,
-      pic_name: isCustomPIC ? 'Custom' : (apt.pic_name || 'Azizul'),
+      pic_name: isCustomPIC ? 'Custom' : (normalizedPic || PRIMARY_PICS[0]),
       custom_pic: isCustomPIC ? apt.pic_name : '',
       is_custom_pic: isCustomPIC,
       location: apt.location || 'Office Consultation',

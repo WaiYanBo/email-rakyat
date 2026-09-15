@@ -19,7 +19,16 @@ interface BillingGeneratorProps {
 }
 
 export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, onSuccess }) => {
+  const getTodayDateString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [documentType, setDocumentType] = useState<'invoice' | 'receipt'>('invoice');
+  const [documentDate, setDocumentDate] = useState<string>(getTodayDateString());
   const [items, setItems] = useState<{ id: string; description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([{ id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
   const [deposit, setDeposit] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -100,6 +109,11 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
   const generateDocument = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!documentDate) {
+      setStatusMessage({ type: 'error', text: 'Please select a document date.' });
+      return;
+    }
+
     const hasAnyItem = items.some(item => item.description || item.amount || item.qty || item.unitPrice || item.paymentDetails || item.date);
     if (!hasAnyItem) {
       setStatusMessage({ type: 'error', text: 'Please add at least one item detail.' });
@@ -154,7 +168,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
           .eq('client_id', clientData.id)
           .eq('document_type', 'invoice')
           .is('deleted_at', null);
-        
+
         if (countError) {
           console.error('Error fetching existing invoices count:', countError);
         } else if (existingInvoices) {
@@ -167,8 +181,14 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         ? `INV-TER-${clientNoVal}-${invoiceCount} Invoices`
         : `RCP-TER-${String(clientNoVal).padStart(4, '0')}`;
 
-      // Date formatted as DD/MM/YYYY
-      const date = new Date().toLocaleDateString('en-GB');
+      // Format manual document date as DD/MM/YYYY
+      let date = documentDate;
+      if (documentDate && documentDate.includes('-') && documentDate.split('-')[0].length === 4) {
+        const [year, month, day] = documentDate.split('-');
+        date = `${day}/${month}/${year}`;
+      } else if (!documentDate) {
+        date = new Date().toLocaleDateString('en-GB');
+      }
 
       // Set PDF Metadata to overwrite template name in browser tab title
       pdfDoc.setTitle(refNumber);
@@ -342,7 +362,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       // 6. Upload to Supabase Storage
       const docCategory = documentType === 'invoice' ? 'Invoices' : 'Receipts';
-      
+
       // Sanitize client name for the folder path
       const safeClientName = clientData.name.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
       const clientFolder = `${clientNoVal} ${safeClientName}`;
@@ -391,6 +411,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       // Reset form amounts/desc
       setItems([{ description: '', amount: '' }]);
       setDeposit('');
+      setDocumentDate(getTodayDateString());
 
       if (onSuccess) {
         onSuccess();
@@ -414,25 +435,40 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       )}
 
       <form onSubmit={generateDocument} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
-          <div className="flex bg-gray-100 p-1 rounded-lg">
-            <button
-              type="button"
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'invoice' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              onClick={() => setDocumentType('invoice')}
-            >
-              Invoice
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'receipt' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              onClick={() => setDocumentType('receipt')}
-            >
-              Receipt
-            </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Document Type</label>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                type="button"
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'invoice' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                onClick={() => setDocumentType('invoice')}
+              >
+                Invoice
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'receipt' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                onClick={() => setDocumentType('receipt')}
+              >
+                Receipt
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {documentType === 'invoice' ? 'Invoice Date' : 'Receipt Date'}
+            </label>
+            <input
+              type="date"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm bg-white"
+              value={documentDate}
+              onChange={(e) => setDocumentDate(e.target.value)}
+            />
           </div>
         </div>
 
@@ -511,7 +547,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
                         placeholder="Date"
                         value={item.date}
                         onChange={(e) => updateItem(index, 'date', e.target.value)}
-                        onClick={(e) => {}}
+                        onClick={(e) => { }}
                       />
                     </div>
                   </div>

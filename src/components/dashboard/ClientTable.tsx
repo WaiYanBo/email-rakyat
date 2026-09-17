@@ -245,8 +245,48 @@ const EXPANDED_COLUMNS_ORDER = [
 const IGNORED_KEYS = [
   'id', '_stableKey', 'updated_at', 'created_at', 'deleted_at', 
   'isVirtual', 'folderName', 'Investigation Paper', 'Report', 'Action Taken by police',
-  'lastPaymentStage', 'lastPaymentDate', 'lastPaymentDateStr', 'overdueDays', 'overdue_days'
+  'lastPaymentStage', 'lastPaymentDate', 'lastPaymentDateStr', 'overdueDays', 'overdue_days',
+  'agreement_url', 'agreement_name', 'agreement_date', 'payment_receipts', 'client_documents', 'agreements'
 ];
+
+const hasPaymentReceipt = (client: any, paymentKey: string): boolean => {
+  if (!client?.payment_receipts) return false;
+  let receiptsObj = client.payment_receipts;
+  if (typeof receiptsObj === 'string') {
+    try {
+      receiptsObj = JSON.parse(receiptsObj);
+    } catch {
+      return false;
+    }
+  }
+  if (!receiptsObj || typeof receiptsObj !== 'object') return false;
+
+  const cleanKey = paymentKey.toLowerCase().replace(/\s*payment\s*/g, '').trim();
+  if (receiptsObj[paymentKey] || receiptsObj[paymentKey.toLowerCase()]) return true;
+  if (cleanKey && (receiptsObj[cleanKey] || receiptsObj[`payment_${cleanKey}`])) return true;
+
+  for (const k of Object.keys(receiptsObj)) {
+    const normK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normTarget = paymentKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normK === normTarget || (cleanKey && normK.includes(cleanKey))) {
+      if (receiptsObj[k]) return true;
+    }
+  }
+  return false;
+};
+
+const getMissingReceiptsCount = (client: any): number => {
+  const paymentStages = ['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'];
+  let missing = 0;
+  for (const st of paymentStages) {
+    const amt = parseAmount(client[st]);
+    if (amt > 0 && !hasPaymentReceipt(client, st)) {
+      missing++;
+    }
+  }
+  return missing;
+};
+
 
 const getOrderedKeys = (clientObj: any) => {
   const availableKeys = Object.keys(clientObj || {});
@@ -1368,7 +1408,20 @@ export default function ClientTable({
                   return (
                     <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
                       <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client.No ?? client.NO ?? '-'}</td>
-                      <td className="px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug text-slate-900 dark:text-white">{client.NAME}</td>
+                      <td className="px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{client.NAME}</span>
+                          {Boolean(client.agreement_url || client.agreement_name) && (
+                            <span 
+                              title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
+                            >
+                              <span>📜</span>
+                              <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client["PHONE NUMBER"] || '-'}</td>
                       <td className="px-4 py-3.5 text-slate-500 dark:text-zinc-400">{client["CASE STATUS"] || '-'}</td>
                       <td className="px-4 py-3.5 font-mono text-slate-700 dark:text-zinc-300 font-semibold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
@@ -1419,18 +1472,57 @@ export default function ClientTable({
                     {viewMode === 'standard' ? (
                       <>
                         <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {client.isVirtual && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
                                 Storage
                               </span>
                             )}
                             <span>{client.NAME}</span>
+                            {Boolean(client.agreement_url || client.agreement_name) && (
+                              <span 
+                                title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
+                              >
+                                <span>📜</span>
+                                <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
                         <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
-                        <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["TOTAL PAID (RM)"] || '0'}</td>
+                        <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">
+                          <div className="flex flex-col items-start gap-0.5">
+                            <span>{client["TOTAL PAID (RM)"] || '0'}</span>
+                            {(() => {
+                              const missing = getMissingReceiptsCount(client);
+                              const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                              if (missing > 0) {
+                                return (
+                                  <span 
+                                    title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
+                                  >
+                                    <span className="text-[9px]">⚠️</span>
+                                    <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
+                                  </span>
+                                );
+                              } else if (totalPaidNum > 0) {
+                                return (
+                                  <span 
+                                    title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
+                                    className="inline-flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
+                                  >
+                                    <span>✓</span>
+                                    <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        </td>
                         <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
                         <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
                         <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
@@ -1439,12 +1531,14 @@ export default function ClientTable({
                       <>
                         {getOrderedKeys(client).map((k) => {
                           const v = client[k];
+                          const isPaymentCol = ['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(k);
                           
                           let displayVal = v;
-                          if (['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(k)) {
+                          let parsedAmt = 0;
+                          if (isPaymentCol) {
                             const dateKey = `${k} DATE`;
                             const dateVal = client[dateKey];
-                            const parsedAmt = parseAmount(v);
+                            parsedAmt = parseAmount(v);
                             if (parsedAmt === 0) {
                               const isDateEmpty = !dateVal || String(dateVal).trim() === '' || String(dateVal).trim() === '-';
                               if (isDateEmpty) {
@@ -1458,12 +1552,44 @@ export default function ClientTable({
 
                           return (
                           <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={hasValue ? String(displayVal) : ''}>
-                            {k === 'NAME' && client.isVirtual ? (
-                              <div className="flex items-center gap-1.5">
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
-                                  Storage
-                                </span>
+                            {k === 'NAME' ? (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {client.isVirtual && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
+                                    Storage
+                                  </span>
+                                )}
                                 <span>{textRepresentation}</span>
+                                {Boolean(client.agreement_url || client.agreement_name) && (
+                                  <span 
+                                    title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
+                                  >
+                                    <span>📜</span>
+                                    <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
+                                  </span>
+                                )}
+                              </div>
+                            ) : isPaymentCol && parsedAmt > 0 ? (
+                              <div className="flex flex-col items-start gap-0.5">
+                                <span className="font-mono">{textRepresentation}</span>
+                                {hasPaymentReceipt(client, k) ? (
+                                  <span 
+                                    title={lang === 'bm' ? 'Resit klien dilampirkan' : 'Client receipt attached'}
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40 whitespace-nowrap"
+                                  >
+                                    <span>✓</span>
+                                    <span>{lang === 'bm' ? 'Resit Ada' : 'Receipt OK'}</span>
+                                  </span>
+                                ) : (
+                                  <span 
+                                    title={lang === 'bm' ? 'Resit klien belum dimuat naik untuk bayaran ini' : 'Client receipt has not been uploaded for this payment'}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40 whitespace-nowrap"
+                                  >
+                                    <span className="text-[9px]">⚠️</span>
+                                    <span>{lang === 'bm' ? 'Tiada Resit' : 'No Receipt'}</span>
+                                  </span>
+                                )}
                               </div>
                             ) : textRepresentation.startsWith('[') ? (
                                 (() => {

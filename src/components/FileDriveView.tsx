@@ -217,7 +217,16 @@ export default function FileDriveView() {
       setIsGlobalAdmin(isGlobal);
 
       if (currentPath === null) {
-        if (!isGlobal && userProfile.department) {
+        // Check if a direct path is requested via query string (e.g. ?path=Clients/151%20John)
+        let directPath: string | null = null;
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          directPath = params.get('path') || params.get('folder');
+        }
+
+        if (directPath) {
+          setCurrentPath(decodeURIComponent(directPath));
+        } else if (!isGlobal && userProfile.department) {
           setCurrentPath(userProfile.department);
         } else {
           setCurrentPath('');
@@ -338,8 +347,8 @@ export default function FileDriveView() {
       parts.pop();
       const newPath = parts.join('/');
 
-      // Prevent non-admins from going to root
-      if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department)) {
+      // Prevent non-admins from going outside their department or Clients area
+      if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department) && !newPath.startsWith('Clients') && newPath !== '') {
         return userProfile.department;
       }
       return newPath;
@@ -352,8 +361,8 @@ export default function FileDriveView() {
       const parts = prev.split('/').filter(Boolean);
       const newPath = parts.slice(0, index + 1).join('/');
 
-      // Prevent non-admins from going to root or outside their department
-      if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department)) {
+      // Prevent non-admins from going outside their department or Clients area
+      if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department) && !newPath.startsWith('Clients') && newPath !== '') {
         return userProfile.department;
       }
       return newPath;

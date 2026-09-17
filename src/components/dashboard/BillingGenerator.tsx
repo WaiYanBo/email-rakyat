@@ -360,19 +360,22 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         window.URL.revokeObjectURL(url);
       }, 1000);
 
-      // 6. Upload to Supabase Storage
+      // 6. Upload to Supabase Storage inside the unified Client Folder: Clients/{clientFolder}/{docCategory}/
       const docCategory = documentType === 'invoice' ? 'Invoices' : 'Receipts';
 
       // Sanitize client name for the folder path
       const safeClientName = clientData.name.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
       const clientFolder = `${clientNoVal} ${safeClientName}`;
 
-      // Target path: e.g. "Finance/billing_documents/Invoices/151 Testing A/INV-TER-151-2 Invoices.pdf"
-      const filePath = `Finance/billing_documents/${docCategory}/${clientFolder}/${fileName}`;
+      // Primary unified Client Drive path: e.g. "Clients/151 Testing A/Invoices/INV-TER-151-2.pdf"
+      const clientDrivePath = `Clients/${clientFolder}/${docCategory}/${fileName}`;
+      // Legacy fallback path: e.g. "Finance/billing_documents/Invoices/151 Testing A/INV-TER-151-2.pdf"
+      const legacyPath = `Finance/billing_documents/${docCategory}/${clientFolder}/${fileName}`;
 
+      // Upload to unified Client folder
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('company_drive')
-        .upload(filePath, blob, {
+        .upload(clientDrivePath, blob, {
           contentType: 'application/pdf',
           upsert: true,
         });
@@ -381,10 +384,22 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         throw new Error(uploadError.message || 'Failed to upload to Supabase Storage');
       }
 
-      // Get public URL
+      // Also mirror to legacy path for backward compatibility
+      try {
+        await supabase.storage
+          .from('company_drive')
+          .upload(legacyPath, blob, {
+            contentType: 'application/pdf',
+            upsert: true,
+          });
+      } catch (mirrorErr) {
+        console.warn('Mirror to legacy path failed (non-critical):', mirrorErr);
+      }
+
+      // Get public URL of primary unified path
       const { data: publicUrlData } = supabase.storage
         .from('company_drive')
-        .getPublicUrl(filePath);
+        .getPublicUrl(clientDrivePath);
 
       const fileUrl = publicUrlData.publicUrl;
 

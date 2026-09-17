@@ -201,9 +201,18 @@ export default function ClientDataView() {
   const [viewingClient, setViewingClient] = useState<any>(null);
 
   const [billingRecords, setBillingRecords] = useState<any[]>([]);
+  const [agreementFiles, setAgreementFiles] = useState<any[]>([]);
+  const [paymentReceipts, setPaymentReceipts] = useState<{ [stage: string]: any }>({});
+  const [isUploadingAgreement, setIsUploadingAgreement] = useState(false);
+  const [uploadingReceiptStage, setUploadingReceiptStage] = useState<string | null>(null);
+
+  const agreementFileInputRef = useRef<HTMLInputElement>(null);
+  const receiptFileInputRef = useRef<HTMLInputElement>(null);
+  const targetReceiptStageRef = useRef<string | null>(null);
+
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
-  const loadBillingRecords = async (clientId: string, clientNo?: any, clientName?: string) => {
+  const loadClientDocuments = async (clientId: string, clientNo?: any, clientName?: string) => {
     try {
       const actualNo = clientNo !== undefined ? clientNo : (viewingClient?.No ?? viewingClient?.NO ?? '');
       const actualName = clientName !== undefined ? clientName : (viewingClient?.NAME ?? '');
@@ -226,65 +235,149 @@ export default function ClientDataView() {
         });
       }
 
-      // 2. List files from company_drive storage under Invoices
-      const { data: storageInvoices, error: errInv } = await supabase.storage
+      // 2. List Invoices from both unified Clients folder and legacy Finance folder
+      const [uInvoicesRes, lInvoicesRes] = await Promise.all([
+        supabase.storage.from('company_drive').list(`Clients/${clientFolder}/Invoices`, { limit: 100 }),
+        supabase.storage.from('company_drive').list(`Finance/billing_documents/Invoices/${clientFolder}`, { limit: 100 })
+      ]);
+
+      // 3. List Official Receipts from both unified Clients folder and legacy Finance folder
+      const [uReceiptsRes, lReceiptsRes] = await Promise.all([
+        supabase.storage.from('company_drive').list(`Clients/${clientFolder}/Receipts`, { limit: 100 }),
+        supabase.storage.from('company_drive').list(`Finance/billing_documents/Receipts/${clientFolder}`, { limit: 100 })
+      ]);
+
+      // 4. List Agreements from unified Clients folder
+      const { data: storageAgreements } = await supabase.storage
         .from('company_drive')
-        .list(`Finance/billing_documents/Invoices/${clientFolder}`, { limit: 100 });
+        .list(`Clients/${clientFolder}/Agreements`, { limit: 100 });
 
-      // 3. List files from company_drive storage under Receipts
-      const { data: storageReceipts, error: errRec } = await supabase.storage
+      // 5. List Client Installment Payment Receipts
+      const { data: storagePayments } = await supabase.storage
         .from('company_drive')
-        .list(`Finance/billing_documents/Receipts/${clientFolder}`, { limit: 100 });
+        .list(`Clients/${clientFolder}/Payments`, { limit: 100 });
 
-      const invoicesList: any[] = [];
-      if (!errInv && storageInvoices) {
-        storageInvoices.forEach(file => {
-          if (file.name === '.keep') return;
-          const refNumber = file.name.replace('.pdf', '');
-          const dbRec = dbMap.get(refNumber);
+      // Build unified invoices list (deduplicating by filename / ref_number)
+      const invoicesMap = new Map();
+      const processInvoice = (file: any, folderPrefix: string) => {
+        if (!file || file.name === '.keep') return;
+        const refNumber = file.name.replace('.pdf', '');
+        const dbRec = dbMap.get(refNumber);
+        const filePath = `${folderPrefix}/${file.name}`;
+        const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
 
-          const filePath = `Finance/billing_documents/Invoices/${clientFolder}/${file.name}`;
-          const { data: publicUrlData } = supabase.storage
-            .from('company_drive')
-            .getPublicUrl(filePath);
+        invoicesMap.set(refNumber, {
+          id: dbRec?.id || file.id || refNumber,
+          document_type: 'invoice',
+          ref_number: refNumber,
+          amount: dbRec?.amount || 0,
+          created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
+          drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
+          filePath
+        });
+      };
 
-          invoicesList.push({
-            id: dbRec?.id || file.id || refNumber,
-            document_type: 'invoice',
-            ref_number: refNumber,
-            amount: dbRec?.amount || 0,
-            created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
-            drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
+      if (uInvoicesRes.data) uInvoicesRes.data.forEach(f => processInvoice(f, `Clients/${clientFolder}/Invoices`));
+      if (lInvoicesRes.data) lInvoicesRes.data.forEach(f => {
+        const refNumber = f.name.replace('.pdf', '');
+        if (!invoicesMap.has(refNumber)) {
+          processInvoice(f, `Finance/billing_documents/Invoices/${clientFolder}`);
+        }
+      });
+
+      // Build unified official receipts list (deduplicating by filename / ref_number)
+      const receiptsMap = new Map();
+      const processReceipt = (file: any, folderPrefix: string) => {
+        if (!file || file.name === '.keep') return;
+        const refNumber = file.name.replace('.pdf', '');
+        const dbRec = dbMap.get(refNumber);
+        const filePath = `${folderPrefix}/${file.name}`;
+        const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
+
+        receiptsMap.set(refNumber, {
+          id: dbRec?.id || file.id || refNumber,
+          document_type: 'receipt',
+          ref_number: refNumber,
+          amount: dbRec?.amount || 0,
+          created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
+          drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
+          filePath
+        });
+      };
+
+      if (uReceiptsRes.data) uReceiptsRes.data.forEach(f => processReceipt(f, `Clients/${clientFolder}/Receipts`));
+      if (lReceiptsRes.data) lReceiptsRes.data.forEach(f => {
+        const refNumber = f.name.replace('.pdf', '');
+        if (!receiptsMap.has(refNumber)) {
+          processReceipt(f, `Finance/billing_documents/Receipts/${clientFolder}`);
+        }
+      });
+
+      setBillingRecords([...Array.from(invoicesMap.values()), ...Array.from(receiptsMap.values())]);
+
+      // Process Agreements
+      const loadedAgreements: any[] = [];
+      if (storageAgreements) {
+        storageAgreements.forEach(f => {
+          if (f.name === '.keep') return;
+          const filePath = `Clients/${clientFolder}/Agreements/${f.name}`;
+          const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
+          loadedAgreements.push({
+            id: f.id || f.name,
+            name: f.name,
+            created_at: f.created_at || new Date().toISOString(),
+            size: f.metadata?.size || 0,
+            drive_url: publicUrlData?.publicUrl || filePath,
+            filePath
           });
         });
       }
-
-      const receiptsList: any[] = [];
-      if (!errRec && storageReceipts) {
-        storageReceipts.forEach(file => {
-          if (file.name === '.keep') return;
-          const refNumber = file.name.replace('.pdf', '');
-          const dbRec = dbMap.get(refNumber);
-
-          const filePath = `Finance/billing_documents/Receipts/${clientFolder}/${file.name}`;
-          const { data: publicUrlData } = supabase.storage
-            .from('company_drive')
-            .getPublicUrl(filePath);
-
-          receiptsList.push({
-            id: dbRec?.id || file.id || refNumber,
-            document_type: 'receipt',
-            ref_number: refNumber,
-            amount: dbRec?.amount || 0,
-            created_at: file.created_at || dbRec?.created_at || new Date().toISOString(),
-            drive_url: publicUrlData?.publicUrl || dbRec?.drive_url || '',
-          });
+      // If DB has agreement_url and not in storage list, include it
+      if (viewingClient?.agreement_url && loadedAgreements.length === 0) {
+        loadedAgreements.push({
+          id: 'db-agreement',
+          name: viewingClient.agreement_name || 'Agreement_Form.pdf',
+          created_at: viewingClient.agreement_date || new Date().toISOString(),
+          size: 0,
+          drive_url: viewingClient.agreement_url,
+          filePath: viewingClient.agreement_url
         });
       }
+      setAgreementFiles(loadedAgreements);
 
-      setBillingRecords([...invoicesList, ...receiptsList]);
+      // Process Client Installment Payment Receipts
+      const loadedPaymentsMap: { [stage: string]: any } = {};
+      if (viewingClient?.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
+        Object.entries(viewingClient.payment_receipts).forEach(([k, v]: [string, any]) => {
+          loadedPaymentsMap[k.toLowerCase()] = v;
+        });
+      }
+      if (storagePayments) {
+        storagePayments.forEach(f => {
+          if (f.name === '.keep') return;
+          const filePath = `Clients/${clientFolder}/Payments/${f.name}`;
+          const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
+          const lower = f.name.toLowerCase();
+
+          // Find which payment stage this matches (e.g. 1st, 2nd, 3rd, etc.)
+          const stages = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+          const matchedStage = stages.find(st => lower.includes(st) || lower.includes(`payment_${st.replace(/[^0-9]/g, '')}`));
+
+          if (matchedStage) {
+            loadedPaymentsMap[matchedStage] = {
+              id: f.id || f.name,
+              fileName: f.name,
+              created_at: f.created_at || new Date().toISOString(),
+              size: f.metadata?.size || 0,
+              drive_url: publicUrlData?.publicUrl || filePath,
+              filePath
+            };
+          }
+        });
+      }
+      setPaymentReceipts(loadedPaymentsMap);
     } catch (err) {
-      console.error('Error loading billing documents:', err);
+      console.error('Error loading client documents:', err);
     }
   };
 
@@ -342,6 +435,123 @@ export default function ClientDataView() {
     }
   };
 
+  const handleUploadAgreement = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !viewingClient) return;
+    setIsUploadingAgreement(true);
+    try {
+      const actualNo = viewingClient?.No ?? viewingClient?.NO ?? '';
+      const actualName = viewingClient?.NAME ?? '';
+      const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+      const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
+      const clientFolder = `${clientNoVal} ${safeClientName}`;
+
+      const ext = file.name.split('.').pop() || 'pdf';
+      const safeOriginalName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `Agreement_${clientNoVal}_${safeOriginalName}`;
+      const filePath = `Clients/${clientFolder}/Agreements/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('company_drive')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('company_drive')
+        .getPublicUrl(filePath);
+
+      // Gracefully update database record if columns exist
+      try {
+        await supabase.from('clients').update({
+          agreement_url: publicUrlData?.publicUrl || filePath,
+          agreement_name: file.name,
+          agreement_date: new Date().toLocaleDateString('en-GB')
+        }).eq('id', viewingClient.id);
+      } catch (_dbErr) {
+        console.warn('Could not update agreement fields in clients table (columns may not exist yet):', _dbErr);
+      }
+
+      await loadClientDocuments(viewingClient.id, actualNo, actualName);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      console.error('Error uploading agreement:', err);
+      alert('Error uploading agreement: ' + (err.message || err));
+    } finally {
+      setIsUploadingAgreement(false);
+      if (agreementFileInputRef.current) agreementFileInputRef.current.value = '';
+    }
+  };
+
+  const handleUploadPaymentReceipt = async (e: React.ChangeEvent<HTMLInputElement>, stagePrefix: string) => {
+    const file = e.target.files?.[0];
+    if (!file || !viewingClient) return;
+    setUploadingReceiptStage(stagePrefix);
+    try {
+      const actualNo = viewingClient?.No ?? viewingClient?.NO ?? '';
+      const actualName = viewingClient?.NAME ?? '';
+      const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+      const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
+      const clientFolder = `${clientNoVal} ${safeClientName}`;
+
+      const safeOriginalName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `Receipt_${stagePrefix}_Payment_${safeOriginalName}`;
+      const filePath = `Clients/${clientFolder}/Payments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('company_drive')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('company_drive')
+        .getPublicUrl(filePath);
+
+      // Gracefully update payment_receipts map in DB if column exists
+      try {
+        const existingReceipts = viewingClient.payment_receipts || {};
+        const updatedReceipts = {
+          ...existingReceipts,
+          [stagePrefix.toLowerCase()]: {
+            url: publicUrlData?.publicUrl || filePath,
+            fileName: file.name,
+            uploadedAt: new Date().toISOString()
+          }
+        };
+        await supabase.from('clients').update({
+          payment_receipts: updatedReceipts
+        }).eq('id', viewingClient.id);
+      } catch (_dbErr) {
+        console.warn('Could not update payment_receipts in clients table (column may not exist yet):', _dbErr);
+      }
+
+      await loadClientDocuments(viewingClient.id, actualNo, actualName);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      console.error('Error uploading payment receipt:', err);
+      alert('Error uploading payment receipt: ' + (err.message || err));
+    } finally {
+      setUploadingReceiptStage(null);
+      if (receiptFileInputRef.current) receiptFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteDocument = async (filePath: string, docType: 'agreement' | 'payment_receipt') => {
+    if (!window.confirm(lang === 'bm' ? 'Adakah anda pasti mahu memadam fail ini?' : 'Are you sure you want to delete this file?')) return;
+    try {
+      const { error } = await supabase.storage.from('company_drive').remove([filePath]);
+      if (error) throw error;
+      if (viewingClient?.id) {
+        await loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
+        setRefreshTrigger(prev => prev + 1);
+      }
+    } catch (err: any) {
+      console.error('Error deleting document:', err);
+      alert('Error deleting document: ' + (err.message || err));
+    }
+  };
+
   const handleDeleteBillingRecord = async (record: any) => {
     if (!window.confirm(lang === 'bm'
       ? `Adakah anda pasti mahu memadam "${record.ref_number}" ke tong sampah?`
@@ -385,8 +595,10 @@ export default function ClientDataView() {
 
       if (newPathWithUniqueName.includes('Finance/billing_documents/')) {
         trashPath = newPathWithUniqueName.replace('Finance/billing_documents/', 'Finance/billing_documents/Trash/');
+      } else if (newPathWithUniqueName.includes('Clients/')) {
+        trashPath = newPathWithUniqueName.replace('Clients/', 'Clients/Trash/');
       } else {
-        trashPath = `Finance/billing_documents/Trash/${newPathWithUniqueName}`;
+        trashPath = `Clients/Trash/${newPathWithUniqueName}`;
       }
 
       // Move file in storage
@@ -422,7 +634,7 @@ export default function ClientDataView() {
 
       // Reload records
       if (viewingClient?.id) {
-        loadBillingRecords(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
+        loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
       }
     } catch (err: any) {
       console.error('Error deleting billing record:', err);
@@ -432,9 +644,11 @@ export default function ClientDataView() {
 
   useEffect(() => {
     if (viewingClient?.id) {
-      loadBillingRecords(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
+      loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
     } else {
       setBillingRecords([]);
+      setAgreementFiles([]);
+      setPaymentReceipts({});
     }
   }, [viewingClient]);
 
@@ -501,6 +715,10 @@ export default function ClientDataView() {
           .from('company_drive')
           .list('Finance/billing_documents/Receipts', { limit: 1000 });
 
+        const { data: clientFoldersData } = await supabase.storage
+          .from('company_drive')
+          .list('Clients', { limit: 1000 });
+
         const folderNames = new Set<string>();
         if (invoiceFoldersData) {
           invoiceFoldersData.forEach(f => {
@@ -511,6 +729,13 @@ export default function ClientDataView() {
         }
         if (receiptFoldersData) {
           receiptFoldersData.forEach(f => {
+            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+              folderNames.add(f.name);
+            }
+          });
+        }
+        if (clientFoldersData) {
+          clientFoldersData.forEach(f => {
             if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
               folderNames.add(f.name);
             }
@@ -1138,14 +1363,61 @@ export default function ClientDataView() {
         lod_remark: sanitizeInput((data.lod_remark as string) || '', 1000),
       };
 
+      let savedClientId = editingClient?.id;
       if (editingClient && !editingClient.isVirtual) {
         const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
         if (error) throw error;
         await writeAuditLog('UPDATE', editingClient.id, clientPayload);
       } else {
-        const { error } = await supabase.from('clients').insert([clientPayload]);
+        const { data: insertedData, error } = await supabase.from('clients').insert([clientPayload]).select('id').single();
         if (error) throw error;
+        if (insertedData) savedClientId = insertedData.id;
       }
+
+      // Process file uploads from the form into unified Client folder: Clients/{clientFolder}/...
+      try {
+        const safeClientName = clientName.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+        const clientNoVal = (data.No ? String(data.No) : '') || (editingClient?.No ?? editingClient?.NO ?? '0');
+        const clientFolder = `${clientNoVal} ${safeClientName}`;
+        const formElement = e.target as HTMLFormElement;
+
+        // 1. Agreement file upload
+        const agreementInput = formElement.querySelector('input[name="agreement_file"]') as HTMLInputElement;
+        if (agreementInput?.files?.[0]) {
+          const agFile = agreementInput.files[0];
+          const safeOriginalName = agFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const agFileName = `Agreement_${clientNoVal}_${safeOriginalName}`;
+          const agPath = `Clients/${clientFolder}/Agreements/${agFileName}`;
+          await supabase.storage.from('company_drive').upload(agPath, agFile, { upsert: true });
+
+          const { data: agUrlData } = supabase.storage.from('company_drive').getPublicUrl(agPath);
+          if (savedClientId) {
+            try {
+              await supabase.from('clients').update({
+                agreement_url: agUrlData?.publicUrl || agPath,
+                agreement_name: agFile.name,
+                agreement_date: new Date().toLocaleDateString('en-GB')
+              }).eq('id', savedClientId);
+            } catch (_e) {}
+          }
+        }
+
+        // 2. Installment payment receipts
+        for (let i = 0; i < 10; i++) {
+          const pInput = formElement.querySelector(`input[name="payment_receipt_file_${i}"]`) as HTMLInputElement;
+          if (pInput?.files?.[0]) {
+            const rFile = pInput.files[0];
+            const prefix = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`;
+            const safeOriginalName = rFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const rFileName = `Receipt_${prefix}_Payment_${safeOriginalName}`;
+            const rPath = `Clients/${clientFolder}/Payments/${rFileName}`;
+            await supabase.storage.from('company_drive').upload(rPath, rFile, { upsert: true });
+          }
+        }
+      } catch (uploadErr) {
+        console.warn('Non-critical file upload notice in save client:', uploadErr);
+      }
+
       setRefreshTrigger(prev => prev + 1);
       handleCloseModal();
     } catch (err: any) {
@@ -1227,9 +1499,29 @@ export default function ClientDataView() {
             <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[95vh]">
 
               <div className="p-5 border-b border-slate-200 dark:border-gray-800 flex justify-between items-center bg-slate-50 dark:bg-gray-900">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
-                  {t('clients', 'clientCaseProfile', lang)}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-slate-800 dark:text-white tracking-tight">
+                    {t('clients', 'clientCaseProfile', lang)}
+                  </h2>
+                  {(() => {
+                    const actualNo = viewingClient?.No ?? viewingClient?.NO ?? '0';
+                    const actualName = viewingClient?.NAME ?? '';
+                    const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+                    const clientFolder = `${actualNo} ${safeClientName}`;
+                    return (
+                      <a
+                        href={`/portal/pemacu?path=Clients/${encodeURIComponent(clientFolder)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-gray-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 hover:text-indigo-600 dark:hover:text-yellow-400 transition-colors shadow-sm"
+                        title={t('clients', 'clientDriveTooltip', lang)}
+                      >
+                        <span>📂</span>
+                        <span className="hidden sm:inline">{t('clients', 'openInDrive', lang)}</span>
+                      </a>
+                    );
+                  })()}
+                </div>
                 <button
                   onClick={handleCloseViewModal}
                   className="text-slate-400 hover:text-rose-500 transition-colors p-2 hover:bg-rose-50/50 dark:hover:bg-rose-950/20 rounded-xl"
@@ -1356,6 +1648,125 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
+                {/* 4. Borang Perjanjian Klien (Agreement Form) */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <SectionHeader
+                      icon={
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                      }
+                      title={t('clients', 'agreementForm', lang)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        ref={agreementFileInputRef}
+                        onChange={handleUploadAgreement}
+                        accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                        className="hidden"
+                      />
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => agreementFileInputRef.current?.click()}
+                          disabled={isUploadingAgreement}
+                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          {isUploadingAgreement ? (
+                            <>
+                              <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                              <span>{lang === 'bm' ? 'Memuat naik...' : 'Uploading...'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>📄</span>
+                              <span>{agreementFiles.length > 0 ? t('clients', 'replaceAgreement', lang) : t('clients', 'uploadAgreement', lang)}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {agreementFiles.length === 0 ? (
+                    <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/40 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 mt-0.5">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            {t('clients', 'noAgreementYet', lang)}
+                          </h4>
+                          <p className="text-xs text-amber-700/90 dark:text-amber-300/80 mt-0.5">
+                            {t('clients', 'agreementSubtitle', lang)}
+                          </p>
+                        </div>
+                      </div>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => agreementFileInputRef.current?.click()}
+                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors whitespace-nowrap cursor-pointer"
+                        >
+                          + {t('clients', 'uploadAgreement', lang)}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {agreementFiles.map((file, idx) => (
+                        <div key={file.id || idx} className="bg-white dark:bg-gray-900 border border-emerald-200/80 dark:border-emerald-800/50 rounded-xl p-3.5 shadow-sm flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                              <span className="text-lg">📜</span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                  {lang === 'bm' ? 'Perjanjian Rasmi' : 'Official Agreement'}
+                                </span>
+                              </div>
+                              <p className="font-semibold text-xs text-slate-900 dark:text-white truncate mt-0.5" title={file.name}>
+                                {file.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                                {new Date(file.created_at).toLocaleDateString()} &middot; {file.size ? (file.size > 1024*1024 ? `${(file.size/(1024*1024)).toFixed(1)} MB` : `${Math.round(file.size/1024)} KB`) : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={(e) => handleViewDocument(e, file.drive_url || file.filePath)}
+                              className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            >
+                              {t('clients', 'viewDoc', lang)}
+                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={() => handleDeleteDocument(file.filePath, 'agreement')}
+                                className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                                title={lang === 'bm' ? 'Padam Perjanjian' : 'Delete Agreement'}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* 5. Financial Overview & Case Categories */}
                 <div>
                   <SectionHeader
@@ -1385,7 +1796,7 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* Installment Payment Schedule */}
+                {/* Installment Payment Schedule & Client Receipts */}
                 {(() => {
                   const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
                   const payments = paymentIndices.map(prefix => {
@@ -1402,27 +1813,126 @@ export default function ClientDataView() {
 
                   return (
                     <div>
-                      <SectionHeader
-                        icon={
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        }
-                        title={t('clients', 'paymentSchedule', lang)}
-                      />
+                      <div className="flex justify-between items-center mb-4">
+                        <SectionHeader
+                          icon={
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          }
+                          title={t('clients', 'paymentSchedule', lang)}
+                        />
+                        <input
+                          type="file"
+                          ref={receiptFileInputRef}
+                          onChange={(e) => {
+                            if (targetReceiptStageRef.current) {
+                              handleUploadPaymentReceipt(e, targetReceiptStageRef.current);
+                            }
+                          }}
+                          accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                          className="hidden"
+                        />
+                      </div>
                       <div className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800/80 rounded-xl p-4 shadow-sm divide-y divide-slate-100 dark:divide-gray-800">
                         {payments.map(p => {
                           const ordinalLabel = lang === 'bm'
                             ? `Bayaran Ke-${p.prefix.replace(/[^0-9]/g, '')}`
                             : `${p.prefix} Payment`;
                           const formattedAmt = String(p.amount).startsWith('RM') ? p.amount : `RM ${p.amount}`;
+                          const stageKey = p.prefix.toLowerCase();
+                          const receiptFile = paymentReceipts[stageKey] || paymentReceipts[p.prefix];
+                          const hasReceipt = Boolean(receiptFile && (receiptFile.drive_url || receiptFile.filePath || receiptFile.url));
+
                           return (
-                            <div key={p.prefix} className="flex justify-between items-center py-3 first:pt-0 last:pb-0 text-sm font-semibold">
+                            <div key={p.prefix} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 first:pt-0 last:pb-0 gap-2 text-sm font-semibold">
                               <div className="flex flex-col">
-                                <span className="text-slate-800 dark:text-white">{ordinalLabel}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-800 dark:text-white">{ordinalLabel}</span>
+                                  {/* Non-annoying receipt status pill */}
+                                  {hasReceipt ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+                                      <span>📎</span> {t('clients', 'receiptAttached', lang)}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40" title={t('clients', 'receiptMissingNotice', lang)}>
+                                      <span>⚠️</span> {t('clients', 'noReceipt', lang)}
+                                    </span>
+                                  )}
+                                </div>
                                 {p.date && <span className="text-xs text-slate-450 dark:text-zinc-500 font-mono font-medium">{p.date}</span>}
                               </div>
-                              <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formattedAmt}</span>
+
+                              <div className="flex items-center justify-between sm:justify-end gap-3">
+                                <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formattedAmt}</span>
+
+                                {/* Receipt action button */}
+                                <div className="flex items-center gap-1.5">
+                                  {hasReceipt ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => handleViewDocument(e, receiptFile.drive_url || receiptFile.filePath || receiptFile.url)}
+                                        className="h-7 px-2.5 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                                      >
+                                        <span>👁️</span> {t('clients', 'viewDoc', lang)}
+                                      </button>
+                                      {canEdit && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            targetReceiptStageRef.current = p.prefix;
+                                            receiptFileInputRef.current?.click();
+                                          }}
+                                          className="h-7 px-2 flex items-center text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-400 text-xs font-semibold transition-colors cursor-pointer"
+                                          title={lang === 'bm' ? 'Ganti Resit' : 'Replace Receipt'}
+                                        >
+                                          🔄
+                                        </button>
+                                      )}
+                                      {canEdit && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteDocument(receiptFile.filePath, 'payment_receipt')}
+                                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                                          title={lang === 'bm' ? 'Padam Resit' : 'Delete Receipt'}
+                                        >
+                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    canEdit && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          targetReceiptStageRef.current = p.prefix;
+                                          receiptFileInputRef.current?.click();
+                                        }}
+                                        disabled={uploadingReceiptStage === p.prefix}
+                                        className="h-7 px-2.5 flex items-center gap-1 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                                      >
+                                        {uploadingReceiptStage === p.prefix ? (
+                                          <>
+                                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                            </svg>
+                                            <span>...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span>+</span>
+                                            <span>{t('clients', 'uploadClientReceipt', lang)}</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           );
                         })}
@@ -2030,7 +2540,29 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
-                  {/* 4. Financial Details */}
+                  {/* 4. Borang Perjanjian Klien (Agreement Form) */}
+                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'agreementForm', lang)}</h3>
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">{t('clients', 'agreementSubtitle', lang)}</span>
+                  </div>
+                  <div className="sm:col-span-2 space-y-2 bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                      {lang === 'bm' ? 'Muat Naik Salinan Borang Perjanjian Fizikal (PDF / Gambar)' : 'Upload Physical Agreement Scanned Copy (PDF / Image)'}
+                    </label>
+                    <input
+                      type="file"
+                      name="agreement_file"
+                      accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                      className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-zinc-800 dark:file:text-yellow-400 cursor-pointer"
+                    />
+                    {editingClient?.agreement_url && (
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-1">
+                        <span>✓</span> {lang === 'bm' ? 'Perjanjian telah dimuat naik sebelum ini (pilih fail baru jika mahu menggantikannya).' : 'Agreement previously uploaded (choose a new file to replace).'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 5. Financial Details */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
                   </div>
@@ -2071,7 +2603,7 @@ export default function ClientDataView() {
                           }
                           setPaymentList([...paymentList, { amount: '', date: '' }]);
                         }}
-                        className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                        className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer"
                       >
                         + ADD
                       </button>
@@ -2087,7 +2619,7 @@ export default function ClientDataView() {
                           setPaymentList(newList);
                           setTimeout(handleFinancialChange, 100);
                         }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors cursor-pointer"
                       >
                         ×
                       </button>
@@ -2103,6 +2635,17 @@ export default function ClientDataView() {
                         defaultValue={pay.date}
                         lang={lang}
                       />
+                      <div className="sm:col-span-2 space-y-1 mt-1 pt-2 border-t border-slate-200/60 dark:border-gray-700/50">
+                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                          {lang === 'bm' ? `Resit / Slip Bayaran Klien (Ansuran Ke-${idx + 1})` : `Client Receipt / Bank Slip (${idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment)`}
+                        </label>
+                        <input
+                          type="file"
+                          name={`payment_receipt_file_${idx}`}
+                          accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                          className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-zinc-700 file:text-slate-700 dark:file:text-zinc-200 cursor-pointer"
+                        />
+                      </div>
                     </div>
                   ))}
                   {/* 6. Case & Resolution Details */}

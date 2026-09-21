@@ -347,14 +347,21 @@ export default function ClientDataView() {
 
       // Process Client Installment Payment Receipts
       const loadedPaymentsMap: { [stage: string]: any } = {};
-      if (viewingClient?.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
-        Object.entries(viewingClient.payment_receipts).forEach(([k, v]: [string, any]) => {
-          loadedPaymentsMap[k.toLowerCase()] = v;
-        });
+      let dbReceipts: Record<string, any> = {};
+      if (typeof viewingClient?.payment_receipts === 'string') {
+        try { dbReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
+      } else if (viewingClient?.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
+        dbReceipts = { ...viewingClient.payment_receipts };
       }
+      Object.entries(dbReceipts).forEach(([k, v]: [string, any]) => {
+        loadedPaymentsMap[k.toLowerCase()] = v;
+        loadedPaymentsMap[k] = v;
+      });
+
+      let hasOrphanSync = false;
       if (storagePayments) {
         storagePayments.forEach(f => {
-          if (f.name === '.keep') return;
+          if (!f.name || f.name === '.keep') return;
           const filePath = `Clients/${clientFolder}/Payments/${f.name}`;
           const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
           const lower = f.name.toLowerCase();
@@ -364,17 +371,39 @@ export default function ClientDataView() {
           const matchedStage = stages.find(st => lower.includes(st) || lower.includes(`payment_${st.replace(/[^0-9]/g, '')}`));
 
           if (matchedStage) {
-            loadedPaymentsMap[matchedStage] = {
+            const receiptItem = {
               id: f.id || f.name,
               fileName: f.name,
               created_at: f.created_at || new Date().toISOString(),
               size: f.metadata?.size || 0,
               drive_url: publicUrlData?.publicUrl || filePath,
-              filePath
+              filePath,
+              url: publicUrlData?.publicUrl || filePath
             };
+            loadedPaymentsMap[matchedStage] = receiptItem;
+            loadedPaymentsMap[matchedStage.toLowerCase()] = receiptItem;
+
+            if (!dbReceipts[matchedStage.toLowerCase()] && !dbReceipts[matchedStage]) {
+              dbReceipts[matchedStage.toLowerCase()] = receiptItem;
+              dbReceipts[matchedStage] = receiptItem;
+              hasOrphanSync = true;
+            }
           }
         });
       }
+
+      // Auto-sync storage receipts to DB if client has receipts in storage not recorded in DB
+      if (hasOrphanSync && clientId && !clientId.startsWith('virtual-')) {
+        try {
+          await supabase.from('clients').update({
+            payment_receipts: dbReceipts
+          }).eq('id', clientId);
+          setRefreshTrigger(prev => prev + 1);
+        } catch (_syncErr) {
+          console.warn('Notice auto-syncing storage receipts to database:', _syncErr);
+        }
+      }
+
       setPaymentReceipts(loadedPaymentsMap);
     } catch (err) {
       console.error('Error loading client documents:', err);
@@ -510,18 +539,31 @@ export default function ClientDataView() {
 
       // Gracefully update payment_receipts map in DB if column exists
       try {
-        const existingReceipts = viewingClient.payment_receipts || {};
+        let existingReceipts: Record<string, any> = {};
+        if (typeof viewingClient.payment_receipts === 'string') {
+          try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
+        } else if (viewingClient.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
+          existingReceipts = { ...viewingClient.payment_receipts };
+        }
+
+        const receiptItem = {
+          url: publicUrlData?.publicUrl || filePath,
+          fileName: file.name,
+          filePath,
+          uploadedAt: new Date().toISOString()
+        };
+
         const updatedReceipts = {
           ...existingReceipts,
-          [stagePrefix.toLowerCase()]: {
-            url: publicUrlData?.publicUrl || filePath,
-            fileName: file.name,
-            uploadedAt: new Date().toISOString()
-          }
+          [stagePrefix.toLowerCase()]: receiptItem,
+          [stagePrefix]: receiptItem
         };
+
         await supabase.from('clients').update({
           payment_receipts: updatedReceipts
         }).eq('id', viewingClient.id);
+
+        setViewingClient((prev: any) => prev ? { ...prev, payment_receipts: updatedReceipts } : prev);
       } catch (_dbErr) {
         console.warn('Could not update payment_receipts in clients table (column may not exist yet):', _dbErr);
       }
@@ -542,7 +584,43 @@ export default function ClientDataView() {
     try {
       const { error } = await supabase.storage.from('company_drive').remove([filePath]);
       if (error) throw error;
+
       if (viewingClient?.id) {
+        if (docType === 'agreement') {
+          await supabase.from('clients').update({
+            agreement_url: null,
+            agreement_name: null,
+            agreement_date: null
+          }).eq('id', viewingClient.id);
+
+          setViewingClient((prev: any) => prev ? {
+            ...prev,
+            agreement_url: null,
+            agreement_name: null,
+            agreement_date: null
+          } : prev);
+        } else if (docType === 'payment_receipt') {
+          let existingReceipts: Record<string, any> = {};
+          if (typeof viewingClient.payment_receipts === 'string') {
+            try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
+          } else if (viewingClient.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
+            existingReceipts = { ...viewingClient.payment_receipts };
+          }
+
+          Object.keys(existingReceipts).forEach(k => {
+            const item = existingReceipts[k];
+            if (item?.filePath === filePath || item?.url === filePath || (item?.fileName && filePath.includes(item.fileName))) {
+              delete existingReceipts[k];
+            }
+          });
+
+          await supabase.from('clients').update({
+            payment_receipts: existingReceipts
+          }).eq('id', viewingClient.id);
+
+          setViewingClient((prev: any) => prev ? { ...prev, payment_receipts: existingReceipts } : prev);
+        }
+
         await loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
         setRefreshTrigger(prev => prev + 1);
       }
@@ -948,9 +1026,71 @@ export default function ClientDataView() {
       const { data } = await supabase.from('clients').select('*').eq('id', client.id).single();
       if (data) {
         currentData = { ...data, _stableKey: client._stableKey };
-        setEditingClient(currentData);
       }
     }
+
+    // Safely parse payment_receipts
+    let currentReceipts: Record<string, any> = {};
+    if (typeof currentData?.payment_receipts === 'string') {
+      try { currentReceipts = JSON.parse(currentData.payment_receipts); } catch {}
+    } else if (currentData?.payment_receipts && typeof currentData.payment_receipts === 'object') {
+      currentReceipts = { ...currentData.payment_receipts };
+    }
+
+    // Check storage for any previously uploaded receipts not yet registered in payment_receipts
+    const actualNo = currentData?.No ?? currentData?.NO ?? '';
+    const actualName = currentData?.NAME ?? '';
+    const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
+    const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
+    const clientFolder = `${clientNoVal} ${safeClientName}`;
+
+    try {
+      const { data: storagePayments } = await supabase.storage
+        .from('company_drive')
+        .list(`Clients/${clientFolder}/Payments`, { limit: 100 });
+
+      if (storagePayments && storagePayments.length > 0) {
+        let synced = false;
+        const stages = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+        storagePayments.forEach(f => {
+          if (!f.name || f.name === '.keep') return;
+          const lower = f.name.toLowerCase();
+          const matchedStage = stages.find(st => lower.includes(st) || lower.includes(`payment_${st.replace(/[^0-9]/g, '')}`));
+          if (matchedStage) {
+            const stageLower = matchedStage.toLowerCase();
+            if (!currentReceipts[stageLower] && !currentReceipts[matchedStage]) {
+              const filePath = `Clients/${clientFolder}/Payments/${f.name}`;
+              const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
+              const rObj = {
+                id: f.id || f.name,
+                fileName: f.name,
+                filePath,
+                url: publicUrlData?.publicUrl || filePath,
+                drive_url: publicUrlData?.publicUrl || filePath,
+                uploadedAt: f.created_at || new Date().toISOString()
+              };
+              currentReceipts[stageLower] = rObj;
+              currentReceipts[matchedStage] = rObj;
+              synced = true;
+            }
+          }
+        });
+
+        if (synced && currentData?.id && !currentData.isVirtual) {
+          try {
+            await supabase.from('clients').update({ payment_receipts: currentReceipts }).eq('id', currentData.id);
+            setRefreshTrigger(prev => prev + 1);
+          } catch (_syncErr) {
+            console.warn('Notice syncing storage receipts in edit modal:', _syncErr);
+          }
+        }
+      }
+    } catch (_storageErr) {
+      console.warn('Notice scanning storage in edit modal:', _storageErr);
+    }
+
+    currentData.payment_receipts = currentReceipts;
+    setEditingClient(currentData);
 
     let parsedReports = [];
     if (currentData?.police_report_no && currentData.police_report_no.trim().startsWith('[')) {
@@ -1388,21 +1528,35 @@ export default function ClientDataView() {
           const safeOriginalName = agFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
           const agFileName = `Agreement_${clientNoVal}_${safeOriginalName}`;
           const agPath = `Clients/${clientFolder}/Agreements/${agFileName}`;
-          await supabase.storage.from('company_drive').upload(agPath, agFile, { upsert: true });
-
-          const { data: agUrlData } = supabase.storage.from('company_drive').getPublicUrl(agPath);
-          if (savedClientId) {
-            try {
-              await supabase.from('clients').update({
-                agreement_url: agUrlData?.publicUrl || agPath,
-                agreement_name: agFile.name,
-                agreement_date: new Date().toLocaleDateString('en-GB')
-              }).eq('id', savedClientId);
-            } catch (_e) {}
+          const { error: agErr } = await supabase.storage.from('company_drive').upload(agPath, agFile, { upsert: true });
+          if (agErr) {
+            console.error('Agreement upload error:', agErr);
+          } else {
+            const { data: agUrlData } = supabase.storage.from('company_drive').getPublicUrl(agPath);
+            if (savedClientId) {
+              try {
+                await supabase.from('clients').update({
+                  agreement_url: agUrlData?.publicUrl || agPath,
+                  agreement_name: agFile.name,
+                  agreement_date: new Date().toLocaleDateString('en-GB')
+                }).eq('id', savedClientId);
+              } catch (_e) {}
+            }
           }
         }
 
         // 2. Installment payment receipts
+        let updatedReceiptsMap: Record<string, any> = {};
+        if (typeof editingClient?.payment_receipts === 'string') {
+          try {
+            updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
+          } catch {}
+        } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
+          updatedReceiptsMap = { ...editingClient.payment_receipts };
+        }
+
+        let hasNewReceiptUpload = false;
+
         for (let i = 0; i < 10; i++) {
           const pInput = formElement.querySelector(`input[name="payment_receipt_file_${i}"]`) as HTMLInputElement;
           if (pInput?.files?.[0]) {
@@ -1411,7 +1565,33 @@ export default function ClientDataView() {
             const safeOriginalName = rFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
             const rFileName = `Receipt_${prefix}_Payment_${safeOriginalName}`;
             const rPath = `Clients/${clientFolder}/Payments/${rFileName}`;
-            await supabase.storage.from('company_drive').upload(rPath, rFile, { upsert: true });
+            const { error: rUploadError } = await supabase.storage.from('company_drive').upload(rPath, rFile, { upsert: true });
+
+            if (rUploadError) {
+              console.error(`Error uploading receipt for ${prefix} payment:`, rUploadError);
+            } else {
+              const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(rPath);
+              const receiptInfo = {
+                url: publicUrlData?.publicUrl || rPath,
+                drive_url: publicUrlData?.publicUrl || rPath,
+                filePath: rPath,
+                fileName: rFile.name,
+                uploadedAt: new Date().toISOString()
+              };
+              updatedReceiptsMap[prefix.toLowerCase()] = receiptInfo;
+              updatedReceiptsMap[prefix] = receiptInfo;
+              hasNewReceiptUpload = true;
+            }
+          }
+        }
+
+        if (hasNewReceiptUpload && savedClientId) {
+          try {
+            await supabase.from('clients').update({
+              payment_receipts: updatedReceiptsMap
+            }).eq('id', savedClientId);
+          } catch (recErr) {
+            console.warn('Could not update payment_receipts in clients table:', recErr);
           }
         }
       } catch (uploadErr) {
@@ -2645,6 +2825,37 @@ export default function ClientDataView() {
                           accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
                           className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-zinc-700 file:text-slate-700 dark:file:text-zinc-200 cursor-pointer"
                         />
+                        {(() => {
+                          const prefix = idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`;
+                          let rMap: any = {};
+                          if (typeof editingClient?.payment_receipts === 'string') {
+                            try { rMap = JSON.parse(editingClient.payment_receipts); } catch {}
+                          } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
+                            rMap = editingClient.payment_receipts;
+                          }
+                          const existing = rMap[prefix.toLowerCase()] || rMap[prefix];
+                          if (!existing) return null;
+                          const rUrl = existing.url || existing.drive_url || existing.filePath;
+                          return (
+                            <div className="flex items-center justify-between text-[11px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 mt-1.5">
+                              <span className="flex items-center gap-1.5 truncate">
+                                <span>📎</span>
+                                <span className="font-semibold">{existing.fileName || (lang === 'bm' ? 'Resit telah dilampirkan' : 'Receipt uploaded')}</span>
+                                <span className="text-slate-400 dark:text-zinc-500">({lang === 'bm' ? 'pilih fail baru untuk ganti' : 'choose new file to replace'})</span>
+                              </span>
+                              {rUrl && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleViewDocument(e, rUrl)}
+                                  className="text-emerald-700 dark:text-emerald-300 font-bold hover:underline ml-2 flex-shrink-0 cursor-pointer flex items-center gap-1"
+                                >
+                                  <span>👁️</span>
+                                  <span>{lang === 'bm' ? 'Lihat Resit' : 'View Receipt'}</span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}

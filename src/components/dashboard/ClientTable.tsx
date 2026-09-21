@@ -1289,6 +1289,32 @@ export default function ClientTable({
                       <span className="font-extrabold text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 block font-mono">
                         RM {formatCurrency(parseAmount(client["TOTAL PAID (RM)"]))}
                       </span>
+                      {(() => {
+                        const missing = getMissingReceiptsCount(client);
+                        const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                        if (missing > 0) {
+                          return (
+                            <span 
+                              title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
+                              className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 mt-1"
+                            >
+                              <span>⚠️</span>
+                              <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
+                            </span>
+                          );
+                        } else if (totalPaidNum > 0) {
+                          return (
+                            <span 
+                              title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
+                              className="inline-flex items-center gap-0.5 text-[8px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1"
+                            >
+                              <span>✓</span>
+                              <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-xl border border-amber-100 dark:border-amber-900/30">
                       <span className="text-[9px] uppercase font-bold text-amber-600 dark:text-amber-400 block">

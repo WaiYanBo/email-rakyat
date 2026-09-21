@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
+import FAQ from '../components/FAQ.astro';
 import serviceBg from '../assets/perkhidmatan-banner.webp'; // Import the image
 
 // Updated Service Data with IDs for Google Ads Sitelinks
@@ -65,11 +66,12 @@ const steps = [
 ---
 
 <Layout
-  title="Perkhidmatan Khidmat Nasihat Ah Long & Hutang Lapuk | Email Rakyat"
-  description="Khidmat nasihat profesional, penyelesaian gangguan debt collector, aduan kredit komuniti KPKT, dan bantuan mangsa pinjaman wang tanpa lesen (Ah Long) secara sah."
+  title="Perkhidmatan Khidmat Nasihat Ah Long & Rundingan Hutang | ER Advocacy (Team Email Rakyat)"
+  description="Perkhidmatan khidmat nasihat profesional mangsa Ah Long, penyelesaian gangguan debt collector, aduan salah laku kredit komuniti KPKT, dan perlindungan pengguna oleh ER Advocacy Sdn. Bhd."
 >
     <Hero
-      line1="PERKHIDMATAN"
+      line1="Perkhidmatan Khidmat Nasihat Mangsa Ah Long & Hutang Sah"
+      line2="ER Advocacy Sdn. Bhd. — Team Email Rakyat"
       showDetails={false}
       backgroundImage={serviceBg}
     />
@@ -160,4 +162,6 @@ const steps = [
         </div>
       </div>
     </section>
+
+    <FAQ />
 </Layout>

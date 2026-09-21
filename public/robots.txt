@@ -1,21 +1,15 @@
 # Legitimate search engine crawlers
 User-agent: Googlebot
 Allow: /
-Crawl-delay: 2
-Request-rate: 1/2s
 
 User-agent: Bingbot
 Allow: /
-Crawl-delay: 2
-Request-rate: 1/2s
 
 User-agent: Slurp
 Allow: /
-Crawl-delay: 2
 
 User-agent: DuckDuckBot
 Allow: /
-Crawl-delay: 2
 
 # Block suspicious crawlers and bad actors
 User-agent: AhrefsBot
@@ -57,10 +51,7 @@ Disallow: /portal/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /*.json$
-Disallow: /*?*
 Allow: /
-Crawl-delay: 5
-Request-rate: 1/5s
 
 # Sensitive paths - no indexing
 Disallow: /login

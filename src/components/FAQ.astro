@@ -1,0 +1,95 @@
+---
+// src/components/FAQ.astro
+const faqs = [
+  {
+    question: "Apa yang perlu saya buat sekiranya mula diugut oleh Ah Long?",
+    answer: "Langkah terpenting ialah jangan panik dan jangan sesekali terus meminjam daripada pihak lain atau membayar 'bunga' yang tidak berkesudahan demi menghentikan ugutan sementara. Kumpulkan dan simpan semua bukti seperti mesej WhatsApp, rakaman panggilan suara, nombor akaun bank sindiket, dan bukti pemindahan wang. Segera hubungi Team Email Rakyat (ER Advocacy Sdn. Bhd.) untuk bimbingan profesional menyusun kronologi fakta kes bagi tindakan laporan polis teknikal mengikut lunas undang-undang yang sah."
+  },
+  {
+    question: "Bolehkah Ah Long menyebarkan gambar aib saya atau mengganggu tempat kerja?",
+    answer: "Tindakan menyebarkan gambar peribadi, mengugut bunuh, mengaibkan mangsa, atau mengganggu ahli keluarga dan majikan adalah kesalahan jenayah berat di bawah Seksyen 503 & 506 Kanun Keseksaan serta Seksyen 233 Akta Komunikasi dan Multimedia 1998. Pasukan kami membantu mangsa menyediakan draf laporan rasmi yang kukuh agar Kertas Siasatan (Investigation Paper) dibuka oleh pihak polis bagi menghentikan gangguan sindiket ini."
+  },
+  {
+    question: "Bagaimana Team Email Rakyat membantu mangsa keluar daripada jerat Ah Long?",
+    answer: "ER Advocacy Sdn. Bhd. bertindak sebagai perunding advokasi profesional. Kami tidak berunding secara haram dengan sindiket, sebaliknya membimbing mangsa menggunakan instrumen undang-undang, saluran aduan pihak berkuasa, serta perlindungan hak pengguna untuk menghentikan pemerasan ugut dan menyelesaikan isu bebanan kewangan secara sah, berstruktur, dan selamat."
+  },
+  {
+    question: "Adakah syarikat Kredit Komuniti (Pinjaman Berlesen KPKT) boleh mengenakan bunga sesuka hati?",
+    answer: "Tidak. Di bawah Akta Pemberi Pinjam Wang 1951 (Akta 400), kadar faedah statutori ditetapkan tidak melebihi 12% setahun bagi pinjaman bercagar dan 18% setahun bagi pinjaman tidak bercagar. Segala penalti tersembunyi, penahanan kad ATM, atau faedah melampau adalah pelanggaran undang-undang yang boleh diadukan terus kepada Kementerian Perumahan dan Kerajaan Tempatan (KPKT) dengan bantuan kami."
+  },
+  {
+    question: "Bagaimana jika saya diganggu oleh agensi pengutip hutang (Debt Collector) untuk hutang lama?",
+    answer: "Agensi pengutip hutang tertakluk kepada garis panduan Bank Negara Malaysia (BNM) dan undang-undang privasi. Mereka dilarang keras mengugut, memalukan penghutang di media sosial, atau menghubungi pihak ketiga tanpa izin. Kami membantu anda menyemak kesahihan baki tuntutan, menyusun fakta, serta merundingkan tawaran penyelesaian bayaran penuh (full settlement) atau penjadualan semula bayaran yang munasabah."
+  },
+  {
+    question: "Berapa lama masa yang diambil untuk menghentikan gangguan sindiket Ah Long?",
+    answer: "Tindakan segera diambil sebaik sahaja dokumen dan bukti kronologi lengkap disemak oleh pegawai ER Advocacy Sdn. Bhd. Bimbingan teknikal dan saluran undang-undang yang tepat membantu mangsa menyekat ancaman sindiket dengan pantas tanpa perlu terus tunduk kepada pemerasan wang bunga."
+  }
+];
+---
+
+<section id="faq" class="py-20 px-4 sm:px-6 lg:px-8 bg-zinc-950 border-t border-gray-800 relative overflow-hidden">
+  <div class="max-w-5xl mx-auto relative z-10">
+
+    {/* Section Header */}
+    <div class="text-center mb-14">
+      <div class="inline-block px-3 py-1 mb-4 text-[10px] font-semibold tracking-wider text-yellow-500 uppercase bg-yellow-500/10 rounded-full border border-yellow-500/20">
+        Soalan Lazim (FAQ)
+      </div>
+      <h2 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
+        Panduan & <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">Jawapan Segera</span>
+      </h2>
+      <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+        Ketahui hak anda di sisi undang-undang dan langkah terbaik menghadapi tekanan hutang tidak berlesen atau gangguan pengutip hutang.
+      </p>
+      <div class="h-1 w-20 bg-yellow-500 mx-auto rounded-full mt-5"></div>
+    </div>
+
+    {/* FAQ Accordion List */}
+    <div class="space-y-4 max-w-4xl mx-auto">
+      {faqs.map((faq, index) => (
+        <details class="group bg-gray-900/60 backdrop-blur-md rounded-xl border border-gray-800 p-5 md:p-6 transition-all duration-300 hover:border-yellow-500/40 open:border-yellow-500/60 open:bg-gray-900/90 shadow-lg">
+          <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-base md:text-lg text-white group-hover:text-yellow-400 transition-colors">
+            <span class="pr-4 flex items-start gap-3">
+              <span class="text-yellow-500 text-sm md:text-base font-mono mt-0.5">{String(index + 1).padStart(2, '0')}.</span>
+              <span>{faq.question}</span>
+            </span>
+            <span class="ml-2 flex-shrink-0 text-yellow-500 transition-transform duration-300 group-open:rotate-180">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </summary>
+          <div class="mt-4 pt-4 border-t border-gray-800 text-gray-300 text-sm md:text-base leading-relaxed pl-7">
+            <p>{faq.answer}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+
+    {/* Direct Urgency CTA under FAQ */}
+    <div class="mt-14 text-center bg-gradient-to-r from-gray-900 via-zinc-900 to-gray-900 p-8 rounded-2xl border border-yellow-500/20 max-w-3xl mx-auto shadow-2xl">
+      <h3 class="text-xl md:text-2xl font-bold text-white mb-2">
+        Masih Menghadapi Tekanan & Ugutan?
+      </h3>
+      <p class="text-gray-400 text-xs md:text-sm mb-6 max-w-xl mx-auto">
+        Setiap minit penting sebelum keadaan menjadi lebih buruk. Hubungi Team Email Rakyat untuk perbincangan sulit dan langkah penyelesaian sah.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/hubungi"
+          class="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-yellow-500 px-8 py-3.5 text-sm font-black uppercase tracking-wider text-black shadow-lg transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
+        >
+          Hubungi Pegawai Bertugas
+        </a>
+        <a
+          href="/perkhidmatan"
+          class="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-gray-700 bg-black/40 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:border-yellow-500 hover:text-yellow-400"
+        >
+          Lihat Ruang Lingkup Khidmat
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>

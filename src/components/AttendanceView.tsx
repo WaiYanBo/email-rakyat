@@ -60,7 +60,8 @@ const formatTimeSafe = (timeStr: any) => {
 };
 
 export default function AttendanceView({ personalOnly = false }: { personalOnly?: boolean }) {
-  const { profile, permissions, isITAdmin, loading: permsLoading } = usePermissions();
+  const [profile, setProfile] = useState<any>(null);
+  const { permissions, isITAdmin, loading: permsLoading } = usePermissions(profile);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
@@ -348,72 +349,83 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
   useEffect(() => {
     const loadData = async () => {
-      const session = await getCurrentSession();
-      if (!session) {
-        window.location.href = '/portal/login';
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select(`id, department, full_name, salary, roles ( role_name )`)
-        .eq('id', session.user.id)
-        .single();
-
-      let roleName = 'No Role';
-      let userProfile: any = null;
-      if (profileData) {
-        if (profileData.roles) {
-          const rolesVar = profileData.roles as any;
-          if (Array.isArray(rolesVar)) {
-            roleName = rolesVar[0]?.role_name || 'No Role';
-          } else {
-            roleName = rolesVar?.role_name || 'No Role';
-          }
-        }
-        userProfile = { id: profileData.id, department: profileData.department, name: profileData.full_name, role: roleName, salary: profileData.salary };
-        setProfile(userProfile);
-      }
-
-      // Fetch all active profiles to populate employee search dropdown (excluding resigned)
-      let allEmployees: any[] = [];
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, full_name, salary, status')
-        .order('full_name', { ascending: true });
-      if (profilesData) {
-        const activeOnly = profilesData.filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive');
-        setUniqueEmployees(activeOnly);
-        allEmployees = activeOnly;
-      } else if (profileData && profileData.status !== 'Resigned') {
-        setUniqueEmployees([profileData]);
-        allEmployees = [profileData];
-      }
-
-      // Fetch public holidays
       try {
-        const { data: holidaysData } = await supabase
-          .from('public_holidays')
-          .select('*');
-        if (holidaysData) {
-          setPublicHolidays(holidaysData);
+        const session = await getCurrentSession();
+        if (!session) {
+          window.location.href = '/portal/login';
+          return;
+        }
+
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select(`id, department, full_name, salary, roles ( role_name )`)
+          .eq('id', session.user.id)
+          .single();
+
+        let roleName = 'No Role';
+        let userProfile: any = null;
+        if (profileData) {
+          if (profileData.roles) {
+            const rolesVar = profileData.roles as any;
+            if (Array.isArray(rolesVar)) {
+              roleName = rolesVar[0]?.role_name || 'No Role';
+            } else {
+              roleName = rolesVar?.role_name || 'No Role';
+            }
+          }
+          userProfile = {
+            id: profileData.id,
+            department: profileData.department,
+            name: profileData.full_name,
+            full_name: profileData.full_name,
+            role: roleName,
+            salary: profileData.salary
+          };
+          setProfile(userProfile);
+        }
+
+        // Fetch all active profiles to populate employee search dropdown (excluding resigned)
+        let allEmployees: any[] = [];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, salary, status')
+          .order('full_name', { ascending: true });
+        if (profilesData) {
+          const activeOnly = profilesData.filter(p => p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive');
+          setUniqueEmployees(activeOnly);
+          allEmployees = activeOnly;
+        } else if (profileData && profileData.status !== 'Resigned') {
+          setUniqueEmployees([profileData]);
+          allEmployees = [profileData];
+        }
+
+        // Fetch public holidays
+        try {
+          const { data: holidaysData } = await supabase
+            .from('public_holidays')
+            .select('*');
+          if (holidaysData) {
+            setPublicHolidays(holidaysData);
+          }
+        } catch (err) {
+          console.warn('Could not fetch public holidays', err);
+        }
+
+        const activeUserId = profileData?.id || session.user.id;
+        const initialMode = personalOnly ? 'month' : filterMode;
+
+        if (personalOnly) {
+          setSelectedEmployeeId(activeUserId);
+          await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, activeUserId, allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
+        } else {
+          setSelectedEmployeeId('all');
+          await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, 'all', allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
         }
       } catch (err) {
-        console.warn('Could not fetch public holidays', err);
+        console.error('Exception in loadData:', err);
+      } finally {
+        setLoading(false);
       }
-
-      const activeUserId = profileData?.id || session.user.id;
-      const initialMode = personalOnly ? 'month' : filterMode;
-
-      if (personalOnly) {
-        setSelectedEmployeeId(activeUserId);
-        await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, activeUserId, allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
-      } else {
-        setSelectedEmployeeId('all');
-        await fetchAttendanceRecords(selectedDate, selectedMonth, initialMode, 'all', allEmployees.length > 0 ? allEmployees : [profileData || { id: activeUserId, full_name: 'User' }]);
-      }
-
-      setLoading(false);
     };
 
     loadData();
@@ -467,7 +479,7 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
     const initialMap: Record<string, any> = {};
 
     empNames.forEach(empName => {
-      const empProfile = uniqueEmployees.find(e => (e.full_name || e.name) === empName) || (profile?.name === empName ? profile : null);
+      const empProfile = uniqueEmployees.find(e => (e.full_name || e.name) === empName) || ((profile?.name === empName || profile?.full_name === empName) ? profile : null);
       const dbSalary = empProfile?.salary ? parseFloat(empProfile.salary) : 0;
       const isFromTab = isFinite(dbSalary) && dbSalary > 0;
 

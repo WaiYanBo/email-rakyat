@@ -19,19 +19,19 @@ const {
   type = 'website'
 } = Astro.props;
 
-const siteTitle = "Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah | Email Rakyat";
-const defaultDescription = "Pusat advokasi & khidmat nasihat profesional mangsa Ah Long, pinjaman wang tanpa lesen, gangguan debt collector agresif, dan aduan salah laku syarikat kredit komuniti (KPKT) di Malaysia. Selesai masalah secara sah dan berintegriti.";
+const siteTitle = "Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah | Team Email Rakyat (ER Advocacy)";
+const defaultDescription = "Perunding advokasi & khidmat nasihat profesional mangsa Ah Long, pinjaman wang tanpa lesen, gangguan debt collector agresif, dan aduan salah laku kredit komuniti (KPKT) di Malaysia oleh ER Advocacy Sdn. Bhd.";
 const siteDescription = description || defaultDescription;
 
 // Real Malaysian high-intent user search queries
-const defaultKeywords = "bantuan mangsa ah long, cara setel hutang ah long, kena ugut ah long apa nak buat, ah long ugut sebar gambar, lapor polis ah long, selesai hutang ah long cara sah, gangguan debt collector, cara hadapi pengutip hutang, aduan kredit komuniti kpkt, rundingan hutang lapuk, bantuan advokasi pengguna malaysia, raja emel bantuan mangsa ah long, khidmat nasihat hutang percuma, debt settlement malaysia";
+const defaultKeywords = "bantuan mangsa ah long, cara setel hutang ah long, kena ugut ah long apa nak buat, ah long ugut sebar gambar, lapor polis ah long, selesai hutang ah long cara sah, gangguan debt collector, cara hadapi pengutip hutang, aduan kredit komuniti kpkt, rundingan hutang lapuk, khidmat nasihat hutang ah long, er advocacy sdn bhd, raja emel bantuan mangsa ah long, debt settlement malaysia";
 const pageKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
 
 // Absolute Social Image URL
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || Astro.url).href;
 
-// JSON-LD Schemas: Legal & Advocacy Service + Local Business + Breadcrumb
+// JSON-LD Schemas: Legal & Advocacy Service + Local Business + FAQPage
 const schemaOrg = {
   "@context": "https://schema.org",
   "@graph": [
@@ -39,12 +39,20 @@ const schemaOrg = {
       "@type": "LegalService",
       "@id": "https://e-rakyat.com/#organization",
       "name": "Team Email Rakyat",
-      "alternateName": ["Email Rakyat", "Pusat Advokasi & Bantuan Mangsa Ah Long Malaysia", "Team Raja Emel"],
+      "legalName": "ER Advocacy Sdn. Bhd.",
+      "alternateName": [
+        "Email Rakyat",
+        "ER Advocacy",
+        "ER Advocacy Sdn Bhd",
+        "Pusat Advokasi & Bantuan Mangsa Ah Long Malaysia",
+        "Team Raja Emel"
+      ],
+      "disambiguatingDescription": "Firma perunding advokasi dan khidmat nasihat mangsa Ah Long swasta berdaftar di Malaysia (ER Advocacy Sdn Bhd).",
       "url": "https://e-rakyat.com",
       "logo": new URL("/logo.png", Astro.site || Astro.url).href,
       "image": socialImageURL,
       "description": siteDescription,
-      "priceRange": "Free Consultation / Khidmat Nasihat",
+      "priceRange": "$$",
       "areaServed": [
         {
           "@type": "Country",
@@ -64,7 +72,6 @@ const schemaOrg = {
           "@type": "ContactPoint",
           "telephone": "+6012-6232949",
           "contactType": "emergency",
-          "contactOption": "TollFree",
           "areaServed": "MY",
           "availableLanguage": ["Malay", "English"]
         }
@@ -79,11 +86,49 @@ const schemaOrg = {
       "@id": "https://e-rakyat.com/#website",
       "url": "https://e-rakyat.com",
       "name": "Email Rakyat",
-      "description": "Portal Rasmi Advokasi & Bantuan Mangsa Ah Long Malaysia",
+      "description": "Portal Rasmi Advokasi & Bantuan Mangsa Ah Long Malaysia (ER Advocacy Sdn. Bhd.)",
       "publisher": {
         "@id": "https://e-rakyat.com/#organization"
       },
       "inLanguage": "ms-MY"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://e-rakyat.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Apa yang perlu dilakukan jika diugut oleh Ah Long?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Jangan panik dan elakkan daripada terus membayar wang bunga yang tidak berkesudahan. Kumpulkan dan simpan semua bukti seperti mesej WhatsApp, rakaman panggilan, dan slip transaksi akaun bank. Hubungi Team Email Rakyat (ER Advocacy Sdn. Bhd.) untuk mendapatkan panduan menyusun fakta kes kronologi bagi membuat laporan polis teknikal mengikut saluran undang-undang yang sah."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Bolehkah Ah Long menyebarkan gambar atau mengganggu keluarga di tempat kerja?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sebarang perbuatan ugutan jenayah, memeras ugut, atau menyebarkan gambar peribadi adalah kesalahan jenayah serius di bawah Kanun Keseksaan dan Akta Komunikasi dan Multimedia 1998. Pasukan kami membantu mangsa merangka laporan rasmi supaya Kertas Siasatan (Investigation Paper) dapat dibuka oleh pihak berkuasa."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Bagaimana cara menangani gangguan daripada Debt Collector (Pengutip Hutang)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Pengutip hutang tertakluk kepada garis panduan undang-undang dan dilarang menggunakan taktik ugutan atau mengganggu pihak ketiga. Kami menyediakan khidmat perundingan bagi membantu semakan baki hutang sebenar serta merundingkan tawaran penyelesaian penuh (full settlement) atau penjadualan semula bayaran yang telus."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Berapa lama masa yang diambil untuk menghentikan gangguan sindiket Ah Long?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tindakan segera diambil sebaik sahaja dokumen dan bukti kronologi lengkap disemak oleh pegawai ER Advocacy Sdn. Bhd. Bimbingan teknikal dan saluran undang-undang yang tepat membantu mangsa menyekat ancaman sindiket dengan pantas tanpa perlu terus tunduk kepada pemerasan wang bunga."
+          }
+        }
+      ]
     }
   ]
 };
@@ -92,7 +137,7 @@ const schemaOrg = {
 <meta name="title" content={title || siteTitle} />
 <meta name="description" content={siteDescription} />
 <meta name="keywords" content={pageKeywords} />
-<meta name="author" content="Team Email Rakyat" />
+<meta name="author" content="Team Email Rakyat (ER Advocacy Sdn. Bhd.)" />
 <link rel="canonical" href={canonicalURL} />
 <meta name="theme-color" content="#111827" />
 

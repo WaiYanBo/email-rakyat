@@ -19,5 +19,10 @@ export default defineConfig({
       exclude: ['@supabase/supabase-js']
     }
   },
-  integrations: [sitemap(), react()]
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes('/portal')
+    }),
+    react()
+  ]
 });

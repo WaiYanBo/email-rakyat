@@ -214,8 +214,19 @@ export default function ClientDataView() {
 
   const loadClientDocuments = async (clientId: string, clientNo?: any, clientName?: string) => {
     try {
-      const actualNo = clientNo !== undefined ? clientNo : (viewingClient?.No ?? viewingClient?.NO ?? '');
-      const actualName = clientName !== undefined ? clientName : (viewingClient?.NAME ?? '');
+      // Fetch latest client record directly to guarantee 100% fresh data and avoid stale closure
+      let freshClient: any = null;
+      if (clientId && !clientId.startsWith('virtual-')) {
+        const { data: cData } = await supabase.from('clients').select('*').eq('id', clientId).single();
+        if (cData) {
+          freshClient = cData;
+          setViewingClient((prev: any) => prev ? { ...prev, ...cData } : cData);
+          setDbClients(prev => prev.map(c => c.id === clientId ? { ...c, ...cData } : c));
+        }
+      }
+
+      const actualNo = clientNo !== undefined && clientNo !== '' ? clientNo : (freshClient?.No ?? freshClient?.NO ?? viewingClient?.No ?? viewingClient?.NO ?? '');
+      const actualName = clientName !== undefined && clientName !== '' ? clientName : (freshClient?.NAME ?? viewingClient?.NAME ?? '');
 
       const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
       const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
@@ -313,6 +324,51 @@ export default function ClientDataView() {
         }
       });
 
+      // Ensure all database billing_records are included even if storage.list() missed them
+      if (dbRecords && dbRecords.length > 0) {
+        dbRecords.forEach((dbRec: any) => {
+          const docType = dbRec.document_type;
+          const refNumber = dbRec.ref_number;
+          if (!refNumber) return;
+
+          if (docType === 'invoice' && !invoicesMap.has(refNumber)) {
+            let derivedFilePath = `Clients/${clientFolder}/Invoices/${refNumber}.pdf`;
+            if (dbRec.drive_url) {
+              const decoded = safeDecodeUri(dbRec.drive_url);
+              if (decoded.includes('company_drive/')) {
+                derivedFilePath = decoded.substring(decoded.indexOf('company_drive/') + 'company_drive/'.length).split('?')[0];
+              }
+            }
+            invoicesMap.set(refNumber, {
+              id: dbRec.id,
+              document_type: 'invoice',
+              ref_number: refNumber,
+              amount: dbRec.amount || 0,
+              created_at: dbRec.created_at || new Date().toISOString(),
+              drive_url: dbRec.drive_url || '',
+              filePath: derivedFilePath
+            });
+          } else if (docType === 'receipt' && !receiptsMap.has(refNumber)) {
+            let derivedFilePath = `Clients/${clientFolder}/Receipts/${refNumber}.pdf`;
+            if (dbRec.drive_url) {
+              const decoded = safeDecodeUri(dbRec.drive_url);
+              if (decoded.includes('company_drive/')) {
+                derivedFilePath = decoded.substring(decoded.indexOf('company_drive/') + 'company_drive/'.length).split('?')[0];
+              }
+            }
+            receiptsMap.set(refNumber, {
+              id: dbRec.id,
+              document_type: 'receipt',
+              ref_number: refNumber,
+              amount: dbRec.amount || 0,
+              created_at: dbRec.created_at || new Date().toISOString(),
+              drive_url: dbRec.drive_url || '',
+              filePath: derivedFilePath
+            });
+          }
+        });
+      }
+
       setBillingRecords([...Array.from(invoicesMap.values()), ...Array.from(receiptsMap.values())]);
 
       // Process Agreements
@@ -333,14 +389,15 @@ export default function ClientDataView() {
         });
       }
       // If DB has agreement_url and not in storage list, include it
-      if (viewingClient?.agreement_url && loadedAgreements.length === 0) {
+      const actualAgreementUrl = freshClient?.agreement_url ?? viewingClient?.agreement_url;
+      if (actualAgreementUrl && loadedAgreements.length === 0) {
         loadedAgreements.push({
           id: 'db-agreement',
-          name: viewingClient.agreement_name || 'Agreement_Form.pdf',
-          created_at: viewingClient.agreement_date || new Date().toISOString(),
+          name: freshClient?.agreement_name || viewingClient?.agreement_name || 'Agreement_Form.pdf',
+          created_at: freshClient?.agreement_date || viewingClient?.agreement_date || new Date().toISOString(),
           size: 0,
-          drive_url: viewingClient.agreement_url,
-          filePath: viewingClient.agreement_url
+          drive_url: actualAgreementUrl,
+          filePath: actualAgreementUrl
         });
       }
       setAgreementFiles(loadedAgreements);
@@ -348,10 +405,11 @@ export default function ClientDataView() {
       // Process Client Installment Payment Receipts
       const loadedPaymentsMap: { [stage: string]: any } = {};
       let dbReceipts: Record<string, any> = {};
-      if (typeof viewingClient?.payment_receipts === 'string') {
-        try { dbReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
-      } else if (viewingClient?.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
-        dbReceipts = { ...viewingClient.payment_receipts };
+      const sourceReceipts = freshClient?.payment_receipts ?? viewingClient?.payment_receipts;
+      if (typeof sourceReceipts === 'string') {
+        try { dbReceipts = JSON.parse(sourceReceipts); } catch {}
+      } else if (sourceReceipts && typeof sourceReceipts === 'object') {
+        dbReceipts = { ...sourceReceipts };
       }
       Object.entries(dbReceipts).forEach(([k, v]: [string, any]) => {
         loadedPaymentsMap[k.toLowerCase()] = v;
@@ -457,9 +515,17 @@ export default function ClientDataView() {
 
       if (data?.signedUrl) {
         window.open(data.signedUrl, '_blank');
+        return;
+      }
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        window.open(url, '_blank');
       }
     } catch (err: any) {
-      console.error('Error generating signed URL:', err);
+      console.warn('Notice generating signed URL, trying direct URL:', err);
+      if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:'))) {
+        window.open(url, '_blank');
+        return;
+      }
       alert('Error opening document: ' + (err.message || err));
     }
   };
@@ -492,11 +558,14 @@ export default function ClientDataView() {
 
       // Gracefully update database record if columns exist
       try {
-        await supabase.from('clients').update({
+        const agUpdate = {
           agreement_url: publicUrlData?.publicUrl || filePath,
           agreement_name: file.name,
           agreement_date: new Date().toLocaleDateString('en-GB')
-        }).eq('id', viewingClient.id);
+        };
+        await supabase.from('clients').update(agUpdate).eq('id', viewingClient.id);
+        setViewingClient((prev: any) => prev ? { ...prev, ...agUpdate } : prev);
+        setDbClients(prev => prev.map(c => c.id === viewingClient.id ? { ...c, ...agUpdate } : c));
       } catch (_dbErr) {
         console.warn('Could not update agreement fields in clients table (columns may not exist yet):', _dbErr);
       }
@@ -548,6 +617,7 @@ export default function ClientDataView() {
 
         const receiptItem = {
           url: publicUrlData?.publicUrl || filePath,
+          drive_url: publicUrlData?.publicUrl || filePath,
           fileName: file.name,
           filePath,
           uploadedAt: new Date().toISOString()
@@ -564,6 +634,12 @@ export default function ClientDataView() {
         }).eq('id', viewingClient.id);
 
         setViewingClient((prev: any) => prev ? { ...prev, payment_receipts: updatedReceipts } : prev);
+        setPaymentReceipts(prev => ({
+          ...prev,
+          [stagePrefix.toLowerCase()]: receiptItem,
+          [stagePrefix]: receiptItem
+        }));
+        setDbClients(prev => prev.map(c => c.id === viewingClient.id ? { ...c, payment_receipts: updatedReceipts } : c));
       } catch (_dbErr) {
         console.warn('Could not update payment_receipts in clients table (column may not exist yet):', _dbErr);
       }
@@ -587,18 +663,18 @@ export default function ClientDataView() {
 
       if (viewingClient?.id) {
         if (docType === 'agreement') {
-          await supabase.from('clients').update({
+          const agDelete = {
             agreement_url: null,
             agreement_name: null,
             agreement_date: null
-          }).eq('id', viewingClient.id);
+          };
+          await supabase.from('clients').update(agDelete).eq('id', viewingClient.id);
 
           setViewingClient((prev: any) => prev ? {
             ...prev,
-            agreement_url: null,
-            agreement_name: null,
-            agreement_date: null
+            ...agDelete
           } : prev);
+          setDbClients(prev => prev.map(c => c.id === viewingClient.id ? { ...c, ...agDelete } : c));
         } else if (docType === 'payment_receipt') {
           let existingReceipts: Record<string, any> = {};
           if (typeof viewingClient.payment_receipts === 'string') {
@@ -619,6 +695,7 @@ export default function ClientDataView() {
           }).eq('id', viewingClient.id);
 
           setViewingClient((prev: any) => prev ? { ...prev, payment_receipts: existingReceipts } : prev);
+          setDbClients(prev => prev.map(c => c.id === viewingClient.id ? { ...c, payment_receipts: existingReceipts } : c));
         }
 
         await loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
@@ -1522,6 +1599,7 @@ export default function ClientDataView() {
         const formElement = e.target as HTMLFormElement;
 
         // 1. Agreement file upload
+        let newAgreementData: any = null;
         const agreementInput = formElement.querySelector('input[name="agreement_file"]') as HTMLInputElement;
         if (agreementInput?.files?.[0]) {
           const agFile = agreementInput.files[0];
@@ -1533,13 +1611,14 @@ export default function ClientDataView() {
             console.error('Agreement upload error:', agErr);
           } else {
             const { data: agUrlData } = supabase.storage.from('company_drive').getPublicUrl(agPath);
+            newAgreementData = {
+              agreement_url: agUrlData?.publicUrl || agPath,
+              agreement_name: agFile.name,
+              agreement_date: new Date().toLocaleDateString('en-GB')
+            };
             if (savedClientId) {
               try {
-                await supabase.from('clients').update({
-                  agreement_url: agUrlData?.publicUrl || agPath,
-                  agreement_name: agFile.name,
-                  agreement_date: new Date().toLocaleDateString('en-GB')
-                }).eq('id', savedClientId);
+                await supabase.from('clients').update(newAgreementData).eq('id', savedClientId);
               } catch (_e) {}
             }
           }
@@ -1596,6 +1675,21 @@ export default function ClientDataView() {
         }
       } catch (uploadErr) {
         console.warn('Non-critical file upload notice in save client:', uploadErr);
+      }
+
+      if (savedClientId) {
+        const finalReceipts = hasNewReceiptUpload ? updatedReceiptsMap : (editingClient?.payment_receipts || {});
+        setDbClients(prev => prev.map(c => {
+          if (c.id === savedClientId) {
+            return {
+              ...c,
+              ...clientPayload,
+              ...(newAgreementData ? newAgreementData : {}),
+              payment_receipts: finalReceipts
+            };
+          }
+          return c;
+        }));
       }
 
       setRefreshTrigger(prev => prev + 1);
@@ -2346,11 +2440,18 @@ export default function ClientDataView() {
                       viewingClient['10TH PAYMENT'] ?? viewingClient['10th PAYMENT'] ?? viewingClient['10th payment']
                     ]
                   }}
-                  onSuccess={() => {
+                  onSuccess={async () => {
+                    if (viewingClient?.id) {
+                      await loadClientDocuments(
+                        viewingClient.id,
+                        viewingClient.No ?? viewingClient.NO ?? '',
+                        viewingClient.NAME ?? ''
+                      );
+                      setRefreshTrigger(prev => prev + 1);
+                    }
                     setTimeout(() => {
                       setIsBillingModalOpen(false);
-                      loadBillingRecords(viewingClient.id);
-                    }, 1500);
+                    }, 1200);
                   }}
                 />
               </div>

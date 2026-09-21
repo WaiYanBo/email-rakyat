@@ -10,14 +10,19 @@ const {
   backgroundImage = defaultBg
 } = Astro.props;
 
-const heightClass = "h-[40vh] md:h-[50vh]";
-// Navbar is fixed; add top padding so hero content doesn't sit under it.
-const safeTopPadClass = showDetails ? "pt-20 md:pt-24" : "pt-10 md:pt-12";
+const heightClass = showDetails
+  ? "min-h-[640px] md:min-h-[720px] lg:min-h-[82vh]"
+  : "min-h-[260px] md:min-h-[320px]";
+
+// Safe top padding ensures content always starts well below the fixed navbar (~80px tall)
+const safePaddingClass = showDetails
+  ? "pt-32 pb-16 sm:pt-36 sm:pb-20 md:pt-40 md:pb-24"
+  : "pt-28 pb-12 sm:pt-32 sm:pb-14 md:pt-36 md:pb-16";
 ---
 
-<section class={`relative ${heightClass} ${safeTopPadClass} flex items-center justify-center overflow-hidden bg-gray-900 transition-all duration-500`}>
+<section class={`relative ${heightClass} ${safePaddingClass} flex items-center justify-center bg-gray-900 transition-all duration-500`}>
 
-  <div class="absolute inset-0 z-0">
+  <div class="absolute inset-0 z-0 overflow-hidden">
     <Image
       src={backgroundImage}
       alt="Background Pattern"
@@ -26,59 +31,67 @@ const safeTopPadClass = showDetails ? "pt-20 md:pt-24" : "pt-10 md:pt-12";
       widths={[640, 768, 1024, 1280, 1536]}
       sizes="(max-width: 768px) 100vw, 100vw"
     />
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90"></div>
   </div>
 
   <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
-      {showDetails ? (
-        <div class="flex flex-col items-center justify-center h-full pb-6">
-        <div class="flex flex-col items-center w-full mt-4 md:mt-6">
-          <span class="text-yellow-500 tracking-[0.3em] text-xs md:text-sm uppercase font-bold mb-2 drop-shadow-md pl-1">
+    {showDetails ? (
+      <div class="flex flex-col items-center justify-center w-full">
+        <!-- Official Firm Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 backdrop-blur-sm mb-3">
+          <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+          <span class="text-yellow-400 tracking-[0.25em] text-xs sm:text-sm uppercase font-bold drop-shadow-md">
             ER Advocacy Sdn. Bhd.
           </span>
-          <h1 class="text-2xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-center leading-tight max-w-4xl">
-            Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah
-          </h1>
-          <p class="text-xs sm:text-sm font-semibold text-gray-300 uppercase tracking-widest mt-2">
-            Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)
+        </div>
+
+        <!-- Main H1 Title -->
+        <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-center leading-tight max-w-4xl">
+          Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-xs sm:text-sm md:text-base font-semibold text-gray-300 uppercase tracking-widest mt-3 max-w-2xl">
+          Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)
+        </p>
+
+        <!-- 3 Highlight Callouts -->
+        <div class="mt-4 space-y-1">
+          <p class="text-sm md:text-base font-bold text-yellow-400 uppercase tracking-wider drop-shadow-lg">
+            {line1}
           </p>
-
-          <div class="mt-4 space-y-1.5">
-            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
-              {line1}
-            </p>
-            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
-              {line2}
-            </p>
-            <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
-              {line3}
-            </p>
-          </div>
-
-          <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
-            <a
-              href="/hubungi"
-              class="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-yellow-500 px-6 py-3 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_22px_rgba(234,179,8,0.18)] transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
-            >
-              Dapatkan Bantuan
-            </a>
-            <a
-              href="/perkhidmatan"
-              class="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-gray-500 bg-black/35 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-300 hover:border-yellow-500 hover:text-yellow-400"
-            >
-              Lihat Perkhidmatan
-            </a>
-          </div>
-
-          <p class="mt-4 text-xs md:text-sm uppercase tracking-[0.25em] text-gray-300">
-            Sulit. Profesional. Berlandaskan undang-undang.
+          <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
+            {line2}
+          </p>
+          <p class="text-sm md:text-base font-bold text-yellow-400 uppercase tracking-wider drop-shadow-lg">
+            {line3}
           </p>
         </div>
 
+        <!-- CTA Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full">
+          <a
+            href="/hubungi"
+            class="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-yellow-500 px-7 py-3.5 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_24px_rgba(234,179,8,0.25)] transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
+          >
+            Dapatkan Bantuan
+          </a>
+          <a
+            href="/perkhidmatan"
+            class="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-gray-500 bg-black/40 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-300 hover:border-yellow-500 hover:text-yellow-400"
+          >
+            Lihat Perkhidmatan
+          </a>
+        </div>
+
+        <!-- Trust Tagline -->
+        <p class="mt-4 text-xs md:text-sm uppercase tracking-[0.25em] text-gray-300 font-medium">
+          Sulit • Profesional • Berlandaskan Undang-Undang
+        </p>
       </div>
     ) : (
       /* --- SUB-PAGE LAYOUT --- */
-      <div class="flex flex-col items-center justify-center pt-8 text-center max-w-4xl mx-auto px-4">
+      <div class="flex flex-col items-center justify-center text-center max-w-4xl mx-auto px-4">
         <div class="w-12 h-1 bg-yellow-500 mb-4"></div>
 
         <h1 class="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-wide drop-shadow-2xl leading-tight">

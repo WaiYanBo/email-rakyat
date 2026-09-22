@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { supabase, getCurrentSession } from '../lib/supabase';
 import ClientTable from './dashboard/ClientTable';
 import { sanitizeInput, parseSafeAmount } from '../utils/security';
@@ -211,6 +211,66 @@ export default function ClientDataView() {
   const targetReceiptStageRef = useRef<string | null>(null);
 
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+
+  const billingClientData = useMemo(() => {
+    if (!viewingClient) return null;
+    return {
+      id: viewingClient.id,
+      clientNo: viewingClient.No ?? viewingClient.NO ?? '',
+      name: viewingClient.NAME || 'N/A',
+      ic: viewingClient['IC NUMBER'] || 'N/A',
+      address: viewingClient.ADDRESS || 'N/A',
+      payments: [
+        viewingClient['1ST PAYMENT'] ?? viewingClient['1st PAYMENT'] ?? viewingClient['1st payment'],
+        viewingClient['2ND PAYMENT'] ?? viewingClient['2nd PAYMENT'] ?? viewingClient['2nd payment'],
+        viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
+        viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
+        viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
+        viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment'],
+        viewingClient['7TH PAYMENT'] ?? viewingClient['7th PAYMENT'] ?? viewingClient['7th payment'],
+        viewingClient['8TH PAYMENT'] ?? viewingClient['8th PAYMENT'] ?? viewingClient['8th payment'],
+        viewingClient['9TH PAYMENT'] ?? viewingClient['9th PAYMENT'] ?? viewingClient['9th payment'],
+        viewingClient['10TH PAYMENT'] ?? viewingClient['10th PAYMENT'] ?? viewingClient['10th payment']
+      ]
+    };
+  }, [
+    viewingClient?.id,
+    viewingClient?.No,
+    viewingClient?.NO,
+    viewingClient?.NAME,
+    viewingClient?.['IC NUMBER'],
+    viewingClient?.ADDRESS,
+    viewingClient?.['1ST PAYMENT'],
+    viewingClient?.['1st PAYMENT'],
+    viewingClient?.['1st payment'],
+    viewingClient?.['2ND PAYMENT'],
+    viewingClient?.['2nd PAYMENT'],
+    viewingClient?.['2nd payment'],
+    viewingClient?.['3RD PAYMENT'],
+    viewingClient?.['3rd PAYMENT'],
+    viewingClient?.['3rd payment'],
+    viewingClient?.['4TH PAYMENT'],
+    viewingClient?.['4th PAYMENT'],
+    viewingClient?.['4th payment'],
+    viewingClient?.['5TH PAYMENT'],
+    viewingClient?.['5th PAYMENT'],
+    viewingClient?.['5th payment'],
+    viewingClient?.['6TH PAYMENT'],
+    viewingClient?.['6th PAYMENT'],
+    viewingClient?.['6th payment'],
+    viewingClient?.['7TH PAYMENT'],
+    viewingClient?.['7th PAYMENT'],
+    viewingClient?.['7th payment'],
+    viewingClient?.['8TH PAYMENT'],
+    viewingClient?.['8th PAYMENT'],
+    viewingClient?.['8th payment'],
+    viewingClient?.['9TH PAYMENT'],
+    viewingClient?.['9th PAYMENT'],
+    viewingClient?.['9th payment'],
+    viewingClient?.['10TH PAYMENT'],
+    viewingClient?.['10th PAYMENT'],
+    viewingClient?.['10th payment']
+  ]);
 
   const loadClientDocuments = async (clientId: string, clientNo?: any, clientName?: string) => {
     try {
@@ -456,7 +516,8 @@ export default function ClientDataView() {
           await supabase.from('clients').update({
             payment_receipts: dbReceipts
           }).eq('id', clientId);
-          setRefreshTrigger(prev => prev + 1);
+          setDbClients(prev => prev.map(c => c.id === clientId ? { ...c, payment_receipts: dbReceipts } : c));
+          setViewingClient((prev: any) => prev ? { ...prev, payment_receipts: dbReceipts } : prev);
         } catch (_syncErr) {
           console.warn('Notice auto-syncing storage receipts to database:', _syncErr);
         }
@@ -805,7 +866,7 @@ export default function ClientDataView() {
       setAgreementFiles([]);
       setPaymentReceipts({});
     }
-  }, [viewingClient]);
+  }, [viewingClient?.id]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
@@ -2421,25 +2482,7 @@ export default function ClientDataView() {
               </div>
               <div className="overflow-y-auto rounded-xl shadow-2xl bg-white">
                 <BillingGenerator
-                  clientData={{
-                    id: viewingClient.id,
-                    clientNo: viewingClient.No ?? viewingClient.NO ?? '',
-                    name: viewingClient.NAME || 'N/A',
-                    ic: viewingClient['IC NUMBER'] || 'N/A',
-                    address: viewingClient.ADDRESS || 'N/A',
-                    payments: [
-                      viewingClient['1ST PAYMENT'] ?? viewingClient['1st PAYMENT'] ?? viewingClient['1st payment'],
-                      viewingClient['2ND PAYMENT'] ?? viewingClient['2nd PAYMENT'] ?? viewingClient['2nd payment'],
-                      viewingClient['3RD PAYMENT'] ?? viewingClient['3rd PAYMENT'] ?? viewingClient['3rd payment'],
-                      viewingClient['4TH PAYMENT'] ?? viewingClient['4th PAYMENT'] ?? viewingClient['4th payment'],
-                      viewingClient['5TH PAYMENT'] ?? viewingClient['5th PAYMENT'] ?? viewingClient['5th payment'],
-                      viewingClient['6TH PAYMENT'] ?? viewingClient['6th PAYMENT'] ?? viewingClient['6th payment'],
-                      viewingClient['7TH PAYMENT'] ?? viewingClient['7th PAYMENT'] ?? viewingClient['7th payment'],
-                      viewingClient['8TH PAYMENT'] ?? viewingClient['8th PAYMENT'] ?? viewingClient['8th payment'],
-                      viewingClient['9TH PAYMENT'] ?? viewingClient['9th PAYMENT'] ?? viewingClient['9th payment'],
-                      viewingClient['10TH PAYMENT'] ?? viewingClient['10th PAYMENT'] ?? viewingClient['10th payment']
-                    ]
-                  }}
+                  clientData={billingClientData}
                   onSuccess={async () => {
                     if (viewingClient?.id) {
                       await loadClientDocuments(

@@ -29,7 +29,9 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
   const [documentType, setDocumentType] = useState<'invoice' | 'receipt'>('invoice');
   const [documentDate, setDocumentDate] = useState<string>(getTodayDateString());
-  const [items, setItems] = useState<{ id: string; description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([{ id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+  const [items, setItems] = useState<{ id: string; description: string; qty: string; unitPrice: string; paymentDetails: string; date: string; amount: string }[]>([
+    { id: 'invoice-item-0', description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }
+  ]);
   const [deposit, setDeposit] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -45,12 +47,15 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
     return num + "th Payment";
   };
 
-  useEffect(() => {
-    if (documentType === 'receipt') {
+  const handleDocumentTypeChange = (newType: 'invoice' | 'receipt') => {
+    if (newType === documentType) return;
+    setDocumentType(newType);
+
+    if (newType === 'receipt') {
       const pastPayments = clientData.payments ? clientData.payments.filter(p => p !== null && p !== '' && p !== undefined && p !== 0 && p !== '0') : [];
 
       const populatedItems = pastPayments.map((amt, index) => ({
-        id: crypto.randomUUID(),
+        id: `receipt-item-${index}`,
         description: '',
         qty: '',
         unitPrice: '',
@@ -61,7 +66,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       // Add one blank item for the new payment
       populatedItems.push({
-        id: crypto.randomUUID(),
+        id: `receipt-item-new-${populatedItems.length}`,
         description: '',
         qty: '',
         unitPrice: '',
@@ -72,36 +77,62 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       setItems(populatedItems);
     } else {
-      setItems([{ id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+      setItems([{ id: 'invoice-item-0', description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
     }
-  }, [documentType, clientData.payments]);
+  };
+
+  // Reset clean state when a different client is selected
+  useEffect(() => {
+    setDocumentType('invoice');
+    setDocumentDate(getTodayDateString());
+    setDeposit('');
+    setItems([{ id: 'invoice-item-0', description: '', qty: '', unitPrice: '', paymentDetails: '', date: '', amount: '' }]);
+    setStatusMessage(null);
+  }, [clientData.id]);
 
   const addItem = () => {
-    if (items.length < 10) {
+    if (items.length < 6) {
       const nextPayment = getPaymentOrdinalString(items.length, 0);
-      setItems([...items, { id: crypto.randomUUID(), description: '', qty: '', unitPrice: '', paymentDetails: documentType === 'receipt' ? nextPayment : '', date: '', amount: '' }]);
+      setItems(prev => [
+        ...prev,
+        {
+          id: `${documentType}-item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          description: '',
+          qty: '',
+          unitPrice: '',
+          paymentDetails: documentType === 'receipt' ? nextPayment : '',
+          date: '',
+          amount: ''
+        }
+      ]);
     }
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const updateItem = (index: number, field: 'description' | 'qty' | 'unitPrice' | 'paymentDetails' | 'date' | 'amount', value: string) => {
-    const newItems = [...items];
-    newItems[index][field] = value;
+    setItems(prev => {
+      const newItems = [...prev];
+      if (!newItems[index]) return prev;
+      newItems[index] = {
+        ...newItems[index],
+        [field]: value
+      };
 
-    if (documentType === 'invoice' && (field === 'qty' || field === 'unitPrice')) {
-      const q = Number(newItems[index].qty) || 0;
-      const u = Number(newItems[index].unitPrice) || 0;
-      if (newItems[index].qty || newItems[index].unitPrice) {
-        newItems[index].amount = (q * u).toFixed(2);
-      } else {
-        newItems[index].amount = '';
+      if (documentType === 'invoice' && (field === 'qty' || field === 'unitPrice')) {
+        const q = Number(newItems[index].qty) || 0;
+        const u = Number(newItems[index].unitPrice) || 0;
+        if (newItems[index].qty || newItems[index].unitPrice) {
+          newItems[index].amount = (q * u).toFixed(2);
+        } else {
+          newItems[index].amount = '';
+        }
       }
-    }
 
-    setItems(newItems);
+      return newItems;
+    });
   };
 
   const subtotal = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -458,7 +489,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
                 type="button"
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'invoice' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
                   }`}
-                onClick={() => setDocumentType('invoice')}
+                onClick={() => handleDocumentTypeChange('invoice')}
               >
                 Invoice
               </button>
@@ -466,7 +497,7 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
                 type="button"
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${documentType === 'receipt' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'
                   }`}
-                onClick={() => setDocumentType('receipt')}
+                onClick={() => handleDocumentTypeChange('receipt')}
               >
                 Receipt
               </button>

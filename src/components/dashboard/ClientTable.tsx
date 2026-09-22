@@ -87,7 +87,7 @@ const parseDateString = (dateStr: any): Date | null => {
   if (parts.length === 3) {
     const part0 = parts[0].trim();
     const part2 = parts[2].trim().split(/\s+/)[0];
-    
+
     if (part0.length === 4) {
       // YYYY/MM/DD format
       const y = parseInt(part0, 10);
@@ -243,7 +243,7 @@ const EXPANDED_COLUMNS_ORDER = [
 ];
 
 const IGNORED_KEYS = [
-  'id', '_stableKey', 'updated_at', 'created_at', 'deleted_at', 
+  'id', '_stableKey', 'updated_at', 'created_at', 'deleted_at',
   'isVirtual', 'folderName', 'Investigation Paper', 'Report', 'Action Taken by police',
   'lastPaymentStage', 'lastPaymentDate', 'lastPaymentDateStr', 'overdueDays', 'overdue_days',
   'agreement_url', 'agreement_name', 'agreement_date', 'payment_receipts', 'client_documents', 'agreements'
@@ -291,8 +291,8 @@ const getMissingReceiptsCount = (client: any): number => {
 const getOrderedKeys = (clientObj: any) => {
   const availableKeys = Object.keys(clientObj || {});
   const orderedKeys = EXPANDED_COLUMNS_ORDER.filter(k => availableKeys.includes(k));
-  const extraKeys = availableKeys.filter(k => 
-    !EXPANDED_COLUMNS_ORDER.includes(k) && 
+  const extraKeys = availableKeys.filter(k =>
+    !EXPANDED_COLUMNS_ORDER.includes(k) &&
     !IGNORED_KEYS.includes(k) &&
     !k.startsWith('_')
   );
@@ -408,7 +408,7 @@ const formatJsonValue = (val: any) => {
     try {
       const parsed = JSON.parse(str);
       if (Array.isArray(parsed)) {
-        const validItems = parsed.filter(item => 
+        const validItems = parsed.filter(item =>
           Object.values(item).some(v => v !== '' && v !== null && v !== undefined)
         );
         if (validItems.length === 0) return '-';
@@ -429,7 +429,7 @@ const formatJsonValue = (val: any) => {
           return Object.values(item).filter(Boolean).join(', ');
         }).join('; ');
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   const strV = str.replace(/\s/g, '');
   if (strV === '[]' || strV === '[{date:,no:}]' || strV === '[{date:,no:,pem:,officer:}]') return '-';
@@ -469,7 +469,7 @@ const formatExpandedClient = (client: any, lang: string, orderedKeys: string[]) 
   for (const key of orderedKeys) {
     const label = getExportHeaderLabel(key, lang);
     const val = client[key];
-    
+
     if (key === 'No') {
       const numVal = val !== null && val !== undefined ? Number(val) : null;
       formatted[label] = numVal !== null && !isNaN(numVal) ? numVal : '-';
@@ -486,21 +486,21 @@ const formatExpandedClient = (client: any, lang: string, orderedKeys: string[]) 
 
 const formatLodClient = (client: any, lang: string) => {
   const payInfo = getLastPaymentInfo(client);
-  const overdueDays = payInfo && payInfo.date 
+  const overdueDays = payInfo && payInfo.date
     ? Math.max(0, Math.floor((Date.now() - payInfo.date.getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
-    
+
   const weeks = Math.floor(overdueDays / 7);
   const days = overdueDays % 7;
-  
+
   let durationStr = lang === 'bm'
     ? `${weeks} minggu, ${days} hari`
     : `${weeks} weeks, ${days} days`;
-  
+
   if (weeks === 0 && days === 0) {
     durationStr = lang === 'bm' ? 'Hari Ini' : 'Today';
   }
-  
+
   if (!payInfo || payInfo.date === null) {
     durationStr = '-';
   }
@@ -630,7 +630,7 @@ export default function ClientTable({
       .filter(c => hasPendingAmount(c["PENDING (RM)"]))
       .map(c => {
         const payInfo = getLastPaymentInfo(c);
-        const overdueDays = payInfo && payInfo.date 
+        const overdueDays = payInfo && payInfo.date
           ? Math.max(0, Math.floor((Date.now() - payInfo.date.getTime()) / (1000 * 60 * 60 * 24)))
           : 0;
 
@@ -814,7 +814,7 @@ export default function ClientTable({
     } else {
       const [year, month] = selectedMonth.split('-').map(Number);
       const daysInMonth = new Date(year, month, 0).getDate();
-      
+
       const daysList: BarChartItem[] = [];
       const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const monthNamesBm = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
@@ -824,7 +824,7 @@ export default function ClientTable({
         const dayClients = processedClients.filter(client => {
           const parsed = parseMonthYear(client.DATE);
           if (!parsed || parsed.key !== selectedMonth) return false;
-          
+
           const dVal = client._parsedDateVal;
           if (dVal > 0) {
             const dayNum = dVal % 100;
@@ -884,7 +884,7 @@ export default function ClientTable({
       if (exportScope === 'full') {
         return formatExpandedClient(client, lang, orderedKeys);
       }
-      
+
       if (viewMode === 'lod') {
         return formatLodClient(client, lang);
       } else if (viewMode === 'expanded') {
@@ -952,18 +952,18 @@ export default function ClientTable({
       didParseCell: (data) => {
         const colHeader = tableColumn[data.column.index];
         if (data.section === 'body' && (colHeader === 'Name' || colHeader === 'NAME' || colHeader === 'Full Name' || colHeader === 'Nama Penuh')) {
-           const rowData = exportData[data.row.index];
-           const pendingVal = rowData["Pending (RM)"] || rowData["PENDING (RM)"] || rowData["Belum Bayar (RM)"];
-           const isPending = hasPendingAmount(pendingVal);
-           if (isPending) {
-             data.cell.styles.fillColor = [254, 226, 226]; // light red (red-100)
-             data.cell.styles.textColor = [127, 29, 29]; // high contrast dark red (red-900)
-             data.cell.styles.fontStyle = 'bold';
-           } else {
-             data.cell.styles.fillColor = [220, 252, 231]; // light green (green-100)
-             data.cell.styles.textColor = [20, 83, 45]; // high contrast dark green (green-900)
-             data.cell.styles.fontStyle = 'bold';
-           }
+          const rowData = exportData[data.row.index];
+          const pendingVal = rowData["Pending (RM)"] || rowData["PENDING (RM)"] || rowData["Belum Bayar (RM)"];
+          const isPending = hasPendingAmount(pendingVal);
+          if (isPending) {
+            data.cell.styles.fillColor = [254, 226, 226]; // light red (red-100)
+            data.cell.styles.textColor = [127, 29, 29]; // high contrast dark red (red-900)
+            data.cell.styles.fontStyle = 'bold';
+          } else {
+            data.cell.styles.fillColor = [220, 252, 231]; // light green (green-100)
+            data.cell.styles.textColor = [20, 83, 45]; // high contrast dark green (green-900)
+            data.cell.styles.fontStyle = 'bold';
+          }
         }
       }
     });
@@ -1022,573 +1022,492 @@ export default function ClientTable({
         ) : (
           <>
             <div className="p-3 sm:p-4 border-b border-cyan-700 dark:border-yellow-500/50 bg-cyan-600 dark:bg-gray-900 flex-shrink-0">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-            <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">{t('clients', 'clientRegistry', lang)}</h3>
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">{t('clients', 'clientRegistry', lang)}</h3>
 
-            {/* EXPORT BUTTONS & ADD BUTTON */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
-              {canExport && (
-                <>
-                  <div className="relative flex-1 sm:flex-none min-w-[130px]">
-                    <select
-                      value={exportScope}
-                      onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
-                      data-custom-select
-                      className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
-                    >
-                      <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
-                      <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
-                    </select>
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
-                    <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
-                    <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
-                    <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
-                  </div>
-                </>
-              )}
-
-              {(viewMode === 'lod' ? canManageLoD : canEdit) && (
-                <button
-                  onClick={onAddClick}
-                  className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[42px] sm:h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50 flex-shrink-0"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  <span>{t('clients', 'addClient', lang)}</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder={t('clients', 'searchPlaceholder', lang)}
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all h-[42px] sm:h-[48px] shadow-sm"
-              />
-            </div>
-            <div className="relative w-full sm:w-auto min-w-[130px]">
-              <select
-                value={dateFilter}
-                onChange={(e) => onDateFilterChange(e.target.value)}
-                data-custom-select
-                className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
-              >
-                <option value="all">{t('clients', 'allDates', lang)}</option>
-                <option value="year">{t('clients', 'thisYear', lang)}</option>
-                <option value="month">{t('clients', 'thisMonth', lang)}</option>
-              </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Card System (Phones only - Vertical, No Horizontal Scrolling) */}
-        <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">
-          {paginatedClients.length > 0 ? (
-            paginatedClients.map((client, index) => {
-              const rowId = client.id || client.NAME + client["PHONE NUMBER"];
-              const clientNo = client.No ?? client.NO ?? ((currentPage - 1) * 25 + index + 1);
-              const isPending = hasPendingAmount(client["PENDING (RM)"]);
-              const isUncolored = isCaseUncolored(client["CASE STATUS"]);
-              const statusBadgeClass = client.isVirtual
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                : isUncolored
-                ? "bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-zinc-200"
-                : isPending
-                ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
-
-              if (viewMode === 'lod') {
-                const overdueDays = client.overdueDays || 0;
-                const weeks = Math.floor(overdueDays / 7);
-                const days = overdueDays % 7;
-                let durationStr = lang === 'bm' ? `${weeks} minggu, ${days} hari` : `${weeks}w, ${days}d`;
-                if (weeks === 0 && days === 0) durationStr = lang === 'bm' ? 'Hari Ini' : 'Today';
-                if (client.lastPaymentDate === null) durationStr = '-';
-
-                return (
-                  <div
-                    key={rowId}
-                    className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
-                  >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
-                      <div className="space-y-0.5 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500">
-                            #{clientNo}
-                          </span>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                            {client.NAME}
-                          </h4>
-                        </div>
-                        {client["PHONE NUMBER"] && (
-                          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-zinc-400 pt-0.5">
-                            <span>📞 {client["PHONE NUMBER"]}</span>
-                            <a
-                              href={`https://wa.me/${String(client["PHONE NUMBER"]).replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-emerald-600 dark:text-emerald-400 text-xs font-bold"
-                            >
-                              WhatsApp
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
-                        {durationStr}
-                      </span>
-                    </div>
-
-                    {/* 2x2 Grid Info */}
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
-                          {lang === 'bm' ? 'Status Kes' : 'Case Status'}
-                        </span>
-                        <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate block mt-0.5">
-                          {client["CASE STATUS"] || '-'}
-                        </span>
-                      </div>
-                      <div className="bg-rose-50/50 dark:bg-rose-950/20 p-2.5 rounded-xl border border-rose-100 dark:border-rose-900/30">
-                        <span className="text-[10px] text-rose-500 uppercase font-bold block">
-                          {lang === 'bm' ? 'Tunggakan (RM)' : 'Pending (RM)'}
-                        </span>
-                        <span className="font-extrabold text-rose-600 dark:text-rose-400 block mt-0.5 font-mono">
-                          RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}
-                        </span>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
-                          {lang === 'bm' ? 'Bayaran Terakhir' : 'Last Payment'}
-                        </span>
-                        <span className="font-medium text-slate-700 dark:text-zinc-300 block mt-0.5">
-                          {getStageLabel(client.lastPaymentStage, lang)} ({client.lastPaymentDateStr || '-'})
-                        </span>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
-                          {lang === 'bm' ? 'Tarikh LoD' : 'LoD Date'}
-                        </span>
-                        <span className="font-medium text-slate-700 dark:text-zinc-300 block mt-0.5">
-                          {client.lod_date || (lang === 'bm' ? 'Belum Dihantar' : 'Not Sent')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        onClick={() => onViewClick(client)}
-                        className="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                      >
-                        <span>📄</span>
-                        <span>{t('clients', 'viewDoc', lang)}</span>
-                      </button>
-                      {canManageLoD && (
-                        <button
-                          onClick={() => onEditClick(client)}
-                          className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                {/* EXPORT BUTTONS & ADD BUTTON */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                  {canExport && (
+                    <>
+                      <div className="relative flex-1 sm:flex-none min-w-[130px]">
+                        <select
+                          value={exportScope}
+                          onChange={(e) => setExportScope(e.target.value as 'current' | 'full')}
+                          data-custom-select
+                          className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
                         >
-                          <span>⚖️</span>
-                          <span>{lang === 'bm' ? 'Rekod LoD' : 'Record LoD'}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              }
-
-              // Standard / Expanded View Card
-              return (
-                <div
-                  key={rowId}
-                  className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
-                >
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500">
-                          #{clientNo}
-                        </span>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                          {client.NAME}
-                        </h4>
-                        {client.isVirtual && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                            Storage
-                          </span>
-                        )}
+                          <option value="current">{t('clients', 'exportCurrentView', lang)}</option>
+                          <option value="full">{t('clients', 'exportFullDatabase', lang)}</option>
+                        </select>
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 flex-wrap">
-                        {client["PHONE NUMBER"] && (
-                          <div className="flex items-center gap-1 font-mono">
-                            <span>📞 {client["PHONE NUMBER"]}</span>
-                            <a
-                              href={`https://wa.me/${String(client["PHONE NUMBER"]).replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-emerald-600 dark:text-emerald-400 text-xs font-bold"
-                            >
-                              WA
-                            </a>
-                          </div>
-                        )}
-                        {client["IC NUMBER"] && client["IC NUMBER"] !== '-' && (
-                          <span className="font-mono text-[11px] text-slate-400">IC: {client["IC NUMBER"]}</span>
-                        )}
+
+                      <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
+                        <button onClick={handleExportCSV} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">CSV</button>
+                        <button onClick={handleExportExcel} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-r border-slate-200 dark:border-gray-800 transition-colors h-full flex items-center justify-center">Excel</button>
+                        <button onClick={handleExportPDF} className="flex-1 sm:flex-none text-xs font-semibold px-3 sm:px-4 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors h-full flex items-center justify-center">PDF</button>
                       </div>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${statusBadgeClass}`}>
-                      {client["CASE STATUS"] || (isPending ? 'Pending' : 'Completed')}
-                    </span>
-                  </div>
+                    </>
+                  )}
 
-                  {/* Details Row */}
-                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 bg-slate-50/80 dark:bg-gray-800/30 px-3 py-2 rounded-xl">
-                    <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate max-w-[170px]">
-                      🏷️ {client["CASE CATEGORY"] || '-'}
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 flex-shrink-0">
-                      📅 {client.DATE || '-'}
-                    </span>
-                  </div>
-
-                  {/* Financial Breakdown Grid */}
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-xl">
-                      <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
-                        {lang === 'bm' ? 'Pakej' : 'Package'}
-                      </span>
-                      <span className="font-extrabold text-xs text-slate-800 dark:text-zinc-200 mt-0.5 block font-mono">
-                        RM {formatCurrency(parseAmount(client["PACKAGE (RM)"]))}
-                      </span>
-                    </div>
-                    <div className="bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                      <span className="text-[9px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">
-                        {lang === 'bm' ? 'Dibayar' : 'Paid'}
-                      </span>
-                      <span className="font-extrabold text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 block font-mono">
-                        RM {formatCurrency(parseAmount(client["TOTAL PAID (RM)"]))}
-                      </span>
-                      {(() => {
-                        const missing = getMissingReceiptsCount(client);
-                        const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
-                        if (missing > 0) {
-                          return (
-                            <span 
-                              title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
-                              className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 mt-1"
-                            >
-                              <span>⚠️</span>
-                              <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
-                            </span>
-                          );
-                        } else if (totalPaidNum > 0) {
-                          return (
-                            <span 
-                              title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
-                              className="inline-flex items-center gap-0.5 text-[8px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1"
-                            >
-                              <span>✓</span>
-                              <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
-                            </span>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                    <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-xl border border-amber-100 dark:border-amber-900/30">
-                      <span className="text-[9px] uppercase font-bold text-amber-600 dark:text-amber-400 block">
-                        {lang === 'bm' ? 'Baki' : 'Pending'}
-                      </span>
-                      <span className="font-extrabold text-xs text-amber-600 dark:text-yellow-500 mt-0.5 block font-mono">
-                        RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions Footer */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  {(viewMode === 'lod' ? canManageLoD : canEdit) && (
                     <button
-                      onClick={() => onViewClick(client)}
-                      className="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                      onClick={onAddClick}
+                      className="text-xs font-semibold bg-white hover:bg-slate-50 text-cyan-700 dark:bg-yellow-500 dark:text-black font-semibold border-0 dark:hover:bg-yellow-400 dark:text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto h-[42px] sm:h-[48px] flex items-center justify-center gap-1 border border-cyan-100 dark:border-yellow-500/50 flex-shrink-0"
                     >
-                      <span>📄</span>
-                      <span>{t('clients', 'viewDoc', lang)}</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
+                      </svg>
+                      <span>{t('clients', 'addClient', lang)}</span>
                     </button>
-                    {canEdit && (
-                      <button
-                        onClick={() => onEditClick(client)}
-                        className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                      >
-                        <span>✏️</span>
-                        <span>{t('reports', 'editBtn', lang)}</span>
-                      </button>
-                    )}
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder={t('clients', 'searchPlaceholder', lang)}
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-all h-[42px] sm:h-[48px] shadow-sm"
+                  />
+                </div>
+                <div className="relative w-full sm:w-auto min-w-[130px]">
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => onDateFilterChange(e.target.value)}
+                    data-custom-select
+                    className="w-full bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2.5 sm:py-3 pl-3 sm:pl-4 pr-8 sm:pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer h-[42px] sm:h-[48px] shadow-sm appearance-none"
+                  >
+                    <option value="all">{t('clients', 'allDates', lang)}</option>
+                    <option value="year">{t('clients', 'thisYear', lang)}</option>
+                    <option value="month">{t('clients', 'thisMonth', lang)}</option>
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
-              );
-            })
-          ) : (
-            <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
-              {t('clients', 'noClientsFound', lang)}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Desktop Table (Laptops / Tablets / Desktops only) */}
-        <div className="hidden md:block flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative">
-          <table className="w-full min-w-[1000px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
-            <thead>
-              {viewMode === 'standard' ? (
-                <tr>
-                  <SortHeader label={getLabel("NAME")} sortKey="NAME" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PHONE")} sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PAID")} sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PACKAGE")} sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("CATEGORY")} sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("DATE")} sortKey="DATE" currentSort={sort} onClick={handleSort} />
-                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
-                </tr>
-              ) : viewMode === 'lod' ? (
-                <tr>
-                  <SortHeader label={getLabel("NO")} sortKey="No" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("NAME")} sortKey="NAME" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PHONE")} sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={lang === 'bm' ? 'Status Kes' : 'Case Status'} sortKey="CASE STATUS" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={lang === 'bm' ? 'Peringkat Terakhir' : 'Last Payment Stage'} sortKey="last_payment_stage" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={lang === 'bm' ? 'Tarikh Bayaran Terakhir' : 'Last Payment Date'} sortKey="last_payment_date" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={lang === 'bm' ? 'Tempoh Tunggakan' : 'Overdue Duration'} sortKey="overdue_days" currentSort={sort} onClick={handleSort} />
-                  <SortHeader label={lang === 'bm' ? 'Tarikh LoD' : 'LoD Date'} sortKey="lod_date" currentSort={sort} onClick={handleSort} />
-                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-505 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
-                </tr>
-              ) : (
-                <tr>
-                  {getOrderedKeys(clients[0] || {}).map(key => (
-                    <SortHeader key={key} label={getLabel(key)} sortKey={key} currentSort={sort} onClick={handleSort} />
-                  ))}
-                  <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
-                </tr>
-              )}
-            </thead>
+            {/* Mobile Card System (Phones only - Vertical, No Horizontal Scrolling) */}
+            <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">
+              {paginatedClients.length > 0 ? (
+                paginatedClients.map((client, index) => {
+                  const rowId = client.id || client.NAME + client["PHONE NUMBER"];
+                  const clientNo = client.No ?? client.NO ?? ((currentPage - 1) * 25 + index + 1);
+                  const isPending = hasPendingAmount(client["PENDING (RM)"]);
+                  const isUncolored = isCaseUncolored(client["CASE STATUS"]);
+                  const statusBadgeClass = client.isVirtual
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                    : isUncolored
+                      ? "bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-zinc-200"
+                      : isPending
+                        ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                        : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
 
-            <tbody className="divide-y divide-slate-150 dark:divide-gray-800">
-              {paginatedClients.length > 0 ? paginatedClients.map((client) => {
-                const rowId = client.id || client.NAME + client["PHONE NUMBER"];
-                
-                if (viewMode === 'lod') {
-                  const overdueDays = client.overdueDays || 0;
-                  const weeks = Math.floor(overdueDays / 7);
-                  const days = overdueDays % 7;
-                  
-                  let durationStr = '';
-                  if (lang === 'bm') {
-                    durationStr = `${weeks} minggu, ${days} hari`;
-                  } else {
-                    const weekStr = weeks === 1 ? 'week' : 'weeks';
-                    const dayStr = days === 1 ? 'day' : 'days';
-                    durationStr = `${weeks} ${weekStr}, ${days} ${dayStr}`;
-                  }
-                  
-                  if (weeks === 0 && days === 0) {
-                    durationStr = lang === 'bm' ? 'Hari Ini' : 'Today';
-                  }
+                  if (viewMode === 'lod') {
+                    const overdueDays = client.overdueDays || 0;
+                    const weeks = Math.floor(overdueDays / 7);
+                    const days = overdueDays % 7;
+                    let durationStr = lang === 'bm' ? `${weeks} minggu, ${days} hari` : `${weeks}w, ${days}d`;
+                    if (weeks === 0 && days === 0) durationStr = lang === 'bm' ? 'Hari Ini' : 'Today';
+                    if (client.lastPaymentDate === null) durationStr = '-';
 
-                  let durationBadgeClass = "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30 font-semibold";
-                  if (overdueDays > 0) {
-                    if (weeks < 2) {
-                      durationBadgeClass = "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30 font-semibold";
-                    } else if (weeks < 4) {
-                      durationBadgeClass = "bg-orange-50 text-orange-800 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30 font-semibold";
-                    } else {
-                      durationBadgeClass = "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30 font-bold";
-                    }
-                  }
-
-                  if (client.lastPaymentDate === null) {
-                    durationStr = '-';
-                    durationBadgeClass = "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700/50 font-semibold";
-                  }
-
-                  return (
-                    <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
-                      <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client.No ?? client.NO ?? '-'}</td>
-                      <td className="px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug text-slate-900 dark:text-white">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span>{client.NAME}</span>
-                          {Boolean(client.agreement_url || client.agreement_name) && (
-                            <span 
-                              title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
-                            >
-                              <span>📜</span>
-                              <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
-                            </span>
-                          )}
+                    return (
+                      <div
+                        key={rowId}
+                        className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
+                          <div className="space-y-0.5 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500">
+                                #{clientNo}
+                              </span>
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                                {client.NAME}
+                              </h4>
+                            </div>
+                            {client["PHONE NUMBER"] && (
+                              <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-zinc-400 pt-0.5">
+                                <span>📞 {client["PHONE NUMBER"]}</span>
+                                <a
+                                  href={`https://wa.me/${String(client["PHONE NUMBER"]).replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 dark:text-emerald-400 text-xs font-bold"
+                                >
+                                  WhatsApp
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+                            {durationStr}
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client["PHONE NUMBER"] || '-'}</td>
-                      <td className="px-4 py-3.5 text-slate-500 dark:text-zinc-400">{client["CASE STATUS"] || '-'}</td>
-                      <td className="px-4 py-3.5 font-mono text-slate-700 dark:text-zinc-300 font-semibold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
-                      <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{getStageLabel(client.lastPaymentStage, lang)}</td>
-                      <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lastPaymentDateStr}</td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-xs ${durationBadgeClass}`}>
-                          {durationStr}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lod_date || (lang === 'bm' ? 'Belum Dihantar' : 'Not Sent')}</td>
-                      
-                      <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
-                        <div className="flex items-center justify-start gap-1.5 sm:gap-2">
+
+                        {/* 2x2 Grid Info */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
+                              {lang === 'bm' ? 'Status Kes' : 'Case Status'}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate block mt-0.5">
+                              {client["CASE STATUS"] || '-'}
+                            </span>
+                          </div>
+                          <div className="bg-rose-50/50 dark:bg-rose-950/20 p-2.5 rounded-xl border border-rose-100 dark:border-rose-900/30">
+                            <span className="text-[10px] text-rose-500 uppercase font-bold block">
+                              {lang === 'bm' ? 'Tunggakan (RM)' : 'Pending (RM)'}
+                            </span>
+                            <span className="font-extrabold text-rose-600 dark:text-rose-400 block mt-0.5 font-mono">
+                              RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}
+                            </span>
+                          </div>
+                          <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
+                              {lang === 'bm' ? 'Bayaran Terakhir' : 'Last Payment'}
+                            </span>
+                            <span className="font-medium text-slate-700 dark:text-zinc-300 block mt-0.5">
+                              {getStageLabel(client.lastPaymentStage, lang)} ({client.lastPaymentDateStr || '-'})
+                            </span>
+                          </div>
+                          <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
+                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
+                              {lang === 'bm' ? 'Tarikh LoD' : 'LoD Date'}
+                            </span>
+                            <span className="font-medium text-slate-700 dark:text-zinc-300 block mt-0.5">
+                              {client.lod_date || (lang === 'bm' ? 'Belum Dihantar' : 'Not Sent')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
                           <button
                             onClick={() => onViewClick(client)}
-                            className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                            className="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
                           >
-                            {t('clients', 'viewDoc', lang)}
+                            <span>📄</span>
+                            <span>{t('clients', 'viewDoc', lang)}</span>
                           </button>
                           {canManageLoD && (
                             <button
                               onClick={() => onEditClick(client)}
-                              className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
+                              className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
                             >
-                              {lang === 'bm' ? 'Rekod LoD' : 'Record LoD'}
+                              <span>⚖️</span>
+                              <span>{lang === 'bm' ? 'Rekod LoD' : 'Record LoD'}</span>
                             </button>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                }
+                      </div>
+                    );
+                  }
 
-                const isPending = hasPendingAmount(client["PENDING (RM)"]);
-                const isUncolored = isCaseUncolored(client["CASE STATUS"]);
-                const nameHighlightClasses = client.isVirtual
-                  ? "bg-slate-100 text-slate-700 dark:bg-zinc-800/40 dark:text-zinc-300 italic"
-                  : isUncolored
-                  ? "text-slate-900 dark:text-white font-bold"
-                  : isPending
-                  ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"
-                  : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
-
-                return (
-                  <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
-
-                    {viewMode === 'standard' ? (
-                      <>
-                        <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                  // Standard / Expanded View Card
+                  return (
+                    <div
+                      key={rowId}
+                      className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-zinc-500">
+                              #{clientNo}
+                            </span>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                              {client.NAME}
+                            </h4>
                             {client.isVirtual && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                 Storage
                               </span>
                             )}
-                            <span>{client.NAME}</span>
-                            {Boolean(client.agreement_url || client.agreement_name) && (
-                              <span 
-                                title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
-                              >
-                                <span>📜</span>
-                                <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
-                              </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 flex-wrap">
+                            {client["PHONE NUMBER"] && (
+                              <div className="flex items-center gap-1 font-mono">
+                                <span>📞 {client["PHONE NUMBER"]}</span>
+                                <a
+                                  href={`https://wa.me/${String(client["PHONE NUMBER"]).replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 dark:text-emerald-400 text-xs font-bold"
+                                >
+                                  WA
+                                </a>
+                              </div>
+                            )}
+                            {client["IC NUMBER"] && client["IC NUMBER"] !== '-' && (
+                              <span className="font-mono text-[11px] text-slate-400">IC: {client["IC NUMBER"]}</span>
                             )}
                           </div>
-                        </td>
-                        <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
-                        <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
-                        <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">
-                          <div className="flex flex-col items-start gap-0.5">
-                            <span>{client["TOTAL PAID (RM)"] || '0'}</span>
-                            {(() => {
-                              const missing = getMissingReceiptsCount(client);
-                              const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
-                              if (missing > 0) {
-                                return (
-                                  <span 
-                                    title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
-                                  >
-                                    <span className="text-[9px]">⚠️</span>
-                                    <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
-                                  </span>
-                                );
-                              } else if (totalPaidNum > 0) {
-                                return (
-                                  <span 
-                                    title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
-                                    className="inline-flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
-                                  >
-                                    <span>✓</span>
-                                    <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
-                                  </span>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
-                        <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
-                        <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
-                      </>
-                    ) : (
-                      <>
-                        {getOrderedKeys(client).map((k) => {
-                          const v = client[k];
-                          const isPaymentCol = ['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(k);
-                          
-                          let displayVal = v;
-                          let parsedAmt = 0;
-                          if (isPaymentCol) {
-                            const dateKey = `${k} DATE`;
-                            const dateVal = client[dateKey];
-                            parsedAmt = parseAmount(v);
-                            if (parsedAmt === 0) {
-                              const isDateEmpty = !dateVal || String(dateVal).trim() === '' || String(dateVal).trim() === '-';
-                              if (isDateEmpty) {
-                                displayVal = null;
-                              }
+                        </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${statusBadgeClass}`}>
+                          {client["CASE STATUS"] || (isPending ? 'Pending' : 'Completed')}
+                        </span>
+                      </div>
+
+                      {/* Details Row */}
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 bg-slate-50/80 dark:bg-gray-800/30 px-3 py-2 rounded-xl">
+                        <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate max-w-[170px]">
+                          🏷️ {client["CASE CATEGORY"] || '-'}
+                        </span>
+                        <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 flex-shrink-0">
+                          📅 {client.DATE || '-'}
+                        </span>
+                      </div>
+
+                      {/* Financial Breakdown Grid */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-xl">
+                          <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
+                            {lang === 'bm' ? 'Pakej' : 'Package'}
+                          </span>
+                          <span className="font-extrabold text-xs text-slate-800 dark:text-zinc-200 mt-0.5 block font-mono">
+                            RM {formatCurrency(parseAmount(client["PACKAGE (RM)"]))}
+                          </span>
+                        </div>
+                        <div className="bg-emerald-50 dark:bg-emerald-950/20 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                          <span className="text-[9px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">
+                            {lang === 'bm' ? 'Dibayar' : 'Paid'}
+                          </span>
+                          <span className="font-extrabold text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 block font-mono">
+                            RM {formatCurrency(parseAmount(client["TOTAL PAID (RM)"]))}
+                          </span>
+                          {(() => {
+                            const missing = getMissingReceiptsCount(client);
+                            const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                            if (missing > 0) {
+                              return (
+                                <span
+                                  title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
+                                  className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 mt-1"
+                                >
+                                  <span>⚠️</span>
+                                  <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
+                                </span>
+                              );
+                            } else if (totalPaidNum > 0) {
+                              return (
+                                <span
+                                  title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
+                                  className="inline-flex items-center gap-0.5 text-[8px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1"
+                                >
+                                  <span>✓</span>
+                                  <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
+                                </span>
+                              );
                             }
-                          }
+                            return null;
+                          })()}
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-950/20 p-2 rounded-xl border border-amber-100 dark:border-amber-900/30">
+                          <span className="text-[9px] uppercase font-bold text-amber-600 dark:text-amber-400 block">
+                            {lang === 'bm' ? 'Baki' : 'Pending'}
+                          </span>
+                          <span className="font-extrabold text-xs text-amber-600 dark:text-yellow-500 mt-0.5 block font-mono">
+                            RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}
+                          </span>
+                        </div>
+                      </div>
 
-                          const hasValue = displayVal !== null && displayVal !== undefined && String(displayVal).trim() !== '';
-                          const textRepresentation = hasValue ? String(displayVal) : '-';
+                      {/* Actions Footer */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          onClick={() => onViewClick(client)}
+                          className="w-full py-2.5 px-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <span>📄</span>
+                          <span>{t('clients', 'viewDoc', lang)}</span>
+                        </button>
+                        {canEdit && (
+                          <button
+                            onClick={() => onEditClick(client)}
+                            className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                          >
+                            <span>✏️</span>
+                            <span>{t('reports', 'editBtn', lang)}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center text-xs font-semibold text-slate-400 dark:text-zinc-500 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
+                  {t('clients', 'noClientsFound', lang)}
+                </div>
+              )}
+            </div>
 
-                          return (
-                          <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={hasValue ? String(displayVal) : ''}>
-                            {k === 'NAME' ? (
+            {/* Desktop Table (Laptops / Tablets / Desktops only) */}
+            <div className="hidden md:block flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative">
+              <table className="w-full min-w-[1000px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
+                <thead>
+                  {viewMode === 'standard' ? (
+                    <tr>
+                      <SortHeader label={getLabel("NAME")} sortKey="NAME" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PHONE")} sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PAID")} sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PACKAGE")} sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("CATEGORY")} sortKey="CASE CATEGORY" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("DATE")} sortKey="DATE" currentSort={sort} onClick={handleSort} />
+                      <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                    </tr>
+                  ) : viewMode === 'lod' ? (
+                    <tr>
+                      <SortHeader label={getLabel("NO")} sortKey="No" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("NAME")} sortKey="NAME" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PHONE")} sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={lang === 'bm' ? 'Status Kes' : 'Case Status'} sortKey="CASE STATUS" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={lang === 'bm' ? 'Peringkat Terakhir' : 'Last Payment Stage'} sortKey="last_payment_stage" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={lang === 'bm' ? 'Tarikh Bayaran Terakhir' : 'Last Payment Date'} sortKey="last_payment_date" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={lang === 'bm' ? 'Tempoh Tunggakan' : 'Overdue Duration'} sortKey="overdue_days" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={lang === 'bm' ? 'Tarikh LoD' : 'LoD Date'} sortKey="lod_date" currentSort={sort} onClick={handleSort} />
+                      <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-505 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                    </tr>
+                  ) : (
+                    <tr>
+                      {getOrderedKeys(clients[0] || {}).map(key => (
+                        <SortHeader key={key} label={getLabel(key)} sortKey={key} currentSort={sort} onClick={handleSort} />
+                      ))}
+                      <th className="px-3 sm:px-4 py-3 sm:py-3.5 font-semibold text-slate-500 dark:text-zinc-400 border-b border-slate-200 dark:border-gray-800 md:sticky md:top-0 md:right-0 bg-slate-50 dark:bg-gray-900 md:z-20 md:shadow-sm text-left">{t('clients', 'actions', lang)}</th>
+                    </tr>
+                  )}
+                </thead>
+
+                <tbody className="divide-y divide-slate-150 dark:divide-gray-800">
+                  {paginatedClients.length > 0 ? paginatedClients.map((client) => {
+                    const rowId = client.id || client.NAME + client["PHONE NUMBER"];
+
+                    if (viewMode === 'lod') {
+                      const overdueDays = client.overdueDays || 0;
+                      const weeks = Math.floor(overdueDays / 7);
+                      const days = overdueDays % 7;
+
+                      let durationStr = '';
+                      if (lang === 'bm') {
+                        durationStr = `${weeks} minggu, ${days} hari`;
+                      } else {
+                        const weekStr = weeks === 1 ? 'week' : 'weeks';
+                        const dayStr = days === 1 ? 'day' : 'days';
+                        durationStr = `${weeks} ${weekStr}, ${days} ${dayStr}`;
+                      }
+
+                      if (weeks === 0 && days === 0) {
+                        durationStr = lang === 'bm' ? 'Hari Ini' : 'Today';
+                      }
+
+                      let durationBadgeClass = "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30 font-semibold";
+                      if (overdueDays > 0) {
+                        if (weeks < 2) {
+                          durationBadgeClass = "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30 font-semibold";
+                        } else if (weeks < 4) {
+                          durationBadgeClass = "bg-orange-50 text-orange-800 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30 font-semibold";
+                        } else {
+                          durationBadgeClass = "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/30 font-bold";
+                        }
+                      }
+
+                      if (client.lastPaymentDate === null) {
+                        durationStr = '-';
+                        durationBadgeClass = "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700/50 font-semibold";
+                      }
+
+                      return (
+                        <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
+                          <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client.No ?? client.NO ?? '-'}</td>
+                          <td className="px-4 py-3.5 font-bold min-w-[180px] whitespace-normal leading-snug text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{client.NAME}</span>
+                              {Boolean(client.agreement_url || client.agreement_name) && (
+                                <span
+                                  title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
+                                >
+                                  <span>📜</span>
+                                  <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono">{client["PHONE NUMBER"] || '-'}</td>
+                          <td className="px-4 py-3.5 text-slate-500 dark:text-zinc-400">{client["CASE STATUS"] || '-'}</td>
+                          <td className="px-4 py-3.5 font-mono text-slate-700 dark:text-zinc-300 font-semibold">RM {formatCurrency(parseAmount(client["PENDING (RM)"]))}</td>
+                          <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{getStageLabel(client.lastPaymentStage, lang)}</td>
+                          <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lastPaymentDateStr}</td>
+                          <td className="px-4 py-3.5">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-xl text-xs ${durationBadgeClass}`}>
+                              {durationStr}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.lod_date || (lang === 'bm' ? 'Belum Dihantar' : 'Not Sent')}</td>
+
+                          <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
+                            <div className="flex items-center justify-start gap-1.5 sm:gap-2">
+                              <button
+                                onClick={() => onViewClick(client)}
+                                className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                              >
+                                {t('clients', 'viewDoc', lang)}
+                              </button>
+                              {canManageLoD && (
+                                <button
+                                  onClick={() => onEditClick(client)}
+                                  className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
+                                >
+                                  {lang === 'bm' ? 'Rekod LoD' : 'Record LoD'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    const isPending = hasPendingAmount(client["PENDING (RM)"]);
+                    const isUncolored = isCaseUncolored(client["CASE STATUS"]);
+                    const nameHighlightClasses = client.isVirtual
+                      ? "bg-slate-100 text-slate-700 dark:bg-zinc-800/40 dark:text-zinc-300 italic"
+                      : isUncolored
+                        ? "text-slate-900 dark:text-white font-bold"
+                        : isPending
+                          ? "bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100 font-bold"
+                          : "bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100 font-bold";
+
+                    return (
+                      <tr key={rowId} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors group relative">
+
+                        {viewMode === 'standard' ? (
+                          <>
+                            <td className={`px-4 py-3.5 min-w-[200px] whitespace-normal leading-snug ${nameHighlightClasses}`}>
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 {client.isVirtual && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
                                     Storage
                                   </span>
                                 )}
-                                <span>{textRepresentation}</span>
+                                <span>{client.NAME}</span>
                                 {Boolean(client.agreement_url || client.agreement_name) && (
-                                  <span 
-                                    title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`} 
+                                  <span
+                                    title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`}
                                     className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
                                   >
                                     <span>📜</span>
@@ -1596,266 +1515,349 @@ export default function ClientTable({
                                   </span>
                                 )}
                               </div>
-                            ) : isPaymentCol && parsedAmt > 0 ? (
+                            </td>
+                            <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
+                            <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
+                            <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">
                               <div className="flex flex-col items-start gap-0.5">
-                                <span className="font-mono">{textRepresentation}</span>
-                                {hasPaymentReceipt(client, k) ? (
-                                  <span 
-                                    title={lang === 'bm' ? 'Resit klien dilampirkan' : 'Client receipt attached'}
-                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40 whitespace-nowrap"
-                                  >
-                                    <span>✓</span>
-                                    <span>{lang === 'bm' ? 'Resit Ada' : 'Receipt OK'}</span>
-                                  </span>
-                                ) : (
-                                  <span 
-                                    title={lang === 'bm' ? 'Resit klien belum dimuat naik untuk bayaran ini' : 'Client receipt has not been uploaded for this payment'}
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40 whitespace-nowrap"
-                                  >
-                                    <span className="text-[9px]">⚠️</span>
-                                    <span>{lang === 'bm' ? 'Tiada Resit' : 'No Receipt'}</span>
-                                  </span>
-                                )}
-                              </div>
-                            ) : textRepresentation.startsWith('[') ? (
-                                (() => {
-                                  try {
-                                    const parsed = JSON.parse(textRepresentation);
-                                    if (Array.isArray(parsed)) {
-                                      const validItems = parsed.filter(item => Object.values(item).some(val => val !== '' && val !== null));
-                                      return validItems.length > 0 ? `${validItems.length} Items` : '-';
-                                    }
-                                  } catch (e) {
-                                    const strV = textRepresentation.replace(/\s/g, '');
-                                    if (strV === '[{date:,no:}]' || strV === '[{date:,no:,pem:,officer:}]') return '-';
-                                    if (strV.includes('[{') && strV.includes('}]')) {
-                                      return `${strV.split('},{').length} Items`;
-                                    }
+                                <span>{client["TOTAL PAID (RM)"] || '0'}</span>
+                                {(() => {
+                                  const missing = getMissingReceiptsCount(client);
+                                  const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                                  if (missing > 0) {
+                                    return (
+                                      <span
+                                        title={lang === 'bm' ? `${missing} bayaran belum dilampirkan resit klien` : `${missing} payment(s) missing client receipt`}
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40"
+                                      >
+                                        <span className="text-[9px]">⚠️</span>
+                                        <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
+                                      </span>
+                                    );
+                                  } else if (totalPaidNum > 0) {
+                                    return (
+                                      <span
+                                        title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
+                                        className="inline-flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
+                                      >
+                                        <span>✓</span>
+                                        <span>{lang === 'bm' ? 'Resit OK' : 'Receipts OK'}</span>
+                                      </span>
+                                    );
                                   }
-                                  return textRepresentation;
-                                })()
-                              ) : (
-                                textRepresentation
-                              )}
-                          </td>
-                        );
-                        })}
+                                  return null;
+                                })()}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">{client["PACKAGE (RM)"] || '0'}</td>
+                            <td className="px-4 py-3.5 text-slate-600 dark:text-zinc-300">{client["CASE CATEGORY"]}</td>
+                            <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-zinc-400">{client.DATE}</td>
+                          </>
+                        ) : (
+                          <>
+                            {getOrderedKeys(client).map((k) => {
+                              const v = client[k];
+                              const isPaymentCol = ['1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(k);
+
+                              let displayVal = v;
+                              let parsedAmt = 0;
+                              if (isPaymentCol) {
+                                const dateKey = `${k} DATE`;
+                                const dateVal = client[dateKey];
+                                parsedAmt = parseAmount(v);
+                                if (parsedAmt === 0) {
+                                  const isDateEmpty = !dateVal || String(dateVal).trim() === '' || String(dateVal).trim() === '-';
+                                  if (isDateEmpty) {
+                                    displayVal = null;
+                                  }
+                                }
+                              }
+
+                              const hasValue = displayVal !== null && displayVal !== undefined && String(displayVal).trim() !== '';
+                              const textRepresentation = hasValue ? String(displayVal) : '-';
+
+                              return (
+                                <td key={k} className={`px-4 py-3.5 max-w-[150px] truncate ${k === 'NAME' ? nameHighlightClasses : 'text-slate-700 dark:text-zinc-300'}`} title={hasValue ? String(displayVal) : ''}>
+                                  {k === 'NAME' ? (
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {client.isVirtual && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 flex-shrink-0">
+                                          Storage
+                                        </span>
+                                      )}
+                                      <span>{textRepresentation}</span>
+                                      {Boolean(client.agreement_url || client.agreement_name) && (
+                                        <span
+                                          title={lang === 'bm' ? `Borang Perjanjian: ${client.agreement_name || 'Ada'}` : `Agreement Form: ${client.agreement_name || 'Attached'}`}
+                                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 flex-shrink-0"
+                                        >
+                                          <span>📜</span>
+                                          <span>{lang === 'bm' ? 'Perjanjian' : 'Agreement'}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : isPaymentCol && parsedAmt > 0 ? (
+                                    <div className="flex flex-col items-start gap-0.5">
+                                      <span className="font-mono">{textRepresentation}</span>
+                                      {hasPaymentReceipt(client, k) ? (
+                                        <span
+                                          title={lang === 'bm' ? 'Resit klien dilampirkan' : 'Client receipt attached'}
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40 whitespace-nowrap"
+                                        >
+                                          <span>✓</span>
+                                          <span>{lang === 'bm' ? 'Resit Ada' : 'Receipt OK'}</span>
+                                        </span>
+                                      ) : (
+                                        <span
+                                          title={lang === 'bm' ? 'Resit klien belum dimuat naik untuk bayaran ini' : 'Client receipt has not been uploaded for this payment'}
+                                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40 whitespace-nowrap"
+                                        >
+                                          <span className="text-[9px]">⚠️</span>
+                                          <span>{lang === 'bm' ? 'Tiada Resit' : 'No Receipt'}</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : textRepresentation.startsWith('[') ? (
+                                    (() => {
+                                      try {
+                                        const parsed = JSON.parse(textRepresentation);
+                                        if (Array.isArray(parsed)) {
+                                          const validItems = parsed.filter(item => Object.values(item).some(val => val !== '' && val !== null));
+                                          return validItems.length > 0 ? `${validItems.length} Items` : '-';
+                                        }
+                                      } catch (e) {
+                                        const strV = textRepresentation.replace(/\s/g, '');
+                                        if (strV === '[{date:,no:}]' || strV === '[{date:,no:,pem:,officer:}]') return '-';
+                                        if (strV.includes('[{') && strV.includes('}]')) {
+                                          return `${strV.split('},{').length} Items`;
+                                        }
+                                      }
+                                      return textRepresentation;
+                                    })()
+                                  ) : (
+                                    textRepresentation
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </>
+                        )}
+
+
+                        <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
+                          <div className="flex items-center justify-start gap-1.5 sm:gap-2">
+                            <button
+                              onClick={() => onViewClick(client)}
+                              className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
+                            >
+                              {t('clients', 'viewDoc', lang)}
+                            </button>
+                            {canEdit && (
+                              <button
+                                onClick={() => onEditClick(client)}
+                                className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
+                              >
+                                {t('reports', 'editBtn', lang)}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan={viewMode === 'standard' ? 10 : viewMode === 'lod' ? 10 : 20} className="px-4 py-8 text-center text-xs font-semibold text-slate-505 dark:text-zinc-500 bg-slate-50/20 dark:bg-transparent">
+                        {t('clients', 'noClientsFound', lang)}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {(() => {
+              const totalRecords = viewMode === 'lod' ? sortedLodClients.length : sortedClients.length;
+              const totalPages = Math.ceil(totalRecords / 25) || 1;
+              const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * 25 + 1;
+              const endRecord = Math.min(currentPage * 25, totalRecords);
+
+              return (
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80">
+                  <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                    {lang === 'bm' ? (
+                      <>
+                        Menunjukkan <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> hingga <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> daripada <span className="font-semibold text-slate-800 dark:text-white">{totalRecords}</span> klien
+                      </>
+                    ) : (
+                      <>
+                        Showing <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> to <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> of <span className="font-semibold text-slate-800 dark:text-white">{totalRecords}</span> clients
                       </>
                     )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>{t('clients', 'prev', lang)}</span>
+                    </button>
 
+                    <div className="flex items-center gap-1">
+                      <span className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 dark:bg-yellow-500 text-white dark:text-black shadow-sm">
+                        {currentPage}
+                      </span>
+                      <span className="text-slate-450 dark:text-zinc-550 text-xs font-semibold px-2">
+                        {t('common', 'of', lang)} {totalPages}
+                      </span>
+                    </div>
 
-                    <td className="px-3 sm:px-4 py-3 sm:py-3.5 text-left whitespace-nowrap md:sticky md:right-0 bg-white dark:bg-black group-hover:bg-slate-50 dark:group-hover:bg-zinc-900 transition-colors md:shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.06)] md:z-10">
-                      <div className="flex items-center justify-start gap-1.5 sm:gap-2">
-                        <button
-                          onClick={() => onViewClick(client)}
-                          className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold transition-all shadow-sm"
-                        >
-                          {t('clients', 'viewDoc', lang)}
-                        </button>
-                        {canEdit && (
-                          <button
-                            onClick={() => onEditClick(client)}
-                            className="h-7 sm:h-8 px-2.5 sm:px-3 flex items-center justify-center rounded-lg bg-white hover:bg-slate-50 text-slate-700 dark:bg-gray-800 dark:text-zinc-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-gray-700 text-xs font-semibold transition-all shadow-sm"
-                          >
-                            {t('reports', 'editBtn', lang)}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              }) : (
-                <tr>
-                  <td colSpan={viewMode === 'standard' ? 10 : viewMode === 'lod' ? 10 : 20} className="px-4 py-8 text-center text-xs font-semibold text-slate-505 dark:text-zinc-500 bg-slate-50/20 dark:bg-transparent">
-                    {t('clients', 'noClientsFound', lang)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {(() => {
-          const totalRecords = viewMode === 'lod' ? sortedLodClients.length : sortedClients.length;
-          const totalPages = Math.ceil(totalRecords / 25) || 1;
-          const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * 25 + 1;
-          const endRecord = Math.min(currentPage * 25, totalRecords);
-
-          return (
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80">
-              <div className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                {lang === 'bm' ? (
-                  <>
-                    Menunjukkan <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> hingga <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> daripada <span className="font-semibold text-slate-800 dark:text-white">{totalRecords}</span> klien
-                  </>
-                ) : (
-                  <>
-                    Showing <span className="font-semibold text-slate-800 dark:text-white">{startRecord}</span> to <span className="font-semibold text-slate-800 dark:text-white">{endRecord}</span> of <span className="font-semibold text-slate-800 dark:text-white">{totalRecords}</span> clients
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span>{t('clients', 'prev', lang)}</span>
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <span className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 dark:bg-yellow-500 text-white dark:text-black shadow-sm">
-                    {currentPage}
-                  </span>
-                  <span className="text-slate-450 dark:text-zinc-550 text-xs font-semibold px-2">
-                    {t('common', 'of', lang)} {totalPages}
-                  </span>
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>{t('clients', 'next', lang)}</span>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-h-[38px] flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <span>{t('clients', 'next', lang)}</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          );
-        })()}
+              );
+            })()}
           </>
         )}
       </div>
 
       {/* Dynamic Summary Cards & Month Registry Count Filter */}
-      {viewMode !== 'potential' && (
-      <div className="mt-6 bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col gap-6">
-        <div className="flex items-center gap-2 pb-1">
-          <svg className="w-5 h-5 text-cyan-600 dark:text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2" />
-          </svg>
-          <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">
-            {t('clients', 'financialClientSummary', lang)}
-          </h4>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Total Clients */}
-          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
-            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              {t('clients', 'totalClients', lang)}
-            </span>
-            <span className="text-xl md:text-2xl font-extrabold text-cyan-700 dark:text-yellow-500 mt-2">
-              {totalClients}
-            </span>
-          </div>
-
-          {/* Card 2: Total Package */}
-          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
-            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              {t('clients', 'totalPackageSum', lang)}
-            </span>
-            <span className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-white mt-2">
-              RM {formatCurrency(totalPackage)}
-            </span>
-          </div>
-
-          {/* Card 3: Collected Amount */}
-          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
-            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              {t('clients', 'collectedAmountSum', lang)}
-            </span>
-            <span className="text-xl md:text-2xl font-extrabold text-emerald-600 dark:text-emerald-500 mt-2">
-              RM {formatCurrency(totalPaid)}
-            </span>
-          </div>
-
-          {/* Card 4: Pending Amount */}
-          <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
-            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              {t('clients', 'pendingAmountSum', lang)}
-            </span>
-            <span className="text-xl md:text-2xl font-extrabold text-rose-600 dark:text-rose-500 mt-2">
-              RM {formatCurrency(totalPending)}
-            </span>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-slate-100 dark:border-gray-800" />
-
-        {/* Month Registry Count Filter Sub-section */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1">
-              <h5 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-                {t('clients', 'monthlyRegistration', lang)}
-              </h5>
-              <p className="text-xs text-slate-400 dark:text-zinc-550">
-                {t('clients', 'monthlyRegistrationSub', lang)}
-              </p>
+      {
+        viewMode !== 'potential' && (
+          <div className="mt-6 bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col gap-6">
+            <div className="flex items-center gap-2 pb-1">
+              <svg className="w-5 h-5 text-cyan-600 dark:text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2" />
+              </svg>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">
+                {t('clients', 'financialClientSummary', lang)}
+              </h4>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  data-custom-select
-                  className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer min-h-[40px] shadow-sm min-w-[160px] appearance-none"
-                >
-                  <option value="all">
-                    {t('clients', 'allMonthsOption', lang)}
-                  </option>
-                  {uniqueMonths.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card 1: Total Clients */}
+              <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                  {t('clients', 'totalClients', lang)}
+                </span>
+                <span className="text-xl md:text-2xl font-extrabold text-cyan-700 dark:text-yellow-500 mt-2">
+                  {totalClients}
+                </span>
+              </div>
+
+              {/* Card 2: Total Package */}
+              <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                  {t('clients', 'totalPackageSum', lang)}
+                </span>
+                <span className="text-xl md:text-2xl font-extrabold text-slate-800 dark:text-white mt-2">
+                  RM {formatCurrency(totalPackage)}
+                </span>
+              </div>
+
+              {/* Card 3: Collected Amount */}
+              <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                  {t('clients', 'collectedAmountSum', lang)}
+                </span>
+                <span className="text-xl md:text-2xl font-extrabold text-emerald-600 dark:text-emerald-500 mt-2">
+                  RM {formatCurrency(totalPaid)}
+                </span>
+              </div>
+
+              {/* Card 4: Pending Amount */}
+              <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
+                <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                  {t('clients', 'pendingAmountSum', lang)}
+                </span>
+                <span className="text-xl md:text-2xl font-extrabold text-rose-600 dark:text-rose-500 mt-2">
+                  RM {formatCurrency(totalPending)}
+                </span>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-slate-100 dark:border-gray-800" />
+
+            {/* Month Registry Count Filter Sub-section */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <h5 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+                    {t('clients', 'monthlyRegistration', lang)}
+                  </h5>
+                  <p className="text-xs text-slate-400 dark:text-zinc-550">
+                    {t('clients', 'monthlyRegistrationSub', lang)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      data-custom-select
+                      className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-xl py-2 pl-3 pr-10 focus:outline-none focus:border-indigo-500 cursor-pointer min-h-[40px] shadow-sm min-w-[160px] appearance-none"
+                    >
+                      <option value="all">
+                        {t('clients', 'allMonthsOption', lang)}
+                      </option>
+                      {uniqueMonths.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="bg-cyan-50 dark:bg-yellow-500/10 border border-cyan-100 dark:border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-2 min-h-[40px]">
+                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
+                      {lang === 'bm' ? 'Klien:' : 'Clients:'}
+                    </span>
+                    <span className="text-sm font-extrabold text-cyan-600 dark:text-yellow-500">
+                      {monthlyCount}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-cyan-50 dark:bg-yellow-500/10 border border-cyan-100 dark:border-yellow-500/20 px-4 py-2 rounded-xl flex items-center gap-2 min-h-[40px]">
-                <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
-                  {lang === 'bm' ? 'Klien:' : 'Clients:'}
-                </span>
-                <span className="text-sm font-extrabold text-cyan-600 dark:text-yellow-500">
-                  {monthlyCount}
-                </span>
-              </div>
+              {/* Registration Trend Chart */}
+              {clientChartData.length > 0 && (
+                <div className="p-5 border border-slate-100 dark:border-gray-800/80 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col space-y-4">
+                  <InteractiveBarChart
+                    data={clientChartData}
+                    maxOverride={5}
+                    yAxisSuffix=""
+                    barColorGradStart="#22d3ee"
+                    barColorGradEnd="#0891b2"
+                    barColorHoverStart="#fbbf24"
+                    barColorHoverEnd="#f59e0b"
+                    onBarClick={selectedMonth === 'all' ? (item) => setSelectedMonth(item.key) : undefined}
+                  />
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Registration Trend Chart */}
-          {clientChartData.length > 0 && (
-            <div className="p-5 border border-slate-100 dark:border-gray-800/80 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col space-y-4">
-              <InteractiveBarChart
-                data={clientChartData}
-                maxOverride={5}
-                yAxisSuffix=""
-                barColorGradStart="#22d3ee"
-                barColorGradEnd="#0891b2"
-                barColorHoverStart="#fbbf24"
-                barColorHoverEnd="#f59e0b"
-                onBarClick={selectedMonth === 'all' ? (item) => setSelectedMonth(item.key) : undefined}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

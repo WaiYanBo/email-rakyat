@@ -11,6 +11,27 @@ const { title } = Astro.props;
 ---
 
 <Layout title={title}>
+  <script is:inline slot="head">
+    // Instant pre-hydration auth guard: bounce unauthenticated requests before dashboard components load
+    (function() {
+      try {
+        var hasAuth = false;
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1) {
+            var val = localStorage.getItem(k);
+            if (val && val.indexOf('access_token') !== -1) {
+              hasAuth = true;
+              break;
+            }
+          }
+        }
+        if (!hasAuth) {
+          window.location.replace('/portal/login');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <PortalSidebar client:only="react" />
   <PortalAlertSystem client:only="react" />
   <main class="min-h-[100dvh] md:ml-64 pb-[calc(5rem+env(safe-area-inset-bottom))] px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 py-6 sm:py-8 md:py-10 animate-fade-in transition-all duration-300">

@@ -1488,6 +1488,7 @@ export default function ClientDataView() {
 
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
     const canSave = isIT || canEditClients || canManageLoD;
     if (!canSave) {
       alert(lang === 'bm' ? 'Akses ditolak: Anda tidak mempunyai kebenaran untuk menyimpan maklumat klien.' : 'Access denied: You do not have permission to save client data.');
@@ -1653,6 +1654,17 @@ export default function ClientDataView() {
       }
 
       // Process file uploads from the form into unified Client folder: Clients/{clientFolder}/...
+      let newAgreementData: any = null;
+      let updatedReceiptsMap: Record<string, any> = {};
+      if (typeof editingClient?.payment_receipts === 'string') {
+        try {
+          updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
+        } catch {}
+      } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
+        updatedReceiptsMap = { ...editingClient.payment_receipts };
+      }
+      let hasNewReceiptUpload = false;
+
       try {
         const safeClientName = clientName.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
         const clientNoVal = (data.No ? String(data.No) : '') || (editingClient?.No ?? editingClient?.NO ?? '0');
@@ -1660,7 +1672,6 @@ export default function ClientDataView() {
         const formElement = e.target as HTMLFormElement;
 
         // 1. Agreement file upload
-        let newAgreementData: any = null;
         const agreementInput = formElement.querySelector('input[name="agreement_file"]') as HTMLInputElement;
         if (agreementInput?.files?.[0]) {
           const agFile = agreementInput.files[0];
@@ -1686,17 +1697,6 @@ export default function ClientDataView() {
         }
 
         // 2. Installment payment receipts
-        let updatedReceiptsMap: Record<string, any> = {};
-        if (typeof editingClient?.payment_receipts === 'string') {
-          try {
-            updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
-          } catch {}
-        } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
-          updatedReceiptsMap = { ...editingClient.payment_receipts };
-        }
-
-        let hasNewReceiptUpload = false;
-
         for (let i = 0; i < 10; i++) {
           const pInput = formElement.querySelector(`input[name="payment_receipt_file_${i}"]`) as HTMLInputElement;
           if (pInput?.files?.[0]) {
@@ -1740,17 +1740,21 @@ export default function ClientDataView() {
 
       if (savedClientId) {
         const finalReceipts = hasNewReceiptUpload ? updatedReceiptsMap : (editingClient?.payment_receipts || {});
-        setDbClients(prev => prev.map(c => {
-          if (c.id === savedClientId) {
-            return {
-              ...c,
-              ...clientPayload,
-              ...(newAgreementData ? newAgreementData : {}),
-              payment_receipts: finalReceipts
-            };
+        const finalClientRecord = {
+          id: savedClientId,
+          ...clientPayload,
+          ...(newAgreementData ? newAgreementData : {}),
+          payment_receipts: finalReceipts
+        };
+
+        setDbClients(prev => {
+          const exists = prev.some(c => c.id === savedClientId);
+          if (exists) {
+            return prev.map(c => c.id === savedClientId ? { ...c, ...finalClientRecord } : c);
+          } else {
+            return [finalClientRecord, ...prev];
           }
-          return c;
-        }));
+        });
       }
 
       setRefreshTrigger(prev => prev + 1);

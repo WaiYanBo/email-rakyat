@@ -18,8 +18,7 @@
 --     - Their credentials, existing roles, and permissions are 100% UNTOUCHED!
 --
 --  HOW TO RUN:
---  1. Go to your Supabase Dashboard:
---     https://supabase.com/dashboard/project/whqnbxywpplalmddsjwe
+--  1. Go to your Supabase Project Dashboard (SQL Editor)
 --  2. Navigate to "SQL Editor" on the left sidebar.
 --  3. Paste this entire script into a new query tab and click "Run".
 -- ====================================================================

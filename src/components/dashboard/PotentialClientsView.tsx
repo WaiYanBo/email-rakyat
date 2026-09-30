@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { usePortalLanguage } from '../../hooks/usePortalLanguage';
 import { t } from '../../lib/portalI18n';
 import { sanitizeInput } from '../../utils/security';
+import PotentialClientsLineChart from './PotentialClientsLineChart';
 
 export interface PotentialClient {
   id: string;
@@ -42,6 +43,22 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
+
+  // Interactive Line Chart & Period Selection State
+  const [showChart, setShowChart] = useState(true);
+  const [chartSelectedPeriod, setChartSelectedPeriod] = useState<string | null>(null);
+  const [chartSelectedClientIds, setChartSelectedClientIds] = useState<Set<string> | null>(null);
+
+  const handleChartPeriodSelect = (periodLabel: string, periodClients: PotentialClient[]) => {
+    setChartSelectedPeriod(periodLabel);
+    setChartSelectedClientIds(new Set(periodClients.map(c => c.id)));
+    setCurrentPage(1);
+  };
+
+  const handleClearChartPeriodSelect = () => {
+    setChartSelectedPeriod(null);
+    setChartSelectedClientIds(null);
+  };
 
   // Staff members for "Lead By" dropdown
   const [staffList, setStaffList] = useState<string[]>([]);
@@ -349,6 +366,11 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
   const filteredClients = useMemo(() => {
     let result = [...clients];
 
+    // Filter by period selected on line chart if active
+    if (chartSelectedClientIds) {
+      result = result.filter(c => chartSelectedClientIds.has(c.id));
+    }
+
     // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -427,7 +449,7 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     });
 
     return result;
-  }, [clients, searchQuery, potentialFilter, dateFilter, sortKey, sortDirection]);
+  }, [clients, searchQuery, potentialFilter, dateFilter, sortKey, sortDirection, chartSelectedClientIds]);
 
   // Pagination
   const totalPages = Math.ceil(filteredClients.length / pageSize) || 1;
@@ -604,7 +626,13 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
       )}
 
       {/* Top Controls Header */}
-      <div className="p-3 sm:p-4 border-b border-amber-600/40 dark:border-amber-500/30 bg-amber-600 dark:bg-gray-900 flex-shrink-0 rounded-t-2xl">
+      <div
+        style={{
+          paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(0.75rem, env(safe-area-inset-right, 0px))'
+        }}
+        className="p-3 sm:p-4 border-b border-amber-600/40 dark:border-amber-500/30 bg-amber-600 dark:bg-gray-900 flex-shrink-0 rounded-t-2xl"
+      >
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-white/15 dark:bg-amber-500/20 text-white dark:text-yellow-400 flex items-center justify-center font-bold">
@@ -644,6 +672,23 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 PDF
               </button>
             </div>
+
+            {/* Toggle Line Chart Button */}
+            <button
+              type="button"
+              onClick={() => setShowChart(prev => !prev)}
+              className={`text-xs font-semibold px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 border h-[42px] sm:h-[48px] ${
+                showChart
+                  ? 'bg-amber-700 hover:bg-amber-800 text-white border-amber-500/80 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/40'
+                  : 'bg-white/15 hover:bg-white/25 text-white border-white/20'
+              }`}
+              title={showChart ? (lang === 'bm' ? 'Tutup Carta Analisis' : 'Hide Analytics Chart') : (lang === 'bm' ? 'Papar Carta Analisis' : 'Show Analytics Chart')}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
+              <span>{showChart ? (lang === 'bm' ? 'Tutup Carta' : 'Hide Chart') : (lang === 'bm' ? 'Papar Carta' : 'Show Chart')}</span>
+            </button>
 
             {canEdit && (
               <button
@@ -710,6 +755,46 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
           </div>
         </div>
       </div>
+
+      {/* Potential Clients Acquisition & Trend Line Chart with Interactive Filters */}
+      {showChart && (
+        <div
+          style={{
+            paddingLeft: 'max(0.5rem, env(safe-area-inset-left, 0px))',
+            paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0px))'
+          }}
+          className="p-2 sm:p-4 md:p-5 bg-slate-50/60 dark:bg-black/40 border-b border-slate-200 dark:border-gray-800"
+        >
+          <PotentialClientsLineChart
+            clients={clients}
+            lang={lang}
+            staffList={staffList}
+            onPeriodSelect={handleChartPeriodSelect}
+            selectedPeriodLabel={chartSelectedPeriod}
+            onClearPeriodSelect={handleClearChartPeriodSelect}
+          />
+        </div>
+      )}
+
+      {/* Chart Period Filter Indicator (if chart is closed or user scrolls down) */}
+      {chartSelectedPeriod && !showChart && (
+        <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-3 text-xs font-semibold text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-500 font-bold">🔍</span>
+            <span>
+              {lang === 'bm' ? 'Jadual ditapis mengikut carta:' : 'Table filtered by chart period:'}{' '}
+              <strong className="underline">{chartSelectedPeriod}</strong> ({filteredClients.length} {lang === 'bm' ? 'klien' : 'clients'})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearChartPeriodSelect}
+            className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-sm"
+          >
+            ✕ {lang === 'bm' ? 'Kosongkan Tapisan' : 'Clear Filter'}
+          </button>
+        </div>
+      )}
 
       {/* Mobile Card System for Potential Clients (Phones only - Vertical, No Horizontal Scrolling) */}
       <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">

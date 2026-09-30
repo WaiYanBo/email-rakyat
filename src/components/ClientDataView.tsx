@@ -935,24 +935,30 @@ export default function ClientDataView() {
           .from('company_drive')
           .list('Clients', { limit: 1000 });
 
+        const isIgnoredFolder = (name: string) => {
+          if (!name) return true;
+          const lower = name.toLowerCase().trim();
+          return lower === '.keep' || lower === 'trash' || lower === 'test' || lower === 'testing' || lower.startsWith('testing');
+        };
+
         const folderNames = new Set<string>();
         if (invoiceFoldersData) {
           invoiceFoldersData.forEach(f => {
-            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+            if (!f.id && !isIgnoredFolder(f.name)) {
               folderNames.add(f.name);
             }
           });
         }
         if (receiptFoldersData) {
           receiptFoldersData.forEach(f => {
-            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+            if (!f.id && !isIgnoredFolder(f.name)) {
               folderNames.add(f.name);
             }
           });
         }
         if (clientFoldersData) {
           clientFoldersData.forEach(f => {
-            if (!f.id && f.name !== '.keep' && f.name !== 'Trash') {
+            if (!f.id && !isIgnoredFolder(f.name)) {
               folderNames.add(f.name);
             }
           });
@@ -1064,41 +1070,51 @@ export default function ClientDataView() {
           const dbClientsList = clientsData || [];
           const virtualClients: any[] = [];
 
-          parsedFolders.forEach(pf => {
-            const match = dbClientsList.find(c => {
-              const dbNo = c.No ?? c.NO;
-              const dbName = c.NAME;
+          // Virtual storage folders do not have a registration date (DATE: '-').
+          // Only evaluate and include virtual storage folders when viewing 'all' time,
+          // to prevent false orphan detection when database records are filtered by month or year.
+          if (dateFilter === 'all') {
+            parsedFolders.forEach(pf => {
+              const cleanName = pf.NAME.toLowerCase().trim();
+              if (cleanName === 'test' || cleanName === 'testing' || cleanName.startsWith('testing')) {
+                return;
+              }
 
-              const noMatch = dbNo !== null && dbNo !== undefined && pf.No !== null && pf.No !== undefined && Number(dbNo) === Number(pf.No);
-              const nameMatch = dbName && pf.NAME && dbName.toLowerCase().trim() === pf.NAME.toLowerCase().trim();
+              const match = dbClientsList.find(c => {
+                const dbNo = c.No ?? c.NO;
+                const dbName = c.NAME;
 
-              return noMatch || nameMatch;
-            });
+                const noMatch = dbNo !== null && dbNo !== undefined && pf.No !== null && pf.No !== undefined && Number(dbNo) === Number(pf.No);
+                const nameMatch = dbName && pf.NAME && dbName.toLowerCase().trim() === pf.NAME.toLowerCase().trim();
 
-            if (!match) {
-              virtualClients.push({
-                id: `virtual-${pf.folderName}`,
-                No: pf.No,
-                NAME: pf.NAME,
-                "PHONE NUMBER": '-',
-                "IC NUMBER": '-',
-                "CASE CATEGORY": '-',
-                "TOTAL PAID (RM)": '0',
-                "PENDING (RM)": '0',
-                "PACKAGE (RM)": '0',
-                "CASE STATUS": 'PENDING',
-                "Investigation Paper": '-',
-                Report: '-',
-                "Action Taken by police": '-',
-                DATE: '-',
-                isVirtual: true,
-                folderName: pf.folderName
+                return noMatch || nameMatch;
               });
-            }
-          });
+
+              if (!match) {
+                virtualClients.push({
+                  id: `virtual-${pf.folderName}`,
+                  No: pf.No,
+                  NAME: pf.NAME,
+                  "PHONE NUMBER": '-',
+                  "IC NUMBER": '-',
+                  "CASE CATEGORY": '-',
+                  "TOTAL PAID (RM)": '0',
+                  "PENDING (RM)": '0',
+                  "PACKAGE (RM)": '0',
+                  "CASE STATUS": 'PENDING',
+                  "Investigation Paper": '-',
+                  Report: '-',
+                  "Action Taken by police": '-',
+                  DATE: '-',
+                  isVirtual: true,
+                  folderName: pf.folderName
+                });
+              }
+            });
+          }
 
           let filteredVirtuals = virtualClients;
-          if (searchQuery) {
+          if (dateFilter === 'all' && searchQuery) {
             const q = searchQuery.toLowerCase();
             filteredVirtuals = virtualClients.filter(vc =>
               vc.NAME.toLowerCase().includes(q) ||

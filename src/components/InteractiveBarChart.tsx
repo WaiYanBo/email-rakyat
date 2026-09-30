@@ -51,9 +51,40 @@ export default function InteractiveBarChart({
   const axisOffset = 25;
   const paddingY = 28;
 
-  // Calculate coordinates and grid constraints
-  const scrollWidth = paddingLeft + paddingRight + 2 * axisOffset + (data.length - 1) * dayWidth;
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const update = () => {
+      if (scrollContainerRef.current) {
+        setContainerWidth(scrollContainerRef.current.clientWidth);
+      }
+    };
+    update();
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      }
+    });
+    observer.observe(scrollContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Calculate coordinates and grid constraints safely
+  const minContentWidth = paddingLeft + paddingRight + 2 * axisOffset + Math.max(0, data.length - 1) * dayWidth;
+  const scrollWidth = Math.max(containerWidth, minContentWidth, 240);
   const maxVal = Math.max(...data.map(d => d.value), maxOverride, 1);
+
+  const getBarX = (index: number) => {
+    if (data.length <= 1) {
+      return scrollWidth / 2;
+    }
+    const availableWidth = scrollWidth - paddingLeft - paddingRight - 2 * axisOffset;
+    const step = availableWidth / (data.length - 1);
+    return paddingLeft + axisOffset + index * step;
+  };
 
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -117,9 +148,8 @@ export default function InteractiveBarChart({
         const sLeft = container.scrollLeft;
         const width = container.clientWidth;
 
-        const step = (scrollWidth - paddingLeft - paddingRight - 2 * axisOffset) / (data.length - 1);
         const visible = data.filter((_, index) => {
-          const x = paddingLeft + axisOffset + index * step;
+          const x = getBarX(index);
           return x >= sLeft && x <= sLeft + width;
         });
         onScrollChange(visible);
@@ -198,8 +228,7 @@ export default function InteractiveBarChart({
 
           {/* Bars */}
           {data.map((d, index) => {
-            const step = (scrollWidth - paddingLeft - paddingRight - 2 * axisOffset) / (data.length - 1);
-            const x = paddingLeft + axisOffset + index * step;
+            const x = getBarX(index);
             const barWidth = 32;
             
             // Height calculations
@@ -207,6 +236,14 @@ export default function InteractiveBarChart({
             const y = chartHeight - paddingY - activeHeight;
             
             const isHovered = hoveredBar === index;
+
+            // Check if second line should be rendered (only if distinct day component exists)
+            const dayPart = d.key.split('-')[2];
+            const hasSubLabel = Boolean(
+              dayPart && 
+              d.label !== dayPart && 
+              d.label !== String(parseInt(dayPart, 10))
+            );
 
             return (
               <g 
@@ -252,20 +289,22 @@ export default function InteractiveBarChart({
                 {/* X Axis Labels */}
                 <text 
                   x={x} 
-                  y={chartHeight - 14} 
+                  y={hasSubLabel ? chartHeight - 14 : chartHeight - 8} 
                   textAnchor="middle" 
                   className={`text-[10px] font-bold ${isHovered ? 'fill-indigo-600 dark:fill-yellow-500' : 'fill-slate-500 dark:fill-zinc-400'}`}
                 >
                   {d.label}
                 </text>
-                <text 
-                  x={x} 
-                  y={chartHeight - 2} 
-                  textAnchor="middle" 
-                  className={`text-[9px] font-semibold ${isHovered ? 'fill-indigo-400 dark:fill-yellow-600/70' : 'fill-slate-400 dark:fill-zinc-500'}`}
-                >
-                  {d.key.split('-')[2]}
-                </text>
+                {hasSubLabel && (
+                  <text 
+                    x={x} 
+                    y={chartHeight - 2} 
+                    textAnchor="middle" 
+                    className={`text-[9px] font-semibold ${isHovered ? 'fill-indigo-400 dark:fill-yellow-600/70' : 'fill-slate-400 dark:fill-zinc-500'}`}
+                  >
+                    {dayPart}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -277,7 +316,7 @@ export default function InteractiveBarChart({
             className="absolute z-50 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-xl pointer-events-none flex flex-col gap-1.5 transition-all text-xs min-w-[170px] whitespace-nowrap"
             style={{
               left: `${Math.min(
-                Math.max(10, (paddingLeft + axisOffset + hoveredBar * ((scrollWidth - paddingLeft - paddingRight - 2 * axisOffset) / (data.length - 1))) - 85),
+                Math.max(10, getBarX(hoveredBar) - 85),
                 scrollWidth - 180
               )}px`,
               bottom: '40px',

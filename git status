@@ -1,0 +1,521 @@
+[33mcommit 2c308a4929df073095a59e63f997cb6650ce1bc7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 29 10:45:02 2026 +0800
+
+    Update Fixing for the registration
+
+[33mcommit 301cd4bcd68ab6befee72a10513570c80337766c[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 25 18:19:23 2026 +0800
+
+    Update Blank-invoice.pdf
+
+[33mcommit 58a9bf48541d4498300396e0121e4e8648e44bd9[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 25 16:34:42 2026 +0800
+
+    Update receipts and Invoices Amendments
+
+[33mcommit e13fee006f3ac179eb0193d03632f80b62a62e81[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 22 17:04:20 2026 +0800
+
+    Update Security Patch
+
+[33mcommit e263c58a154af2950079361ebd6b1141ee81526e[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 22 13:44:42 2026 +0800
+
+    Update Generate Invoices and Refceiopts
+
+[33mcommit 762ad5fb784551725033a1f684afe8c50175cb59[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 21 16:11:56 2026 +0800
+
+    Update Stroing for Receipts and Invoices
+
+[33mcommit 20124ff2d7a9bc22740d2650e17e20a15a77ccf9[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 21 13:18:19 2026 +0800
+
+    Update Payment and Receipts uplaods
+
+[33mcommit aa49ae307b9b6a357edd3eb0692e174703899449[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 21 12:50:52 2026 +0800
+
+    Fix mobile WhatsApp FAB size and footer bottom clearance to prevent covering content
+
+[33mcommit 8cbebd3d99e365cc3a77b7c8c89322d98348d8bd[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 21 12:05:57 2026 +0800
+
+    Fix hero section height, navbar overlap, and button clipping
+
+[33mcommit 668417b5c3037b80b4676386c4bf441be0aa8e04[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 21 11:43:40 2026 +0800
+
+    Udpate For SEO Opimization
+
+[33mcommit b8901a032ca26f49dab1fff2bbc815705c367fdf[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 17 12:19:22 2026 +0800
+
+    Update for Client Signed Agreement and payment receipts
+
+[33mcommit 1d586fe24f8431998acb12aa8fa41f6fe7d59c78[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 15 17:45:34 2026 +0800
+
+    Update Client Table Date option to be put manually
+
+[33mcommit 947a4f40bf205804f4809a41a996cd42d7f2968a[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 14 14:49:09 2026 +0800
+
+    Update PIC lists and fix the anomalies or redundant datas
+
+[33mcommit f5f33fc06be5015fcaae88fc23b232e8d10ecb9c[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 14 12:39:50 2026 +0800
+
+    Fix Save Button not working for client page
+
+[33mcommit 0582ad1e2dc7ccb1543a67410b713b2a695d7a40[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 18:13:48 2026 +0800
+
+    Update Sanitizing the Website
+
+[33mcommit 5b5728092d55a49da58da5c1872cddc7ab6d76b7[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 13:03:35 2026 +0800
+
+    Update Notification Settings
+
+[33mcommit aada1c59b98ce0234e65b16daf4fb6647b643a03[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 12:42:27 2026 +0800
+
+    Update the Notification sounds bar
+
+[33mcommit ce0a15ce15e8ed9295e02622bcb2fa50bf58ec36[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 12:15:43 2026 +0800
+
+    Update Appointment Wheel and Notification
+
+[33mcommit 34b16839a4805eda2977ddce6a9a286516a37b90[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 11:20:27 2026 +0800
+
+    Update Notification Setting Request
+
+[33mcommit 033f03e98025d3981b007c0f49c1edd1de8c784e[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 10:26:03 2026 +0800
+
+    fix(portal): optimize responsive layout for split-screen and mobile, fix button overflow, remove emojis
+
+[33mcommit 96f887a86e6458793ee34bf2fbee53d2b2ae7e05[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 11 09:47:28 2026 +0800
+
+    Update Appointments
+
+[33mcommit d31eb193c61f2b038aa3760c76d170dfb08d0593[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 10 15:00:51 2026 +0800
+
+    Update Leave Portal for HR View
+
+[33mcommit 265b4dea8e67371a5b941e4e7af73865425d8d29[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 15:34:32 2026 +0800
+
+    Immediate fix for Clients data View
+
+[33mcommit ab8e3b996353ca97d1e8380a943331f36a4fef80[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 14:49:20 2026 +0800
+
+    Update the Appointment System after Testing
+
+[33mcommit 5e9896c08ec575db72cd4d3d72b7ada15735e803[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 10:43:48 2026 +0800
+
+    Update meta tag for google indexing
+
+[33mcommit 27eb679e2f8b6c272761f3e5d3df5b74b19c30e9[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 10:40:08 2026 +0800
+
+    Update Pages for SEO Optimization
+
+[33mcommit 81a2fb30c5005a55bcaaa3302eaa724383933f58[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 10:21:32 2026 +0800
+
+    Update Access Control Bug
+
+[33mcommit d720f868202a6c108739d758d089dcc175adaed1[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Sep 8 09:59:56 2026 +0800
+
+    Update Personal Access Control Setting for Matt
+
+[33mcommit e690a39e08d2c560bfb00140dc4e12c4d91122a5[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Sep 7 16:46:23 2026 +0800
+
+    Update Security and Bugs for Appointment System
+
+[33mcommit 7bbd88d31569a5d98a27c423165db1cabfc16ff7[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 4 15:12:26 2026 +0800
+
+    fix(access-control): align default staff permissions template and resolve save conflicts
+
+[33mcommit 21afd9828941a60e49763d36f6bd57322cb12708[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 4 12:07:48 2026 +0800
+
+    Update and Fix Appointments
+
+[33mcommit 2856da6ffb6c8d3c0c47edca7dd035987395e071[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Sep 4 11:12:23 2026 +0800
+
+    Update Appointment for Clients
+
+[33mcommit 7dcdf7ab4ff42701335766fd52e6129f55cf12cc[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 3 17:24:00 2026 +0800
+
+    fix(ui): resolve dark mode card background and text contrast issues across all portal views
+
+[33mcommit c3fb48c66a96d78e93afcaa5c3b2cf062e0b0e62[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 3 16:13:40 2026 +0800
+
+    style: refine Access Control with minimalist corporate styling and remove decorative emoji icons
+
+[33mcommit d16026980e5d0f7ec5b6062c8e49473d9e672a20[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 3 16:10:01 2026 +0800
+
+    feat: enhance Access Control with granular privilege presets, department sync, search filters, and reactive cache invalidation
+
+[33mcommit 3a780028434912f69e6ab48258d5a5b0f403d952[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Sep 3 16:01:54 2026 +0800
+
+    feat: integrate HR administrative claim management and responsive mobile cards layout for all tables
+
+[33mcommit d8bd164df2487e5c0151004f013898a3d5031993[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 17:46:53 2026 +0800
+
+    Update Fix on Leave System
+
+[33mcommit 808430f6544a359e6476aee3763774972a305450[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 16:53:14 2026 +0800
+
+    Update Leave System and Fix Error
+
+[33mcommit 2a76fc57ccf4ad29bc75226083511867ce0ae6bc[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 16:26:36 2026 +0800
+
+    Update Leave System for CoS and CfS
+
+[33mcommit 4e5f20c0188eab6c85e967fe4b46ba8869ac4e9a[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 11:03:35 2026 +0800
+
+    Update the Table View to Card View in Mobile Devices
+
+[33mcommit 189737e17f8befaf748613eee284dc0134bcd751[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 10:35:32 2026 +0800
+
+    New Client Table Mobile Fix
+
+[33mcommit c8c4fc36e6535e4ecebf64327dfa736909b3e696[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Sep 2 10:08:06 2026 +0800
+
+    New Client Table
+
+[33mcommit 2599e630b9edb5de0d96063c5e91b2117fffa235[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Aug 24 15:59:01 2026 +0800
+
+    Update Client Payment Sequences
+
+[33mcommit 71f11fabfb1f16a52a0f688df2685a791a21bf95[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Aug 3 18:17:15 2026 +0800
+
+    Update on Database for Clock In Clock Out Edit
+
+[33mcommit 2d2911e9bcc5e3ff14cd2c9dddd6670b37b4fcd2[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jul 31 17:47:57 2026 +0800
+
+    Update Attendance Payslip
+
+[33mcommit 34f194f525b67fc30edb854e68b74ee6a9e61571[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jul 31 17:13:31 2026 +0800
+
+    Update Client Categories
+
+[33mcommit b69d22f28ac2c5283bcc7ac199b6d9d7e2ea1868[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jul 23 14:21:13 2026 +0800
+
+    Update fix on notification
+
+[33mcommit d3214e7281200675d6b5834ed9c104be20b861d7[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jul 23 14:18:33 2026 +0800
+
+    Update Claim System
+
+[33mcommit 5fbc0d4bb8622d2ea1f3107d74e1cb7ed1bc429d[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 22 13:29:37 2026 +0800
+
+    Update for Pollice Stations
+
+[33mcommit 03c884d0043adbe880b14aaa0d031038793412db[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 22 11:17:05 2026 +0800
+
+    Update Notification Bar
+
+[33mcommit 4cfc732ffc1009a12742a7736fddae038b7c6cc3[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Jul 21 14:07:53 2026 +0800
+
+    Update Case Not Started yet
+
+[33mcommit 39e4b23551254be25452ce894ed86f20e55610c8[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Jul 21 13:57:22 2026 +0800
+
+    Update for the Client Drop Cases
+
+[33mcommit 556f0fd07843bea6b8b726c59967515356f1944d[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jul 17 10:17:31 2026 +0800
+
+    Update The Fix of Clock In Clock Out
+
+[33mcommit 948301ba468d8896f0d00f1552cabaca665eb709[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jul 16 10:45:50 2026 +0800
+
+    Update CLient table features
+
+[33mcommit 58d77d514a54205a24560c7cc1698dd5efdf0f95[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 15 15:47:46 2026 +0800
+
+    Update on Miss Shahniza Role
+
+[33mcommit d1c0272c23ce373e0b83ebd7179893e184be02ff[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 15 14:51:47 2026 +0800
+
+    Update notification and human Resources
+
+[33mcommit 99ca8a2d614edf15a253b09596c3df64693da356[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jul 13 17:49:57 2026 +0800
+
+    Update on Client Table Fix
+
+[33mcommit 253b2e926612317c9f38b027c815ee1b6cf9db48[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jul 13 16:48:46 2026 +0800
+
+    Update LOD Tab
+
+[33mcommit 29e581adfd9d8f3ef578901f4edf1ad485f96868[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jul 13 10:28:18 2026 +0800
+
+    Update Access Control 7/13
+
+[33mcommit 73689a42bb597ae41b0011fffaf49a7983ad0d71[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jul 2 17:57:07 2026 +0800
+
+    Update Features
+
+[33mcommit d64e1491eab0530f46475d06b761596bb5275bca[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 1 16:21:03 2026 +0800
+
+    Optimized everything and update datas
+
+[33mcommit e987e48b5d6658b360729a815eb7d6ce2e28ed16[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jul 1 13:37:26 2026 +0800
+
+    Update Client Details
+
+[33mcommit 988e4f735ae58260706cd31be3a01372140bedbc[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Jun 30 15:53:12 2026 +0800
+
+    Update Access
+
+[33mcommit e4a870c47209a7184b4c6cd05548cb5fbdfa9ce5[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jun 29 17:16:59 2026 +0800
+
+    Unsolved attendance issue
+
+[33mcommit 32ca99734a016f6b84a7d7788f752ceb8c370ea2[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jun 29 14:53:30 2026 +0800
+
+    Update Marketing Team View
+
+[33mcommit 0440817223a71c8f3a11e169da0d0d7e4e805c80[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 25 18:26:38 2026 +0800
+
+    Update Scrollbar 1
+
+[33mcommit 336fa94ef00837ad762b5a5504cb3e94826ac225[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 25 18:06:12 2026 +0800
+
+    Update Scrollbar
+
+[33mcommit 5ce07d8b4f8a3ece2a652a0e7090ba46b5c70266[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 25 14:54:40 2026 +0800
+
+    Update Analytics for Clients
+
+[33mcommit 620d1f776ee236f0422d56a7d3a49bb85ca231b7[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 25 14:26:37 2026 +0800
+
+    Update Dashboard for Staffs
+
+[33mcommit cf5117340c9344b44c4f7a613da56f48b6a2671e[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 13:14:23 2026 +0800
+
+    Optimize Lighthouse metrics (gtag consent, TikTok lazy load/CLS, logo dimensions, layout, text contrast)
+
+[33mcommit 7848677af59253e89839e091319493a342b4bb16[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 12:09:14 2026 +0800
+
+    Fix TikTok CSS CSP
+
+[33mcommit b40bf9d74d7ac42846f46f797db491846ef67dcd[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 12:01:03 2026 +0800
+
+    Update Lighthouse
+
+[33mcommit d40bbc2e4ce781e84b554e47170b0fbb5964da66[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 11:17:52 2026 +0800
+
+    Update Optimization
+
+[33mcommit a308159a36cae5075b1b5faa9d9730e342973393[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 11:12:32 2026 +0800
+
+    Update BEst Pratice Fixes
+
+[33mcommit 440946e0c2d34bd4f35433da72bfca9e45b28992[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 10:56:48 2026 +0800
+
+    Update Best Practices
+
+[33mcommit 014041968da235d438d1512dfc315308215c21d8[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 10:48:07 2026 +0800
+
+    Fix colSnapshot translation mistranslations for Executive Snapshot
+
+[33mcommit bbae6cf51102230b78089feb89019468edd4fd10[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 10:36:05 2026 +0800
+
+    Restore BOD / Board of Directors department in whitelists and view exclusions
+
+[33mcommit 0811532da86f3041db91befc9c5be3ec81e952af[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 10:34:37 2026 +0800
+
+    Filter out non-departmental terms like Part time and Contract in AccessControlView and ReportsView
+
+[33mcommit 0249e89e665c26df847396d4c4985042625baffb[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 10:17:16 2026 +0800
+
+    Support displaying and syncing employee email addresses in ReportsView and profiles schema
+
+[33mcommit 9ed4dcc5d53f829eb2f477c21ea391ff3619571b[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Wed Jun 24 09:59:25 2026 +0800
+
+    Add CLEAN_TEST_ACCOUNTS.sql clean-up script
+
+[33mcommit b0a8d881c51585b58e8d48b02b7107fdb6eca525[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Tue Jun 23 15:41:37 2026 +0800
+
+    Harden Supabase database triggers/RLS policies and clean up clock-in terminology
+
+[33mcommit 60944bd4c4192b2db9eb477e981a69f2b252ff71[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Mon Jun 22 18:10:50 2026 +0800
+
+    update google ads
+
+[33mcommit 6b69666d786478c4077dc6c37fbb879631f6739b[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jun 19 17:47:44 2026 +0800
+
+    Update Client Table Filter
+
+[33mcommit 89f5ad54660dd2cef7634b82a009cadd22b63541[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jun 19 17:07:22 2026 +0800
+
+    Update Summary for Finance
+
+[33mcommit 3bec79fba0f6aaa1673a290a7cd116f1ab0efbe9[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Fri Jun 19 16:43:01 2026 +0800
+
+    Update File Storage with Invoices and Receipts
+
+[33mcommit 73560f114f9ab61ae611563d9f8b2c3fa6b87c20[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 18 18:26:30 2026 +0800
+
+    Update Behasa Melayu More
+
+[33mcommit 97909d5329e483434742b718f6979fd4839e2054[m
+Author: Wai Yan Bo <shoaiev126.wyb@gmail.com>
+Date:   Thu Jun 18 16:45:42 2026 +0800
+
+    Update CSP fix

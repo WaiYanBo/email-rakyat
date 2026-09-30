@@ -795,7 +795,7 @@ export default function ClientTable({
         const monthNameShortEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const monthNameShortBm = ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ogos", "Sep", "Okt", "Nov", "Dis"];
         const shortName = lang === 'bm' ? monthNameShortBm[m.month - 1] : monthNameShortEn[m.month - 1];
-        const shortLabel = `${shortName} ${String(m.year).slice(-2)}`;
+        const shortLabel = `${shortName} ${m.year}`;
 
         return {
           key: m.value,

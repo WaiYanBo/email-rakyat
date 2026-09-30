@@ -1,27 +1,3 @@
--- ====================================================================
---  SUPABASE BATCH SCRIPT: CREATE ALL STAFF USERS & SET READ-ONLY ACCESS
---  Generated for: Email Rakyat Secure Portal
---
---  SUMMARY:
---  1. Creates accounts in auth.users & auth.identities with confirmed email.
---  2. Sets temporary default password: ERakyat@2026! (can be changed in tetapan).
---  3. Populates public.profiles with full_name, email, and Active status.
---  4. Leaves role & position (department) unassigned so you can set them
---     manually later via Portal Settings or HR Panel as desired.
---  5. Configures public.access_permissions to 'Read-Only View All':
---     - Can see Clients, LoD, Potential Clients, Appointments, Staff Directory,
---       Attendance Logs, Reports/Snapshots, Expense Claims, and Leave Records.
---     - CANNOT edit, add, delete, or modify any records, settings, or approvals.
---  6. CRITICAL SAFETY RULE:
---     - Any user already registered in Supabase (including Wai Yan Bo and
---       any other existing accounts) is COMPLETELY SKIPPED.
---     - Their credentials, existing roles, and permissions are 100% UNTOUCHED!
---
---  HOW TO RUN:
---  1. Go to your Supabase Project Dashboard (SQL Editor)
---  2. Navigate to "SQL Editor" on the left sidebar.
---  3. Paste this entire script into a new query tab and click "Run".
--- ====================================================================
 
 -- 1. Ensure required extensions exist
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

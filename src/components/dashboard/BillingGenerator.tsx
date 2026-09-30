@@ -35,7 +35,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
   const [deposit, setDeposit] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  // Removed billing_records fetch since payments come from clientData
 
   const getPaymentOrdinalString = (index: number, count: number) => {
     const num = count + index + 1;
@@ -64,7 +63,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         amount: String(amt).replace(/,/g, '')
       }));
 
-      // Add one blank item for the new payment
       populatedItems.push({
         id: `receipt-item-new-${populatedItems.length}`,
         description: '',
@@ -81,7 +79,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
     }
   };
 
-  // Reset clean state when a different client is selected
   useEffect(() => {
     setDocumentType('invoice');
     setDocumentDate(getTodayDateString());
@@ -155,11 +152,9 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
     setStatusMessage(null);
 
     try {
-      // 1. Determine template path using our bulletproof API route
       const templateFilename = documentType === 'invoice' ? 'blank-invoice' : 'blank-receipt';
       const fetchUrl = `/api/templates/${templateFilename}?t=${Date.now()}`;
 
-      // 2. Fetch the template
       const templateBytes = await fetch(fetchUrl).then(async (res) => {
         if (!res.ok) throw new Error(`Failed to fetch ${fetchUrl} (Status: ${res.status})`);
         const buffer = await res.arrayBuffer();
@@ -169,11 +164,9 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         return buffer;
       });
 
-      // 3. Load PDF
       const pdfDoc = await PDFDocument.load(templateBytes);
       pdfDoc.registerFontkit(fontkit);
 
-      // Load custom fonts (Verdana Regular and Bold)
       const fontUrlRegular = `/fonts/verdana.ttf?t=${Date.now()}`;
       const fontBytesRegular = await fetch(fontUrlRegular).then(async (res) => {
         if (!res.ok) throw new Error(`Failed to fetch regular font`);
@@ -212,7 +205,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         ? `INV-TER-${clientNoVal}-${invoiceCount} Invoices`
         : `RCP-TER-${String(clientNoVal).padStart(4, '0')}`;
 
-      // Format manual document date as DD/MM/YYYY
       let date = documentDate;
       if (documentDate && documentDate.includes('-') && documentDate.split('-')[0].length === 4) {
         const [year, month, day] = documentDate.split('-');
@@ -221,14 +213,10 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         date = new Date().toLocaleDateString('en-GB');
       }
 
-      // Set PDF Metadata to overwrite template name in browser tab title
       pdfDoc.setTitle(refNumber);
       pdfDoc.setAuthor('Team Email Rakyat');
       pdfDoc.setSubject(`${documentType === 'invoice' ? 'Invoice' : 'Receipt'} for ${clientData.name}`);
 
-      // 4. Stamp data using coordinates (Variables left easily tweakable)
-      // NOTE: Adjust these coordinates based on the actual blank PDF template layout.
-      // pdf-lib's origin (0, 0) is at the bottom-left corner of the page.
       const invoiceCoords = {
         nameX: 67.8, nameY: 614,
         icX: 93, icY: 604.4,
@@ -267,9 +255,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       const invoiceFontSize = 5.5; // Adjust invoice font size
       const receiptFontSize = 8.5; // Adjust receipt font size
 
-      // You can manually change the font and color for each item here!
-      // 'font': Choose between 'customFont' (Normal) or 'customFontBold' (Bold)
-      // 'color': Use rgb(0,0,0) for Black, rgb(1,0,0) for Red, rgb(1,1,1) for White, etc.
       const invoiceStyles = {
         name: { font: customFontBold, color: rgb(0, 0, 0), size: 6.5 },
         ic: { font: customFont, color: rgb(0, 0, 0), size: invoiceFontSize },
@@ -350,7 +335,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         firstPage.drawText(formatCurrency(subtotal), { x: coords.subtotalX, y: coords.subtotalY, ...styles.subtotal });
         firstPage.drawText(deposit ? formatCurrency(deposit) : `RM0`, { x: coords.depositX, y: coords.depositY, ...styles.deposit });
 
-        // Generate total in words for Invoice only
         const integerPart = Math.floor(total);
         const decimalPart = Math.round((total - integerPart) * 100);
 
@@ -366,18 +350,15 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
         firstPage.drawText(totalWordsStr, { x: coords.totalWordsX, y: coords.totalWordsY, ...styles.totalWords });
       } else {
-        // Receipt drawings
         firstPage.drawText(`This Receipt Acknowledges Full Settlement of ${refNumber}`, { x: coords.refNumberBottomX, y: coords.refNumberBottomY, ...styles.refNumberBottom });
       }
 
       firstPage.drawText(formatCurrency(total), { x: coords.totalX, y: coords.totalY, ...styles.total });
 
-      // 5. Save document and download
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const fileName = `${refNumber}.pdf`;
 
-      // Trigger local view (open in new tab)
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -386,24 +367,18 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
       link.click();
       document.body.removeChild(link);
 
-      // Delay revoking the URL so the new tab has time to load the PDF
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
       }, 1000);
 
-      // 6. Upload to Supabase Storage inside the unified Client Folder: Clients/{clientFolder}/{docCategory}/
       const docCategory = documentType === 'invoice' ? 'Invoices' : 'Receipts';
 
-      // Sanitize client name for the folder path
       const safeClientName = clientData.name.replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
       const clientFolder = `${clientNoVal} ${safeClientName}`;
 
-      // Primary unified Client Drive path: e.g. "Clients/151 Testing A/Invoices/INV-TER-151-2.pdf"
       const clientDrivePath = `Clients/${clientFolder}/${docCategory}/${fileName}`;
-      // Legacy fallback path: e.g. "Finance/billing_documents/Invoices/151 Testing A/INV-TER-151-2.pdf"
       const legacyPath = `Finance/billing_documents/${docCategory}/${clientFolder}/${fileName}`;
 
-      // Upload to unified Client folder
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('company_drive')
         .upload(clientDrivePath, blob, {
@@ -415,7 +390,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         throw new Error(uploadError.message || 'Failed to upload to Supabase Storage');
       }
 
-      // Also mirror to legacy path for backward compatibility
       try {
         await supabase.storage
           .from('company_drive')
@@ -427,14 +401,12 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
         console.warn('Mirror to legacy path failed (non-critical):', mirrorErr);
       }
 
-      // Get public URL of primary unified path
       const { data: publicUrlData } = supabase.storage
         .from('company_drive')
         .getPublicUrl(clientDrivePath);
 
       const fileUrl = publicUrlData.publicUrl;
 
-      // 7. Insert to Supabase database
       const { error: dbError } = await supabase
         .from('billing_records')
         .insert([
@@ -454,7 +426,6 @@ export const BillingGenerator: React.FC<BillingGeneratorProps> = ({ clientData, 
 
       setStatusMessage({ type: 'success', text: `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} generated and uploaded successfully!` });
 
-      // Reset form amounts/desc
       setItems([{ description: '', amount: '' }]);
       setDeposit('');
       setDocumentDate(getTodayDateString());

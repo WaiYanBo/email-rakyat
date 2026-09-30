@@ -88,7 +88,6 @@ export default function HRControlPanel() {
 
   return (
     <div className="space-y-8 animate-page-transition pt-12 md:pt-0">
-      {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-gray-800 pb-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-2">
@@ -100,7 +99,6 @@ export default function HRControlPanel() {
         </div>
       </div>
 
-      {/* Tabs Switcher */}
       <div className="flex flex-wrap bg-slate-100/50 dark:bg-zinc-900/60 p-1.5 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 gap-1.5 w-full md:w-fit">
         <button
           onClick={() => setActiveTab('attendance')}
@@ -155,7 +153,6 @@ export default function HRControlPanel() {
         </button>
       </div>
 
-      {/* Tab Panels with animations */}
       <div className="transition-all duration-300">
         {activeTab === 'attendance' && (
           <div className="animate-fade-in">

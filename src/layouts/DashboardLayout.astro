@@ -12,7 +12,6 @@ const { title } = Astro.props;
 
 <Layout title={title}>
   <script is:inline slot="head">
-    // Instant pre-hydration auth guard: bounce unauthenticated requests before dashboard components load
     (function() {
       try {
         var hasAuth = false;

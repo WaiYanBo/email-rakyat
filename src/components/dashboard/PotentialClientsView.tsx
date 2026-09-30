@@ -35,7 +35,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
   const [tableMissingError, setTableMissingError] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Search, Filter & Sort State
   const [searchQuery, setSearchQuery] = useState('');
   const [potentialFilter, setPotentialFilter] = useState<'all' | 'High' | 'Medium' | 'Low'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'year' | 'month'>('all');
@@ -44,7 +43,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
-  // Interactive Line Chart & Period Selection State
   const [showChart, setShowChart] = useState(true);
   const [chartSelectedPeriod, setChartSelectedPeriod] = useState<string | null>(null);
   const [chartSelectedClientIds, setChartSelectedClientIds] = useState<Set<string> | null>(null);
@@ -60,16 +58,13 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     setChartSelectedClientIds(null);
   };
 
-  // Staff members for "Lead By" dropdown
   const [staffList, setStaffList] = useState<string[]>([]);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeClient, setActiveClient] = useState<PotentialClient | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     full_name: '',
     ic_number: '',
@@ -90,7 +85,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
   const [submitting, setSubmitting] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // Load Staff List from profiles for "Lead By" selector
   useEffect(() => {
     async function fetchStaff() {
       try {
@@ -113,7 +107,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     fetchStaff();
   }, []);
 
-  // Fetch Potential Clients
   const fetchPotentialClients = async () => {
     try {
       setLoading(true);
@@ -126,7 +119,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
         .order('created_at', { ascending: false });
 
       if (error) {
-        // Table doesn't exist yet in Supabase (42P01)
         if (error.code === '42P01' || error.message?.toLowerCase().includes('does not exist')) {
           setTableMissingError(true);
         } else {
@@ -149,7 +141,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     fetchPotentialClients();
   }, []);
 
-  // Format today's date in DD/MM/YYYY
   const getTodayFormatted = () => {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
@@ -211,7 +202,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     setIsViewModalOpen(true);
   };
 
-  // Submit Handler for Add / Edit
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.full_name.trim()) {
@@ -290,7 +280,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     }
   };
 
-  // Delete Record
   const handleDelete = async (client: PotentialClient) => {
     if (!canEdit) return;
     const confirmMsg = t('clients', 'deletePotentialConfirm', lang).replace('{name}', client.full_name);
@@ -311,14 +300,12 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     }
   };
 
-  // Convert Potential Client to Active Client
   const handleConvertToActive = async (client: PotentialClient) => {
     if (!canEdit) return;
     const confirmMsg = t('clients', 'confirmConvertToActive', lang).replace('{name}', client.full_name);
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      // 1. Insert into clients table
       const newClientPayload = {
         NAME: client.full_name,
         "IC NUMBER": client.ic_number || '-',
@@ -341,7 +328,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
         throw new Error(`Failed to create active client: ${insertErr.message}`);
       }
 
-      // 2. Update potential_clients status to 'Converted'
       await supabase
         .from('potential_clients')
         .update({ status: 'Converted', updated_at: new Date().toISOString() })
@@ -362,16 +348,13 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     }
   };
 
-  // Filtering & Sorting
   const filteredClients = useMemo(() => {
     let result = [...clients];
 
-    // Filter by period selected on line chart if active
     if (chartSelectedClientIds) {
       result = result.filter(c => chartSelectedClientIds.has(c.id));
     }
 
-    // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(c => {
@@ -388,12 +371,10 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
       });
     }
 
-    // Potential Filter
     if (potentialFilter !== 'all') {
       result = result.filter(c => c.potential_level === potentialFilter);
     }
 
-    // Date Filter
     if (dateFilter !== 'all') {
       const now = new Date();
       const currentYear = String(now.getFullYear());
@@ -418,7 +399,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
       });
     }
 
-    // Sorting
     result.sort((a, b) => {
       let valA: any = a[sortKey];
       let valB: any = b[sortKey];
@@ -451,7 +431,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     return result;
   }, [clients, searchQuery, potentialFilter, dateFilter, sortKey, sortDirection, chartSelectedClientIds]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredClients.length / pageSize) || 1;
   const paginatedClients = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -467,7 +446,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     }
   };
 
-  // Metrics summary
   const metrics = useMemo(() => {
     const total = clients.length;
     const high = clients.filter(c => c.potential_level === 'High').length;
@@ -477,7 +455,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     return { total, high, medium, low, converted };
   }, [clients]);
 
-  // Export handlers
   const getExportData = () => {
     return filteredClients.map((c, idx) => ({
       No: idx + 1,
@@ -542,7 +519,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
     doc.save(`EmailRakyat_Potential_Clients_${dateStr}.pdf`);
   };
 
-  // Helper Badge Color
   const getPotentialBadge = (level: 'High' | 'Medium' | 'Low') => {
     switch (level) {
       case 'High':
@@ -571,7 +547,6 @@ export default function PotentialClientsView({ canEdit, onClientConverted }: Pot
 
   return (
     <div className="flex flex-col h-auto w-full">
-      {/* Table Missing Alert Banner */}
       {tableMissingError && (
         <div className="p-4 mb-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -625,7 +600,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       )}
 
-      {/* Top Controls Header */}
       <div
         style={{
           paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
@@ -650,7 +624,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </div>
           </div>
 
-          {/* Action buttons (Export + Add) */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
             <div className="flex bg-white dark:bg-gray-900 rounded-xl border border-slate-200 dark:border-gray-800 flex-1 sm:flex-none justify-center overflow-hidden shadow-sm h-[42px] sm:h-[48px] items-center">
               <button
@@ -673,7 +646,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
               </button>
             </div>
 
-            {/* Toggle Line Chart Button */}
             <button
               type="button"
               onClick={() => setShowChart(prev => !prev)}
@@ -704,9 +676,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
           </div>
         </div>
 
-        {/* Search & Filters */}
         <div className="grid grid-cols-2 sm:grid-cols-12 gap-2.5 sm:gap-3">
-          {/* Search bar */}
           <div className="col-span-2 sm:col-span-6 relative">
             <input
               type="text"
@@ -717,7 +687,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             />
           </div>
 
-          {/* Potential Level Filter */}
           <div className="col-span-1 sm:col-span-3 relative">
             <select
               value={potentialFilter}
@@ -736,7 +705,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </div>
           </div>
 
-          {/* Date Filter */}
           <div className="col-span-1 sm:col-span-3 relative">
             <select
               value={dateFilter}
@@ -756,7 +724,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       </div>
 
-      {/* Potential Clients Acquisition & Trend Line Chart with Interactive Filters */}
       {showChart && (
         <div
           style={{
@@ -776,7 +743,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       )}
 
-      {/* Chart Period Filter Indicator (if chart is closed or user scrolls down) */}
       {chartSelectedPeriod && !showChart && (
         <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-3 text-xs font-semibold text-amber-900 dark:text-amber-200">
           <div className="flex items-center gap-2">
@@ -796,7 +762,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       )}
 
-      {/* Mobile Card System for Potential Clients (Phones only - Vertical, No Horizontal Scrolling) */}
       <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">
         {loading ? (
           <div className="p-8 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 bg-white dark:bg-gray-900 rounded-2xl border border-slate-200 dark:border-gray-800">
@@ -813,7 +778,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 key={client.id}
                 className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
               >
-                {/* Header */}
                 <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
                   <div className="space-y-0.5 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -853,7 +817,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                   </div>
                 </div>
 
-                {/* Details 2-col Grid */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
                     <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
@@ -873,7 +836,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                   </div>
                 </div>
 
-                {/* Date & Address / Email */}
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400 px-1 flex-wrap gap-1">
                   <span>📅 {client.date || '-'}</span>
                   {client.email && (
@@ -895,7 +857,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                   </div>
                 )}
 
-                {/* Actions Footer */}
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     onClick={() => handleOpenViewModal(client)}
@@ -946,7 +907,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         )}
       </div>
 
-      {/* Desktop Main Table (Laptops / Tablets / Desktops only) */}
       <div className="hidden md:block flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative border-b border-slate-200 dark:border-gray-800">
         <table className="w-full min-w-[1100px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
           <thead>
@@ -1157,7 +1117,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </table>
       </div>
 
-      {/* Pagination Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white dark:bg-gray-900/50 border-b border-slate-200 dark:border-gray-800 text-xs">
         <div className="text-slate-500 dark:text-zinc-400 font-medium">
           {lang === 'bm'
@@ -1186,7 +1145,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       </div>
 
-      {/* Summary Metrics Cards */}
       <div className="mt-6 bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col gap-5">
         <div className="flex items-center gap-2 pb-1">
           <span className="text-amber-500 text-base">★</span>
@@ -1196,7 +1154,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Prospects */}
           <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
               {lang === 'bm' ? 'Jumlah Klien Berpotensi' : 'Total Potential Clients'}
@@ -1206,7 +1163,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </span>
           </div>
 
-          {/* High Potential */}
           <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[10px] md:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
               {t('clients', 'highPotential', lang)}
@@ -1216,7 +1172,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </span>
           </div>
 
-          {/* Medium Potential */}
           <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[10px] md:text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
               {t('clients', 'mediumPotential', lang)}
@@ -1226,7 +1181,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </span>
           </div>
 
-          {/* Low Potential */}
           <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[10px] md:text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
               {t('clients', 'lowPotential', lang)}
@@ -1238,9 +1192,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       </div>
 
-      {/* =========================================================
-          ADD / EDIT POTENTIAL CLIENT MODAL
-          ========================================================= */}
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
@@ -1262,7 +1213,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </div>
 
             <form onSubmit={handleSubmitForm} className="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-              {/* Row 1: Full Name */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                   {lang === 'bm' ? 'Nama Penuh *' : 'Full Name *'}
@@ -1277,7 +1227,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 />
               </div>
 
-              {/* Row 2: IC & Phone Number */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
@@ -1311,7 +1260,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Row 3: Email & Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
@@ -1340,7 +1288,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Row 4: Address */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                   {lang === 'bm' ? 'Alamat Kediaman / Premis' : 'Address'}
@@ -1354,7 +1301,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 />
               </div>
 
-              {/* Row 5: Case Category */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                   {lang === 'bm' ? 'Kategori Kes' : 'Case Category'}
@@ -1393,9 +1339,7 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Row 6: Potential Level & Lead By */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Potential Level */}
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                     {t('clients', 'potentialLevel', lang)}
@@ -1411,7 +1355,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                   </select>
                 </div>
 
-                {/* Lead By */}
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                     {t('clients', 'leadBy', lang)} ({lang === 'bm' ? 'Nama Staf' : 'Staff Member'})
@@ -1449,7 +1392,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Row 7: Notes */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide">
                   {lang === 'bm' ? 'Catatan & Ringkasan Pertanyaan' : 'Notes & Enquiry Remarks'}
@@ -1463,7 +1405,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 />
               </div>
 
-              {/* Submit Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
                 <button
                   type="button"
@@ -1489,9 +1430,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
         </div>
       )}
 
-      {/* =========================================================
-          VIEW POTENTIAL CLIENT PROFILE MODAL
-          ========================================================= */}
       {isViewModalOpen && activeClient && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
@@ -1516,7 +1454,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
-              {/* Top Banner with Potential & Status */}
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-900/80 border border-slate-200/80 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase">
@@ -1535,7 +1472,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Contact & Personal Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800 shadow-sm">
                   <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">IC Number</span>
@@ -1612,7 +1548,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </div>
               </div>
 
-              {/* Address */}
               <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800 shadow-sm">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
                   {lang === 'bm' ? 'Alamat' : 'Address'}
@@ -1622,7 +1557,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </p>
               </div>
 
-              {/* Notes */}
               <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-slate-200 dark:border-gray-800 shadow-sm">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase">
                   {lang === 'bm' ? 'Catatan Tambahan' : 'Notes / Remarks'}
@@ -1632,7 +1566,6 @@ CREATE POLICY "Allow authenticated delete potential_clients" ON public.potential
                 </p>
               </div>
 
-              {/* Actions footer */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-gray-800">
                 <div className="flex items-center gap-2 flex-wrap">
                   <a

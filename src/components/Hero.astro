@@ -14,7 +14,6 @@ const heightClass = showDetails
   ? "min-h-[640px] md:min-h-[720px] lg:min-h-[82vh]"
   : "min-h-[260px] md:min-h-[320px]";
 
-// Safe top padding ensures content always starts well below the fixed navbar (~80px tall)
 const safePaddingClass = showDetails
   ? "pt-32 pb-16 sm:pt-36 sm:pb-20 md:pt-40 md:pb-24"
   : "pt-28 pb-12 sm:pt-32 sm:pb-14 md:pt-36 md:pb-16";
@@ -37,7 +36,6 @@ const safePaddingClass = showDetails
   <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
     {showDetails ? (
       <div class="flex flex-col items-center justify-center w-full">
-        <!-- Official Firm Badge -->
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 backdrop-blur-sm mb-3">
           <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
           <span class="text-yellow-400 tracking-[0.25em] text-xs sm:text-sm uppercase font-bold drop-shadow-md">
@@ -45,17 +43,14 @@ const safePaddingClass = showDetails
           </span>
         </div>
 
-        <!-- Main H1 Title -->
         <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-center leading-tight max-w-4xl">
           Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah
         </h1>
 
-        <!-- Subtitle -->
         <p class="text-xs sm:text-sm md:text-base font-semibold text-gray-300 uppercase tracking-widest mt-3 max-w-2xl">
           Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)
         </p>
 
-        <!-- 3 Highlight Callouts -->
         <div class="mt-4 space-y-1">
           <p class="text-sm md:text-base font-bold text-yellow-400 uppercase tracking-wider drop-shadow-lg">
             {line1}
@@ -68,7 +63,6 @@ const safePaddingClass = showDetails
           </p>
         </div>
 
-        <!-- CTA Buttons -->
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full">
           <a
             href="/hubungi"
@@ -84,13 +78,11 @@ const safePaddingClass = showDetails
           </a>
         </div>
 
-        <!-- Trust Tagline -->
         <p class="mt-4 text-xs md:text-sm uppercase tracking-[0.25em] text-gray-300 font-medium">
           Sulit • Profesional • Berlandaskan Undang-Undang
         </p>
       </div>
     ) : (
-      /* --- SUB-PAGE LAYOUT --- */
       <div class="flex flex-col items-center justify-center text-center max-w-4xl mx-auto px-4">
         <div class="w-12 h-1 bg-yellow-500 mb-4"></div>
 

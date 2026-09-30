@@ -13,7 +13,6 @@ export default function LoginAuth() {
   const { lang } = usePortalLanguage();
 
   useEffect(() => {
-    // Check if redirected due to termination
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('error') === 'terminated') {
@@ -24,7 +23,6 @@ export default function LoginAuth() {
       }
     }
 
-    // If user is already authenticated, verify not resigned before redirecting
     getCurrentSession().then(async (session) => {
       if (session) {
         const { data: prof } = await supabase
@@ -49,7 +47,6 @@ export default function LoginAuth() {
     e.preventDefault();
     setError('');
 
-    // ── 1. Input validation ──────────────────────────────────────────────
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!isValidEmail(trimmedEmail)) {
@@ -62,7 +59,6 @@ export default function LoginAuth() {
       return;
     }
 
-    // ── 2. Client-side rate limiting ─────────────────────────────────────
     if (!isLoginAllowed(trimmedEmail)) {
       setError(t('login', 'rateLimitExceeded', lang));
       return;
@@ -80,9 +76,6 @@ export default function LoginAuth() {
         const newCount = attemptCount + 1;
         setAttemptCount(newCount);
 
-        // ── 3. Generic error message (no user enumeration) ───────────────
-        // Never reveal whether email or password was wrong specifically.
-        // Also avoid leaking account-existence information.
         if (
           authError.message.includes('Invalid login credentials') ||
           authError.message.includes('invalid_credentials') ||
@@ -93,16 +86,13 @@ export default function LoginAuth() {
         } else if (authError.message.includes('rate')) {
           setError(t('login', 'tooManyAttempts', lang));
         } else {
-          // Avoid leaking raw Supabase error messages
           setError(t('login', 'failed', lang));
         }
 
-        // Show remaining attempts warning after 3 failures
         if (newCount >= 3) {
           setError(t('login', 'attemptsRemaining', lang).replace('{count}', String(5 - newCount)));
         }
       } else if (data?.user) {
-        // ── 4. Verify staff account status (Terminate if Resigned) ────────
         const { data: profileRecord } = await supabase
           .from('profiles')
           .select('status')
@@ -120,7 +110,6 @@ export default function LoginAuth() {
 
         clearRateLimit(trimmedEmail); // Reset on success
 
-        // Automatically prompt for notification permission as soon as staff logs into ER Portal Web App
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
           try {
             await Notification.requestPermission();
@@ -131,7 +120,6 @@ export default function LoginAuth() {
         window.location.href = '/portal';
       }
     } catch (_err) {
-      // Do NOT log sensitive details to console in production
       setError(t('login', 'networkError', lang));
     } finally {
       setLoading(false);
@@ -139,7 +127,6 @@ export default function LoginAuth() {
   };
 
   return (
-    // FIX: Changed w-full to w-[90%] on mobile, adjusted padding (p-6 md:p-8)
     <div className="w-[90%] md:w-full max-w-md mx-auto p-6 md:p-8 bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl transition-colors duration-300">
       <div className="text-center mb-6 md:mb-8">
         <h2 className="text-xl md:text-2xl font-black text-indigo-900 dark:text-white uppercase tracking-wider mb-2 transition-colors">

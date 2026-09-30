@@ -428,7 +428,6 @@ export default function PortalSidebar() {
     try {
       sessionStorage.clear();
     } catch (e) {
-      // ignore
     }
     await supabase.auth.signOut();
     window.location.href = '/portal/login';
@@ -441,7 +440,6 @@ export default function PortalSidebar() {
     return currentPath.startsWith(path);
   };
 
-  // Renders navigation item details with clean icons
   const getNavItems = () => {
     if (!profile) return [];
 
@@ -515,7 +513,6 @@ export default function PortalSidebar() {
       });
     }
 
-    // Only non-contract/non-freelance staff can access My Leave if permission is enabled
     const isContractor = ['Contract Worker', 'Part-Time Worker', 'Contract', 'Part Time'].includes(profile?.role || '');
     if (!isContractor && canViewLeave) {
       items.push({
@@ -543,7 +540,6 @@ export default function PortalSidebar() {
       });
     }
 
-    // Only users with HR manage permission can access Human Resources
     if (canManageHR) {
       items.push({
         label: t('sidebar', 'navHR', lang),

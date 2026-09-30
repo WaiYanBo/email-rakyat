@@ -35,7 +35,6 @@ export default function ClockInClockOut() {
   const [detailFilterDay, setDetailFilterDay] = useState('');
   const [detailFilterMonth, setDetailFilterMonth] = useState('');
 
-  // Edit / Delete attendance record state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [editDate, setEditDate] = useState('');
@@ -137,13 +136,11 @@ export default function ClockInClockOut() {
     }
   };
 
-  // Office coordinates
   const OFFICE_LAT = 3.0750624396122763;
   const OFFICE_LNG = 101.61250689446412;
   const ZONE_RADIUS_METERS = 200;
   const MINIMUM_WORK_HOURS = 9;
 
-  // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371000; // Earth's radius in meters
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -155,7 +152,6 @@ export default function ClockInClockOut() {
     return R * c;
   };
 
-  // Calculate working hours between clock in and clock out
   const calculateWorkingHours = (clockInTime: string, clockOutTime: string | null): { hours: number; minutes: number } | null => {
     if (!clockInTime || !clockOutTime) return null;
 
@@ -169,13 +165,11 @@ export default function ClockInClockOut() {
     return { hours, minutes };
   };
 
-  // Fetch attendance records efficiently
   const fetchForgotClockoutRecords = async (userId?: string, isPrivileged?: boolean) => {
     try {
       const today = getLocalDateString();
       const privileged = isPrivileged;
 
-      // 1. Fetch forgot clockouts specifically (server-side filtering)
       let forgotQuery = supabase
         .from('attendance')
         .select('*')
@@ -196,7 +190,6 @@ export default function ClockInClockOut() {
         setForgotClockoutRecords(forgotRecords);
       }
 
-      // 2. Fetch a limited set of recent records for general view/export
       let allQuery = supabase
         .from('attendance')
         .select('*')
@@ -209,7 +202,6 @@ export default function ClockInClockOut() {
 
       const { data: recentRecords, error: allErr } = await allQuery;
 
-      // 3. Fetch approved leave requests to inject into the history
       let leaveQuery = supabase
         .from('leave_requests')
         .select('*, profiles!profile_id(full_name)')
@@ -241,7 +233,6 @@ export default function ClockInClockOut() {
              let currentDate = new Date(startDate);
              while (currentDate <= endDate) {
                const dayOfWeek = currentDate.getDay();
-               // Mon-Fri only
                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                  const dateStr = getLocalDateString(currentDate);
                  const existingRecord = enrichedRecords.find(r => r.user_id === leave.profile_id && r.date === dateStr);
@@ -263,7 +254,6 @@ export default function ClockInClockOut() {
            });
          }
 
-         // Sort enriched records by date descending, then user_name ascending
          enrichedRecords.sort((a: any, b: any) => {
            if (a.date !== b.date) return b.date.localeCompare(a.date);
            return (a.user_name || '').localeCompare(b.user_name || '');
@@ -276,7 +266,6 @@ export default function ClockInClockOut() {
     }
   };
 
-  // Memoized filtered forgot clockout records
   const filteredForgotRecords = useMemo(() => {
     let result = [...forgotClockoutRecords];
 
@@ -293,7 +282,6 @@ export default function ClockInClockOut() {
     return result;
   }, [forgotClockoutRecords, detailFilterEmployee, detailFilterMode, detailFilterDay, detailFilterMonth]);
 
-  // Memoized filtered all records
   const filteredAllRecords = useMemo(() => {
     let result = [...allRecords];
 
@@ -340,7 +328,6 @@ export default function ClockInClockOut() {
       return;
     }
 
-    // Group by employee name + date to support multiple daily shifts
     const grouped: Record<string, any[]> = {};
     filteredAllRecords.forEach(record => {
       const key = `${record.user_name || 'Unknown'}_${record.date || 'NoDate'}`;
@@ -351,7 +338,6 @@ export default function ClockInClockOut() {
     });
 
     const exportData = Object.values(grouped).map(dayRecords => {
-      // Sort by clock_in_time ascending
       dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
 
       const firstRecord = dayRecords[0];
@@ -379,7 +365,6 @@ export default function ClockInClockOut() {
         };
       }
 
-      // Sum of working times of all completed shifts
       let totalWorkMs = 0;
       dayRecords.forEach(r => {
         if (r.clock_in_time && r.clock_out_time) {
@@ -393,7 +378,6 @@ export default function ClockInClockOut() {
         minutes: Math.round((totalHours % 1) * 60)
       };
 
-      // Subtract 1 hour default break for short day check
       const adjustedHours = Math.max(0, totalHours - 1);
       const isShortDay = isCompleted && adjustedHours < MINIMUM_WORK_HOURS;
 
@@ -423,12 +407,10 @@ export default function ClockInClockOut() {
     XLSX.writeFile(wb, filename);
   };
 
-  // Helper to run a single geolocation request with a safety timeout net
   const getSingleLocation = (options: { enableHighAccuracy?: boolean; timeout?: number; maximumAge?: number }): Promise<GeolocationPosition> => {
     return new Promise((resolve, reject) => {
       let finished = false;
 
-      // Timeout safety net to handle Safari "doing nothing" hang bug
       const safetyTimeoutId = setTimeout(() => {
         if (!finished) {
           finished = true;
@@ -464,13 +446,11 @@ export default function ClockInClockOut() {
     });
   };
 
-  // Robust location helper with sequential fallbacks (High Accuracy -> Low Accuracy/Wi-Fi -> Cached last resort)
   const getCurrentPositionWithFallback = async (): Promise<GeolocationPosition> => {
     if (!navigator.geolocation) {
       throw new DOMException("Geolocation not supported", "NotSupportedError");
     }
 
-    // Attempt 1: High accuracy, fresh position, moderate timeout (15 seconds to allow user permission prompt response)
     try {
       console.log("Attempt 1: high accuracy");
       return await getSingleLocation({
@@ -480,12 +460,10 @@ export default function ClockInClockOut() {
       });
     } catch (err: any) {
       console.warn("Attempt 1 (High Accuracy) failed:", err);
-      // Code 1 is PERMISSION_DENIED. If user denied permission, do not retry.
       if (err?.code === 1) {
         throw err;
       }
 
-      // Attempt 2: Fallback to lower accuracy (much faster, works indoors using Wi-Fi / Cell towers)
       try {
         console.log("Attempt 2: lower accuracy fallback");
         return await getSingleLocation({
@@ -499,7 +477,6 @@ export default function ClockInClockOut() {
           throw err2;
         }
 
-        // Attempt 3: Cached position fallback (as a last resort)
         try {
           console.log("Attempt 3: cached position fallback");
           return await getSingleLocation({
@@ -515,18 +492,15 @@ export default function ClockInClockOut() {
     }
   };
 
-  // Actionable instruction text for iOS users facing permission issues
   const getActionableErrorMessage = (error: any): string => {
     const isBm = lang === 'bm';
     
-    // Check if it's permission denied (code 1)
     if (error?.code === 1) {
       return isBm
         ? "Akses lokasi ditolak.\n\nSila dayakan akses lokasi untuk Safari/Chrome di iPhone anda:\n1. Buka Settings > Privacy & Security > Location Services.\n2. Pastikan Location Services dihidupkan.\n3. Skrol ke bawah dan pilih Safari / Chrome.\n4. Pilih 'While Using the App' dan hidupkan 'Precise Location'."
         : "Location access denied.\n\nPlease enable location access for Safari/Chrome on your iPhone:\n1. Go to Settings > Privacy & Security > Location Services.\n2. Ensure Location Services is turned ON.\n3. Scroll down and select Safari / Chrome.\n4. Select 'While Using the App' and turn ON 'Precise Location'.";
     }
     
-    // Other errors (timeout/unavailable/safety-net)
     return isBm
       ? "Gagal mendapatkan lokasi.\n\nTips untuk iPhone:\n1. Pastikan Wi-Fi dihidupkan (ia membantu carian lokasi dalam bangunan).\n2. Gerak berhampiran tingkap atau kawasan terbuka untuk isyarat GPS lebih kuat.\n3. Periksa tetapan lokasi anda."
       : "Failed to get location.\n\nTips for iPhone:\n1. Ensure Wi-Fi is turned ON (helps with indoor location positioning).\n2. Move near a window or open area for a stronger GPS signal.\n3. Check your device location settings.";
@@ -568,7 +542,6 @@ export default function ClockInClockOut() {
       const distance = calculateDistance(OFFICE_LAT, OFFICE_LNG, latitude, longitude);
       const isWithinZone = distance <= ZONE_RADIUS_METERS;
 
-      // Get current user
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         alert(t('attendance', 'sessionExpired', lang));
@@ -578,7 +551,6 @@ export default function ClockInClockOut() {
 
       const today = getLocalDateString();
 
-      // Get today's active record (where clock_out_time is null)
       const { data: activeRecord } = await supabase
         .from('attendance')
         .select('*')
@@ -670,7 +642,6 @@ export default function ClockInClockOut() {
     setIsSubmittingLateClockout(true);
 
     try {
-      // Get location coordinates if possible (non-blocking)
       let latitude: number | null = null;
       let longitude: number | null = null;
       let distance: number | null = null;
@@ -690,13 +661,11 @@ export default function ClockInClockOut() {
         }
       }
 
-      // Construct clockout timestamp from the record date and input time
       const [year, month, day] = lateClockoutRecord.date.split('-').map(Number);
       const [hours, minutes] = lateClockoutTime.split(':').map(Number);
       const actualClockoutDate = new Date(year, month - 1, day, hours, minutes);
       const clockoutTimeISO = actualClockoutDate.toISOString();
 
-      // Check if clockout time is after clockin time
       const clockInTime = new Date(lateClockoutRecord.clock_in_time);
       if (actualClockoutDate <= clockInTime) {
         const timeFormatted = clockInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -708,7 +677,6 @@ export default function ClockInClockOut() {
         return;
       }
 
-      // Update attendance record
       const updateData = {
         clock_out_time: clockoutTimeISO,
         clock_out_latitude: latitude,
@@ -733,7 +701,6 @@ export default function ClockInClockOut() {
         return;
       }
 
-      // Write audit log entry
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const auditPayload = {
@@ -761,7 +728,6 @@ export default function ClockInClockOut() {
       setLateClockoutRecord(null);
       setLateClockoutTime('');
 
-      // Refresh lists
       await fetchTodayRecord();
       await fetchForgotClockoutRecords();
     } catch (err) {
@@ -791,19 +757,16 @@ export default function ClockInClockOut() {
       }
 
       if (records && records.length > 0) {
-        // Find if there's any active clock-in (where clock_out_time is null)
         const activeRecord = records.find(r => !r.clock_out_time);
         if (activeRecord) {
           setTodayRecord(activeRecord);
         } else {
-          // If no active session, set the latest completed session
           setTodayRecord(records[0]);
         }
       } else {
         setTodayRecord(null);
       }
 
-      // Check if user is on leave today
       const { data: leaves, error: leaveError } = await supabase
         .from('leave_requests')
         .select('*')
@@ -895,7 +858,6 @@ export default function ClockInClockOut() {
 
       <div className="p-6 md:p-8">
         <div className="space-y-8">
-          {/* Today's Status Card */}
             {todayRecord && (
               <div className="p-5 md:p-6 rounded-2xl border border-slate-200 dark:border-gray-800 bg-slate-50/30 dark:bg-gray-900/20">
                 <div className="flex items-center gap-2 mb-4">
@@ -1045,7 +1007,6 @@ export default function ClockInClockOut() {
               </div>
             )}
 
-            {/* Forgot Clockout & Working Hours Section */}
             <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-gray-800">
 
               {(forgotClockoutRecords.length > 0 || isPrivilegedRole) && (
@@ -1060,7 +1021,6 @@ export default function ClockInClockOut() {
                 </button>
               )}
 
-              {/* Filters Card for Privileged Roles (HR, CFO, IT) */}
               {showDetails && isPrivilegedRole && (
                 <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800/80 space-y-4">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
@@ -1160,7 +1120,6 @@ export default function ClockInClockOut() {
                 </div>
               )}
 
-              {/* Forgot Clockout Alert - Only shown when details are expanded */}
               {showDetails && (forgotClockoutRecords.length > 0 || isPrivilegedRole) && (
                 <div className="p-5 rounded-2xl bg-rose-50/10 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/20">
                   <div className="space-y-4">
@@ -1182,7 +1141,6 @@ export default function ClockInClockOut() {
                       )}
                     </div>
                     <div className="overflow-hidden rounded-xl border border-rose-100 dark:border-rose-900/20">
-                      {/* Mobile Cards (md:hidden) */}
                       <div className="md:hidden space-y-2.5 p-2.5 bg-rose-50/20 dark:bg-rose-950/10">
                         {filteredForgotRecords.length === 0 ? (
                           <div className="p-6 text-center text-rose-700 dark:text-rose-400 font-medium italic bg-white dark:bg-black rounded-xl">
@@ -1225,7 +1183,6 @@ export default function ClockInClockOut() {
                         )}
                       </div>
 
-                      {/* Desktop Table (hidden md:block) */}
                       <div className="hidden md:block overflow-x-auto">
                         <table className="w-full min-w-[650px] text-left border-collapse text-xs md:text-sm">
                           <thead>
@@ -1280,7 +1237,6 @@ export default function ClockInClockOut() {
                 </div>
               )}
 
-              {/* Working Hours Summary - Only shown when details are expanded */}
               {showDetails && (
                 <div className="p-5 rounded-2xl bg-slate-50/50 dark:bg-gray-900/30 border border-slate-200 dark:border-gray-800">
                   <div className="space-y-4">
@@ -1304,7 +1260,6 @@ export default function ClockInClockOut() {
                       )}
                     </div>
                     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
-                      {/* Mobile Card View (md:hidden) */}
                       <div className="md:hidden space-y-2.5 p-3">
                         {filteredAllRecords.length === 0 ? (
                           <div className="p-6 text-center text-slate-500 font-medium italic">
@@ -1434,7 +1389,6 @@ export default function ClockInClockOut() {
                         )}
                       </div>
 
-                      {/* Desktop Table (hidden md:block) */}
                       <div className="hidden md:block overflow-x-auto">
                         <table className="w-full min-w-[750px] text-left border-collapse text-xs md:text-sm">
                           <thead>
@@ -1653,7 +1607,6 @@ export default function ClockInClockOut() {
               </div>
             )}
 
-            {/* Edit Attendance Record Modal */}
             {isEditModalOpen && editingRecord && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
                 <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">

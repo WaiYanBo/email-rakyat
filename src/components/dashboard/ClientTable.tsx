@@ -76,20 +76,17 @@ const parseDateString = (dateStr: any): Date | null => {
   const s = translateBmMonths(String(dateStr).trim().toUpperCase());
   if (s === 'KIV' || s === 'PENDING' || s === '' || s === '-') return null;
 
-  // Try ISO YYYY-MM-DD first
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     const d = new Date(s);
     if (!isNaN(d.getTime())) return d;
   }
 
-  // Try DD/MM/YYYY or YYYY/MM/DD or standard splits
   const parts = s.replace(/-/g, '/').split('/');
   if (parts.length === 3) {
     const part0 = parts[0].trim();
     const part2 = parts[2].trim().split(/\s+/)[0];
 
     if (part0.length === 4) {
-      // YYYY/MM/DD format
       const y = parseInt(part0, 10);
       const m = parseInt(parts[1], 10);
       const d = parseInt(part2, 10);
@@ -98,7 +95,6 @@ const parseDateString = (dateStr: any): Date | null => {
         if (!isNaN(date.getTime())) return date;
       }
     } else {
-      // DD/MM/YYYY format
       const d = parseInt(part0, 10);
       const m = parseInt(parts[1], 10);
       let y = parseInt(part2, 10);
@@ -110,7 +106,6 @@ const parseDateString = (dateStr: any): Date | null => {
     }
   }
 
-  // Fallback to standard JS Date parsing
   const parsed = new Date(s);
   return isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -141,7 +136,6 @@ const getLastPaymentInfo = (client: any) => {
     { name: '10th Payment', dateKey: '10th PAYMENT DATE', amtKey: '10th PAYMENT' }
   ];
 
-  // Scan backwards from 6th down to 1st
   for (let i = paymentStages.length - 1; i >= 0; i--) {
     const stage = paymentStages[i];
     const amt = parseAmount(client[stage.amtKey]);
@@ -159,7 +153,6 @@ const getLastPaymentInfo = (client: any) => {
     }
   }
 
-  // Fallback to case Date if no payment has been made yet
   const caseDateStr = client.DATE;
   if (caseDateStr && String(caseDateStr).trim() !== '') {
     const parsedCaseDate = parseDateString(caseDateStr);
@@ -589,7 +582,6 @@ export default function ClientTable({
 
   const processedClients = useMemo(() => {
     return clients.map(client => {
-      // Pre-parse DATE
       let parsedDateVal = 0;
       const s = String(client.DATE || '').trim().toUpperCase();
       if (s !== 'KIV' && s !== 'PENDING' && s !== '') {
@@ -603,7 +595,6 @@ export default function ClientTable({
         }
       }
 
-      // Pre-parse numeric columns
       const numericValues: Record<string, number> = {};
       const numericKeys = ['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'];
       for (const k of numericKeys) {
@@ -611,7 +602,6 @@ export default function ClientTable({
         numericValues[k] = parseFloat(raw) || 0;
       }
 
-      // Pre-parse No
       const valNo = client.No ?? client.NO;
       const numNo = Number(valNo);
       const parsedNoVal = isNaN(numNo) ? 0 : numNo;
@@ -677,12 +667,10 @@ export default function ClientTable({
     return result;
   }, [sort, lodClients]);
 
-  // Reset to first page when search/filters/sort changes, but not when clients data updates (like on edit)
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, dateFilter, sort, selectedMonth, viewMode]);
 
-  // Clamp page if records decrease (e.g. on delete or mode change)
   useEffect(() => {
     const totalRecords = viewMode === 'lod' ? lodClients.length : processedClients.length;
     const totalPages = Math.ceil(totalRecords / 25) || 1;
@@ -862,7 +850,6 @@ export default function ClientTable({
   const getExportData = async () => {
     let baseData = exportScope === 'full' ? await onExportFull() : sortedClients;
 
-    // Always sort by "No" ascending if exportScope is "full" (as requested by user)
     if (exportScope === 'full') {
       baseData = [...baseData].sort((a: any, b: any) => {
         const noA = a.No !== null && a.No !== undefined ? Number(a.No) : (a.NO !== null && a.NO !== undefined ? Number(a.NO) : Infinity);
@@ -874,13 +861,10 @@ export default function ClientTable({
       });
     }
 
-    // Determine ordering keys for expanded view if needed
     const sampleClient = baseData[0] || {};
     const orderedKeys = getOrderedKeys(sampleClient);
 
     return baseData.map(client => {
-      // Export Full Database always exports all columns (expanded).
-      // Export Current View exports based on the active viewMode.
       if (exportScope === 'full') {
         return formatExpandedClient(client, lang, orderedKeys);
       }
@@ -1025,7 +1009,6 @@ export default function ClientTable({
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                 <h3 className="text-sm font-bold text-white tracking-tight hidden lg:block">{t('clients', 'clientRegistry', lang)}</h3>
 
-                {/* EXPORT BUTTONS & ADD BUTTON */}
                 <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
                   {canExport && (
                     <>
@@ -1098,7 +1081,6 @@ export default function ClientTable({
               </div>
             </div>
 
-            {/* Mobile Card System (Phones only - Vertical, No Horizontal Scrolling) */}
             <div className="block md:hidden flex-1 p-3 space-y-3 bg-slate-50/70 dark:bg-black/90 overflow-y-auto">
               {paginatedClients.length > 0 ? (
                 paginatedClients.map((client, index) => {
@@ -1127,7 +1109,6 @@ export default function ClientTable({
                         key={rowId}
                         className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
                       >
-                        {/* Header */}
                         <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
                           <div className="space-y-0.5 flex-1">
                             <div className="flex items-center gap-2">
@@ -1157,7 +1138,6 @@ export default function ClientTable({
                           </span>
                         </div>
 
-                        {/* 2x2 Grid Info */}
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="bg-slate-50 dark:bg-gray-800/40 p-2.5 rounded-xl">
                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold block">
@@ -1193,7 +1173,6 @@ export default function ClientTable({
                           </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="grid grid-cols-2 gap-2 pt-1">
                           <button
                             onClick={() => onViewClick(client)}
@@ -1216,13 +1195,11 @@ export default function ClientTable({
                     );
                   }
 
-                  // Standard / Expanded View Card
                   return (
                     <div
                       key={rowId}
                       className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-gray-700 transition-all"
                     >
-                      {/* Card Header */}
                       <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-gray-800/80 pb-2.5">
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1262,7 +1239,6 @@ export default function ClientTable({
                         </span>
                       </div>
 
-                      {/* Details Row */}
                       <div className="flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 bg-slate-50/80 dark:bg-gray-800/30 px-3 py-2 rounded-xl">
                         <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate max-w-[170px]">
                           🏷️ {client["CASE CATEGORY"] || '-'}
@@ -1272,7 +1248,6 @@ export default function ClientTable({
                         </span>
                       </div>
 
-                      {/* Financial Breakdown Grid */}
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-xl">
                           <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
@@ -1326,7 +1301,6 @@ export default function ClientTable({
                         </div>
                       </div>
 
-                      {/* Actions Footer */}
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <button
                           onClick={() => onViewClick(client)}
@@ -1355,7 +1329,6 @@ export default function ClientTable({
               )}
             </div>
 
-            {/* Desktop Table (Laptops / Tablets / Desktops only) */}
             <div className="hidden md:block flex-1 overflow-auto scrollbar-thin bg-white dark:bg-black relative">
               <table className="w-full min-w-[1000px] text-left border-collapse whitespace-nowrap text-xs md:text-sm">
                 <thead>
@@ -1733,7 +1706,6 @@ export default function ClientTable({
         )}
       </div>
 
-      {/* Dynamic Summary Cards & Month Registry Count Filter */}
       {
         viewMode !== 'potential' && (
           <div className="mt-6 bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col gap-6">
@@ -1746,9 +1718,7 @@ export default function ClientTable({
               </h4>
             </div>
 
-            {/* Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Card 1: Total Clients */}
               <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
                 <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {t('clients', 'totalClients', lang)}
@@ -1758,7 +1728,6 @@ export default function ClientTable({
                 </span>
               </div>
 
-              {/* Card 2: Total Package */}
               <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
                 <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {t('clients', 'totalPackageSum', lang)}
@@ -1768,7 +1737,6 @@ export default function ClientTable({
                 </span>
               </div>
 
-              {/* Card 3: Collected Amount */}
               <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
                 <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {t('clients', 'collectedAmountSum', lang)}
@@ -1778,7 +1746,6 @@ export default function ClientTable({
                 </span>
               </div>
 
-              {/* Card 4: Pending Amount */}
               <div className="bg-slate-50 dark:bg-gray-900/80 border border-slate-100 dark:border-gray-800/80 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-200 dark:hover:border-gray-700/80 transition-all">
                 <span className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                   {t('clients', 'pendingAmountSum', lang)}
@@ -1789,10 +1756,8 @@ export default function ClientTable({
               </div>
             </div>
 
-            {/* Divider */}
             <div className="border-t border-slate-100 dark:border-gray-800" />
 
-            {/* Month Registry Count Filter Sub-section */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
@@ -1839,7 +1804,6 @@ export default function ClientTable({
                 </div>
               </div>
 
-              {/* Registration Trend Chart */}
               {clientChartData.length > 0 && (
                 <div className="p-5 border border-slate-100 dark:border-gray-800/80 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col space-y-4">
                   <InteractiveBarChart

@@ -1,6 +1,4 @@
 ---
-// src/components/PortalNavbar.astro
-// Portal Admin Navigation Bar - Fixed at top with z-50
 ---
 
 <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 h-16">
@@ -42,17 +40,13 @@
 </nav>
 
 <script>
-  // Script to handle theme toggling specifically for the portal
   const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
   const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
   const themeToggleBtn = document.getElementById('portal-theme-toggle');
 
-  // Ensure this script only runs on portal pages
   if (window.location.pathname.startsWith('/portal')) {
-    // 1. Check local storage
     let currentTheme = localStorage.getItem('portal-theme') || 'dark';
 
-    // 2. Set initial icon and class
     const applyTheme = (theme: string) => {
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -67,7 +61,6 @@
 
     applyTheme(currentTheme);
 
-    // 3. Handle click
     themeToggleBtn?.addEventListener('click', () => {
       currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
       localStorage.setItem('portal-theme', currentTheme);

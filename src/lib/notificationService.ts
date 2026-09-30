@@ -41,10 +41,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Automatically prompts the user for notification permissions as soon as they use the portal,
- * ensuring prompts appear immediately and on first tap/click.
- */
 export const initAutoNotificationRequest = () => {
   if (typeof window === 'undefined') return;
   if (!('Notification' in window)) return;
@@ -57,10 +53,8 @@ export const initAutoNotificationRequest = () => {
     }
   };
 
-  // 1. Try immediately on execution
   tryRequest();
 
-  // 2. Also bind to the first user touch/click/pointer interaction across the portal
   const onFirstInteraction = () => {
     tryRequest();
     window.removeEventListener('click', onFirstInteraction);
@@ -75,7 +69,6 @@ export const initAutoNotificationRequest = () => {
   window.addEventListener('keydown', onFirstInteraction, { once: true, passive: true });
 };
 
-// Automatically run on portal load
 if (typeof window !== 'undefined') {
   initAutoNotificationRequest();
 }
@@ -281,10 +274,6 @@ export const setAlertSoundMuted = (muted: boolean) => {
   window.dispatchEvent(new CustomEvent('portalAlertMuteChanged', { detail: { muted } }));
 };
 
-/**
- * Synthesizes an elegant, soothing executive chime (warm C-major acoustic triad).
- * Zero harsh frequencies, zero ear fatigue.
- */
 const playSyntheticExecutiveChime = (ctx: AudioContext) => {
   try {
     const now = ctx.currentTime;
@@ -299,7 +288,6 @@ const playSyntheticExecutiveChime = (ctx: AudioContext) => {
     masterGain.connect(filter);
     filter.connect(ctx.destination);
 
-    // Warm, pleasant 3-note executive chime: C5 (523.25 Hz), E5 (659.25 Hz), G5 (783.99 Hz)
     const chimeNotes = [
       { freq: 523.25, offset: 0, duration: 0.75, gain: 0.28 },
       { freq: 659.25, offset: 0.09, duration: 0.75, gain: 0.25 },
@@ -313,7 +301,6 @@ const playSyntheticExecutiveChime = (ctx: AudioContext) => {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + offset);
 
-      // Acoustic attack and smooth exponential decay
       noteGain.gain.setValueAtTime(0.0001, now + offset);
       noteGain.gain.exponentialRampToValueAtTime(gain, now + offset + 0.02);
       noteGain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
@@ -355,7 +342,6 @@ const playWebAudioChimeFallback = () => {
 export const playNotificationChime = () => {
   if (typeof window === 'undefined') return;
 
-  // Respect user's mute setting
   if (isAlertSoundMuted()) {
     try {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -365,14 +351,12 @@ export const playNotificationChime = () => {
     return;
   }
 
-  // Gentle vibration on supported mobile devices
   try {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate([200, 80, 200]);
     }
   } catch (_vErr) {}
 
-  // Try playing the clean audio element first
   try {
     if (!persistentAudioEl) {
       persistentAudioEl = new Audio('/sounds/chime.wav');
@@ -383,7 +367,6 @@ export const playNotificationChime = () => {
     const p = persistentAudioEl.play();
     if (p !== undefined) {
       p.catch(() => {
-        // If file playback blocked, fallback to Web Audio
         playWebAudioChimeFallback();
       });
     }
@@ -398,7 +381,6 @@ export const playUrgentAlertChime = (repeatCount: number = 1) => {
 
   playNotificationChime();
 
-  // If repeated, space gently by 1600ms rather than a rapid repeating siren
   if (repeatCount > 1) {
     let count = 1;
     const timer = setInterval(() => {

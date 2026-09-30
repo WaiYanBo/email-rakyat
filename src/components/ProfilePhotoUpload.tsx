@@ -33,8 +33,6 @@ async function getCroppedImg(
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // We DO NOT apply the background here anymore.
-  // We just extract the cropped portion of the original image.
   ctx.drawImage(
     image,
     pixelCrop.x,
@@ -71,19 +69,16 @@ export default function ProfilePhotoUpload({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
-  // Sync avatarUrl whenever initialAvatarUrl prop updates from parent
   useEffect(() => {
     setAvatarUrl(initialAvatarUrl);
   }, [initialAvatarUrl]);
 
-  // Menu & View State
   const [showMenu, setShowMenu] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -114,7 +109,6 @@ export default function ProfilePhotoUpload({
       setShowMenu(false);
       setError(null);
 
-      // Clean up previous avatar from storage if available
       if (avatarUrl && avatarUrl.includes('/avatars/')) {
         try {
           const parts = avatarUrl.split('/avatars/');
@@ -162,7 +156,6 @@ export default function ProfilePhotoUpload({
       setShowCropModal(true);
       setError(null);
 
-      // Reset input so the same file can be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -180,11 +173,9 @@ export default function ProfilePhotoUpload({
       setIsUploading(true);
       setError(null);
 
-      // 1. Get the cropped image blob directly
       const croppedBlob = await getCroppedImg(selectedImage, croppedAreaPixels);
       if (!croppedBlob) throw new Error(t('settings', 'cropFailed', lang));
 
-      // 2. Clean up previous avatar from storage if exists
       if (avatarUrl && avatarUrl.includes('/avatars/')) {
         try {
           const parts = avatarUrl.split('/avatars/');
@@ -195,7 +186,6 @@ export default function ProfilePhotoUpload({
         } catch (_delErr) {}
       }
 
-      // 3. Upload cleanly to Supabase Storage
       const filePath = `${userId}/avatar-${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
@@ -209,14 +199,12 @@ export default function ProfilePhotoUpload({
         throw new Error(`${t('settings', 'uploadFailed', lang)} ${uploadError.message}`);
       }
 
-      // 4. Get Public URL
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
       const newUrl = publicUrlData.publicUrl;
 
-      // 5. Update profiles table
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: newUrl })
@@ -228,7 +216,6 @@ export default function ProfilePhotoUpload({
       onUploadSuccess(newUrl);
       window.dispatchEvent(new Event('profileUpdated'));
 
-      // Close Modal & Cleanup
       setShowCropModal(false);
       URL.revokeObjectURL(selectedImage);
       setSelectedImage(null);

@@ -21,11 +21,6 @@ export interface AccrualCalculation {
   note?: string;
 }
 
-// ─── HELPER: ROUND LEAVE DAYS (0.5 and Whole numbers) ───────────────────────
-// Rules:
-// - Negligible remainder (< 0.20, e.g. 3.01, 3.02) -> stays at whole number: 3.0!
-// - Moderate remainder (0.20 - 0.59, e.g. 3.35, 1.34) -> rounds to 0.5: 3.5, 1.5!
-// - High remainder (>= 0.60, e.g. 6.67, 0.67) -> rounds up to whole number: 7.0, 1.0!
 export function roundLeaveDays(val: number): number {
   if (val <= 0) return 0;
   const intPart = Math.floor(val);
@@ -40,7 +35,6 @@ export function roundLeaveDays(val: number): number {
   return intPart + 1.0;
 }
 
-// ─── HELPER: CALCULATE MONTH-BY-MONTH ANNUAL LEAVE ACCRUAL & TENURE ───
 export function calculateLeaveAccrual(
   startDateStr?: string,
   endDateStr?: string,
@@ -63,7 +57,6 @@ export function calculateLeaveAccrual(
     };
   }
 
-  // Parse YYYY-MM-DD explicitly to prevent any UTC/timezone shifts
   const dateParts = startDateStr.split('T')[0].split('-');
   const startYear = parseInt(dateParts[0], 10);
   const startMonth1Based = parseInt(dateParts[1], 10); // 1 = Jan, 8 = Aug
@@ -87,7 +80,6 @@ export function calculateLeaveAccrual(
     ? new Date(parseInt(endDateStr.split('-')[0], 10), parseInt(endDateStr.split('-')[1], 10) - 1, parseInt(endDateStr.split('-')[2], 10) || 1)
     : referenceDate;
 
-  // 1. Calculate Tenure
   let years = end.getFullYear() - start.getFullYear();
   let months = end.getMonth() - start.getMonth();
   let days = end.getDate() - start.getDate();
@@ -108,7 +100,6 @@ export function calculateLeaveAccrual(
   if (days > 0 || tenureParts.length === 0) tenureParts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
   const tenureText = tenureParts.join(' ');
 
-  // 2. Contract for Service (Independent Contractor - Not eligible for statutory annual leave accrual)
   if (employmentType === 'Contract for Service') {
     return {
       tenureText,
@@ -123,7 +114,6 @@ export function calculateLeaveAccrual(
     };
   }
 
-  // 3. Internship: Pro-rated across the internship duration
   if (employmentType === 'Internship') {
     const internEnd = endDateStr ? new Date(endDateStr) : end;
     const totalInternMonths = Math.max(1, (internEnd.getFullYear() - start.getFullYear()) * 12 + (internEnd.getMonth() - start.getMonth()) + (internEnd.getDate() >= start.getDate() ? 1 : 0));
@@ -143,23 +133,16 @@ export function calculateLeaveAccrual(
     };
   }
 
-  // 4. Contract of Service: Month-by-month statutory accrual in current calendar year
   const currentYear = referenceDate.getFullYear();
   let monthsInYear = 12;
   let completedMonthsThisYear = 0;
 
   if (startYear === currentYear) {
-    // Full months after the start month through December
     const fullMonthsAfter = 12 - startMonth1Based;
-    // Join month credit:
-    // Started on 1st: 1.0 month credit (e.g. Aug 1st = 1.0 + 4 = 5.0 months)
-    // Started between 2nd and 15th: 0.5 month credit (e.g. Aug 15th = 0.5 + 4 = 4.5 months)
-    // Started after 15th: 0 month credit (e.g. Aug 20th = 0 + 4 = 4.0 months)
     const joinMonthCredit = startDay === 1 ? 1.0 : (startDay <= 15 ? 0.5 : 0.0);
     monthsInYear = fullMonthsAfter + joinMonthCredit;
     monthsInYear = Math.max(0.5, Math.min(12, monthsInYear));
 
-    // Completed months elapsed so far in current year up to reference date
     const refMonth1Based = referenceDate.getMonth() + 1; // 1-12
     if (refMonth1Based > startMonth1Based) {
       const fullMonthsBetween = refMonth1Based - startMonth1Based - 1;
@@ -177,17 +160,12 @@ export function calculateLeaveAccrual(
     completedMonthsThisYear = referenceDate.getMonth() + (referenceDate.getDate() >= 15 ? 1 : 0.5);
     completedMonthsThisYear = Math.min(12, Math.max(0, completedMonthsThisYear));
   } else {
-    // Future start date
     monthsInYear = 0;
     completedMonthsThisYear = 0;
   }
 
   const monthlyRateNum = annualTotal / 12;
-  // Year pro-rata entitlement:
-  // For Aug 15: 4.5 * (8 / 12) = 3.015 -> roundLeaveDays(3.015) = 3 days!
-  // For Aug 1:  5.0 * (8 / 12) = 3.333 (or 5 * 0.67 = 3.35) -> roundLeaveDays(3.35) = 3.5 days!
   const proRatedYearTotal = roundLeaveDays(monthsInYear * monthlyRateNum);
-  // Accrued to date
   const rawAccrued = completedMonthsThisYear * monthlyRateNum;
   const accruedDays = Math.min(proRatedYearTotal, roundLeaveDays(rawAccrued));
 
@@ -223,7 +201,6 @@ export default function ReportsView() {
   const [editingStaff, setEditingStaff] = useState<any>(null);
   const [departmentInputType, setDepartmentInputType] = useState<'select' | 'text'>('select');
 
-  // Contract & Period form modal states
   const [modalEmploymentType, setModalEmploymentType] = useState<EmploymentType>('Contract of Service');
   const [modalStartDate, setModalStartDate] = useState('');
   const [modalEndDate, setModalEndDate] = useState('');
@@ -240,7 +217,6 @@ export default function ReportsView() {
         return;
       }
 
-      // Fetch approved leave requests for today
       const todayStr = new Date().toISOString().split('T')[0];
       const { data: leavesData } = await supabase
         .from('leave_requests')
@@ -251,7 +227,6 @@ export default function ReportsView() {
 
       const staffOnLeave = new Set(leavesData?.map(l => l.profile_id) || []);
 
-      // Fetch leave balances to know each staff's assigned annual_total
       const { data: balancesData } = await supabase
         .from('leave_balances')
         .select('profile_id, annual_total, annual_used');
@@ -264,7 +239,6 @@ export default function ReportsView() {
           let empEnd = staff.end_date;
           let empActive = staff.is_currently_working;
 
-          // Parse metadata tag from remarks if direct columns are not yet present
           if (staff.remarks) {
             const match = staff.remarks.match(/<!--EMP_META:(.*?)-->/);
             if (match) {
@@ -464,13 +438,11 @@ export default function ReportsView() {
       return;
     }
 
-    // Employment contract and period
     const employmentType = modalEmploymentType;
     const startDateVal = modalStartDate || '';
     const isStillWorkingVal = modalEmploymentType === 'Internship' ? false : modalIsStillWorking;
     const endDateVal = modalEmploymentType === 'Internship' ? (modalEndDate || '') : (!isStillWorkingVal ? (modalEndDate || '') : '');
 
-    // Prepare metadata tag fallback in remarks
     const rawCleanRemarks = cleanRemarks.replace(/<!--EMP_META:.*?-->/g, '').trim();
     const metaPayload = {
       type: employmentType,
@@ -492,7 +464,6 @@ export default function ReportsView() {
       }
 
       if (editingStaff) {
-        // Attempt update with native columns, fallback to remarksWithMeta if columns don't exist yet
         let updatePayload: any = {
           id: editingStaff.id,
           full_name: cleanName,
@@ -667,7 +638,6 @@ export default function ReportsView() {
 
       {activeTab === 'hr' && (
         <div className="space-y-6 animate-fade-in">
-          {/* Top Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
             <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-gray-900/40 dark:border-gray-800/80 shadow-sm">
               <p className="text-[11px] font-semibold text-slate-450 dark:text-zinc-500 uppercase tracking-wide">{t('reports', 'activeStaff', lang)}</p>
@@ -683,7 +653,6 @@ export default function ReportsView() {
             </div>
           </div>
 
-          {/* Staff Directory (Mobile Cards + Desktop Table) */}
           <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm flex flex-col max-h-[75vh]">
             <div className="p-5 border-b border-indigo-950 dark:border-gray-800 flex justify-between items-center bg-indigo-950 dark:bg-gray-900">
               <div>
@@ -705,14 +674,12 @@ export default function ReportsView() {
               )}
             </div>
 
-            {/* Mobile Card View (md:hidden) */}
             <div className="md:hidden flex-1 overflow-y-auto p-3 space-y-3">
               {sortedStaffRecords.map(staff => (
                 <div
                   key={staff.id}
                   className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                 >
-                  {/* Top: Name, Role & Status */}
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-white text-sm">
@@ -739,7 +706,6 @@ export default function ReportsView() {
                     </span>
                   </div>
 
-                  {/* Contract & Period */}
                   <div className="p-2.5 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
@@ -769,7 +735,6 @@ export default function ReportsView() {
                       )}
                     </div>
 
-                    {/* Accrued Leave Info */}
                     <div className="pt-1.5 border-t border-slate-200 dark:border-gray-800 flex justify-between items-center text-[11px]">
                       <span className="text-slate-500 dark:text-zinc-400 font-medium">Accrued Leave:</span>
                       {staff.employment_type === 'Contract for Service' ? (
@@ -782,7 +747,6 @@ export default function ReportsView() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100 dark:border-gray-800">
                     <button
                       onClick={() => { setViewingStaff(staff); setIsViewStaffModalOpen(true); }}
@@ -803,7 +767,6 @@ export default function ReportsView() {
               ))}
             </div>
 
-            {/* Desktop Table View (hidden md:block) */}
             <div className="hidden md:block flex-1 overflow-auto scrollbar-thin">
               <table className="w-full min-w-[950px] text-left border-collapse text-xs md:text-sm">
                 <thead>
@@ -829,7 +792,6 @@ export default function ReportsView() {
                       </td>
                       <td className="px-4 py-3.5 text-left hidden md:table-cell">{staff.department}</td>
 
-                      {/* Contract Type & Duration of Service */}
                       <td className="px-4 py-3.5 text-left">
                         <div className="flex flex-col gap-1 items-start">
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
@@ -859,7 +821,6 @@ export default function ReportsView() {
                         </div>
                       </td>
 
-                      {/* Month-by-Month Accrued Annual Leave */}
                       <td className="px-4 py-3.5 text-center">
                         {staff.employment_type === 'Contract for Service' ? (
                           <div className="text-[10px] text-slate-400 dark:text-zinc-500 italic">
@@ -918,7 +879,6 @@ export default function ReportsView() {
         </div>
       )}
 
-      {/* ─── VIEW STAFF DOSSIER MODAL ─── */}
       {isViewStaffModalOpen && viewingStaff && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -972,7 +932,6 @@ export default function ReportsView() {
 
               </div>
 
-              {/* ─── DEDICATED CONTRACT & ANNUAL LEAVE ACCRUAL CARD ─── */}
               <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-amber-500/30 dark:border-yellow-500/30 shadow-sm space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-gray-800 pb-2.5">
                   <div className="flex items-center gap-2">
@@ -1052,7 +1011,6 @@ export default function ReportsView() {
         </div>
       )}
 
-      {/* ─── ONBOARD / EDIT STAFF MODAL ─── */}
       {isStaffModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -1180,7 +1138,6 @@ export default function ReportsView() {
                       </select>
                     </div>
 
-                    {/* ─── DEDICATED CONTRACT & PERIOD SECTION (CALCULATES ACCRUAL) ─── */}
                     <div className="col-span-2 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 space-y-3.5">
                       <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-2">
                         <span className="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-yellow-400 flex items-center gap-1.5">
@@ -1192,7 +1149,6 @@ export default function ReportsView() {
                         </span>
                       </div>
 
-                      {/* Contract Type Selection */}
                       <div className="space-y-1">
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                           Contract Option
@@ -1209,7 +1165,6 @@ export default function ReportsView() {
                         </select>
                       </div>
 
-                      {/* Conditional Date Pickers */}
                       {modalEmploymentType === 'Internship' ? (
                         <div className="grid grid-cols-2 gap-3 pt-1">
                           <div className="space-y-1">
@@ -1287,7 +1242,6 @@ export default function ReportsView() {
                         </div>
                       )}
 
-                      {/* Live Calculation Preview Card */}
                       {(() => {
                         const accrual = calculateLeaveAccrual(
                           modalStartDate,

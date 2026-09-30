@@ -127,13 +127,11 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
   const [permissionsMatrix, setPermissionsMatrix] = useState<Record<string, PermissionEntry>>({});
   const [initialMatrix, setInitialMatrix] = useState<Record<string, PermissionEntry>>({});
 
-  // Filter & Navigation state
   const [filterType, setFilterType] = useState<'staff' | 'department' | 'feature'>('staff');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const [selectedDept, setSelectedDept] = useState<string>('');
   const [selectedFeature, setSelectedFeature] = useState<PermissionKey>('view_clients');
 
-  // Search queries
   const [staffSearch, setStaffSearch] = useState('');
   const [deptFilterPill, setDeptFilterPill] = useState<string>('all');
   const [deptSearch, setDeptSearch] = useState('');
@@ -183,7 +181,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
       const matrix: Record<string, PermissionEntry> = {};
 
-      // Seed Department Defaults
       depts.forEach(dept => {
         matrix[`dept_${dept}`] = {
           target_type: 'department',
@@ -192,7 +189,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         };
       });
 
-      // Seed User Entries (null defaults to inherit)
       activeProfiles.forEach(user => {
         matrix[`user_${user.id}`] = {
           target_type: 'user',
@@ -223,7 +219,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         };
       });
 
-      // Overlay database permissions
       perms?.forEach(p => {
         const key = p.target_type === 'department' ? `dept_${p.target_id}` : `user_${p.target_id}`;
         if (matrix[key]) {
@@ -260,7 +255,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     }
   };
 
-  // Helper: check effective permission for a user (user override or fallback to dept)
   const getEffectivePermission = (userId: string, module: PermissionKey): boolean => {
     const userKey = `user_${userId}`;
     const userVal = permissionsMatrix[userKey]?.permissions?.[module];
@@ -281,7 +275,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     const effective = deptVal !== null ? deptVal : (DEFAULT_DEPT_PERMISSIONS[module] ?? false);
     if (effective) return true;
 
-    // If checking a view permission, also check if user has the corresponding manage permission
     if (module === 'view_potential_clients' && getEffectivePermission(userId, 'manage_potential_clients')) return true;
     if (module === 'view_lod' && getEffectivePermission(userId, 'manage_lod')) return true;
     if (module === 'view_clients' && getEffectivePermission(userId, 'edit_clients')) return true;
@@ -294,14 +287,12 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     return false;
   };
 
-  // Helper: check if a user permission is an override vs department default
   const isUserOverride = (userId: string, module: PermissionKey): boolean => {
     const userKey = `user_${userId}`;
     const userVal = permissionsMatrix[userKey]?.permissions?.[module];
     return userVal === true || userVal === false;
   };
 
-  // Toggle single permission
   const togglePermission = (key: string, module: PermissionKey) => {
     setPermissionsMatrix(prev => {
       const entry = prev[key];
@@ -322,7 +313,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         [module]: nextVal
       };
 
-      // Automatic cascading for paired view/manage permissions
       if (nextVal === true) {
         if (module === 'manage_potential_clients') updatedPermissions.view_potential_clients = true;
         if (module === 'manage_lod') updatedPermissions.view_lod = true;
@@ -355,7 +345,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     });
   };
 
-  // Quick Privilege Presets definition
   const applyPreset = (targetKey: string, presetType: 'full' | 'manager' | 'hr' | 'staff' | 'readonly' | 'revoke') => {
     let presetPerms: Partial<PermissionEntry['permissions']> = {};
 
@@ -531,7 +520,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     showToast(isBm ? 'Pratetap keistimewaan dikemaskini.' : 'Privilege preset applied.');
   };
 
-  // Reset user to department default
   const resetUserToDeptDefault = (userId: string) => {
     const userKey = `user_${userId}`;
     setPermissionsMatrix(prev => {
@@ -555,7 +543,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     showToast(isBm ? 'Kebenaran staf diset semula ke lalai jabatan.' : 'Staff permissions reset to department default.');
   };
 
-  // Synchronize all staff in department to match department template
   const syncAllStaffInDept = (deptName: string) => {
     const deptUsers = users.filter(u => u.department === deptName);
     const deptKey = `dept_${deptName}`;
@@ -582,7 +569,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     );
   };
 
-  // Compute number of unsaved changes
   const unsavedCount = useMemo(() => {
     let diffs = 0;
     Object.keys(permissionsMatrix).forEach(key => {
@@ -597,13 +583,11 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     return diffs;
   }, [permissionsMatrix, initialMatrix]);
 
-  // Discard changes
   const handleDiscard = () => {
     setPermissionsMatrix(JSON.parse(JSON.stringify(initialMatrix)));
     showToast(isBm ? 'Semua perubahan telah dibatalkan.' : 'Changes discarded.');
   };
 
-  // Save changes to Supabase
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -614,7 +598,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
       for (const entry of upserts) {
         let recordId = entry.id;
 
-        // If ID not set in matrix, check database to prevent duplicate key violations
         if (!recordId) {
           const { data: existing } = await supabase
             .from('access_permissions')
@@ -657,7 +640,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         }
       }
 
-      // Clear in-memory permissions cache for real-time reactivity
       clearPermissionsCache();
 
       setInitialMatrix(JSON.parse(JSON.stringify(permissionsMatrix)));
@@ -670,7 +652,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     }
   };
 
-  // Translation helpers
   const getFeatureLabel = (f: PermissionKey) => {
     switch (f) {
       case 'view_clients': return t('accessControl', 'colViewClients', lang);
@@ -725,7 +706,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
     }
   };
 
-  // Filtered lists
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
       const matchSearch =
@@ -778,7 +758,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
   return (
     <div className="space-y-6 animate-fade-in relative pb-16">
-      {/* Toast Notification */}
       {toastMessage && (
         <div
           className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold animate-bounce-in ${toastMessage.type === 'success'
@@ -790,7 +769,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         </div>
       )}
 
-      {/* Header Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="min-w-0 flex-1">
           <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -835,10 +813,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
         </div>
       </div>
 
-      {/* Main Container */}
       <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6">
 
-        {/* Filter Mode Selector */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-zinc-800 pb-4">
           <button
             onClick={() => setFilterType('staff')}
@@ -877,10 +853,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           </button>
         </div>
 
-        {/* ─── TAB 1: INDIVIDUAL STAFF VIEW ───────────────────────────────── */}
         {filterType === 'staff' && (
           <div className="space-y-6">
-            {/* Search & Department Filter Bar */}
             <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
               <div className="relative flex-1 min-w-[220px] max-w-md">
                 <input
@@ -895,7 +869,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                 </svg>
               </div>
 
-              {/* Department filter pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-thin">
                 <button
                   onClick={() => setDeptFilterPill('all')}
@@ -921,7 +894,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
               </div>
             </div>
 
-            {/* Staff Selector Dropdown */}
             <div>
               <label className="block text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
                 {isBm ? 'Pilih Kakitangan' : 'Select Staff Member'} ({filteredUsers.length})
@@ -941,7 +913,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
             {selectedUserObj && (
               <div className="bg-slate-50 dark:bg-zinc-950/80 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-6">
-                {/* Staff Dossier Header & Active Stats */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-5 border-b border-slate-200 dark:border-zinc-800">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center font-bold text-sm flex-shrink-0">
@@ -971,7 +942,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     </div>
                   </div>
 
-                  {/* Quick Action: Reset to Dept */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => resetUserToDeptDefault(selectedUserObj.id)}
@@ -983,7 +953,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   </div>
                 </div>
 
-                {/* Quick Presets Bar */}
                 <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 space-y-2">
                   <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
                     {t('accessControl', 'presetLabel', lang)}
@@ -1028,7 +997,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   </div>
                 </div>
 
-                {/* Categorized Permissions Grid */}
                 <div className="space-y-5">
                   {PERMISSION_CATEGORIES.map(category => {
                     const availableFeatures = category.features.filter(
@@ -1095,10 +1063,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           </div>
         )}
 
-        {/* ─── TAB 2: DEPARTMENT WIDE VIEW ─────────────────────────────────── */}
         {filterType === 'department' && (
           <div className="space-y-6">
-            {/* Department Search Bar */}
             <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
               <div className="relative flex-1 md:w-96">
                 <input
@@ -1133,7 +1099,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
 
             {selectedDept && (
               <div className="space-y-6">
-                {/* Department Template Card */}
                 <div className="bg-slate-50 dark:bg-zinc-950/80 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-6">
                   <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-200 dark:border-zinc-800">
                     <div>
@@ -1157,7 +1122,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     </div>
                   </div>
 
-                  {/* Department Quick Presets */}
                   <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 space-y-2">
                     <span className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wider block">
                       {isBm ? 'Tetapkan Templat Jabatan Mengikut Peranan:' : 'Set Department Baseline from Role Preset:'}
@@ -1202,7 +1166,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                     </div>
                   </div>
 
-                  {/* Department Matrix Grid by Categories */}
                   <div className="space-y-5">
                     {PERMISSION_CATEGORIES.map(category => {
                       const availableFeatures = category.features.filter(
@@ -1254,7 +1217,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   </div>
                 </div>
 
-                {/* Staff list in this department */}
                 <div className="bg-slate-50 dark:bg-zinc-950/80 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
@@ -1304,10 +1266,8 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
           </div>
         )}
 
-        {/* ─── TAB 3: FEATURE MATRIX VIEW ─────────────────────────────────── */}
         {filterType === 'feature' && (
           <div className="space-y-6">
-            {/* Feature Search */}
             <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
               <div className="relative flex-1 md:w-96">
                 <input
@@ -1351,7 +1311,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                   </p>
                 </div>
 
-                {/* By Department Breakdown */}
                 <div className="space-y-5">
                   {departments.map(dept => {
                     const deptUsers = users.filter(u => u.department === dept);
@@ -1362,7 +1321,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                         key={dept}
                         className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-xs"
                       >
-                        {/* Department Header with Toggle */}
                         <div className="flex items-center justify-between bg-slate-100/70 dark:bg-zinc-800/80 px-4 py-3 border-b border-slate-200 dark:border-zinc-800">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-xs md:text-sm text-slate-900 dark:text-white">
@@ -1379,7 +1337,6 @@ export default function AccessControlView({ isITAdmin = false }: { isITAdmin?: b
                           />
                         </div>
 
-                        {/* Staff items in department */}
                         <div className="p-2 divide-y divide-slate-100 dark:divide-zinc-800">
                           {deptUsers.map(user => {
                             const isEffective = getEffectivePermission(user.id, selectedFeature);

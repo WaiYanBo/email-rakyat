@@ -224,7 +224,6 @@ export default function PublicHolidaysView() {
           </div>
         )}
 
-        {/* Mobile Card View (md:hidden) */}
         <div className="md:hidden space-y-3">
           {holidays.length === 0 ? (
             <div className="p-8 text-center text-slate-500 dark:text-zinc-400 italic bg-white dark:bg-black rounded-xl border border-slate-200 dark:border-gray-800">
@@ -267,7 +266,6 @@ export default function PublicHolidaysView() {
           )}
         </div>
 
-        {/* Desktop Table View (hidden md:block) */}
         <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black">
           <table className="w-full min-w-[500px] text-left border-collapse text-sm">
             <thead>

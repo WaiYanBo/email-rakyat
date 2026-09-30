@@ -57,7 +57,6 @@ export default function LeaveControlPanel() {
 
   return (
     <div className="space-y-8 animate-page-transition pt-12 md:pt-0">
-      {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-gray-800 pb-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-slate-900 dark:text-white mb-2">

@@ -29,65 +29,50 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
   const { lang } = usePortalLanguage();
   const isBm = lang === 'bm';
 
-  // State
   const [profile, setProfile] = useState<any>(initialProfile || null);
   const { permissions, isITAdmin, loading: permsLoading } = usePermissions(profile);
   const [isApprover, setIsApprover] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Entitlement & Stats State (Personal)
   const [entitlement, setEntitlement] = useState<{ medical_total: number; medical_used: number }>({
     medical_total: 500.00,
     medical_used: 0.00
   });
 
-  // Admin Entitlements Management List
   const [allStaffEntitlements, setAllStaffEntitlements] = useState<StaffEntitlement[]>([]);
   const [editingEntitlement, setEditingEntitlement] = useState<{ profile_id: string; medical_total: string } | null>(null);
   const [savingEntitlement, setSavingEntitlement] = useState(false);
 
-  // Claims List State
   const [claims, setClaims] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'my' | 'pending' | 'draft' | 'approved' | 'rejected' | 'paid' | 'entitlements'>('my');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClaim, setEditingClaim] = useState<any>(null);
 
-  // Form State
   const [claimType, setClaimType] = useState<'Meal' | 'Mileage' | 'Medical' | 'Other'>('Meal');
   const [claimDate, setClaimDate] = useState<string>(getLocalDate());
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [actualAmount, setActualAmount] = useState<string>('');
 
-  // Mileage specific
   const [startLocation, setStartLocation] = useState('');
   const [destination, setDestination] = useState('');
   const [vehicleType, setVehicleType] = useState<'Car' | 'Motorcycle'>('Car');
   const [distanceKm, setDistanceKm] = useState<string>('');
 
-  // Receipt File State
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [existingReceiptPath, setExistingReceiptPath] = useState<string | null>(null);
   const [existingReceiptName, setExistingReceiptName] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
-
-  // Rejection Modal State
   const [rejectModalClaim, setRejectModalClaim] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
-
-  // View Receipt Modal State
   const [viewReceiptUrl, setViewReceiptUrl] = useState<string | null>(null);
   const [viewReceiptTitle, setViewReceiptTitle] = useState<string>('');
-
-  // Decide if this view acts as the Administrative view or Staff view
   const isAdminView = mode === 'admin' || (mode === 'auto' && isApprover && window?.location?.pathname?.includes('/portal/hr'));
 
-  // Initial Load
   useEffect(() => {
     loadInitialData();
   }, [initialProfile, mode]);
@@ -100,8 +85,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         window.location.href = '/portal/login';
         return;
       }
-
-      // 1. Load Profile & Role
       let userProfile = initialProfile;
       if (!userProfile) {
         const { data: profileData } = await supabase
@@ -139,7 +122,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
           Boolean(permissions?.manage_claims || permissions?.manage_hr);
         setIsApprover(isUserApprover);
 
-        // Set default tab based on mode
         if (mode === 'admin') {
           setActiveTab('pending');
         } else if (mode === 'staff') {
@@ -148,7 +130,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
           setActiveTab(isUserApprover ? 'pending' : 'my');
         }
 
-        // 2. Load Medical Entitlement (Personal)
         const currentYear = new Date().getFullYear();
         const { data: entData } = await supabase
           .from('claim_entitlements')
@@ -164,10 +145,8 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
           });
         }
 
-        // 3. Load Claims
         await fetchClaims();
 
-        // 4. Load Staff Entitlements if Admin Mode
         if (mode === 'admin' || isUserApprover) {
           await fetchAllStaffEntitlements(currentYear);
         }
@@ -199,7 +178,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         supabase.from('claim_entitlements').select('*').eq('year', year)
       ]);
 
-      const activeProfiles = (profilesRes.data || []).filter((p: any) => 
+      const activeProfiles = (profilesRes.data || []).filter((p: any) =>
         p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive'
       );
 
@@ -261,7 +240,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Live Calculation Helpers
   const remainingMedical = Math.max(0, entitlement.medical_total - entitlement.medical_used);
 
   const calculateLivePayable = () => {
@@ -278,7 +256,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     return act;
   };
 
-  // Modal Reset
   const openNewClaimModal = () => {
     setEditingClaim(null);
     setClaimType('Meal');
@@ -315,7 +292,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     setIsModalOpen(true);
   };
 
-  // Handle File Change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -332,7 +308,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Save or Submit Claim Handler
   const handleSaveClaim = async (targetStatus: 'Draft' | 'Pending Approval') => {
     if (!profile) return;
 
@@ -372,7 +347,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
       let receiptPath = existingReceiptPath;
       let receiptName = existingReceiptName;
 
-      // 1. Upload File if new file selected
       if (receiptFile) {
         const staffNameStr = profile.full_name || profile.name || 'staff';
         const staffFolderName = `${staffNameStr.replace(/[^a-zA-Z0-9]/g, '_')}_${profile.id.slice(0, 6)}`;
@@ -395,7 +369,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         receiptName = receiptFile.name;
       }
 
-      // 2. Prepare Database Payload
       const computedActual = claimType === 'Mileage'
         ? Math.round(Math.max(0, parseFloat(distanceKm) || 0) * (vehicleType === 'Motorcycle' ? 0.20 : 0.60) * 100) / 100
         : Math.max(0, parseFloat(actualAmount) || 0);
@@ -437,7 +410,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Delete Draft
   const handleDeleteClaim = async (id: string) => {
     if (!confirm(isBm ? 'Adakah anda pasti mahu memadam draf ini?' : 'Are you sure you want to delete this draft?')) return;
     try {
@@ -453,7 +425,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Approve Claim Handler
   const handleApproveClaim = async (claim: any) => {
     if (!profile) return;
     try {
@@ -476,7 +447,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Reject Claim Handler (Mandatory Reason)
   const handleConfirmReject = async () => {
     if (!rejectModalClaim || !profile) return;
     if (!rejectionReason.trim()) {
@@ -507,7 +477,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Mark as Paid Handler
   const handleMarkAsPaid = async (claim: any) => {
     if (!profile) return;
     try {
@@ -529,7 +498,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // View Receipt Signed URL Handler
   const handleViewReceipt = async (claim: any) => {
     if (!claim.receipt_path) return;
     try {
@@ -549,7 +517,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     }
   };
 
-  // Filtered Claims List
   const displayedClaims = isAdminView
     ? claims
     : claims.filter(c => c.profile_id === profile?.id);
@@ -581,7 +548,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
     return true;
   });
 
-  // Calculate Summary Stats
   const pendingCount = (isAdminView ? claims : displayedClaims).filter(c => c.status === 'Pending Approval').length;
   const approvedThisMonth = (isAdminView ? claims : displayedClaims).filter(c => {
     if (c.status !== 'Approved' && c.status !== 'Paid') return false;
@@ -628,7 +594,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
 
   return (
     <div className="space-y-6 pb-12">
-      {/* 1. Header & Quick Overview */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-2xl border border-slate-200/80 dark:border-gray-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
@@ -659,9 +624,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         </button>
       </div>
 
-      {/* 2. Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
-        {/* Card A: Medical Entitlement (In Staff Mode) / Pending Review Alert (In Admin Mode) */}
         {!isAdminView ? (
           <div className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white p-5 rounded-2xl border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between h-full">
             <div>
@@ -718,14 +681,13 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
               </div>
             </div>
             <p className="text-xs text-amber-600 dark:text-amber-400/90 font-medium pt-1">
-              {pendingCount > 0 
-                ? (isBm ? '⚠️ Memerlukan semakan & kelulusan pentadbir' : '⚠️ Requires administrative review & decision') 
+              {pendingCount > 0
+                ? (isBm ? '⚠️ Memerlukan semakan & kelulusan pentadbir' : '⚠️ Requires administrative review & decision')
                 : (isBm ? '✓ Tiada tuntutan tertunda' : '✓ All claims processed')}
             </p>
           </div>
         )}
 
-        {/* Card B: Pending Count (Staff) / Total Approved Month (Admin) */}
         {!isAdminView ? (
           <div className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white p-5 rounded-2xl border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between h-full">
             <div>
@@ -763,7 +725,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
           </div>
         )}
 
-        {/* Card C: Approved This Month (Staff) / Total Active Records (Admin) */}
         {!isAdminView ? (
           <div className="bg-white dark:bg-gray-900 text-slate-900 dark:text-white p-5 rounded-2xl border border-slate-200/80 dark:border-gray-800 shadow-sm flex flex-col justify-between h-full sm:col-span-2 lg:col-span-1">
             <div>
@@ -802,10 +763,8 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         )}
       </div>
 
-      {/* 3. Claims Directory Filters & Search */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-slate-200/80 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-          {/* Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none flex-wrap sm:flex-nowrap">
             {isAdminView ? (
               <>
@@ -939,7 +898,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
             )}
           </div>
 
-          {/* Search Box */}
           {activeTab !== 'entitlements' && (
             <div className="relative w-full md:w-64 flex-shrink-0">
               <input
@@ -956,7 +914,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
           )}
         </div>
 
-        {/* Tab Content 1: Staff Medical Entitlements Manager (Admin Only) */}
         {isAdminView && activeTab === 'entitlements' ? (
           <div className="p-4">
             <div className="mb-4 flex justify-between items-center">
@@ -970,7 +927,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
               </div>
             </div>
 
-            {/* Mobile Card View (md:hidden) */}
             <div className="md:hidden space-y-3">
               {allStaffEntitlements.map((staff) => {
                 const isEditing = editingEntitlement?.profile_id === staff.profile_id;
@@ -1060,7 +1016,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
               })}
             </div>
 
-            {/* Desktop Table View (hidden md:block) */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs md:text-sm">
                 <thead>
@@ -1145,9 +1100,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
             </div>
           </div>
         ) : (
-          /* Tab Content 2: Claims Directory (Mobile Cards + Desktop Table) */
           <div>
-            {/* Mobile Cards (md:hidden) */}
             <div className="md:hidden space-y-3 p-3">
               {filteredClaims.length > 0 ? (
                 filteredClaims.map((c) => {
@@ -1159,7 +1112,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                       key={c.id}
                       className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                     >
-                      {/* Top Header: Claim No & Status */}
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <span className="font-mono font-bold text-xs text-indigo-600 dark:text-yellow-400">
@@ -1198,7 +1150,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                         </div>
                       </div>
 
-                      {/* Staff & Title */}
                       <div>
                         {isAdminView && (
                           <p className="text-xs font-bold text-slate-800 dark:text-zinc-200">
@@ -1219,7 +1170,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                         )}
                       </div>
 
-                      {/* Amounts & Receipt */}
                       <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-center items-center">
                         <div>
                           <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
@@ -1256,7 +1206,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                         </div>
                       </div>
 
-                      {/* Rejection Remark display if rejected */}
                       {c.status === 'Rejected' && c.rejection_reason && (
                         <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
                           <span className="font-bold block text-[10px] uppercase">⚠️ {isBm ? 'Sebab Penolakan:' : 'Rejection Reason:'}</span>
@@ -1264,7 +1213,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                         </div>
                       )}
 
-                      {/* Action buttons */}
                       <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-100 dark:border-gray-800 flex-wrap">
                         {canEditDraft && (
                           <>
@@ -1327,7 +1275,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
               )}
             </div>
 
-            {/* Desktop Table View (hidden md:block) */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs md:text-sm">
                 <thead>
@@ -1509,7 +1456,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         )}
       </div>
 
-      {/* 4. New / Edit Claim Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden my-8">
@@ -1526,7 +1472,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
             </div>
 
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-              {/* Type Switcher */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
                   {isBm ? 'Jenis Tuntutan' : 'Claim Category'}
@@ -1578,7 +1523,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               </div>
 
-              {/* Basic Details: Date & Title */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-1">
@@ -1605,9 +1549,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               </div>
 
-              {/* Dynamic Inputs per Claim Type */}
 
-              {/* A. MEAL CLAIM FORM */}
               {claimType === 'Meal' && (
                 <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
                   <div className="flex justify-between items-center">
@@ -1638,7 +1580,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               )}
 
-              {/* B. MILEAGE CLAIM FORM */}
               {claimType === 'Mileage' && (
                 <div className="p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1709,7 +1650,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               )}
 
-              {/* C. MEDICAL CLAIM FORM */}
               {claimType === 'Medical' && (
                 <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 space-y-3">
                   <div className="flex justify-between items-center">
@@ -1746,7 +1686,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               )}
 
-              {/* D. GENERAL CLAIM FORM */}
               {claimType === 'Other' && (
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 space-y-3">
                   <div>
@@ -1765,7 +1704,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 </div>
               )}
 
-              {/* Description textarea */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide mb-1">
                   {isBm ? 'Keterangan Lanjut' : 'Description / Remarks'}
@@ -1779,7 +1717,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                 ></textarea>
               </div>
 
-              {/* File Attachment Uploader */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wide mb-1">
                   📎 {isBm ? 'Muat Naik Resit (Wajib - JPG, PNG, PDF)' : 'Upload Receipt File (Required - JPG, PNG, PDF)'}
@@ -1811,7 +1748,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
               </div>
             </div>
 
-            {/* Modal Footer Actions */}
             <div className="p-5 border-t border-slate-100 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-800/40 flex flex-col sm:flex-row justify-between items-center gap-3">
               <button
                 type="button"
@@ -1844,7 +1780,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         </div>
       )}
 
-      {/* 5. Mandatory Rejection Reason Modal */}
       {rejectModalClaim && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden p-6 space-y-4">
@@ -1892,7 +1827,6 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
         </div>
       )}
 
-      {/* 6. Secure Receipt Viewer Modal */}
       {viewReceiptUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
           <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">

@@ -5,7 +5,6 @@ import { t } from '../lib/portalI18n';
 import { usePermissions } from '../hooks/usePermissions';
 import PermissionDenied from './PermissionDenied';
 
-// A simple utility to format bytes
 function formatBytes(bytes: number, decimals = 2) {
   if (!+bytes) return '0 Bytes';
   const k = 1024;
@@ -15,7 +14,6 @@ function formatBytes(bytes: number, decimals = 2) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-// Helper utility to list all files recursively under a folder in Supabase Storage
 async function listAllFilesRecursive(path: string): Promise<string[]> {
   const allFiles: string[] = [];
   async function traverse(current: string) {
@@ -25,10 +23,8 @@ async function listAllFilesRecursive(path: string): Promise<string[]> {
     for (const item of data) {
       const fullItemPath = current ? `${current}/${item.name}` : item.name;
       if (item.id === null) {
-        // It's a folder, traverse it recursively
         await traverse(fullItemPath);
       } else {
-        // It's a file
         allFiles.push(fullItemPath);
       }
     }
@@ -155,7 +151,6 @@ export default function FileDriveView() {
     }
   };
 
-  // Google Drive layout and sorting states
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'updated_at' | 'size'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -217,7 +212,6 @@ export default function FileDriveView() {
       setIsGlobalAdmin(isGlobal);
 
       if (currentPath === null) {
-        // Check if a direct path is requested via query string (e.g. ?path=Clients/151%20John)
         let directPath: string | null = null;
         if (typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
@@ -293,7 +287,6 @@ export default function FileDriveView() {
 
       if (error) throw error;
 
-      // Filter out the dummy .keep files but keep the folders
       const validItems = data?.filter(item => item.name !== '.keep') || [];
       setItems(validItems);
       setSelectedItem(null);
@@ -347,7 +340,6 @@ export default function FileDriveView() {
       parts.pop();
       const newPath = parts.join('/');
 
-      // Prevent non-admins from going outside their department or Clients area
       if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department) && !newPath.startsWith('Clients') && newPath !== '') {
         return userProfile.department;
       }
@@ -361,7 +353,6 @@ export default function FileDriveView() {
       const parts = prev.split('/').filter(Boolean);
       const newPath = parts.slice(0, index + 1).join('/');
 
-      // Prevent non-admins from going outside their department or Clients area
       if (!isGlobalAdmin && userProfile?.department && !newPath.startsWith(userProfile.department) && !newPath.startsWith('Clients') && newPath !== '') {
         return userProfile.department;
       }
@@ -373,7 +364,6 @@ export default function FileDriveView() {
     if (!newFolderName.trim()) return;
     setUploading(true);
     try {
-      // Create a dummy file to instantiate the folder
       const folderPath = currentPath ? `${currentPath}/${newFolderName.trim()}/.keep` : `${newFolderName.trim()}/.keep`;
       const dummyBlob = new Blob([''], { type: 'text/plain' });
 
@@ -413,7 +403,6 @@ export default function FileDriveView() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only show upload overlay if we are NOT dragging an internal item
     if (!draggedItem) {
       setIsDragging(true);
     }
@@ -430,7 +419,6 @@ export default function FileDriveView() {
     e.stopPropagation();
     setIsDragging(false);
 
-    // If dragging an internal item, ignore external drop handler
     if (draggedItem) return;
 
     const files = Array.from(e.dataTransfer.files);
@@ -463,7 +451,6 @@ export default function FileDriveView() {
     e.stopPropagation();
     if (draggedItem) {
       const isFolder = !draggedItem.id;
-      // Prevent dragging a folder into itself
       if (isFolder && draggedItem.name === folderName) return;
       setActiveOverFolder(folderName);
     }
@@ -490,7 +477,6 @@ export default function FileDriveView() {
       const newPath = currentPath ? `${currentPath}/${targetFolderName}/${draggedItem.name}` : `${targetFolderName}/${draggedItem.name}`;
 
       if (isFolder) {
-        // Move files inside folder recursively
         const allFiles = await listAllFilesRecursive(oldPath);
         if (allFiles.length > 0) {
           for (const file of allFiles) {
@@ -500,7 +486,6 @@ export default function FileDriveView() {
             if (error) throw error;
           }
         } else {
-          // If empty folder, move the keep file or write a new one
           try {
             const { error } = await supabase.storage.from('company_drive').move(`${oldPath}/.keep`, `${newPath}/.keep`);
             if (error) {
@@ -632,7 +617,6 @@ export default function FileDriveView() {
       const newPath = parentPathPrefix ? `${parentPathPrefix}/${renameValue.trim()}` : renameValue.trim();
 
       if (isFolder) {
-        // Find all files in the folder recursively and move them
         const allFiles = await listAllFilesRecursive(oldPath);
         if (allFiles.length > 0) {
           for (const file of allFiles) {
@@ -642,7 +626,6 @@ export default function FileDriveView() {
             if (error) throw error;
           }
         } else {
-          // If empty folder, move the .keep file or write a new one
           try {
             const { error } = await supabase.storage.from('company_drive').move(`${oldPath}/.keep`, `${newPath}/.keep`);
             if (error) {
@@ -1304,7 +1287,6 @@ export default function FileDriveView() {
   const renderListView = () => {
     return (
       <div className="w-full">
-        {/* Mobile Cards (md:hidden) */}
         <div className="md:hidden space-y-2.5 p-2">
           {currentPath !== '' && searchQuery === '' && (
             <div
@@ -1320,7 +1302,6 @@ export default function FileDriveView() {
             </div>
           )}
 
-          {/* Folders in mobile card list */}
           {sortedFolders.map(folder => {
             const isSelected = selectedItem?.id === folder.id;
             return (
@@ -1368,7 +1349,6 @@ export default function FileDriveView() {
             );
           })}
 
-          {/* Files in mobile card list */}
           {sortedFiles.map(file => {
             const isSelected = selectedItem?.id === file.id;
             return (
@@ -1430,7 +1410,6 @@ export default function FileDriveView() {
           })}
         </div>
 
-        {/* Desktop Table (hidden md:block) */}
         <div className="hidden md:block overflow-x-auto w-full">
           <table className="w-full min-w-[650px] border-collapse text-left text-sm text-slate-600 dark:text-zinc-350">
             <thead>
@@ -1658,7 +1637,6 @@ export default function FileDriveView() {
     );
   };
 
-  // Filter and sort items dynamically in the frontend
   const itemsToFilter = (searchQuery.trim() !== '' && allRecursiveItems !== null)
     ? allRecursiveItems
     : items;
@@ -1749,10 +1727,8 @@ export default function FileDriveView() {
       </div>
 
       <div className="animate-fade-in relative w-full h-[calc(100vh-220px)] flex flex-col bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-3xl shadow-sm">
-      {/* Top action header containing breadcrumbs and upload controls */}
       <div className="px-6 py-4 border-b border-slate-200 dark:border-gray-800 bg-white/50 dark:bg-zinc-950/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
         
-        {/* Breadcrumbs Navigation */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold py-1">
 
           {isGlobalAdmin && (
@@ -1999,7 +1975,6 @@ export default function FileDriveView() {
           })}
         </div>
 
-        {/* Action buttons on the right */}
         <div className="flex items-center gap-2.5 w-full sm:w-auto flex-shrink-0">
           <button
             onClick={() => setIsCreateFolderOpen(true)}
@@ -2030,13 +2005,10 @@ export default function FileDriveView() {
         </div>
       </div>
 
-      {/* Main Workspace Body wrapper */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden relative">
 
-        {/* Left Side: Storage area workspace */}
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
-          {/* Controls toolbar */}
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 bg-slate-50/60 dark:bg-black/10 px-6 py-3.5 border-b border-slate-100 dark:border-gray-800/80 flex-shrink-0">
             <div className="relative flex-1 max-w-sm">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-450 dark:text-zinc-550">
@@ -2109,7 +2081,6 @@ export default function FileDriveView() {
           </div>
 
 
-          {/* Storage Area Workspace */}
           <div
             className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-black/5 relative"
             onDragOver={handleDragOver}
@@ -2150,7 +2121,6 @@ export default function FileDriveView() {
               </div>
             ) : layoutMode === 'grid' ? (
               <div className="space-y-6">
-                {/* Folders grid section */}
                 {((searchQuery === '' && currentPath !== '') || sortedFolders.length > 0) && (
                   <div className="space-y-3">
                     <h3 className="text-[10px] font-black text-slate-455 dark:text-zinc-550 uppercase tracking-widest">{t('drive', 'folders', lang)}</h3>
@@ -2161,7 +2131,6 @@ export default function FileDriveView() {
                   </div>
                 )}
 
-                {/* Files grid section */}
                 {sortedFiles.length > 0 && (
                   <div className="space-y-3">
                     <h3 className="text-[10px] font-black text-slate-405 dark:text-zinc-550 uppercase tracking-widest">{t('drive', 'files', lang)}</h3>
@@ -2171,7 +2140,6 @@ export default function FileDriveView() {
                   </div>
                 )}
 
-                {/* Empty folder message inside grid view */}
                 {sortedFolders.length === 0 && sortedFiles.length === 0 && (
                   <div className="flex flex-col items-center justify-center text-center p-8 py-20">
                     <div className="w-20 h-20 bg-indigo-50 dark:bg-gray-800/80 rounded-full flex items-center justify-center mb-4 text-indigo-300 dark:text-gray-600">
@@ -2188,7 +2156,6 @@ export default function FileDriveView() {
               <div className="space-y-4">
                 {renderListView()}
                 
-                {/* Empty folder message inside list view */}
                 {sortedFolders.length === 0 && sortedFiles.length === 0 && (
                   <div className="flex flex-col items-center justify-center text-center p-8 py-16">
                     <div className="w-16 h-16 bg-indigo-50 dark:bg-gray-800/80 rounded-full flex items-center justify-center mb-3 text-indigo-300 dark:text-gray-655">
@@ -2205,7 +2172,6 @@ export default function FileDriveView() {
 
         </div>
 
-        {/* Right side details panel (inside the container box) */}
         {selectedItem && showDetailsPanel && (
           <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-slate-150 dark:border-gray-800 bg-white/70 dark:bg-black/30 p-6 flex flex-col min-h-0 flex-shrink-0 overflow-y-auto animate-fade-in">
             <div className="flex justify-between items-center mb-6">
@@ -2335,7 +2301,6 @@ export default function FileDriveView() {
         </div>
       )}
 
-      {/* Floating Premium Dustbin Area */}
       <div 
         onDragOver={handleTrashDragOver}
         onDragLeave={handleTrashDragLeave}

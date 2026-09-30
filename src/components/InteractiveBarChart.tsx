@@ -72,7 +72,6 @@ export default function InteractiveBarChart({
     return () => observer.disconnect();
   }, []);
 
-  // Calculate coordinates and grid constraints safely
   const minContentWidth = paddingLeft + paddingRight + 2 * axisOffset + Math.max(0, data.length - 1) * dayWidth;
   const scrollWidth = Math.max(containerWidth, minContentWidth, 240);
   const maxVal = Math.max(...data.map(d => d.value), maxOverride, 1);
@@ -123,7 +122,6 @@ export default function InteractiveBarChart({
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
-    // Delay resetting hasDragged slightly to ensure click handlers can check it
     setTimeout(() => setHasDragged(false), 50);
   };
 
@@ -159,7 +157,6 @@ export default function InteractiveBarChart({
     }
   };
 
-  // Auto-scroll-to-right on mount is completely disabled to prevent any possible snapping behavior.
 
   const monthNamesEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const lastDateStr = data.length > 0 ? data[data.length - 1].key : '';
@@ -168,13 +165,11 @@ export default function InteractiveBarChart({
 
   return (
     <div className="flex items-stretch min-h-[180px] w-full relative">
-      {/* Month Display */}
       {displayMonth && (
         <div className="absolute top-2 right-4 text-sm font-black uppercase tracking-widest text-slate-200 dark:text-zinc-800/50 select-none pointer-events-none z-0">
           {displayMonth}
         </div>
       )}
-      {/* Y Axis Labels (Static on the Left) */}
       <svg 
         width="40" 
         height={chartHeight} 
@@ -191,7 +186,6 @@ export default function InteractiveBarChart({
         })}
       </svg>
 
-      {/* Scrollable Container (Grid & Bars) */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
@@ -208,7 +202,6 @@ export default function InteractiveBarChart({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {/* Y Axis Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
             const y = paddingY + ratio * (chartHeight - 2 * paddingY);
             return (
@@ -226,18 +219,15 @@ export default function InteractiveBarChart({
             );
           })}
 
-          {/* Bars */}
           {data.map((d, index) => {
             const x = getBarX(index);
             const barWidth = 32;
             
-            // Height calculations
             const activeHeight = d.value > 0 ? (d.value / maxVal) * (chartHeight - 2 * paddingY) : 4;
             const y = chartHeight - paddingY - activeHeight;
             
             const isHovered = hoveredBar === index;
 
-            // Check if second line should be rendered (only if distinct day component exists)
             const dayPart = d.key.split('-')[2];
             const hasSubLabel = Boolean(
               dayPart && 
@@ -254,7 +244,6 @@ export default function InteractiveBarChart({
                 onClick={() => handleBarClickWrapper(d)}
                 onPointerDown={(e) => e.stopPropagation()} // Prevent parent from starting a drag if tapping
               >
-                {/* Background interactive area */}
                 <rect 
                   x={x - barWidth/2 - 10} 
                   y={paddingY} 
@@ -263,7 +252,6 @@ export default function InteractiveBarChart({
                   fill="transparent" 
                 />
 
-                {/* Gradient Bar */}
                 <defs>
                   <linearGradient id={`barGrad-${d.key}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={d.isLeave ? '#fbbf24' : (d.isHoliday ? '#22d3ee' : barColorGradStart)} />
@@ -286,7 +274,6 @@ export default function InteractiveBarChart({
                   className="transition-all duration-300 ease-out shadow-sm opacity-90 hover:opacity-100" 
                 />
 
-                {/* X Axis Labels */}
                 <text 
                   x={x} 
                   y={hasSubLabel ? chartHeight - 14 : chartHeight - 8} 
@@ -310,7 +297,6 @@ export default function InteractiveBarChart({
           })}
         </svg>
 
-        {/* Custom Tooltip */}
         {hoveredBar !== null && data[hoveredBar] && (
           <div 
             className="absolute z-50 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 shadow-xl pointer-events-none flex flex-col gap-1.5 transition-all text-xs min-w-[170px] whitespace-nowrap"

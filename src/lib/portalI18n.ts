@@ -1,17 +1,7 @@
-/**
- * Portal i18n — Bilingual Translation Map
- * Languages: English (en) | Bahasa Malaysia (bm)
- *
- * Rules:
- * - Job/role titles stay in English (CEO, COO, CFO, Chairman, IT Admin, etc.)
- * - All UI labels, buttons, headings, and messages are translated
- * - BM strings may be longer; UI is designed to wrap gracefully
- */
 
 export type Language = 'en' | 'bm';
 
 export const translations = {
-  // ─── Sidebar ─────────────────────────────────────────────────────────────
   sidebar: {
     portalTitle: { en: 'Portal Admin', bm: 'Admin Portal' },
     mainWebsite: { en: 'Main Website', bm: 'Laman Utama' },
@@ -32,7 +22,6 @@ export const translations = {
     language: { en: 'Language', bm: 'Bahasa' },
   },
 
-  // ─── Login ────────────────────────────────────────────────────────────────
   login: {
     title: { en: 'Staff Portal', bm: 'Portal Kakitangan' },
     subtitle: { en: 'Please log in to continue', bm: 'Sila log masuk untuk meneruskan' },
@@ -50,7 +39,6 @@ export const translations = {
     networkError: { en: 'A network error occurred. Please try again.', bm: 'Ralat rangkaian berlaku. Sila cuba lagi.' },
   },
 
-  // ─── Overview / Announcements ─────────────────────────────────────────────
   overview: {
     pageTitle: { en: 'Portal', bm: 'Portal' },
     pageHighlight: { en: 'Home', bm: 'Utama' },
@@ -118,7 +106,6 @@ export const translations = {
     errorSave: { en: 'Error saving announcement. Please try again.', bm: 'Ralat menyimpan pengumuman. Sila cuba lagi.' },
   },
 
-  // ─── Clock In / Clock Out ─────────────────────────────────────────────────
   attendance: {
     timeTracking: { en: 'Time Tracking', bm: 'Penjejakan Masa' },
     subtitle: { en: 'Clock in and out with GPS location verification', bm: 'Daftar masuk dan keluar dengan pengesahan lokasi GPS' },
@@ -152,7 +139,6 @@ export const translations = {
     orangeNote: { en: 'Orange = Less than 9 hours', bm: 'Oren = Kurang dari 9 jam' },
     greenNote: { en: 'Green = Full work day', bm: 'Hijau = Hari kerja penuh' },
 
-    // Additional ClockInClockOut keys
     loading: { en: 'Loading...', bm: 'Memuatkan...' },
     notSelf: { en: 'Not Self', bm: 'Bukan Diri Sendiri' },
     detailedOverview: { en: 'Detailed Overview', bm: 'Gambaran Terperinci' },
@@ -202,7 +188,6 @@ export const translations = {
     checkedOut: { en: 'Clocked Out', bm: 'Telah Daftar Keluar' },
   },
 
-  // ─── Attendance Records (Admin View) ─────────────────────────────────────
   attendanceAdmin: {
     title: { en: 'Attendance Records', bm: 'Rekod Kehadiran' },
     subtitle: { en: 'View employee clock-in/clock-out with location verification', bm: 'Lihat rekod daftar masuk/keluar kakitangan dengan pengesahan lokasi' },
@@ -248,7 +233,6 @@ export const translations = {
     editFailed: { en: 'Failed to update attendance record.', bm: 'Gagal mengemas kini rekod kehadiran.' },
     deleteFailed: { en: 'Failed to delete attendance record.', bm: 'Gagal memadam rekod kehadiran.' },
 
-    // Export & Payroll Modal
     exportModalTitle: { en: 'Export Attendance & Payroll Report', bm: 'Eksport Laporan Kehadiran & Penggajian' },
     exportModalSub: { en: 'Configure monthly salary, deductions, and preview breakdown before exporting', bm: 'Konfigurasi gaji bulanan, potong dan pra-lihat pecahan sebelum mengeksport' },
     numDaysInMonth: { en: 'Number of days in the month', bm: 'Bilangan hari dalam bulan' },
@@ -276,7 +260,6 @@ export const translations = {
     projectRemainingDaysLabel: { en: 'Project remaining working days as worked (Full Month Projection)', bm: 'Anggap hari bekerja selebihnya sebagai hadir (Unjuran Bulan Penuh)' },
   },
 
-  // ─── Client Database ──────────────────────────────────────────────────────
   clients: {
     pageTitle: { en: 'Client Database', bm: 'Pangkalan Data Klien' },
     manageSubtitle: { en: 'Manage and edit client records.', bm: 'Urus dan edit rekod klien.' },
@@ -409,7 +392,6 @@ export const translations = {
     clientDriveTooltip: { en: 'View all agreements, invoices, receipts, and payments in Drive', bm: 'Lihat semua perjanjian, invois, resit, dan bayaran dalam Pemacu' },
   },
 
-  // ─── Reports ──────────────────────────────────────────────────────────────
   reports: {
     pageTitle: { en: 'Executive Reports', bm: 'Laporan Eksekutif' },
     pageSubtitle: { en: 'Finance, Accounting, and Human Resources Management', bm: 'Pengurusan Kewangan, Perakaunan, dan Sumber Manusia' },
@@ -449,7 +431,6 @@ export const translations = {
     automating: { en: 'Automating...', bm: 'Memproses...' },
   },
 
-  // ─── Settings ─────────────────────────────────────────────────────────────
   settings: {
     pageTitle: { en: 'Account Settings', bm: 'Tetapan Akaun' },
     pageSubtitle: { en: 'Manage your profile settings and account security', bm: 'Urus tetapan profil dan keselamatan akaun anda' },
@@ -487,7 +468,6 @@ export const translations = {
     useThisPhoto: { en: 'Use This Photo', bm: 'Guna Gambar Ini' },
     savingPhoto: { en: 'Saving...', bm: 'Menyimpan...' },
 
-    // Settings alignment additions
     langPrefTitle: { en: 'Language Preference', bm: 'Pilihan Bahasa' },
     langPrefSubtitle: { en: 'Select your preferred display language for the Staff Portal.', bm: 'Pilih bahasa paparan kegemaran anda untuk Portal Kakitangan.' },
     accessControlAdmin: { en: 'Access Control (Admin)', bm: 'Kawalan Akses (Admin)' },
@@ -503,7 +483,6 @@ export const translations = {
     nameInvalidError: { en: 'Name contains invalid characters. Only letters, spaces, hyphens, and apostrophes are allowed.', bm: 'Nama mengandungi aksara tidak sah. Hanya huruf, ruang, sempang, dan koma atas dibenarkan.' },
   },
 
-  // ─── Drive / Storage ──────────────────────────────────────────────────────
   drive: {
     pageTitle: { en: 'Company Drive', bm: 'Pemacu Syarikat' },
     pageSubtitle: { en: 'Secure cloud storage for company files and documents', bm: 'Storan awan selamat untuk fail dan dokumen syarikat' },
@@ -553,7 +532,6 @@ export const translations = {
     noFolders: { en: 'No folders', bm: 'Tiada folder' },
   },
 
-  // ─── Human Resources ──────────────────────────────────────────────────────
   hr: {
     title: { en: 'HR Control Panel', bm: 'Panel Kawalan HR' },
     subtitle: { en: 'Manage attendance records, public holidays, leave system, and claims.', bm: 'Urus rekod kehadiran, cuti umum, sistem cuti, dan tuntutan.' },
@@ -566,7 +544,6 @@ export const translations = {
     claimsPlaceholder: { en: 'The Claims System is currently under development. Soon you will be able to submit expense claims, upload receipts, and check claim reimbursement status.', bm: 'Sistem Tuntutan kini sedang dibangunkan. Tidak lama lagi anda boleh mengemukakan tuntutan perbelanjaan, memuat naik resit, dan menyemak status bayaran balik tuntutan.' },
   },
 
-  // ─── Leave System ────────────────────────────────────────────────────────
   leave: {
     dashboardTitle: { en: 'Staff Leave Management', bm: 'Pengurusan Cuti Kakitangan' },
     tabMyLeave: { en: 'My Leaves', bm: 'Cuti Saya' },
@@ -654,7 +631,6 @@ export const translations = {
     individualHistoryTitle: { en: 'Past Leave Applications for this Employee', bm: 'Permohonan Cuti Lepas Kakitangan Ini' },
   },
 
-  // ─── Access Control ───────────────────────────────────────────────────────
   accessControl: {
     loading: { en: 'Loading Access Control...', bm: 'Memuatkan Kawalan Akses...' },
     matrixTitle: { en: 'Access Control Matrix & Privilege Center', bm: 'Pusat Kawalan Akses & Pengurusan Keistimewaan' },
@@ -665,14 +641,12 @@ export const translations = {
     unsavedChanges: { en: 'unsaved changes', bm: 'perubahan belum disimpan' },
     colTarget: { en: 'Target (Dept / User)', bm: 'Sasaran (Jabatan / Pengguna)' },
 
-    // Categories
     catClients: { en: 'Clients, Cases & Appointments', bm: 'Klien, Kes & Temujanji' },
     catStaffHR: { en: 'Human Resources & Staff Management', bm: 'Sumber Manusia & Pengurusan Staf' },
     catAttendance: { en: 'Attendance & Time Logs', bm: 'Kehadiran & Log Masa' },
     catClaimsLeave: { en: 'Leave & Expense Claims', bm: 'Cuti & Tuntutan Perbelanjaan' },
     catSystemDrive: { en: 'Storage, Analytics & Administration', bm: 'Storan, Analitik & Pentadbiran' },
 
-    // Granular Permissions - Clients & Cases Sub-pages
     colViewClients: { en: 'View Active Clients (Standard & Expanded)', bm: 'Lihat Klien Aktif (Standard & Lanjut)' },
     colViewClientsDesc: { en: 'Read-only access to active client directory, case profiles, and payment histories', bm: 'Akses baca sahaja ke direktori klien aktif, profil kes, dan sejarah pembayaran' },
     colEditClients: { en: 'Manage Active Clients & Installments', bm: 'Urus Klien Aktif & Peringkat Bayaran' },
@@ -721,7 +695,6 @@ export const translations = {
     colManageAccess: { en: 'Access Control & Privilege Authority', bm: 'Kawalan Akses & Kuasa Keistimewaan' },
     colManageAccessDesc: { en: 'Full authority to modify permission matrices and grant staff privileges', bm: 'Kuasa penuh untuk mengubah matriks kebenaran dan memberi keistimewaan staf' },
 
-    // Presets & Badges
     presetLabel: { en: 'Quick Presets:', bm: 'Pratetap Pantas:' },
     presetFullAdmin: { en: 'Grant Full Access', bm: 'Beri Akses Penuh' },
     presetManager: { en: 'Manager / Approver', bm: 'Pengurus / Pelulus' },
@@ -745,7 +718,6 @@ export const translations = {
     saveFailed: { en: 'Failed to save permissions. Ensure network connection is stable.', bm: 'Gagal menyimpan kebenaran. Sila pastikan sambungan stabil.' },
   },
 
-  // ─── Public Holidays ─────────────────────────────────────────────────────
   holidays: {
     title: { en: 'Annual Public Holidays', bm: 'Cuti Umum Tahunan' },
     subtitle: { en: 'Manage the list of public holidays for the attendance system', bm: 'Urus senarai cuti umum untuk sistem kehadiran' },
@@ -767,7 +739,6 @@ export const translations = {
     deleteBtn: { en: 'Delete', bm: 'Padam' }
   },
 
-  // ─── Claims Management ───────────────────────────────────────────────────
   claims: {
     pageTitle: { en: 'Claims Management', bm: 'Pengurusan Tuntutan' },
     pageSubtitle: { en: 'Submit, track, and manage employee expenses & claims', bm: 'Hantar, jejak, dan urus perbelanjaan & tuntutan kakitangan' },
@@ -789,7 +760,6 @@ export const translations = {
     rejectReasonRequired: { en: 'Rejection remark is mandatory.', bm: 'Catatan penolakan adalah wajib.' },
     rejectReasonPlaceholder: { en: 'Enter mandatory rejection reason (e.g. Receipt too blurry, exceeds 30-day limit)...', bm: 'Masukkan sebab penolakan (cth: Resit tidak jelas, melebihi tempoh 30 hari)...' },
 
-    // Table Headers
     colClaimNo: { en: 'Claim No.', bm: 'No. Tuntutan' },
     colDate: { en: 'Date', bm: 'Tarikh' },
     colStaff: { en: 'Staff', bm: 'Kakitangan' },
@@ -800,7 +770,6 @@ export const translations = {
     colStatus: { en: 'Status', bm: 'Status' },
     colActions: { en: 'Actions', bm: 'Tindakan' },
 
-    // Action Buttons
     btnApprove: { en: 'Approve', bm: 'Luluskan' },
     btnReject: { en: 'Reject', bm: 'Tolak' },
     btnMarkPaid: { en: 'Mark Paid', bm: 'Tanda Dibayar' },
@@ -808,7 +777,6 @@ export const translations = {
     btnEdit: { en: 'Edit', bm: 'Edit' },
   },
 
-  // ─── Appointments / Temujanji ──────────────────────────────────────────────
   appointments: {
     pageTitle: { en: 'Client Appointments Hub', bm: 'Hab Temujanji Klien' },
     pageSubtitle: { en: 'Calendar and scheduling management for client consultations', bm: 'Pengurusan kalendar dan jadual temujanji konsultasi klien' },
@@ -932,7 +900,6 @@ export const translations = {
     quickPreset1m: { en: '+1 Month', bm: '+1 Bulan' },
   },
 
-  // ─── Common / Shared ──────────────────────────────────────────────────────
   common: {
     loading: { en: 'Loading...', bm: 'Memuatkan...' },
     loadingDashboard: { en: 'Loading Dashboard...', bm: 'Memuatkan Papan Pemuka...' },
@@ -944,9 +911,6 @@ export const translations = {
   },
 } as const;
 
-/**
- * Helper: get a translation string by section + key + current language
- */
 export function t(
   section: keyof typeof translations,
   key: string,

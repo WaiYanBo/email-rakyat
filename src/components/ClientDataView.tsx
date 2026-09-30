@@ -149,7 +149,6 @@ export default function ClientDataView() {
     return key;
   };
 
-  // MODAL STATE - ADD & EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [policeReportsList, setPoliceReportsList] = useState<{ date: string, no: string }[]>([{ date: '', no: '' }]);
@@ -161,7 +160,6 @@ export default function ClientDataView() {
   const [isCustomIpd, setIsCustomIpd] = useState(false);
   const [isCustomBalai, setIsCustomBalai] = useState(false);
 
-  // CASE CATEGORY STATE & REGISTRATION
   const [registeredCategories, setRegisteredCategories] = useState<string[]>(() => {
     const defaults = ["Ah Long", "Kredit Komuniti", "Bank", "Scam Victim"];
     try {
@@ -196,7 +194,6 @@ export default function ClientDataView() {
   };
 
   const [paymentList, setPaymentList] = useState<{ amount: string, date: string }[]>([]);
-  // MODAL STATE - VIEW (NEW)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingClient, setViewingClient] = useState<any>(null);
 
@@ -274,7 +271,6 @@ export default function ClientDataView() {
 
   const loadClientDocuments = async (clientId: string, clientNo?: any, clientName?: string) => {
     try {
-      // Fetch latest client record directly to guarantee 100% fresh data and avoid stale closure
       let freshClient: any = null;
       if (clientId && !clientId.startsWith('virtual-')) {
         const { data: cData } = await supabase.from('clients').select('*').eq('id', clientId).single();
@@ -292,7 +288,6 @@ export default function ClientDataView() {
       const clientNoVal = actualNo !== undefined && actualNo !== null && actualNo !== '' ? actualNo : '0';
       const clientFolder = `${clientNoVal} ${safeClientName}`;
 
-      // 1. Fetch metadata records from billing_records database to get amounts
       const { data: dbRecords, error: dbError } = await supabase
         .from('billing_records')
         .select('*')
@@ -306,29 +301,24 @@ export default function ClientDataView() {
         });
       }
 
-      // 2. List Invoices from both unified Clients folder and legacy Finance folder
       const [uInvoicesRes, lInvoicesRes] = await Promise.all([
         supabase.storage.from('company_drive').list(`Clients/${clientFolder}/Invoices`, { limit: 100 }),
         supabase.storage.from('company_drive').list(`Finance/billing_documents/Invoices/${clientFolder}`, { limit: 100 })
       ]);
 
-      // 3. List Official Receipts from both unified Clients folder and legacy Finance folder
       const [uReceiptsRes, lReceiptsRes] = await Promise.all([
         supabase.storage.from('company_drive').list(`Clients/${clientFolder}/Receipts`, { limit: 100 }),
         supabase.storage.from('company_drive').list(`Finance/billing_documents/Receipts/${clientFolder}`, { limit: 100 })
       ]);
 
-      // 4. List Agreements from unified Clients folder
       const { data: storageAgreements } = await supabase.storage
         .from('company_drive')
         .list(`Clients/${clientFolder}/Agreements`, { limit: 100 });
 
-      // 5. List Client Installment Payment Receipts
       const { data: storagePayments } = await supabase.storage
         .from('company_drive')
         .list(`Clients/${clientFolder}/Payments`, { limit: 100 });
 
-      // Build unified invoices list (deduplicating by filename / ref_number)
       const invoicesMap = new Map();
       const processInvoice = (file: any, folderPrefix: string) => {
         if (!file || file.name === '.keep') return;
@@ -356,7 +346,6 @@ export default function ClientDataView() {
         }
       });
 
-      // Build unified official receipts list (deduplicating by filename / ref_number)
       const receiptsMap = new Map();
       const processReceipt = (file: any, folderPrefix: string) => {
         if (!file || file.name === '.keep') return;
@@ -384,7 +373,6 @@ export default function ClientDataView() {
         }
       });
 
-      // Ensure all database billing_records are included even if storage.list() missed them
       if (dbRecords && dbRecords.length > 0) {
         dbRecords.forEach((dbRec: any) => {
           const docType = dbRec.document_type;
@@ -431,7 +419,6 @@ export default function ClientDataView() {
 
       setBillingRecords([...Array.from(invoicesMap.values()), ...Array.from(receiptsMap.values())]);
 
-      // Process Agreements
       const loadedAgreements: any[] = [];
       if (storageAgreements) {
         storageAgreements.forEach(f => {
@@ -448,7 +435,6 @@ export default function ClientDataView() {
           });
         });
       }
-      // If DB has agreement_url and not in storage list, include it
       const actualAgreementUrl = freshClient?.agreement_url ?? viewingClient?.agreement_url;
       if (actualAgreementUrl && loadedAgreements.length === 0) {
         loadedAgreements.push({
@@ -462,7 +448,6 @@ export default function ClientDataView() {
       }
       setAgreementFiles(loadedAgreements);
 
-      // Process Client Installment Payment Receipts
       const loadedPaymentsMap: { [stage: string]: any } = {};
       let dbReceipts: Record<string, any> = {};
       const sourceReceipts = freshClient?.payment_receipts ?? viewingClient?.payment_receipts;
@@ -484,7 +469,6 @@ export default function ClientDataView() {
           const { data: publicUrlData } = supabase.storage.from('company_drive').getPublicUrl(filePath);
           const lower = f.name.toLowerCase();
 
-          // Find which payment stage this matches (e.g. 1st, 2nd, 3rd, etc.)
           const stages = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
           const matchedStage = stages.find(st => lower.includes(st) || lower.includes(`payment_${st.replace(/[^0-9]/g, '')}`));
 
@@ -510,7 +494,6 @@ export default function ClientDataView() {
         });
       }
 
-      // Auto-sync storage receipts to DB if client has receipts in storage not recorded in DB
       if (hasOrphanSync && clientId && !clientId.startsWith('virtual-')) {
         try {
           await supabase.from('clients').update({
@@ -617,7 +600,6 @@ export default function ClientDataView() {
         .from('company_drive')
         .getPublicUrl(filePath);
 
-      // Gracefully update database record if columns exist
       try {
         const agUpdate = {
           agreement_url: publicUrlData?.publicUrl || filePath,
@@ -667,7 +649,6 @@ export default function ClientDataView() {
         .from('company_drive')
         .getPublicUrl(filePath);
 
-      // Gracefully update payment_receipts map in DB if column exists
       try {
         let existingReceipts: Record<string, any> = {};
         if (typeof viewingClient.payment_receipts === 'string') {
@@ -817,7 +798,6 @@ export default function ClientDataView() {
         trashPath = `Clients/Trash/${newPathWithUniqueName}`;
       }
 
-      // Move file in storage
       const { error: moveError } = await supabase.storage
         .from(bucket)
         .move(oldPath, trashPath);
@@ -826,7 +806,6 @@ export default function ClientDataView() {
         throw new Error(`Storage move failed: ${moveError.message}`);
       }
 
-      // Generate the new public URL for the trash path
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(trashPath);
@@ -834,7 +813,6 @@ export default function ClientDataView() {
 
       const deletedRef = `${record.ref_number}_deleted_${Date.now()}`;
 
-      // Soft delete in database by updating deleted_at, drive_url and ref_number
       const { error: dbError } = await supabase
         .from('billing_records')
         .update({
@@ -848,7 +826,6 @@ export default function ClientDataView() {
         throw dbError;
       }
 
-      // Reload records
       if (viewingClient?.id) {
         loadClientDocuments(viewingClient.id, viewingClient.No ?? viewingClient.NO ?? '', viewingClient.NAME ?? '');
       }
@@ -887,7 +864,6 @@ export default function ClientDataView() {
 
   const hasAnyClientAccess = canViewClients || canViewLoD || canViewPotential || canEditClients || canManageLoD || canManagePotential;
 
-  // Dynamically adjust viewMode if user lacks permission for the current active tab
   useEffect(() => {
     if (permsLoading) return;
     if (viewMode === 'standard' || viewMode === 'expanded') {
@@ -1037,7 +1013,6 @@ export default function ClientDataView() {
             if (dateFilter === 'year') {
               query = query.like('DATE', `%/${yearFull}`);
             } else if (dateFilter === 'month') {
-              // Handle both '6' and '06' month format: e.g. "19/06/2026" or "9/6/2026"
               if (monthPadded !== monthUnpadded) {
                 query = query.or(`DATE.like.%/${monthPadded}/${yearFull},DATE.like.%/${monthUnpadded}/${yearFull}`);
               } else {
@@ -1046,10 +1021,8 @@ export default function ClientDataView() {
             }
           }
 
-          // No pagination on the server-side anymore - fetch all to allow global sorting
           const { data: clientsData, error } = await query;
 
-          // Storage folders are already loaded in state, so we do not list them again on search/filter changes.
 
           const parsedFolders = storageFolders.map(folderName => {
             const match = folderName.match(/^(\d+)\s+(.+)$/);
@@ -1070,9 +1043,6 @@ export default function ClientDataView() {
           const dbClientsList = clientsData || [];
           const virtualClients: any[] = [];
 
-          // Virtual storage folders do not have a registration date (DATE: '-').
-          // Only evaluate and include virtual storage folders when viewing 'all' time,
-          // to prevent false orphan detection when database records are filtered by month or year.
           if (dateFilter === 'all') {
             parsedFolders.forEach(pf => {
               const cleanName = pf.NAME.toLowerCase().trim();
@@ -1183,7 +1153,6 @@ export default function ClientDataView() {
       }
     }
 
-    // Safely parse payment_receipts
     let currentReceipts: Record<string, any> = {};
     if (typeof currentData?.payment_receipts === 'string') {
       try { currentReceipts = JSON.parse(currentData.payment_receipts); } catch {}
@@ -1191,7 +1160,6 @@ export default function ClientDataView() {
       currentReceipts = { ...currentData.payment_receipts };
     }
 
-    // Check storage for any previously uploaded receipts not yet registered in payment_receipts
     const actualNo = currentData?.No ?? currentData?.NO ?? '';
     const actualName = currentData?.NAME ?? '';
     const safeClientName = String(actualName).replace(/[\/\\?%*:|"<>]/g, '').trim() || 'N_A';
@@ -1306,12 +1274,10 @@ export default function ClientDataView() {
     }
     setPaymentList(payments);
 
-    // Ensure DOM input calculations match the exact data mathematically on mount
     setTimeout(handleFinancialChange, 150);
   };
   const handleCloseModal = () => { setIsModalOpen(false); setEditingClient(null); setSelectedIpk(''); setSelectedIpd(''); setPaymentList([]); };
 
-  // New Handlers for the View Detail Box
   const handleOpenViewModal = async (client: any) => {
     setViewingClient(client);
     setIsViewModalOpen(true);
@@ -1554,7 +1520,6 @@ export default function ClientDataView() {
       }
       const ipsJson = JSON.stringify(gatheredIps);
 
-      // ── Sanitize every field before touching the database ────────────────────
       const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
       const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
 
@@ -1579,14 +1544,12 @@ export default function ClientDataView() {
       }
 
       const clientName = sanitizeInput((data.NAME as string) || '', 100).trim();
-      // Basic validation
       if (!clientName) {
         alert(lang === 'bm' ? 'Nama klien diperlukan.' : 'Client name is required.');
         setIsSaving(false);
         return;
       }
 
-      // Installment dependency validation
       for (let i = 0; i < 10; i++) {
         const amtVal = data[`payment_amt_${i}`];
         const dateVal = data[`payment_date_${i}`];
@@ -1612,7 +1575,6 @@ export default function ClientDataView() {
         'PHONE NUMBER': formattedPhone,
         DATE: sanitizeInput((data.DATE as string) || '', 20),
         'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
-        // Whitelist-based: only accept known status values
         'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
         'TOTAL PAID (RM)': autoTotalPaid,
         'PENDING (RM)': autoPending,
@@ -1669,7 +1631,6 @@ export default function ClientDataView() {
         if (insertedData) savedClientId = insertedData.id;
       }
 
-      // Process file uploads from the form into unified Client folder: Clients/{clientFolder}/...
       let newAgreementData: any = null;
       let updatedReceiptsMap: Record<string, any> = {};
       if (typeof editingClient?.payment_receipts === 'string') {
@@ -1687,7 +1648,6 @@ export default function ClientDataView() {
         const clientFolder = `${clientNoVal} ${safeClientName}`;
         const formElement = e.target as HTMLFormElement;
 
-        // 1. Agreement file upload
         const agreementInput = formElement.querySelector('input[name="agreement_file"]') as HTMLInputElement;
         if (agreementInput?.files?.[0]) {
           const agFile = agreementInput.files[0];
@@ -1712,7 +1672,6 @@ export default function ClientDataView() {
           }
         }
 
-        // 2. Installment payment receipts
         for (let i = 0; i < 10; i++) {
           const pInput = formElement.querySelector(`input[name="payment_receipt_file_${i}"]`) as HTMLInputElement;
           if (pInput?.files?.[0]) {
@@ -1846,9 +1805,6 @@ export default function ClientDataView() {
           />
         </div>
 
-        {/* ==============================================
-          1. VIEW CLIENT DETAILS MODAL
-          ============================================== */}
         {isViewModalOpen && viewingClient && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[95vh]">
@@ -1888,7 +1844,6 @@ export default function ClientDataView() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 dark:bg-gray-900/10 space-y-6">
-                {/* 1. Personal Information */}
                 <div>
                   <SectionHeader
                     icon={
@@ -1908,7 +1863,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 2. Laporan polis & lokasi laporan */}
                 <div>
                   <SectionHeader
                     icon={
@@ -1947,7 +1901,6 @@ export default function ClientDataView() {
                         ));
                       })()}
                     </div>
-                    {/* Lokasi Laporan */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-gray-800">
                       <ViewField label={`${t('clients', 'policeStation', lang)}`} value={viewingClient.report_location_balai} lang={lang} />
                       <ViewField label={`${t('clients', 'districtPolice', lang)}`} value={viewingClient.report_location_ipd} lang={lang} />
@@ -1956,7 +1909,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 3. Kertas Siasatan (IP) */}
                 <div>
                   <SectionHeader
                     icon={
@@ -2003,7 +1955,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 4. Borang Perjanjian Klien (Agreement Form) */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <SectionHeader
@@ -2122,7 +2073,6 @@ export default function ClientDataView() {
                   )}
                 </div>
 
-                {/* 5. Financial Overview & Case Categories */}
                 <div>
                   <SectionHeader
                     icon={
@@ -2151,7 +2101,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* Installment Payment Schedule & Client Receipts */}
                 {(() => {
                   const paymentIndices = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
                   const payments = paymentIndices.map(prefix => {
@@ -2204,7 +2153,6 @@ export default function ClientDataView() {
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
                                   <span className="text-slate-800 dark:text-white">{ordinalLabel}</span>
-                                  {/* Non-annoying receipt status pill */}
                                   {hasReceipt ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
                                       <span>📎</span> {t('clients', 'receiptAttached', lang)}
@@ -2221,7 +2169,6 @@ export default function ClientDataView() {
                               <div className="flex items-center justify-between sm:justify-end gap-3">
                                 <span className="text-emerald-600 dark:text-emerald-400 font-mono">{formattedAmt}</span>
 
-                                {/* Receipt action button */}
                                 <div className="flex items-center gap-1.5">
                                   {hasReceipt ? (
                                     <>
@@ -2296,7 +2243,6 @@ export default function ClientDataView() {
                   );
                 })()}
 
-                {/* 6. rekod pembayaran */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <SectionHeader
@@ -2316,7 +2262,6 @@ export default function ClientDataView() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Invoices Column */}
                     <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800/80 shadow-sm">
                       <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">
                         {lang === 'bm' ? 'Invois (Invoices)' : 'Invoices'}
@@ -2365,7 +2310,6 @@ export default function ClientDataView() {
                       )}
                     </div>
 
-                    {/* Receipts Column */}
                     <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-slate-200 dark:border-gray-800/80 shadow-sm">
                       <h4 className="font-semibold text-slate-700 dark:text-zinc-300 mb-4 border-b border-slate-100 dark:border-gray-800 pb-2">
                         {lang === 'bm' ? 'Resit (Receipts)' : 'Receipts'}
@@ -2416,7 +2360,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 7. Status & Kategori Kes */}
                 <div>
                   <SectionHeader
                     icon={
@@ -2433,7 +2376,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* 8. Letter of Demand (LoD) */}
                 <div>
                   <SectionHeader
                     icon={
@@ -2522,9 +2464,6 @@ export default function ClientDataView() {
           </div>
         )}
 
-        {/* ==============================================
-          2. ADD / EDIT CLIENT MODAL
-          ============================================== */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] md:w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -2547,7 +2486,6 @@ export default function ClientDataView() {
               <form onSubmit={handleSaveClient} noValidate className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-black">
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* 1. Personal Information */}
                     <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mb-1">
                       <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'personalInfo', lang)}</h3>
                     </div>
@@ -2597,7 +2535,6 @@ export default function ClientDataView() {
                       lang={lang}
                     />
 
-                  {/* 2. Laporan Polis */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
                     <button
@@ -2644,7 +2581,6 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
-                  {/* Lokasi Laporan Header & Quick Toggle */}
                   <div className="sm:col-span-2 mt-4 mb-1 flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                       {t('clients', 'reportLocation', lang)}
@@ -2667,7 +2603,6 @@ export default function ClientDataView() {
                     </button>
                   </div>
 
-                  {/* 1. IPK (Kontinjen / Negeri) */}
                   <div className="sm:col-span-2 space-y-1">
                     <div className="flex justify-between items-center">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -2721,7 +2656,6 @@ export default function ClientDataView() {
                     )}
                   </div>
 
-                  {/* 2. IPD (Ibu Pejabat Polis Daerah) */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -2772,7 +2706,6 @@ export default function ClientDataView() {
                     )}
                   </div>
 
-                  {/* 3. Balai Polis */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
@@ -2823,7 +2756,6 @@ export default function ClientDataView() {
                     )}
                   </div>
 
-                  {/* 3. Kertas Siasatan (IP) */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
                     <button
@@ -2884,7 +2816,6 @@ export default function ClientDataView() {
                     </div>
                   ))}
 
-                  {/* 4. Borang Perjanjian Klien (Agreement Form) */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'agreementForm', lang)}</h3>
                     <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">{t('clients', 'agreementSubtitle', lang)}</span>
@@ -2906,7 +2837,6 @@ export default function ClientDataView() {
                     )}
                   </div>
 
-                  {/* 5. Financial Details */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
                   </div>
@@ -2927,7 +2857,6 @@ export default function ClientDataView() {
                     <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
 
-                  {/* Dynamic payments Scheduler */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
                     <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
                     {paymentList.length < 10 && (
@@ -2935,7 +2864,6 @@ export default function ClientDataView() {
                         type="button"
                         onClick={() => {
                           const currentTotal = paymentList.length;
-                          // Find first unfilled payment block if user didn't fill previous ones
                           const isPreviousFilled = paymentList.every(p => {
                             const amt = document.querySelector(`input[name="payment_amt_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
                             const dt = document.querySelector(`input[name="payment_date_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
@@ -3023,7 +2951,6 @@ export default function ClientDataView() {
                       </div>
                     </div>
                   ))}
-                  {/* 6. Case & Resolution Details */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}</h3>
                   </div>
@@ -3134,7 +3061,6 @@ export default function ClientDataView() {
                     <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none min-h-[100px]"></textarea>
                   </div>
 
-                  {/* 7. Letter of Demand (LoD) */}
                   <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'lodTitle', lang)}</h3>
                   </div>
@@ -3153,7 +3079,6 @@ export default function ClientDataView() {
                     <input type="text" name="lod_remark" defaultValue={editingClient?.lod_remark || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
                   </div>
 
-                  {/* Legacy Fields Kept in background for compatibility, hidden */}
                   <input type="hidden" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} />
                   <input type="hidden" name="Report" defaultValue={editingClient?.Report || ''} />
                   <input type="hidden" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} />
@@ -3161,7 +3086,6 @@ export default function ClientDataView() {
                   </div>
                 </div>
 
-                {/* Sticky Modal Footer */}
                 <div className="p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-900 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
                   <div className="w-full sm:w-auto">
                     {editingClient && (['CEO', 'CFO', 'IT Admin'].includes(profile?.role) || profile?.role?.toLowerCase() === 'it admin' || profile?.role?.toLowerCase() === 'it' || profile?.department?.toLowerCase() === 'it' || permissions?.manage_access_control) && (

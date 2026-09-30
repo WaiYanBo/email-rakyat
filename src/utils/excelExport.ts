@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
 
-// Helper to format duration in milliseconds to HH:MM:SS
 function formatDuration(ms: number): string {
   if (ms <= 0) return '00:00:00';
   const totalSeconds = Math.floor(ms / 1000);
@@ -10,7 +9,6 @@ function formatDuration(ms: number): string {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
-// Helper to extract HH:MM:SS from an ISO date string
 function extractTime(isoString: string): string {
   const d = new Date(isoString);
   const hh = String(d.getHours()).padStart(2, '0');
@@ -19,12 +17,10 @@ function extractTime(isoString: string): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-// Helper to format day counts as whole integer if integer, or 1-decimal float if half-day
 function formatDays(days: number): number {
   return Number.isInteger(days) ? Math.round(days) : Number(days.toFixed(1));
 }
 
-// Helper to format signed duration in milliseconds to (±)HH:MM:SS
 function formatDurationSigned(ms: number): string {
   const isNegative = ms < 0;
   const absMs = Math.abs(ms);
@@ -56,20 +52,16 @@ export const exportAttendanceToExcel = (
 ) => {
   if (!records || records.length === 0) return;
 
-  // Determine the month to generate calendar for.
   const targetMonthStr = filterMode === 'month' ? selectedMonth : selectedDate.slice(0, 7);
   const [yearStr, monthStr] = targetMonthStr.split('-');
   const year = parseInt(yearStr);
   const month = parseInt(monthStr) - 1; // 0-indexed for Date
 
-  // Days in month
   const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Today local date string for future date comparison (YYYY-MM-DD)
   const todayLocal = new Date();
   const todayStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
 
-  // Working days (Mon-Fri) & Rest days (Sat-Sun) in month
   let totalWorkingDaysInMonth = 0;
   let totalRestDaysInMonth = 0;
   let nonWeekendHolidaysCount = 0;
@@ -92,14 +84,12 @@ export const exportAttendanceToExcel = (
     }
   }
 
-  // Generate calendar weeks for the month
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
 
   const weeks: Date[][] = [];
   let currentWeek: Date[] = [];
 
-  // Pad the first week if the month doesn't start on Sunday
   const startDay = startDate.getDay(); // 0 is Sunday
   for (let i = 0; i < startDay; i++) {
     const padDate = new Date(year, month, 1 - (startDay - i));
@@ -115,7 +105,6 @@ export const exportAttendanceToExcel = (
     }
   }
 
-  // Pad the last week if the month doesn't end on Saturday
   if (currentWeek.length > 0) {
     const daysToPad = 7 - currentWeek.length;
     const lastDate = currentWeek[currentWeek.length - 1];
@@ -127,7 +116,6 @@ export const exportAttendanceToExcel = (
     weeks.push(currentWeek);
   }
 
-  // Group records by employee
   const recordsByEmployee: Record<string, any[]> = {};
   records.forEach(r => {
     const empName = r.user_name || 'Unknown';
@@ -141,7 +129,6 @@ export const exportAttendanceToExcel = (
   const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const isSingleEmp = Object.keys(recordsByEmployee).length === 1;
 
-  // ─── 1. BUILD WEEKLY ATTENDANCE SHEETS (WEEK 1, WEEK 2, WEEK 3...) ─────────
   Object.entries(recordsByEmployee).forEach(([empName, empRecords]) => {
     const recordsByDate: Record<string, any[]> = {};
     empRecords.forEach(r => {
@@ -153,7 +140,6 @@ export const exportAttendanceToExcel = (
       }
     });
 
-    // Compute weekly & grand totals for this employee
     const weekTotals: { hoursMs: number; otMs: number; hasData: boolean }[] = [];
     let grandTotalHoursMs = 0;
     let grandTotalOtMs = 0;
@@ -314,7 +300,6 @@ export const exportAttendanceToExcel = (
       aoaWeek.push(['', '', '', '', '', '', '', '']); // r=11 spacer
       aoaWeek.push(['', '', '', '', '', '', '', '']); // r=12 spacer
 
-      // ─── 2 ROW WEEKLY & OVERTIME TOTALS TABLE ─────────────────────────
       const summaryHeader = ['', ...weeks.map((_, i) => `Week ${i + 1}`), 'TOTAL'];
       const summaryHoursRow = ['TOTAL WEEKLY HOURS', ...weekTotals.map(w => w.hasData ? formatDurationSigned(w.hoursMs) : ''), formatDurationSigned(grandTotalHoursMs)];
       const summaryOtRow = ['TOTAL OVERTIME', ...weekTotals.map(w => w.hasData ? formatDurationSigned(w.otMs) : ''), formatDurationSigned(grandTotalOtMs)];
@@ -326,7 +311,6 @@ export const exportAttendanceToExcel = (
       aoaWeek.push(['', '', '', '', '', '', '', '']); // r=16 spacer
       aoaWeek.push(['', '', '', '', '', '', '', '']); // r=17 spacer
 
-      // ─── EXACT NOTES & TO DO / COMMENT SECTION ─────────────────────────
       aoaWeek.push(['NOTES', '', '', '', 'TO DO', '', '', '']); // r=18
       aoaWeek.push(['- Jika tiada clock in & clock out (melainkan MC atau annual leave), anda akan', '', '', '', '- Isi dekat kotak warna kuning sahaja mengikut format waktu', '', '', '']); // r=19
       aoaWeek.push(['dikira AWOL (Absent Without Leave). Gaji tidak akan dikira pada hari tersebut', '', '', '', 'berdasarkan live location clock in & clock out anda di dalam', '', '', '']); // r=20
@@ -350,7 +334,6 @@ export const exportAttendanceToExcel = (
         weekMerges.push({ s: { r: nr, c: 4 }, e: { r: nr, c: 7 } });
       }
 
-      // Apply styling to week sheet
       Object.keys(weekWs).forEach(key => {
         if (key.startsWith('!')) return;
 
@@ -368,7 +351,6 @@ export const exportAttendanceToExcel = (
 
         if (!cell.s) cell.s = {};
 
-        // Weekly & Overtime Totals table styling (r=13..15)
         if (r >= 13 && r <= 15) {
           cell.s.fill = { fgColor: { rgb: "FFF8FAFC" } }; // Soft slate 50
           cell.s.border = {
@@ -386,7 +368,6 @@ export const exportAttendanceToExcel = (
           return;
         }
 
-        // Notes & TO DO / COMMENT section formatting (r=18..28)
         if (r >= 18 && r <= 28) {
           const isGreenHeader = val === "NOTES" || val === "TO DO" || val === "COMMENT";
           if (isGreenHeader) {
@@ -446,12 +427,10 @@ export const exportAttendanceToExcel = (
     });
   });
 
-  // ─── 2. BUILD PAYROLL SUMMARY WORKSHEET AT THE VERY END (LAST SHEET!) ─────
   const summaryAoa: any[][] = [];
   summaryAoa.push([`Payroll & Attendance Summary: ${targetMonthStr}`, '']);
   summaryAoa.push(['', '']);
 
-  // Track row indices for styling, currency formatting, and formula generation
   const highlightRows: number[] = [];
   const headerSectionRows: number[] = [];
   const titleRows: number[] = [];
@@ -500,7 +479,6 @@ export const exportAttendanceToExcel = (
       } else if (!isWeekend && !isPublicHoliday && dayRecs.length === 0) {
         const isFutureOrToday = dateStr >= todayStr;
         if (isFutureOrToday && shouldProjectRemainingDays) {
-          // Future days projected as worked
         } else {
           awolDays++;
         }
@@ -525,7 +503,6 @@ export const exportAttendanceToExcel = (
     const totalDeductions = employeeEpf + socsoEmployee + employeeEis + empIrbPcb + empSalaryAdvance;
     const salaryInHand = Math.max(0, eligibleSalary - totalDeductions);
 
-    // Starting row index in summaryAoa for this employee block
     const blockStartRow = summaryAoa.length;
 
     headerSectionRows.push(blockStartRow);
@@ -609,7 +586,6 @@ export const exportAttendanceToExcel = (
 
   const summaryNotesStartRow = summaryAoa.length;
 
-  // ─── EXACT NOTES & TO DO / COMMENT SECTION FOR PAYROLL SUMMARY ───────────
   summaryAoa.push(['NOTES', '', '', '', 'TO DO', '', '', '']); // summaryNotesStartRow + 0
   summaryAoa.push(['- Jika tiada clock in & clock out (melainkan MC atau annual leave), anda akan', '', '', '', '- Isi dekat kotak warna kuning sahaja mengikut format waktu', '', '', '']); // + 1
   summaryAoa.push(['dikira AWOL (Absent Without Leave). Gaji tidak akan dikira pada hari tersebut', '', '', '', 'berdasarkan live location clock in & clock out anda di dalam', '', '', '']); // + 2
@@ -624,7 +600,6 @@ export const exportAttendanceToExcel = (
 
   const summaryWs = XLSX.utils.aoa_to_sheet(summaryAoa);
 
-  // Apply styling to Summary Worksheet
   const mergesSummary: any[] = [];
   mergesSummary.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
 
@@ -645,7 +620,6 @@ export const exportAttendanceToExcel = (
 
     if (!cell.s) cell.s = {};
 
-    // Notes formatting on Summary sheet
     if (r >= summaryNotesStartRow && r <= summaryNotesStartRow + 10) {
       const isGreenHeader = val === "NOTES" || val === "TO DO" || val === "COMMENT";
       if (isGreenHeader) {
@@ -673,7 +647,6 @@ export const exportAttendanceToExcel = (
         mergesSummary.push({ s: { r: r, c: 0 }, e: { r: r, c: 1 } });
       }
     } else if (isHighlight && (c === 0 || c === 1)) {
-      // High-End Mint Emerald Highlight for BOTH Column A and Column B!
       cell.s.fill = { fgColor: { rgb: "FFDCFCE7" } }; // Emerald-100 Light Mint
       cell.s.font = { bold: true, color: { rgb: "FF14532D" } }; // Dark Emerald-900 text
       cell.s.border = {
@@ -684,7 +657,6 @@ export const exportAttendanceToExcel = (
       cell.s.font = { bold: true };
     }
 
-    // Currency format ONLY for Salary & Deduction rows in column B
     if (c === 1 && isSalaryCurrency) {
       cell.z = '"RM "#,##0.00';
     }
@@ -694,7 +666,6 @@ export const exportAttendanceToExcel = (
   summaryWs['!merges'] = mergesSummary;
   summaryWs['!cols'] = [{ wch: 58 }, { wch: 24 }];
 
-  // Append Payroll Summary as the VERY LAST SHEET (TAB)!
   XLSX.utils.book_append_sheet(wb, summaryWs, 'Payroll Summary');
 
   const filename = `Attendance_Payroll_${targetMonthStr}.xlsx`;

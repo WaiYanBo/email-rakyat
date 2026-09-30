@@ -69,14 +69,12 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<'myleaves' | 'dashboard'>('myleaves');
   const [dashboardSubTab, setDashboardSubTab] = useState<'pending' | 'history' | 'balances' | 'calendar'>('pending');
 
-  // Employee states
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
   const [employeeAccrual, setEmployeeAccrual] = useState<AccrualCalculation | null>(null);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [holidays, setHolidays] = useState<string[]>([]);
   const [balancesLoading, setBalancesLoading] = useState(true);
 
-  // Form states
   const [leaveType, setLeaveType] = useState('Annual');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -88,21 +86,18 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dashboard / Admin states
   const [pendingRequests, setPendingRequests] = useState<LeaveRequest[]>([]);
   const [staffBalances, setStaffBalances] = useState<StaffBalanceWithProfile[]>([]);
   const [approvedRequests, setApprovedRequests] = useState<LeaveRequest[]>([]);
   const [allStaffRequests, setAllStaffRequests] = useState<LeaveRequest[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
 
-  // Staff Leave History filters
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [historyStaffFilter, setHistoryStaffFilter] = useState('ALL');
   const [historyDeptFilter, setHistoryDeptFilter] = useState('ALL');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
   const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL');
 
-  // Proof / MC Document Preview Modal state
   const [proofModal, setProofModal] = useState<{
     isOpen: boolean;
     url: string | null;
@@ -123,12 +118,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     error: null,
   });
 
-  // Rejection modal states
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectingItem, setRejectingItem] = useState<LeaveRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  // Edit balances states
   const [selectedStaffBalanceId, setSelectedStaffBalanceId] = useState<string>('');
   const [isEditingBalancesInline, setIsEditingBalancesInline] = useState(false);
   const [editAnnualTotal, setEditAnnualTotal] = useState<string>('0');
@@ -138,7 +131,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const [editPaternityTotal, setEditPaternityTotal] = useState<string>('0');
   const [isUpdatingBalances, setIsUpdatingBalances] = useState(false);
 
-  // Calendar navigation states
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
   const userRole = (profile?.role || '').toUpperCase();
@@ -148,9 +140,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const isHR = userDept.includes('human') || userDept.includes('hr') || userRole.includes('HR') || userRole.includes('HUMAN RESOURCE');
   const hasHRPerms = Boolean(permissions?.manage_hr || permissions?.edit_staff || permissions?.view_staff || permissions?.manage_leave || permissions?.view_leave);
 
-  // Approvers who can view the admin tabs
   const isApprover = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');
-  // Authorized users who can edit entitlements and take actions
   const isActionAllowed = isHR || hasHRPerms || isIT || isExecutive || userRole.includes('ADMIN');
 
   useEffect(() => {
@@ -167,7 +157,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     }
   }, [staffBalances, selectedStaffBalanceId]);
 
-  // Recalculate working days dynamically when inputs change
   useEffect(() => {
     if (startDate && endDate) {
       const days = calculateWorkingDays(startDate, endDate, sessionType, holidays);
@@ -195,7 +184,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     if (!profile?.id) return;
     setBalancesLoading(true);
     try {
-      // 1. Fetch balances and employee profile details
       const [balanceRes, profileRes] = await Promise.all([
         supabase.from('leave_balances').select('*').eq('profile_id', profile.id).single(),
         supabase.from('profiles').select('id, full_name, remarks, roles(role_name)').eq('id', profile.id).single()
@@ -231,7 +219,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         setEmployeeAccrual(myAcc);
       }
 
-      // 2. Fetch requests (joining approver details)
       const { data: requestData, error: requestError } = await supabase
         .from('leave_requests')
         .select('*, approver:profiles!approved_by(full_name, roles(role_name))')
@@ -252,7 +239,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   const fetchAdminData = async () => {
     setAdminLoading(true);
     try {
-      // 1. Fetch pending requests
       const { data: pendingData, error: pendingError } = await supabase
         .from('leave_requests')
         .select('*, profiles!profile_id(full_name, department, status)')
@@ -262,7 +248,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       const activePending = (pendingData || []).filter((r: any) => r.profiles?.status !== 'Resigned' && r.profiles?.status !== 'Terminated');
       setPendingRequests(activePending);
 
-      // 2. Fetch all active staff profiles
       const { data: allProfiles, error: profError } = await supabase
         .from('profiles')
         .select('id, full_name, department, status, remarks, roles(role_name)')
@@ -272,12 +257,10 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         console.error('Error loading profiles for leave balances:', profError);
       }
 
-      // Filter out resigned / terminated staff (keeps ALL active staff, including developer/BOD/management)
       const activeProfiles = (allProfiles || []).filter((p: any) => 
         p.status !== 'Resigned' && p.status !== 'Terminated' && p.status !== 'Inactive'
       );
 
-      // Fetch all existing balances
       const { data: rawBalances, error: balancesError } = await supabase
         .from('leave_balances')
         .select('*');
@@ -288,7 +271,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
       const balancesByProfileId = new Map((rawBalances || []).map((b: any) => [b.profile_id, b]));
 
-      // Merge so EVERY active staff member ALWAYS appears in the Staff Balances dropdown!
       const unifiedBalances = activeProfiles.map((p: any) => {
         const existing = balancesByProfileId.get(p.id);
         if (existing) {
@@ -297,7 +279,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             profiles: p
           };
         }
-        // If staff member doesn't have a record in leave_balances yet, generate default
         return {
           id: p.id,
           profile_id: p.id,
@@ -324,7 +305,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         });
       }
 
-      // 3. Fetch approved leaves for calendar (excluding resigned staff)
       const { data: approvedData, error: approvedError } = await supabase
         .from('leave_requests')
         .select('*, profiles!profile_id(full_name, department, status)')
@@ -333,7 +313,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       const activeApproved = (approvedData || []).filter((r: any) => r.profiles?.status !== 'Resigned' && r.profiles?.status !== 'Terminated');
       setApprovedRequests(activeApproved);
 
-      // 4. Fetch ALL leave requests across staff for Staff Leave History registry
       const { data: allReqData, error: allReqError } = await supabase
         .from('leave_requests')
         .select('*, profiles!profile_id(id, full_name, department, status), approver:profiles!approved_by(full_name, roles(role_name))')
@@ -414,9 +393,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
       return;
     }
 
-    // Check balances
     if (balance) {
-      // Annual leave available right now is strictly what has been accrued to date:
       const yearCap = employeeAccrual?.isEligible 
         ? employeeAccrual.proRatedYearTotal 
         : (employeeAccrual?.isEligible === false ? 0 : balance.annual_total);
@@ -467,7 +444,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     try {
       let attachmentUrl = null;
 
-      // Handle Attachment Upload
       if (file) {
         const fileExt = file.name.split('.').pop();
         const filePath = `${profile.id}/${Date.now()}.${fileExt}`;
@@ -479,7 +455,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         attachmentUrl = filePath;
       }
 
-      // Submit leave request
       const { error: submitError } = await supabase
         .from('leave_requests')
         .insert([
@@ -500,7 +475,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
       alert(t('leave', 'successSubmit', lang));
 
-      // Reset form
       setStartDate('');
       setEndDate('');
       setReason('');
@@ -693,7 +667,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     }
   };
 
-  // Calendar helper calculations
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -722,17 +695,14 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
     const cells: React.ReactNode[] = [];
 
-    // Empty cells for alignment
     for (let i = 0; i < startOffset; i++) {
       cells.push(<div key={`empty-${i}`} className="bg-slate-50/50 dark:bg-black/10 min-h-[90px] border-b border-r border-slate-100 dark:border-zinc-800"></div>);
     }
 
-    // Days in current month
     for (let day = 1; day <= daysInMonth; day++) {
       const cellDate = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), day);
       const cellDateStr = cellDate.toISOString().split('T')[0];
 
-      // Find approved leaves overlapping this day
       const leavesOnThisDay = approvedRequests.filter((req) => {
         const start = new Date(req.start_date);
         const end = new Date(req.end_date);
@@ -774,7 +744,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
     return (
       <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 shadow-sm animate-fade-in">
-        {/* Month Selector header */}
         <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
           <button
             onClick={handlePrevMonth}
@@ -795,9 +764,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           </button>
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7 border-l border-t border-slate-100 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 gap-0">
-          {/* Weekday headers */}
           {weekDays.map((wd) => (
             <div key={wd} className="text-center py-2 text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 border-b border-r border-slate-150 dark:border-zinc-800">
               {wd}
@@ -838,7 +805,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
     }
   };
 
-  // Staff Leave History filter derivations
   const uniqueDepartments = Array.from(
     new Set(allStaffRequests.map((r) => r.profiles?.department).filter(Boolean))
   ) as string[];
@@ -852,7 +818,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
   ).sort((a, b) => a.name.localeCompare(b.name));
 
   const filteredHistory = allStaffRequests.filter((req) => {
-    // 1. Search term
     if (historySearchTerm.trim()) {
       const q = historySearchTerm.toLowerCase();
       const staffName = (req.profiles?.full_name || '').toLowerCase();
@@ -863,19 +828,15 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         return false;
       }
     }
-    // 2. Staff filter
     if (historyStaffFilter !== 'ALL' && req.profile_id !== historyStaffFilter) {
       return false;
     }
-    // 3. Department filter
     if (historyDeptFilter !== 'ALL' && req.profiles?.department !== historyDeptFilter) {
       return false;
     }
-    // 4. Leave Type filter
     if (historyTypeFilter !== 'ALL' && req.leave_type !== historyTypeFilter) {
       return false;
     }
-    // 5. Status filter
     if (historyStatusFilter !== 'ALL' && req.status !== historyStatusFilter) {
       return false;
     }
@@ -897,7 +858,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
   return (
     <div className="space-y-8">
-      {/* Switch Header tabs for Employee View vs Admin View */}
       {isApprover && (
         <div className="flex bg-slate-100/50 dark:bg-gray-900/40 p-1 rounded-xl border border-slate-200/80 dark:border-gray-800/80 w-fit gap-1">
           <button
@@ -923,9 +883,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
       {activeSubTab === 'myleaves' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Side: Balances Cards + Submit Form */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Balances Board */}
             <div>
               <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-zinc-550 mb-4">
                 My Leave Balances
@@ -940,7 +898,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {/* Annual Leave */}
                   {(() => {
                     const yearCap = employeeAccrual?.isEligible 
                       ? employeeAccrual.proRatedYearTotal 
@@ -990,7 +947,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     );
                   })()}
 
-                  {/* Sick Leave */}
                   <div className="bg-gradient-to-br from-amber-50/50 to-amber-100/10 dark:from-amber-950/20 dark:to-amber-900/5 border border-amber-150/40 dark:border-amber-900/20 p-4 rounded-2xl shadow-xs">
                     <span className="text-[10px] font-black uppercase tracking-wider text-amber-500 dark:text-amber-400 block mb-1">
                       {t('leave', 'sick', lang)}
@@ -1006,7 +962,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     </div>
                   </div>
 
-                  {/* Hospitalisation */}
                   <div className="bg-gradient-to-br from-emerald-50/50 to-emerald-100/10 dark:from-emerald-950/20 dark:to-emerald-900/5 border border-emerald-150/40 dark:border-emerald-900/20 p-4 rounded-2xl shadow-xs">
                     <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 dark:text-emerald-400 block mb-1">
                       {t('leave', 'hospitalisation', lang)}
@@ -1022,7 +977,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     </div>
                   </div>
 
-                  {/* Family Support Leaves (Maternity/Paternity/Unpaid) */}
                   <div className="bg-gradient-to-br from-rose-50/50 to-rose-100/10 dark:from-rose-950/20 dark:to-rose-900/5 border border-rose-150/40 dark:border-rose-900/20 p-4 rounded-2xl shadow-xs">
                     <span className="text-[10px] font-black uppercase tracking-wider text-rose-500 dark:text-rose-455 block mb-1">
                       Maternity / Paternity
@@ -1035,7 +989,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     </p>
                   </div>
 
-                  {/* Unpaid Leave Info */}
                   <div className="bg-gradient-to-br from-slate-50/50 to-slate-100/10 dark:from-zinc-900/30 dark:to-zinc-900/10 border border-slate-200/40 dark:border-zinc-800 p-4 rounded-2xl shadow-xs col-span-2 sm:col-span-1">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 block mb-1">
                       {t('leave', 'unpaid', lang)}
@@ -1048,7 +1001,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               )}
             </div>
 
-            {/* Leave History List */}
             <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-200 flex items-center gap-2">
@@ -1070,7 +1022,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                       key={item.id}
                       className="bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 sm:p-4 space-y-3 transition-all hover:border-slate-300 dark:hover:border-zinc-700"
                     >
-                      {/* Top row: Type & Status */}
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
@@ -1086,14 +1037,12 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </div>
                       </div>
 
-                      {/* Dates */}
                       <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-950 p-2 rounded-lg border border-slate-150 dark:border-zinc-800/80">
                         <span>📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         <span>→</span>
                         <span>{new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                       </div>
 
-                      {/* Reason Submitted */}
                       {item.reason && (
                         <div className="text-xs bg-white dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-150 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 break-words whitespace-pre-wrap">
                           <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block mb-0.5">💬 {t('leave', 'reason', lang)}:</span>
@@ -1101,7 +1050,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </div>
                       )}
 
-                      {/* Approver details */}
                       {(item.status === 'Approved' || item.status === 'Rejected') && (item as any).approver && (
                         <div className="text-[11px] text-slate-500 dark:text-zinc-400 bg-white/60 dark:bg-zinc-950/60 p-2 rounded-lg border border-slate-100 dark:border-zinc-800/60 flex items-center justify-between flex-wrap gap-2">
                           <span>
@@ -1110,7 +1058,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </div>
                       )}
 
-                      {/* Rejection Reason Alert Box */}
                       {item.status === 'Rejected' && item.rejection_reason && (
                         <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
                           <span className="text-[10px] font-black uppercase tracking-wider block mb-0.5">⚠️ Sebab Penolakan / Reason for Rejection:</span>
@@ -1118,7 +1065,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </div>
                       )}
 
-                      {/* Actions footer */}
                       <div className="flex items-center justify-between gap-2 pt-1">
                         <div>
                           {item.attachment_url && (
@@ -1150,7 +1096,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             </div>
           </div>
 
-          {/* Right Side: Apply Form panel */}
           <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6 h-fit">
             <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-200 mb-5 pb-2 border-b border-slate-100 dark:border-zinc-800">
               {t('leave', 'applyLeave', lang)}
@@ -1163,7 +1108,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Leave Type */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
                   {t('leave', 'leaveType', lang)}
@@ -1185,7 +1129,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </select>
               </div>
 
-              {/* Start Date */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
                   {t('leave', 'startDate', lang)}
@@ -1199,7 +1142,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 />
               </div>
 
-              {/* End Date */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
                   {t('leave', 'endDate', lang)}
@@ -1213,7 +1155,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 />
               </div>
 
-              {/* Session Type (Half Day vs Full Day) - Only shown/relevant if same date */}
               {startDate === endDate && startDate !== '' && (
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
@@ -1237,7 +1178,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Calculation Days Display */}
               {startDate && endDate && (
                 <div className="py-2.5 px-3.5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-150 dark:border-zinc-800 rounded-xl flex items-center justify-between text-xs font-semibold">
                   <span className="text-slate-400">{t('leave', 'daysCalculated', lang)}</span>
@@ -1247,7 +1187,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Reason */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
                   {t('leave', 'reason', lang)}
@@ -1261,7 +1200,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 ></textarea>
               </div>
 
-              {/* File Attachment */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1.5">
                   {t('leave', 'attachment', lang)}
@@ -1275,7 +1213,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 />
               </div>
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={formSubmitting}
@@ -1287,9 +1224,7 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
           </div>
         </div>
       ) : (
-        // HR/Manager views
         <div className="space-y-8 animate-fade-in">
-          {/* Sub menu controls */}
           <div className="flex flex-wrap bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-1 w-full sm:w-fit gap-1">
             <button
               onClick={() => setDashboardSubTab('pending')}
@@ -1335,8 +1270,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
             </div>
           ) : (
             <>
-              {/* Approvals tab */}
-              {/* Approvals tab */}
               {dashboardSubTab === 'pending' && (
                 <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-zinc-800 pb-3">
@@ -1370,7 +1303,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           key={item.id}
                           className="bg-white dark:bg-zinc-900/70 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5 relative group"
                         >
-                          {/* Top Header: Employee details + Leave Type & Status */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black flex items-center justify-center text-sm shadow-sm flex-shrink-0">
@@ -1395,7 +1327,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* Date Range & Duration Highlight */}
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
@@ -1423,7 +1354,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* FULL REASON (100% VISIBLE, NEVER TRUNCATED, PHONE OPTIMIZED) */}
                           <div className="space-y-1.5 flex-1">
                             <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 dark:text-zinc-500 flex items-center gap-1">
                               <span>💬</span>
@@ -1440,7 +1370,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* Attachment Link */}
                           {item.attachment_url && (
                             <div className="pt-1">
                               <button
@@ -1454,7 +1383,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           )}
 
-                          {/* Action Buttons: Approve / Reject (Mobile-first, prominent, touch-friendly) */}
                           {isActionAllowed && item.status === 'Pending' && (
                             <div className="pt-3 border-t border-slate-150 dark:border-zinc-800/80 flex items-center gap-2.5">
                               <button
@@ -1482,10 +1410,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Staff Leave History Tab */}
               {dashboardSubTab === 'history' && (
                 <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-6">
-                  {/* Header & Metric Counters */}
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-zinc-800 pb-4">
                     <div>
                       <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
@@ -1501,7 +1427,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                       </p>
                     </div>
 
-                    {/* Quick Stat Badges */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -1518,10 +1443,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     </div>
                   </div>
 
-                  {/* Filter Bar Controls */}
                   <div className="bg-slate-50/80 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      {/* Search by Staff Name / Reason */}
                       <div className="sm:col-span-2 lg:col-span-1">
                         <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
                           🔍 {lang === 'bm' ? 'Carian' : 'Search'}
@@ -1535,7 +1458,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         />
                       </div>
 
-                      {/* Filter by Staff Member */}
                       <div>
                         <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
                           👤 {t('leave', 'filterStaff', lang)}
@@ -1554,7 +1476,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </select>
                       </div>
 
-                      {/* Filter by Leave Type */}
                       <div>
                         <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
                           📋 {t('leave', 'filterType', lang)}
@@ -1577,7 +1498,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                         </select>
                       </div>
 
-                      {/* Filter by Status */}
                       <div>
                         <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-1">
                           🏷️ {t('leave', 'filterStatus', lang)}
@@ -1596,7 +1516,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                       </div>
                     </div>
 
-                    {/* Reset Filters & Department Filter row */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-200/50 dark:border-zinc-800/50">
                       <div className="flex items-center gap-2">
                         <label className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider whitespace-nowrap">
@@ -1634,7 +1553,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     </div>
                   </div>
 
-                  {/* List of Leave Applications */}
                   {filteredHistory.length === 0 ? (
                     <div className="p-12 text-center bg-slate-50 dark:bg-zinc-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 space-y-2">
                       <span className="text-3xl block">📋</span>
@@ -1654,7 +1572,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           key={`history-${item.id}`}
                           className="bg-white dark:bg-zinc-900/70 border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between space-y-3.5"
                         >
-                          {/* Staff Header + Leave Type & Status */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-yellow-400 dark:to-yellow-600 text-white dark:text-black font-black flex items-center justify-center text-sm shadow-sm flex-shrink-0">
@@ -1679,7 +1596,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* Date Range & Duration */}
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
@@ -1707,7 +1623,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* Reason */}
                           <div className="space-y-1">
                             <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 dark:text-zinc-500 flex items-center gap-1">
                               <span>💬</span>
@@ -1718,7 +1633,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* Approver Audit & Rejection Alert */}
                           {(item.status === 'Approved' || item.status === 'Rejected') && item.approver && (
                             <div className="text-[11px] text-slate-500 dark:text-zinc-400 bg-slate-50/70 dark:bg-zinc-950/50 p-2.5 rounded-xl border border-slate-150 dark:border-zinc-800/80 flex items-center justify-between flex-wrap gap-2">
                               <span>
@@ -1738,7 +1652,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           )}
 
-                          {/* PROOF OF MC ATTACHMENT BUTTON */}
                           <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between gap-3">
                             <div>
                               {item.attachment_url ? (
@@ -1757,7 +1670,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               )}
                             </div>
 
-                            {/* Applied Date */}
                             <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
                               {new Date(item.created_at).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </span>
@@ -1769,7 +1681,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Balances Directory tab (WP / Gov style select & edit) */}
               {dashboardSubTab === 'balances' && (
                 <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden p-6 space-y-6">
                   <div>
@@ -1814,7 +1725,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                     }
 
                     if (isEditingBalancesInline) {
-                      // WORDPRESS / GOVT WP-TABLE STYLE EDIT VIEW!
                       return (
                         <form onSubmit={handleEditBalancesSubmit} className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-200 dark:border-zinc-800/85 rounded-2xl p-6 space-y-6">
                           <div className="pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
@@ -1828,10 +1738,8 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                             </div>
                           </div>
 
-                          {/* wordpress/govt form-table styled rows */}
                           <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-zinc-200">
                             
-                            {/* Annual Leave Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
                               <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
                                 {t('leave', 'annual', lang)}
@@ -1854,7 +1762,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               </div>
                             </div>
 
-                            {/* Sick Leave Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
                               <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
                                 {t('leave', 'sick', lang)}
@@ -1877,7 +1784,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               </div>
                             </div>
 
-                            {/* Hospitalisation Leave Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
                               <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
                                 {t('leave', 'hospitalisation', lang)}
@@ -1900,7 +1806,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               </div>
                             </div>
 
-                            {/* Maternity Leave Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-b border-slate-100 dark:border-zinc-800/40 items-center gap-2">
                               <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
                                 Maternity Leave
@@ -1923,7 +1828,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                               </div>
                             </div>
 
-                            {/* Paternity Leave Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 py-3 border-slate-100 dark:border-zinc-800/40 items-center gap-2">
                               <label className="font-bold text-slate-700 dark:text-zinc-300 md:col-span-1">
                                 Paternity Leave
@@ -1970,7 +1874,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                       );
                     }
 
-                    // NORMAL VIEW DETAILS PANEL
                     return (
                       <div className="bg-slate-50/50 dark:bg-zinc-900/10 border border-slate-150 dark:border-zinc-800/80 rounded-2xl p-6 space-y-6">
                         <div className="pb-3 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
@@ -2003,7 +1906,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                           )}
                         </div>
 
-                        {/* Large, high contrast detail metrics */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                           
                           {(() => {
@@ -2051,7 +1953,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                   {currentRecord.annual_used} {lang === 'bm' ? 'hari telah digunakan' : 'days used'} · Year Cap: {yearCap}d (Baseline: {currentRecord.annual_total}d/yr)
                                 </p>
 
-                                {/* Month-by-Month Accrued To Date */}
                                 <div className="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
                                   <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-medium">📅 Accrued to Date:</span>
@@ -2121,7 +2022,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
 
                         </div>
 
-                        {/* Individual Employee Leave History */}
                         <div className="pt-6 border-t border-slate-200 dark:border-zinc-800 space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
@@ -2169,14 +2069,12 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                       <div>{getStatusBadge(item.status)}</div>
                                     </div>
 
-                                    {/* Date range */}
                                     <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-150 dark:border-zinc-800/80">
                                       <span>📅 {new Date(item.start_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                       <span>→</span>
                                       <span>{new Date(item.end_date).toLocaleDateString(lang === 'bm' ? 'ms-MY' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                     </div>
 
-                                    {/* Reason */}
                                     {item.reason && (
                                       <div className="text-xs bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-slate-150 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 whitespace-pre-wrap">
                                         <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-zinc-500 block mb-0.5">💬 {t('leave', 'reason', lang)}:</span>
@@ -2184,7 +2082,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                                       </div>
                                     )}
 
-                                    {/* Approver & MC Proof Footer */}
                                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800/60 flex-wrap">
                                       <div className="text-[11px] text-slate-500 dark:text-zinc-400">
                                         {item.status === 'Approved' && item.approver && (
@@ -2221,7 +2118,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
                 </div>
               )}
 
-              {/* Roster Calendar tab */}
               {dashboardSubTab === 'calendar' && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm">
@@ -2242,7 +2138,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         </div>
       )}
 
-      {/* Rejection reason modal */}
       {showRejectModal && rejectingItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-zinc-800">
@@ -2292,11 +2187,9 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
         </div>
       )}
 
-      {/* Proof / MC Document Preview Modal */}
       {proofModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-zinc-800">
-            {/* Modal Header */}
             <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-950/60">
               <div className="flex items-center gap-2.5">
                 <span className="text-xl">🩺</span>
@@ -2319,7 +2212,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-4 sm:p-6 flex-1 overflow-y-auto min-h-[320px] max-h-[65vh] flex flex-col items-center justify-center bg-slate-100/50 dark:bg-zinc-950/40">
               {proofModal.loading && (
                 <div className="flex flex-col items-center gap-3 py-12">
@@ -2367,7 +2259,6 @@ export default function LeaveSystemView({ profile }: LeaveSystemViewProps) {
               )}
             </div>
 
-            {/* Modal Footer */}
             <div className="px-5 sm:px-6 py-3.5 border-t border-slate-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-zinc-900">
               <span className="text-[11px] text-slate-400 dark:text-zinc-500 hidden sm:inline">
                 🔒 Antigravity Secure Document Viewer

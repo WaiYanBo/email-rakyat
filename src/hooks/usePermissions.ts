@@ -73,7 +73,6 @@ const DEFAULT_STAFF_PERMISSIONS: Permissions = {
   manage_leave: false,
 };
 
-// In-memory permissions cache to avoid redundant database calls during component mounts/tab switching
 const permissionsCache: Record<string, Permissions> = {};
 
 export function usePermissions(initialProfile?: any) {
@@ -101,7 +100,6 @@ export function usePermissions(initialProfile?: any) {
           return;
         }
 
-        // Fetch full profile info if missing
         if (!currentProf || !currentProf.department) {
           const { data: profData } = await supabase
             .from('profiles')
@@ -132,7 +130,6 @@ export function usePermissions(initialProfile?: any) {
           return;
         }
 
-        // Fetch permissions for this specific user (by ID or Full Name) and their department
         const targetIds = Array.from(new Set([userId, fullName, deptName].filter(Boolean)));
         const { data, error } = await supabase
           .from('access_permissions')
@@ -149,7 +146,6 @@ export function usePermissions(initialProfile?: any) {
           const deptPerms = data.find(p => p.target_type === 'department' && p.target_id === deptName)?.permissions || {};
           const userPerms = data.find(p => p.target_type === 'user' && (p.target_id === userId || p.target_id === fullName))?.permissions || {};
 
-          // User-specific settings take top precedence, followed by Department template, followed by secure defaults
           const viewPot = userPerms.view_potential_clients ?? deptPerms.view_potential_clients ?? (userPerms.manage_potential_clients || deptPerms.manage_potential_clients ? true : (userPerms.view_clients ?? deptPerms.view_clients ?? DEFAULT_STAFF_PERMISSIONS.view_potential_clients));
           const managePot = userPerms.manage_potential_clients ?? deptPerms.manage_potential_clients ?? userPerms.edit_clients ?? deptPerms.edit_clients ?? DEFAULT_STAFF_PERMISSIONS.manage_potential_clients;
 

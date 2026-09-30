@@ -17,7 +17,6 @@ export default function ExecutiveOverview() {
   const { lang } = usePortalLanguage();
   const { permissions, loading: permsLoading } = usePermissions(profile);
 
-  // --- REAL-TIME ANNOUNCEMENT STATE (Synced from Supabase) ---
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [isPostingNotice, setIsPostingNotice] = useState(false);
@@ -115,7 +114,6 @@ export default function ExecutiveOverview() {
 
         console.log('Session user:', session.user.email);
 
-        // Query profile with explicit relationship
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select(`id, department, full_name, role_id, roles(role_name)`)
@@ -132,7 +130,6 @@ export default function ExecutiveOverview() {
           console.log('Roles field:', profileData.roles);
           console.log('Role ID:', profileData.role_id);
 
-          // Check if roles relationship loaded (might be object or array)
           if (profileData.roles) {
             if (Array.isArray(profileData.roles)) {
               roleName = profileData.roles[0]?.role_name || 'No Role';
@@ -142,7 +139,6 @@ export default function ExecutiveOverview() {
               console.log('Loaded role from object:', roleName);
             }
           } else if (profileData.role_id) {
-            // Fallback: fetch role directly if relationship didn't load
             console.log('Relationship didn\'t load, querying roles table with role_id:', profileData.role_id);
             const { data: roleData, error: roleError } = await supabase.from('roles').select('role_name').eq('id', profileData.role_id).single();
             if (roleError) {
@@ -164,10 +160,8 @@ export default function ExecutiveOverview() {
           console.log('✅ Final roleName for access check:', roleName);
         }
 
-        // 1. Initial Load of Announcements
         await fetchAnnouncements();
 
-        // Fetch HoDs and BODs for author options
         try {
           const { data: authorsData } = await supabase
             .from('profiles')
@@ -188,7 +182,6 @@ export default function ExecutiveOverview() {
           console.error('Error fetching authors:', err);
         }
 
-        // Fetch staff on leave today
         const nowD = new Date();
         const todayStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')}`;
         const { count: leaveCount, error: leaveErr } = await supabase
@@ -212,7 +205,6 @@ export default function ExecutiveOverview() {
     }
     loadDashboard();
 
-    // 2. Setup Real-time Listener for Announcements
     console.log('Setting up real-time listener for announcements...');
     const subscription = supabase
       .channel('public:announcements')
@@ -225,7 +217,6 @@ export default function ExecutiveOverview() {
         },
         async (payload) => {
           console.log('Announcement change detected:', payload.eventType, payload);
-          // Re-fetch all announcements when changes occur
           await fetchAnnouncements();
         }
       )
@@ -233,7 +224,6 @@ export default function ExecutiveOverview() {
         console.log('Announcements subscription status:', status);
       });
 
-    // Cleanup: Remove listener on component unmount
     return () => {
       supabase.removeChannel(subscription);
     };
@@ -358,7 +348,6 @@ export default function ExecutiveOverview() {
     const formData = new FormData(e.target as HTMLFormElement);
     const announcementDate = formData.get('scheduled_date');
 
-    // ── Sanitize all user input before storing ───────────────────────────
     const rawTitle = (formData.get('title') as string) || '';
     const rawContent = (formData.get('content') as string) || '';
     const rawType = (formData.get('type') as string) || 'Info';
@@ -367,7 +356,6 @@ export default function ExecutiveOverview() {
     const cleanTitle = sanitizeInput(rawTitle, 200);
     const cleanContent = sanitizeLongText(rawContent);
     const cleanAuthor = sanitizeInput(rawAuthor, 100);
-    // Whitelist announcement types — reject anything not in list
     const allowedTypes = ['Info', 'Memo', 'Urgent'];
     const cleanType = allowedTypes.includes(rawType) ? rawType : 'Info';
 
@@ -382,7 +370,6 @@ export default function ExecutiveOverview() {
       return;
     }
 
-    // Combine date with midday local time to prevent UTC timezone date flips
     const scheduledDateTime = announcementDate
       ? new Date(`${announcementDate}T12:00:00`).toISOString()
       : new Date().toISOString();
@@ -405,7 +392,6 @@ export default function ExecutiveOverview() {
           console.error('Announcement update failed or RLS blocked:', error, data);
           alert(error ? `${t('overview', 'failedUpdate', lang)} (${error.message})` : `${t('overview', 'failedUpdate', lang)} (Database RLS permission denied)`);
         } else {
-          // Instant optimistic local state update
           const updatedDateFormatted = new Date(scheduledDateTime).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
           setAnnouncements(prev => prev.map(a => a.id === editingNotice.id ? {
             ...a,
@@ -417,7 +403,6 @@ export default function ExecutiveOverview() {
             date: updatedDateFormatted
           } : a));
 
-          // Clear cached translation so edited text / type badge reflects immediately
           setTranslatedAnnouncements(prev => {
             const next = { ...prev };
             delete next[editingNotice.id];
@@ -503,7 +488,6 @@ export default function ExecutiveOverview() {
     );
   }
 
-  // Helper function to get date in local YYYY-MM-DD format
   const getLocalDateString = (isoOrDate?: string | Date) => {
     if (!isoOrDate) return '';
     const d = typeof isoOrDate === 'string' ? new Date(isoOrDate) : isoOrDate;
@@ -516,7 +500,6 @@ export default function ExecutiveOverview() {
 
   const getTodayDateString = () => getLocalDateString(new Date());
 
-  // Separate announcements into today and past (timezone safe)
   const getTodayAnnouncements = () => {
     const todayStr = getTodayDateString();
     return announcements.filter(a => getLocalDateString(a.scheduled_at) === todayStr);
@@ -527,15 +510,12 @@ export default function ExecutiveOverview() {
     return announcements.filter(a => getLocalDateString(a.scheduled_at) < todayStr);
   };
 
-  // Get announcements to display on main page
   const getDisplayedAnnouncements = () => {
     const todayAnnouncements = getTodayAnnouncements();
     const pastAnnouncements = getPastAnnouncements();
 
-    // Always show all today's announcements
     let displayed = [...todayAnnouncements];
 
-    // Fill up to 3 items minimum with latest past announcements
     const neededCount = 3 - displayed.length;
     if (neededCount > 0) {
       displayed = [...displayed, ...pastAnnouncements.slice(0, neededCount)];
@@ -544,7 +524,6 @@ export default function ExecutiveOverview() {
     return displayed;
   };
 
-  // Get all unique Year-Month combinations from past announcements for the month filter dropdown
   const getUniqueMonths = () => {
     const past = getPastAnnouncements();
     const months = past.map(a => a.scheduled_at.substring(0, 7)); // 'YYYY-MM'
@@ -561,7 +540,6 @@ export default function ExecutiveOverview() {
     }
   };
 
-  // Get past announcements for history with optional filters
   const getHistoryAnnouncements = () => {
     let filtered = getPastAnnouncements();
 
@@ -667,7 +645,6 @@ export default function ExecutiveOverview() {
                       : 'border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40'
                       } hover:border-indigo-300 dark:hover:border-zinc-700 hover:shadow-sm`}
                   >
-                    {/* Top row: type badge + date + actions menu */}
                     <div className="flex justify-between items-start gap-2 mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
@@ -727,7 +704,6 @@ export default function ExecutiveOverview() {
                       )}
                     </div>
 
-                    {/* Title & content */}
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1" title={displayTitle}>
                       {displayTitle}
                     </h3>
@@ -735,7 +711,6 @@ export default function ExecutiveOverview() {
                       {displayContent}
                     </p>
 
-                    {/* Footer: author + action buttons — always inside the card */}
                     <div className="pt-3 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-between gap-3">
                       <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold truncate min-w-0" title={a.author}>
                         {a.author}
@@ -774,7 +749,6 @@ export default function ExecutiveOverview() {
           </div>
         </div>
       ) : (
-        /* HISTORY VIEW */
         <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mt-6">
           <div className="p-6 border-b border-slate-200 dark:border-gray-800 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -859,7 +833,6 @@ export default function ExecutiveOverview() {
                     key={a.id}
                     className="p-5 rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900/40 hover:border-indigo-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all"
                   >
-                    {/* Top row: type badge + date + actions menu */}
                     <div className="flex justify-between items-start gap-2 mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border tracking-wide whitespace-nowrap ${a.type === 'Urgent'
@@ -919,7 +892,6 @@ export default function ExecutiveOverview() {
                       )}
                     </div>
 
-                    {/* Title & content */}
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 mb-1" title={displayTitle}>
                       {displayTitle}
                     </h3>
@@ -927,7 +899,6 @@ export default function ExecutiveOverview() {
                       {displayContent}
                     </p>
 
-                    {/* Footer: author + action buttons — always inside the card */}
                     <div className="pt-3 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-between gap-3">
                       <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold truncate min-w-0" title={a.author}>
                         {a.author}
@@ -967,7 +938,6 @@ export default function ExecutiveOverview() {
         </div>
       )}
 
-      {/* POST/EDIT NOTICE MODAL */}
       {mounted && isNoticeModalOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white dark:bg-black w-[95%] max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col border border-slate-200 dark:border-gray-800">
@@ -1176,7 +1146,6 @@ export default function ExecutiveOverview() {
         document.body
       )}
 
-      {/* EXECUTIVE SNAPSHOT (Bottom Section) */}
       {hasFullAccess && !isIT && stats && (
         <div className="space-y-6 pt-8 border-t border-slate-200 dark:border-gray-800/80">
           <h2 className="text-lg font-semibold text-indigo-900 dark:text-yellow-500 tracking-tight">{t('overview', 'executiveSnapshot', lang)}</h2>

@@ -25,7 +25,6 @@ export default function SettingsView() {
   const { lang, setLang } = usePortalLanguage();
   const { permissions } = usePermissions(profile);
 
-  // Fetch Profile & Session
   const loadUserSettings = async () => {
     try {
       const session = await getCurrentSession();
@@ -49,7 +48,6 @@ export default function SettingsView() {
       if (profileData) {
         setFullName(profileData.full_name || '');
 
-        // Handle roles relationship
         if (profileData.roles) {
           const rolesVar = profileData.roles as any;
           if (Array.isArray(rolesVar)) {
@@ -106,7 +104,6 @@ export default function SettingsView() {
 
       setProfileMessage({ type: 'success', text: t('settings', 'profileUpdateSuccess', lang) });
 
-      // Dispatch custom event to update sidebar instead of reloading
       setTimeout(() => {
         window.dispatchEvent(new Event('profileUpdated'));
       }, 500);

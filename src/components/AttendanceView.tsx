@@ -77,7 +77,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
   const canEditAttendance = !personalOnly && (isIT || Boolean(permissions?.edit_attendance));
   const hasAccess = personalOnly || isIT || Boolean(permissions?.view_attendance);
 
-  // Edit / Delete attendance record state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [editDate, setEditDate] = useState('');
@@ -236,7 +235,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         return;
       }
 
-      // Fetch approved leave requests to inject into the attendance view
       let leaveQuery = supabase
         .from('leave_requests')
         .select('*')
@@ -263,7 +261,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         const endDate = `${year}-${String(nextMonth).padStart(2, '0')}-01`;
         filterStartDate = startDate;
         filterEndDate = endDate;
-        // Leave must overlap with the month
         leaveQuery = leaveQuery.lt('start_date', endDate).gte('end_date', startDate);
       }
 
@@ -280,21 +277,17 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           };
         });
 
-        // Inject mock "On Leave" records for days that have approved leaves but no clock-in
         if (leavesData && leavesData.length > 0) {
           leavesData.forEach((leave: any) => {
             const startDate = new Date(leave.start_date);
             const endDate = new Date(leave.end_date);
             
-            // Generate a record for each day in the leave period
             let currentDate = new Date(startDate);
             while (currentDate <= endDate) {
               const dayOfWeek = currentDate.getDay();
-              // Only inject for weekdays (Mon-Fri)
                 if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                   const dateStr = getLocalDateString(currentDate);
                 
-                // Only add if it falls within the current filter range
                 let isWithinFilter = false;
                 if (mode === 'date' && dateStr === date) {
                   isWithinFilter = true;
@@ -303,7 +296,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 }
 
                 if (isWithinFilter) {
-                  // Check if a real attendance record already exists for this user on this day
                   const existingRecord = enrichedRecords.find(r => r.user_id === leave.profile_id && r.date === dateStr);
                   
                   if (!existingRecord) {
@@ -327,7 +319,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           });
         }
 
-        // Re-sort the enriched records by date descending, then name
         enrichedRecords.sort((a, b) => {
           const dateA = String(a.date || '');
           const dateB = String(b.date || '');
@@ -384,7 +375,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           setProfile(userProfile);
         }
 
-        // Fetch all active profiles to populate employee search dropdown (excluding resigned)
         let allEmployees: any[] = [];
         const { data: profilesData } = await supabase
           .from('profiles')
@@ -399,7 +389,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           allEmployees = [profileData];
         }
 
-        // Fetch public holidays
         try {
           const { data: holidaysData } = await supabase
             .from('public_holidays')
@@ -590,7 +579,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </div>
               )}
 
-              {/* Filter Mode Toggle & Date/Month Selector */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
@@ -621,7 +609,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                   </div>
                 </div>
 
-                {/* Date/Month Input */}
                 <div className="p-5 rounded-2xl bg-slate-50/30 dark:bg-gray-900/20 border border-slate-200 dark:border-gray-800/80">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-550 mb-2">
                     {filterMode === 'date' ? t('attendanceAdmin', 'selectDate', lang) : t('attendanceAdmin', 'selectMonth', lang)}
@@ -649,7 +636,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
 
 
             <div className="rounded-xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-black shadow-sm mt-4 overflow-hidden">
-              {/* Mobile Card View (md:hidden) */}
               <div className="md:hidden space-y-3 p-3">
                 {!selectedEmployeeId ? (
                   <div className="p-8 text-center text-slate-450 dark:text-zinc-550 font-medium italic bg-slate-50/50 dark:bg-gray-900/30 rounded-xl">
@@ -666,7 +652,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                         key={record.id}
                         className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xs space-y-3"
                       >
-                        {/* Top: Name & Date */}
                         <div className="flex justify-between items-start gap-2">
                           <div>
                             <h4 className="font-bold text-slate-900 dark:text-white text-sm">
@@ -716,7 +701,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-zinc-950/80 rounded-xl border border-slate-200 dark:border-zinc-800">
-                            {/* Check In Block */}
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                                 🟢 {t('attendanceAdmin', 'colCheckIn', lang)}
@@ -742,7 +726,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                               )}
                             </div>
 
-                            {/* Check Out Block */}
                             <div>
                               <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                                 🔴 {t('attendanceAdmin', 'colCheckOut', lang)}
@@ -782,7 +765,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 )}
               </div>
 
-              {/* Desktop Table View (hidden md:block) */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[700px] text-left border-collapse text-xs md:text-sm">
                   <thead>
@@ -976,7 +958,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
         )}
       </div>
 
-      {/* ─── EXPORT ATTENDANCE & PAYROLL MODAL ────────────────────────────────────── */}
       {isExportModalOpen && (() => {
         const targetMonthStr = filterMode === 'month' ? selectedMonth : selectedDate.slice(0, 7);
         const [yStr, mStr] = targetMonthStr.split('-');
@@ -1029,7 +1010,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           } else if (!isWeekend && !isHoliday && dayRecs.length === 0) {
             const isFutureOrToday = dStr >= todayStr;
             if (isFutureOrToday && exportProjectRemainingDays) {
-              // Projected as worked for full month estimation
             } else {
               prevAwol += 1;
             }
@@ -1061,7 +1041,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-3xl w-full p-6 md:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto my-auto">
               
-              {/* Modal Header */}
               <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1079,7 +1058,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </button>
               </div>
 
-              {/* Global Projection Option */}
               <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50">
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-indigo-900 dark:text-indigo-300 select-none">
                   <input
@@ -1102,7 +1080,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </label>
               </div>
 
-              {/* Employee Salaries & Payroll Configuration (Aligned to Staff Report) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
@@ -1187,10 +1164,8 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </div>
               </div>
 
-              {/* Breakdown Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 
-                {/* Paid & Days Breakdown Card */}
                 <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-2">
                   <div className="font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-400 border-b border-indigo-200 dark:border-indigo-900/60 pb-1.5 flex items-center justify-between">
                     <span>{t('attendanceAdmin', 'paidDaySection', lang)}</span>
@@ -1230,7 +1205,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                   </div>
                 </div>
 
-                {/* Unpaid & Rejection Card */}
                 <div className="p-4 rounded-2xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 space-y-2">
                   <div className="font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400 border-b border-rose-200 dark:border-rose-900/60 pb-1.5 flex items-center justify-between">
                     <span>{t('attendanceAdmin', 'unpaidDaySection', lang)} & {t('attendanceAdmin', 'rejectionSection', lang)}</span>
@@ -1268,7 +1242,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
                 </div>
               </div>
 
-              {/* Salary Results Banner */}
               <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
                   <p className="text-xs text-emerald-800 dark:text-emerald-400 font-medium">
@@ -1300,7 +1273,6 @@ export default function AttendanceView({ personalOnly = false }: { personalOnly?
           </div>
         );
       })()}
-      {/* Edit Attendance Record Modal */}
       {isEditModalOpen && editingRecord && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
           <div className="bg-white dark:bg-black border border-slate-200 dark:border-gray-800 w-[95%] max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col">

@@ -1,6 +1,3 @@
-/**
- * Calendar export utilities for native device alarms (iOS Apple Calendar & Android Google Calendar)
- */
 
 export interface CalendarAppointment {
   id?: string;
@@ -53,11 +50,6 @@ function formatIcsDate(date: Date): string {
   return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
-/**
- * Generates an iCalendar (.ics) string containing a 15-minute system alarm.
- * When opened on iOS (iPhone) or Android, it imports directly into the native
- * device calendar and triggers OS-level system alarms even if the browser is closed.
- */
 export function generateIcs(appointment: CalendarAppointment): string {
   const { start, end } = parseDateTime(appointment.appointment_date, appointment.appointment_time);
   const client = appointment.client_name || 'Client';
@@ -88,13 +80,11 @@ export function generateIcs(appointment: CalendarAppointment): string {
     `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
     `LOCATION:${location.replace(/\n/g, ' ')}`,
     'STATUS:CONFIRMED',
-    // 15-minute advance native phone alarm
     'BEGIN:VALARM',
     'TRIGGER:-PT15M',
     'ACTION:DISPLAY',
     `DESCRIPTION:Peringatan: Temujanji bersama ${client} dalam 15 minit`,
     'END:VALARM',
-    // 0-minute alarm (at meeting start)
     'BEGIN:VALARM',
     'TRIGGER:-PT0M',
     'ACTION:DISPLAY',
@@ -105,9 +95,6 @@ export function generateIcs(appointment: CalendarAppointment): string {
   ].join('\r\n');
 }
 
-/**
- * Prompts download or native open of .ics calendar file on the user's device.
- */
 export function downloadAppointmentIcs(appointment: CalendarAppointment) {
   if (typeof window === 'undefined') return;
   const icsContent = generateIcs(appointment);
@@ -126,9 +113,6 @@ export function downloadAppointmentIcs(appointment: CalendarAppointment) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-/**
- * Generates a direct Google Calendar web / app link pre-filled with meeting details and reminders.
- */
 export function getGoogleCalendarLink(appointment: CalendarAppointment): string {
   const { start, end } = parseDateTime(appointment.appointment_date, appointment.appointment_time);
   const client = appointment.client_name || 'Client';

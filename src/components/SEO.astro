@@ -23,15 +23,12 @@ const siteTitle = "Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah | Team Em
 const defaultDescription = "Perunding advokasi & khidmat nasihat profesional mangsa Ah Long, pinjaman wang tanpa lesen, gangguan debt collector agresif, dan aduan salah laku kredit komuniti (KPKT) di Malaysia oleh ER Advocacy Sdn. Bhd.";
 const siteDescription = description || defaultDescription;
 
-// Real Malaysian high-intent user search queries
 const defaultKeywords = "bantuan mangsa ah long, cara setel hutang ah long, kena ugut ah long apa nak buat, ah long ugut sebar gambar, lapor polis ah long, selesai hutang ah long cara sah, gangguan debt collector, cara hadapi pengutip hutang, aduan kredit komuniti kpkt, rundingan hutang lapuk, khidmat nasihat hutang ah long, er advocacy sdn bhd, raja emel bantuan mangsa ah long, debt settlement malaysia";
 const pageKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
 
-// Absolute Social Image URL
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || Astro.url).href;
 
-// JSON-LD Schemas: Legal & Advocacy Service + Local Business + FAQPage
 const schemaOrg = {
   "@context": "https://schema.org",
   "@graph": [
@@ -141,7 +138,6 @@ const schemaOrg = {
 <link rel="canonical" href={canonicalURL} />
 <meta name="theme-color" content="#111827" />
 
-{/* Language Alternates */}
 <link rel="alternate" hreflang="ms-MY" href={canonicalURL} />
 <link rel="alternate" hreflang="x-default" href={canonicalURL} />
 
@@ -151,7 +147,6 @@ const schemaOrg = {
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 )}
 
-{/* OpenGraph / Facebook / WhatsApp */}
 <meta property="og:site_name" content="Email Rakyat" />
 <meta property="og:type" content={type} />
 <meta property="og:url" content={canonicalURL} />
@@ -161,7 +156,6 @@ const schemaOrg = {
 <meta property="og:image:alt" content="Team Email Rakyat - Advokasi & Bantuan Mangsa Ah Long" />
 <meta property="og:locale" content="ms_MY" />
 
-{/* Twitter Cards */}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:url" content={canonicalURL} />
 <meta name="twitter:title" content={title || siteTitle} />
@@ -169,5 +163,4 @@ const schemaOrg = {
 <meta name="twitter:image" content={socialImageURL} />
 <meta name="twitter:image:alt" content="Team Email Rakyat" />
 
-{/* Structured Data (JSON-LD) */}
 <script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />

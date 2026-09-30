@@ -11,11 +11,9 @@ export interface PotentialClientsLineChartProps {
   onClearPeriodSelect?: () => void;
 }
 
-// Robust date parser for potential client dates (handles DD/MM/YYYY, YYYY-MM-DD, ISO timestamps)
 export function parseClientDate(dateStr?: string | null, createdAt?: string | null): Date | null {
   if (dateStr && typeof dateStr === 'string' && dateStr.trim()) {
     const s = dateStr.trim();
-    // YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
       const parts = s.split('-');
       const y = parseInt(parts[0], 10);
@@ -23,17 +21,14 @@ export function parseClientDate(dateStr?: string | null, createdAt?: string | nu
       const d = parseInt(parts[2], 10);
       if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m, d);
     }
-    // DD/MM/YYYY or DD-MM-YYYY
     const parts = s.replace(/-/g, '/').split('/');
     if (parts.length === 3) {
       if (parts[0].length === 4) {
-        // YYYY/MM/DD
         const y = parseInt(parts[0], 10);
         const m = parseInt(parts[1], 10) - 1;
         const d = parseInt(parts[2], 10);
         if (!isNaN(y) && !isNaN(m) && !isNaN(d)) return new Date(y, m, d);
       } else {
-        // DD/MM/YYYY
         const d = parseInt(parts[0], 10);
         const m = parseInt(parts[1], 10) - 1;
         let y = parseInt(parts[2], 10);
@@ -51,7 +46,6 @@ export function parseClientDate(dateStr?: string | null, createdAt?: string | nu
   return null;
 }
 
-// Format month names
 const monthNamesShortEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthNamesShortBm = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis'];
 const monthNamesFullEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -72,7 +66,6 @@ export interface BucketData {
   clients: PotentialClient[];
 }
 
-// Generate smooth cubic bezier SVG path from points with vertical bounds clamping
 function getCurvedPath(points: { x: number; y: number }[], minY = 0, maxY = 999999): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
@@ -92,7 +85,6 @@ function getCurvedPath(points: { x: number; y: number }[], minY = 0, maxY = 9999
     let cp2x = p2.x - (p3.x - p1.x) / 6;
     let cp2y = p2.y - (p3.y - p1.y) / 6;
 
-    // Clamp control points within bounds to avoid overshooting past baseline
     cp1y = Math.min(Math.max(cp1y, minY), maxY);
     cp2y = Math.min(Math.max(cp2y, minY), maxY);
 
@@ -101,7 +93,6 @@ function getCurvedPath(points: { x: number; y: number }[], minY = 0, maxY = 9999
   return path;
 }
 
-// Generate closed area SVG path
 function getAreaPath(points: { x: number; y: number }[], baseY: number, minY = 0, maxY = 999999): string {
   if (points.length < 2) return '';
   const curve = getCurvedPath(points, minY, maxY);
@@ -110,7 +101,6 @@ function getAreaPath(points: { x: number; y: number }[], baseY: number, minY = 0
   return `${curve} L ${lastX} ${baseY.toFixed(1)} L ${firstX} ${baseY.toFixed(1)} Z`;
 }
 
-// Calculate nice maximum number for Y-axis steps
 function getNiceMax(max: number): number {
   if (max <= 0) return 5;
   if (max <= 5) return 5;
@@ -136,7 +126,6 @@ export default function PotentialClientsLineChart({
   selectedPeriodLabel,
   onClearPeriodSelect
 }: PotentialClientsLineChartProps) {
-  // Filters State
   const [timeRange, setTimeRange] = useState<'all' | 'year' | '6months' | '90days' | '30days' | 'month'>('year');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [granularity, setGranularity] = useState<'auto' | 'day' | 'week' | 'month'>('auto');
@@ -146,10 +135,8 @@ export default function PotentialClientsLineChart({
   const [staffFilter, setStaffFilter] = useState<string>('all');
   const [chartMode, setChartMode] = useState<'breakdown' | 'single' | 'cumulative'>('breakdown');
 
-  // Mobile & Foldable filters drawer toggle
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  // Series visibility toggles (for breakdown mode)
   const [visibleSeries, setVisibleSeries] = useState({
     total: true,
     high: true,
@@ -158,7 +145,6 @@ export default function PotentialClientsLineChart({
     converted: true
   });
 
-  // Dynamic Device Geometry & Viewport Tracking
   const [containerWidth, setContainerWidth] = useState<number>(800);
   const [viewportHeight, setViewportHeight] = useState<number>(() => typeof window !== 'undefined' ? window.innerHeight : 800);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -167,9 +153,6 @@ export default function PotentialClientsLineChart({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // =========================================================================
-  // DYNAMIC SENSING FOR FOLDABLES, ROTATION & IRREGULAR SCREENS
-  // =========================================================================
   const updateDimensions = useCallback(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -185,7 +168,6 @@ export default function PotentialClientsLineChart({
     updateDimensions();
 
     const ro = new ResizeObserver(() => {
-      // Micro-animation debounce for folding/unfolding spring animations
       updateDimensions();
       requestAnimationFrame(updateDimensions);
     });
@@ -195,7 +177,6 @@ export default function PotentialClientsLineChart({
     window.addEventListener('resize', updateDimensions);
     window.addEventListener('orientationchange', updateDimensions);
 
-    // Support visual viewport for virtual keyboard & dual-screen foldables
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', updateDimensions);
     }
@@ -216,7 +197,6 @@ export default function PotentialClientsLineChart({
     };
   }, [updateDimensions]);
 
-  // Distinct Categories & Staff for dropdowns
   const availableCategories = useMemo(() => {
     const set = new Set<string>();
     clients.forEach(c => {
@@ -248,7 +228,6 @@ export default function PotentialClientsLineChart({
     return Array.from(set).sort((a, b) => b - a);
   }, [clients]);
 
-  // Count active non-default filters for mobile/foldable badge
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (timeRange !== 'year') count++;
@@ -261,7 +240,6 @@ export default function PotentialClientsLineChart({
     return count;
   }, [timeRange, selectedYear, granularity, potentialFilter, statusFilter, categoryFilter, staffFilter]);
 
-  // Effective Granularity
   const effectiveGranularity = useMemo<'day' | 'week' | 'month'>(() => {
     if (granularity !== 'auto') return granularity;
     if (timeRange === '30days' || timeRange === 'month') return 'day';
@@ -269,7 +247,6 @@ export default function PotentialClientsLineChart({
     return 'month';
   }, [granularity, timeRange]);
 
-  // Filter clients based on potential, status, category, and staff (pre-date filtering)
   const dimensionFilteredClients = useMemo(() => {
     return clients.filter(c => {
       if (potentialFilter !== 'all' && c.potential_level !== potentialFilter) return false;
@@ -283,7 +260,6 @@ export default function PotentialClientsLineChart({
     });
   }, [clients, potentialFilter, statusFilter, categoryFilter, staffFilter]);
 
-  // Compute Time Window (startDate, endDate)
   const timeWindow = useMemo<{ start: Date; end: Date }>(() => {
     const now = new Date();
     const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
@@ -325,7 +301,6 @@ export default function PotentialClientsLineChart({
       return { start, end: endOfYear };
     }
 
-    // 'all' time: find earliest client
     let earliest = new Date(now.getFullYear(), 0, 1);
     dimensionFilteredClients.forEach(c => {
       const d = parseClientDate(c.date, c.created_at);
@@ -335,7 +310,6 @@ export default function PotentialClientsLineChart({
     return { start: earliest, end };
   }, [timeRange, selectedYear, dimensionFilteredClients]);
 
-  // Aggregate Buckets based on effectiveGranularity and timeWindow
   const chartBuckets = useMemo<BucketData[]>(() => {
     const { start, end } = timeWindow;
     const buckets: BucketData[] = [];
@@ -468,7 +442,6 @@ export default function PotentialClientsLineChart({
 
     if (buckets.length === 0) return [];
 
-    // Bucket the clients
     dimensionFilteredClients.forEach(client => {
       const d = parseClientDate(client.date, client.created_at);
       if (!d) return;
@@ -486,7 +459,6 @@ export default function PotentialClientsLineChart({
       }
     });
 
-    // Compute cumulative counts
     let running = 0;
     buckets.forEach(b => {
       running += b.total;
@@ -496,7 +468,6 @@ export default function PotentialClientsLineChart({
     return buckets;
   }, [timeWindow, effectiveGranularity, dimensionFilteredClients, lang]);
 
-  // Overall statistics for the selected scope
   const summaryStats = useMemo(() => {
     const totalInPeriod = chartBuckets.reduce((acc, b) => acc + b.total, 0);
     const highInPeriod = chartBuckets.reduce((acc, b) => acc + b.high, 0);
@@ -522,16 +493,11 @@ export default function PotentialClientsLineChart({
     };
   }, [chartBuckets]);
 
-  // =========================================================================
-  // MULTI-DEVICE GEOMETRY & BREAKPOINTS
-  // Covers: Foldables (Galaxy Z Fold, Pixel Fold), Compact Phones, iPads, DeX
-  // =========================================================================
   const isUltraNarrow = containerWidth < 340; // Galaxy Z Fold cover screen (280px - 320px)
   const isMobileScreen = containerWidth < 640; // Standard mobile phones
   const isTabletScreen = containerWidth >= 640 && containerWidth < 1024; // iPads, Surface, Foldable unfolded
   const isLandscapeCompact = viewportHeight < 480; // Phone or foldable in short landscape orientation
 
-  // Responsive Chart Height (prevents screen trapping in landscape or small foldables)
   const chartHeight = useMemo(() => {
     if (isLandscapeCompact) return 185;
     if (isUltraNarrow) return 210;
@@ -545,14 +511,12 @@ export default function PotentialClientsLineChart({
   const paddingTop = isLandscapeCompact ? 16 : 20;
   const paddingBottom = isLandscapeCompact ? 28 : 34;
 
-  // Horizontal Scrolling Optimization for Foldables & Phones
   const minStepX = isUltraNarrow ? 38 : (isMobileScreen ? 34 : 28);
   const minCalculatedWidth = paddingLeft + paddingRight + Math.max(0, chartBuckets.length - 1) * minStepX;
   const availableScrollWidth = Math.max(containerWidth - yAxisWidth - 16, 180);
   const isScrollable = minCalculatedWidth > availableScrollWidth;
   const activeCanvasWidth = isScrollable ? minCalculatedWidth : availableScrollWidth;
 
-  // Maximum value for Y axis
   const maxDataVal = useMemo(() => {
     if (chartBuckets.length === 0) return 5;
     if (chartMode === 'cumulative') {
@@ -573,7 +537,6 @@ export default function PotentialClientsLineChart({
 
   const niceMax = useMemo(() => getNiceMax(maxDataVal), [maxDataVal]);
 
-  // Compute point coordinates
   const plotPoints = useMemo(() => {
     if (chartBuckets.length === 0) {
       return { total: [], high: [], medium: [], low: [], converted: [], cumulative: [] };
@@ -603,7 +566,6 @@ export default function PotentialClientsLineChart({
     };
   }, [chartBuckets, activeCanvasWidth, niceMax, chartHeight, paddingLeft, paddingRight, paddingTop, paddingBottom]);
 
-  // X Axis Label filtering (skip labels if too dense)
   const xLabelInterval = useMemo(() => {
     const len = chartBuckets.length;
     if (isScrollable) {
@@ -617,7 +579,6 @@ export default function PotentialClientsLineChart({
     return Math.ceil(len / 8);
   }, [chartBuckets.length, isScrollable]);
 
-  // Reset Filters handler
   const isAnyFilterActive = activeFiltersCount > 0 || chartMode !== 'breakdown';
 
   const handleResetFilters = () => {
@@ -635,7 +596,6 @@ export default function PotentialClientsLineChart({
 
   const baseY = chartHeight - paddingBottom;
 
-  // Paths for series
   const paths = useMemo(() => {
     return {
       total: {
@@ -667,10 +627,6 @@ export default function PotentialClientsLineChart({
 
   const activeBucket = hoveredIndex !== null && chartBuckets[hoveredIndex] ? chartBuckets[hoveredIndex] : null;
 
-  // =========================================================================
-  // MULTI-TOUCH, STYLUS & POINTER SCRUBBING ENGINE
-  // Handles: Fingers, Apple Pencil, S-Pen, Crease Crossing, Trackpads, Mice
-  // =========================================================================
   const handlePointerScrub = useCallback((clientX: number) => {
     if (!svgRef.current || chartBuckets.length === 0) return;
     const rect = svgRef.current.getBoundingClientRect();
@@ -732,11 +688,7 @@ export default function PotentialClientsLineChart({
       }}
       className="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col mb-4 sm:mb-6 transition-all duration-200"
     >
-      {/* ======================================================== */}
-      {/* 1. CHART HEADER & ADAPTIVE FILTER CONTROLS              */}
-      {/* ======================================================== */}
       <div className="p-3 sm:p-5 border-b border-slate-100 dark:border-gray-800/80 bg-slate-50/50 dark:bg-gray-900/80 flex flex-col gap-3">
-        {/* Top title and mode toggles row */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-600 dark:text-yellow-400 flex items-center justify-center font-bold shadow-inner flex-shrink-0">
@@ -761,9 +713,7 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* Quick Mode Switcher & Mobile Filters Toggle */}
           <div className="flex items-center gap-2 w-full lg:w-auto justify-between sm:justify-end flex-wrap">
-            {/* View Mode Toggle */}
             <div className="flex items-center bg-white dark:bg-gray-800 p-0.5 rounded-xl border border-slate-200 dark:border-gray-700 shadow-sm text-xs font-semibold flex-1 sm:flex-none justify-between sm:justify-start">
               <button
                 type="button"
@@ -800,7 +750,6 @@ export default function PotentialClientsLineChart({
               </button>
             </div>
 
-            {/* Mobile / Foldable Filters Toggle Button */}
             <button
               type="button"
               onClick={() => setIsMobileFiltersOpen(prev => !prev)}
@@ -816,7 +765,6 @@ export default function PotentialClientsLineChart({
               <span className="text-[10px] ml-0.5">{isMobileFiltersOpen ? '▲' : '▼'}</span>
             </button>
 
-            {/* Reset Button */}
             {isAnyFilterActive && (
               <button
                 type="button"
@@ -831,9 +779,7 @@ export default function PotentialClientsLineChart({
           </div>
         </div>
 
-        {/* Filter controls grid: 1 col on Galaxy Fold cover (<340px), 2 cols on mobile, 3 on iPad, 6 on desktop */}
         <div className={`${isMobileFiltersOpen ? 'grid' : 'hidden lg:grid'} ${isUltraNarrow ? 'grid-cols-1' : 'grid-cols-2'} sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 pt-1 transition-all`}>
-          {/* 1. Time Range Preset */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Julat Masa' : 'Time Range'}
@@ -862,7 +808,6 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* 2. Specific Year */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Tahun Khusus' : 'Specific Year'}
@@ -886,7 +831,6 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* 3. Interval / Granularity */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Sela Masa' : 'Interval'}
@@ -910,7 +854,6 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* 4. Potential Level Filter */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Tahap Potensi' : 'Potential Level'}
@@ -934,7 +877,6 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* 5. Case Category Filter */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Kategori Kes' : 'Case Category'}
@@ -958,7 +900,6 @@ export default function PotentialClientsLineChart({
             </div>
           </div>
 
-          {/* 6. Lead By (Staff) Filter */}
           <div className="flex flex-col gap-1 min-w-0">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
               {lang === 'bm' ? 'Dibawa Oleh' : 'Lead By (Staff)'}
@@ -983,14 +924,12 @@ export default function PotentialClientsLineChart({
           </div>
         </div>
 
-        {/* Interactive Legend Toggles (in Breakdown mode) */}
         {chartMode === 'breakdown' && (
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-slate-100 dark:border-gray-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mr-1 hidden sm:inline">
               {lang === 'bm' ? 'Papar Garisan:' : 'Series Lines:'}
             </span>
 
-            {/* Total Leads Toggle */}
             <button
               type="button"
               onClick={() => setVisibleSeries(prev => ({ ...prev, total: !prev.total }))}
@@ -1004,7 +943,6 @@ export default function PotentialClientsLineChart({
               <span>{lang === 'bm' ? 'Jumlah' : 'Total Leads'}</span>
             </button>
 
-            {/* High Potential Toggle */}
             <button
               type="button"
               onClick={() => setVisibleSeries(prev => ({ ...prev, high: !prev.high }))}
@@ -1018,7 +956,6 @@ export default function PotentialClientsLineChart({
               <span>{t('clients', 'highPotential', lang)}</span>
             </button>
 
-            {/* Medium Potential Toggle */}
             <button
               type="button"
               onClick={() => setVisibleSeries(prev => ({ ...prev, medium: !prev.medium }))}
@@ -1032,7 +969,6 @@ export default function PotentialClientsLineChart({
               <span>{t('clients', 'mediumPotential', lang)}</span>
             </button>
 
-            {/* Low Potential Toggle */}
             <button
               type="button"
               onClick={() => setVisibleSeries(prev => ({ ...prev, low: !prev.low }))}
@@ -1046,7 +982,6 @@ export default function PotentialClientsLineChart({
               <span>{t('clients', 'lowPotential', lang)}</span>
             </button>
 
-            {/* Converted Toggle */}
             <button
               type="button"
               onClick={() => setVisibleSeries(prev => ({ ...prev, converted: !prev.converted }))}
@@ -1063,9 +998,6 @@ export default function PotentialClientsLineChart({
         )}
       </div>
 
-      {/* ======================================================== */}
-      {/* 2. KPI SUMMARY METRIC PILLS                              */}
-      {/* ======================================================== */}
       <div className={`grid ${isUltraNarrow ? 'grid-cols-1' : 'grid-cols-2'} md:grid-cols-4 gap-2 sm:gap-3 p-2.5 sm:p-4 bg-white dark:bg-gray-900 border-b border-slate-100 dark:border-gray-800`}>
         <div className="p-2.5 sm:p-3 bg-slate-50 dark:bg-gray-800/60 rounded-xl border border-slate-100 dark:border-gray-700/60 flex flex-col justify-between min-w-0">
           <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate">
@@ -1130,7 +1062,6 @@ export default function PotentialClientsLineChart({
         </div>
       </div>
 
-      {/* Selected Period Filter Banner */}
       {selectedPeriodLabel && (
         <div className="px-3 sm:px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
           <div className="flex items-center gap-1.5 truncate min-w-0">
@@ -1152,7 +1083,6 @@ export default function PotentialClientsLineChart({
         </div>
       )}
 
-      {/* Real-time Scrub Info Bar on Mobile / Narrow Devices */}
       {activeBucket && isMobileScreen && (
         <div className="px-3 py-1.5 bg-slate-50 dark:bg-gray-800/90 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between text-[11px] animate-fade-in">
           <div className="font-extrabold text-slate-800 dark:text-white flex items-center gap-1 truncate min-w-0">
@@ -1172,9 +1102,6 @@ export default function PotentialClientsLineChart({
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 3. MAIN SVG LINE CHART WITH ELEVATED Y-AXIS & TOUCH PAN */}
-      {/* ======================================================== */}
       <div className="relative p-1.5 xs:p-2 sm:p-4 w-full bg-white dark:bg-gray-900/40 select-none">
         {chartBuckets.length === 0 ? (
           <div className="h-48 sm:h-64 flex flex-col items-center justify-center text-center p-3 sm:p-6 text-slate-400 dark:text-zinc-500">
@@ -1201,7 +1128,6 @@ export default function PotentialClientsLineChart({
           </div>
         ) : (
           <div className="flex items-stretch w-full relative">
-            {/* Elevated Left Y-Axis SVG: Pinned with shadow divider so horizontal scrolling never bleeds */}
             <svg
               width={yAxisWidth}
               height={chartHeight}
@@ -1219,7 +1145,6 @@ export default function PotentialClientsLineChart({
               })}
             </svg>
 
-            {/* Scrollable / Fluid Canvas Container with iOS & Touch support */}
             <div
               ref={scrollContainerRef}
               className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin select-none relative touch-pan-x overscroll-x-contain"
@@ -1240,49 +1165,41 @@ export default function PotentialClientsLineChart({
                 onPointerCancel={handlePointerUp}
               >
                 <defs>
-                  {/* Glow Filter for lines */}
                   <filter id="lineGlowAdaptive" x="-10%" y="-10%" width="120%" height="120%">
                     <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.25" />
                   </filter>
 
-                  {/* Total Leads Area Gradient */}
                   <linearGradient id="totalGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.28" />
                     <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
                   </linearGradient>
 
-                  {/* High Potential Area Gradient */}
                   <linearGradient id="highGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                   </linearGradient>
 
-                  {/* Medium Potential Area Gradient */}
                   <linearGradient id="mediumGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#f97316" stopOpacity="0.22" />
                     <stop offset="100%" stopColor="#f97316" stopOpacity="0.0" />
                   </linearGradient>
 
-                  {/* Low Potential Area Gradient */}
                   <linearGradient id="lowGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
                     <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
                   </linearGradient>
 
-                  {/* Converted Area Gradient */}
                   <linearGradient id="convertedGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
                   </linearGradient>
 
-                  {/* Cumulative Area Gradient */}
                   <linearGradient id="cumulativeGradA" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
                     <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
-                {/* Horizontal Gridlines spanning full scroll width */}
                 {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
                   const y = chartHeight - paddingBottom - ratio * (chartHeight - paddingTop - paddingBottom);
 
@@ -1301,9 +1218,6 @@ export default function PotentialClientsLineChart({
                   );
                 })}
 
-                {/* ---------------------------------------------------- */}
-                {/* CUMULATIVE MODE                                      */}
-                {/* ---------------------------------------------------- */}
                 {chartMode === 'cumulative' && (
                   <g>
                     {paths.cumulative.area && (
@@ -1336,9 +1250,6 @@ export default function PotentialClientsLineChart({
                   </g>
                 )}
 
-                {/* ---------------------------------------------------- */}
-                {/* SINGLE MODE                                          */}
-                {/* ---------------------------------------------------- */}
                 {chartMode === 'single' && (
                   <g>
                     {paths.total.area && (
@@ -1371,12 +1282,8 @@ export default function PotentialClientsLineChart({
                   </g>
                 )}
 
-                {/* ---------------------------------------------------- */}
-                {/* BREAKDOWN (MULTI-LINE) MODE                          */}
-                {/* ---------------------------------------------------- */}
                 {chartMode === 'breakdown' && (
                   <>
-                    {/* Converted Series */}
                     {visibleSeries.converted && (
                       <g>
                         {paths.converted.area && (
@@ -1396,7 +1303,6 @@ export default function PotentialClientsLineChart({
                       </g>
                     )}
 
-                    {/* Low Potential Series */}
                     {visibleSeries.low && (
                       <g>
                         {paths.low.area && (
@@ -1416,7 +1322,6 @@ export default function PotentialClientsLineChart({
                       </g>
                     )}
 
-                    {/* Medium Potential Series */}
                     {visibleSeries.medium && (
                       <g>
                         {paths.medium.area && (
@@ -1436,7 +1341,6 @@ export default function PotentialClientsLineChart({
                       </g>
                     )}
 
-                    {/* High Potential Series */}
                     {visibleSeries.high && (
                       <g>
                         {paths.high.area && (
@@ -1456,7 +1360,6 @@ export default function PotentialClientsLineChart({
                       </g>
                     )}
 
-                    {/* Total Leads Series */}
                     {visibleSeries.total && (
                       <g>
                         {paths.total.area && (
@@ -1477,7 +1380,6 @@ export default function PotentialClientsLineChart({
                       </g>
                     )}
 
-                    {/* Data Points */}
                     {chartBuckets.map((_, i) => {
                       const isHov = hoveredIndex === i;
                       return (
@@ -1543,7 +1445,6 @@ export default function PotentialClientsLineChart({
                   </>
                 )}
 
-                {/* Vertical Crosshair Line on hover / scrub */}
                 {hoveredIndex !== null && chartBuckets[hoveredIndex] && (
                   <g>
                     <line
@@ -1567,7 +1468,6 @@ export default function PotentialClientsLineChart({
                   </g>
                 )}
 
-                {/* Interactive Touch / Tap Hit Areas */}
                 {chartBuckets.map((bucket, idx) => {
                   const usableWidth = activeCanvasWidth - paddingLeft - paddingRight;
                   const stepX = chartBuckets.length > 1 ? usableWidth / (chartBuckets.length - 1) : usableWidth;
@@ -1593,7 +1493,6 @@ export default function PotentialClientsLineChart({
                   );
                 })}
 
-                {/* X Axis Labels */}
                 {chartBuckets.map((bucket, idx) => {
                   const showLabel = idx % xLabelInterval === 0 || idx === chartBuckets.length - 1;
                   if (!showLabel) return null;
@@ -1628,7 +1527,6 @@ export default function PotentialClientsLineChart({
                 })}
               </svg>
 
-              {/* Floating Tooltip for Tablets (iPads), Foldables Unfolded & Desktops */}
               {activeBucket && hoveredIndex !== null && !isMobileScreen && (
                 <div
                   className="absolute z-40 pointer-events-none transition-all duration-75 flex flex-col gap-1.5 sm:gap-2 p-2.5 sm:p-3.5 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200 dark:border-zinc-700 shadow-2xl text-xs min-w-[180px] sm:min-w-[210px]"
@@ -1708,7 +1606,6 @@ export default function PotentialClientsLineChart({
         )}
       </div>
 
-      {/* Footer Info & Mobile / Foldable Swipe Hint */}
       <div className="px-3 sm:px-4 py-2 sm:py-3 bg-slate-50/70 dark:bg-gray-900/60 border-t border-slate-100 dark:border-gray-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-zinc-400 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-amber-500 font-bold flex-shrink-0">★</span>

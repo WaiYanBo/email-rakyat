@@ -106,20 +106,16 @@ const navLinks = [
 
     const handleScroll = () => {
       if (window.scrollY > 20) {
-        // Scrolled state: frosted glass, shadow, smaller padding
         navbar.classList.remove('bg-transparent', 'py-5');
         navbar.classList.add('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
       } else {
-        // Top state: transparent, larger padding
         navbar.classList.add('bg-transparent', 'py-5');
         navbar.classList.remove('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
       }
     };
 
-    // Run on load to check initial scroll position
     handleScroll();
 
-    // Listen for scroll events
     window.addEventListener('scroll', handleScroll);
 
     const syncMobileMenuBodyScroll = () => {
@@ -144,7 +140,6 @@ const navLinks = [
       }
     });
 
-    // Close mobile menu when clicking outside
     document.addEventListener('click', (event) => {
       const target = event.target as Node;
       if (!navbar.contains(target) && !mobileMenu.classList.contains('hidden')) {

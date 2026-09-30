@@ -93,7 +93,6 @@ export default function AttendanceAnalyticsSample() {
     }
   };
 
-  // Localized text strings to keep the component fully self-contained for easy removal
   const translations = {
     title: { en: 'Attendance Analytics Dashboard', bm: 'Papan Pemuka Analisis Kehadiran' },
     subtitle: { en: 'Visual reports of your recent work hours, break compliance, and location logs', bm: 'Laporan visual waktu kerja terbaharu, pematuhan waktu rehat, dan log lokasi anda' },
@@ -134,7 +133,6 @@ export default function AttendanceAnalyticsSample() {
           return;
         }
 
-        // Fetch user profile and role
         const { data: profileData } = await supabase
           .from('profiles')
           .select(`id, full_name, roles(role_name)`)
@@ -153,7 +151,6 @@ export default function AttendanceAnalyticsSample() {
           hasPaidLeave = !noPaidLeaveRoles.includes(roleName || '');
         }
 
-        // Generate baseline of last 21 calendar days (aligned to 3 full calendar weeks)
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -197,7 +194,6 @@ export default function AttendanceAnalyticsSample() {
         const startDateStr = last21Days[0].dateStr;
         const endDateStr = last21Days[20].dateStr;
 
-        // Fetch attendance records from Supabase for this exact 21-day range
         const { data: records, error } = await supabase
           .from('attendance')
           .select('*')
@@ -208,7 +204,6 @@ export default function AttendanceAnalyticsSample() {
 
         if (error) throw error;
 
-        // Fetch public holidays in the same 21-day range
         const { data: publicHolidays, error: holidaysError } = await supabase
           .from('public_holidays')
           .select('*')
@@ -228,7 +223,6 @@ export default function AttendanceAnalyticsSample() {
           });
         }
 
-        // Process fetched database records
         const grouped: Record<string, any[]> = {};
         if (records && records.length > 0) {
           records.forEach(r => {
@@ -239,7 +233,6 @@ export default function AttendanceAnalyticsSample() {
           });
         }
 
-        // Calculate daily metrics from database records
         last21Days.forEach(day => {
           const dayRecords = grouped[day.dateStr];
           let parsedWorkHours = 0;
@@ -248,7 +241,6 @@ export default function AttendanceAnalyticsSample() {
           let totalCount = 0;
 
           if (dayRecords && dayRecords.length > 0) {
-            // Sort by clock-in time
             dayRecords.sort((a, b) => new Date(a.clock_in_time).getTime() - new Date(b.clock_in_time).getTime());
             
             let totalActiveMs = 0;
@@ -262,7 +254,6 @@ export default function AttendanceAnalyticsSample() {
                 totalActiveMs += (new Date(r.clock_out_time).getTime() - new Date(r.clock_in_time).getTime());
               }
 
-              // Calculate gaps between consecutive clock-ins (breaks)
               if (idx > 0 && r.clock_in_time && dayRecords[idx - 1].clock_out_time) {
                 const gap = new Date(r.clock_in_time).getTime() - new Date(dayRecords[idx - 1].clock_out_time).getTime();
                 if (gap > 0) totalGapMs += gap;
@@ -272,7 +263,6 @@ export default function AttendanceAnalyticsSample() {
             parsedWorkHours = Math.round((totalActiveMs / (1000 * 60 * 60)) * 10) / 10;
             if (isNaN(parsedWorkHours)) parsedWorkHours = 0;
             
-            // Standard break of 1 hour if they did a shift, plus any gap breaks
             if (parsedWorkHours > 0) {
               const gapHours = totalGapMs / (1000 * 60 * 60);
               parsedBreakHours = Math.round((1.0 + (isNaN(gapHours) ? 0 : gapHours)) * 10) / 10;
@@ -286,7 +276,6 @@ export default function AttendanceAnalyticsSample() {
         });
 
 
-        // Fetch approved leave requests in the same 21-day range
         const { data: approvedLeaves, error: leavesError } = await supabase
           .from('leave_requests')
           .select('*')
@@ -299,14 +288,12 @@ export default function AttendanceAnalyticsSample() {
           console.error('Error fetching leaves:', leavesError);
         }
 
-        // Apply Public Holiday overrides (MUST run after mock data fallback so holidays apply in all cases)
         last21Days.forEach(day => {
           const isHoliday = holidaysSet.has(day.dateStr);
           if (isHoliday) {
             const [y, m, d] = day.dateStr.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
             const dayOfWeek = dateObj.getDay();
-            // Only flag weekdays (Mon-Fri)
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
               day.isHoliday = true;
               if (hasPaidLeave) {
@@ -317,15 +304,12 @@ export default function AttendanceAnalyticsSample() {
           }
         });
 
-        // Apply Leave overrides
         last21Days.forEach(day => {
           if (approvedLeaves && approvedLeaves.length > 0) {
             const [y, m, d] = day.dateStr.split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
             const dayOfWeek = dateObj.getDay();
-            // Only count weekdays
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-               // Check if day is within any approved leave using timezone-safe string comparison
                const matchingLeave = approvedLeaves.find(req => {
                  return day.dateStr >= req.start_date && day.dateStr <= req.end_date;
                });
@@ -368,7 +352,6 @@ export default function AttendanceAnalyticsSample() {
         formattedLeaveType = formattedLeaveType.charAt(0).toUpperCase() + formattedLeaveType.slice(1);
       }
 
-      // Height values matching standard 9h shift duration
       const heightValue = d.isLeave
         ? (d.leaveType?.toLowerCase().includes('half') ? 4.5 : 9.0)
         : (d.isHoliday ? 9.0 : d.workHours);
@@ -405,7 +388,6 @@ export default function AttendanceAnalyticsSample() {
     );
   }
 
-  // Calculate high-level summary KPIs
   const loggedDays = chartData.filter(d => d.workHours > 0);
   let avgWorkHours = loggedDays.length > 0 
     ? Math.round((loggedDays.reduce((acc, curr) => acc + (curr.workHours || 0), 0) / loggedDays.length) * 10) / 10 
@@ -421,7 +403,6 @@ export default function AttendanceAnalyticsSample() {
   const totalInZone = chartData.reduce((acc, curr) => acc + curr.inZoneCount, 0);
   const inZonePercentage = totalCheckins > 0 ? Math.round((totalInZone / totalCheckins) * 100) : 100;
 
-  // Active week calculations (restricted to Monday to Friday weekdays)
   const currentWeekId = activeWeekId || (chartData.length > 0 ? getMonday(chartData[chartData.length - 1].dateStr) : '');
   const activeWeekDays = chartData.filter(d => {
     if (getMonday(d.dateStr) !== currentWeekId) return false;
@@ -437,15 +418,12 @@ export default function AttendanceAnalyticsSample() {
   let progressPercent = Math.min(Math.round((totalWeeklyHours / weeklyTargetHours) * 100), 100);
   if (isNaN(progressPercent)) progressPercent = 0;
 
-  // mappedChartData has been moved above the early return to comply with React Hooks rules.
 
-  // SVG Bar Chart configurations
   const chartHeight = 160;
 
   return (
     <div className="bg-white dark:bg-gray-900/50 border border-slate-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm space-y-6 p-6 md:p-8 animate-page-transition">
       
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-gray-800">
         <div>
           <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
@@ -458,10 +436,8 @@ export default function AttendanceAnalyticsSample() {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
-        {/* Card 1: Avg Hours */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/40 to-slate-50/20 dark:from-indigo-950/10 dark:to-zinc-900/20 border border-indigo-100/50 dark:border-indigo-950/30 flex items-center justify-between hover:shadow-md transition-all duration-300">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550">{t('avgHours')}</p>
@@ -475,7 +451,6 @@ export default function AttendanceAnalyticsSample() {
           </div>
         </div>
 
-        {/* Card 2: Break Compliance */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50/40 to-slate-50/20 dark:from-emerald-950/10 dark:to-zinc-900/20 border border-emerald-100/50 dark:border-emerald-950/30 flex items-center justify-between hover:shadow-md transition-all duration-300">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550">{t('breakCompliance')}</p>
@@ -489,7 +464,6 @@ export default function AttendanceAnalyticsSample() {
           </div>
         </div>
 
-        {/* Card 3: Geofence compliance */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50/40 to-slate-50/20 dark:from-amber-950/10 dark:to-zinc-900/20 border border-amber-100/50 dark:border-amber-950/30 flex items-center justify-between hover:shadow-md transition-all duration-300">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-450 dark:text-zinc-550">{t('inZoneRatio')}</p>
@@ -505,9 +479,7 @@ export default function AttendanceAnalyticsSample() {
         </div>
       </div>
 
-      {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-              {/* Left: Bar Chart */}
         <div className="lg:col-span-2 p-5 border border-slate-200 dark:border-gray-800 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col space-y-4">
           <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
             {t('weeklyHoursTitle')}
@@ -522,7 +494,6 @@ export default function AttendanceAnalyticsSample() {
           </div>
         </div>
 
-        {/* Right: Circular Donut Chart */}
         <div className="p-5 border border-slate-200 dark:border-gray-800 rounded-2xl bg-slate-50/20 dark:bg-black/20 flex flex-col items-center space-y-4 text-center">
           <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider w-full text-left flex flex-wrap gap-x-1.5 items-center">
             <span>{t('weeklyProgressTitle')}</span>
@@ -534,7 +505,6 @@ export default function AttendanceAnalyticsSample() {
           </h3>
 
           <div className="relative w-36 h-36 flex items-center justify-center pt-2">
-            {/* SVG circle track and indicator */}
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               <circle 
                 cx="50" 
@@ -574,7 +544,6 @@ export default function AttendanceAnalyticsSample() {
 
       </div>
 
-      {/* Info indicator when mock data is displayed */}
       {loggedDays.length < 2 && (
         <div className="flex gap-3 p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 text-xs text-indigo-750 dark:text-indigo-300 font-medium">
           <div className="text-base">💡</div>

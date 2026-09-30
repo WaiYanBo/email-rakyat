@@ -67,7 +67,6 @@ const isPortal = currentPath.startsWith('/portal');
                     else document.documentElement.classList.remove('dark');
                 } catch (e) {}
 
-                // Prompt notification permission immediately as soon as staff access or tap the portal
                 (function() {
                     if (typeof window !== 'undefined' && 'Notification' in window) {
                         function requestNotif() {
@@ -114,7 +113,6 @@ const isPortal = currentPath.startsWith('/portal');
                 window.gtag('config', 'AW-18262341649');
               };
 
-              // Immediately load if user already consented
               try {
                 const prefsString = localStorage.getItem("cookie_preferences");
                 if (prefsString) {

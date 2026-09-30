@@ -70,7 +70,6 @@ export default function PortalAlertSystem() {
         .not('status', 'in', '("Cancelled","Completed")')
         .limit(100);
 
-      // Unless management, only alert the assigned PIC for their appointments
       if (!isManagement && userName) {
         query = query.ilike('pic_name', userName);
       }

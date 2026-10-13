@@ -19,11 +19,11 @@ const {
   type = 'website'
 } = Astro.props;
 
-const siteTitle = "Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah | Team Email Rakyat (ER Advocacy)";
-const defaultDescription = "Perunding advokasi & khidmat nasihat profesional mangsa Ah Long, pinjaman wang tanpa lesen, gangguan debt collector agresif, dan aduan salah laku kredit komuniti (KPKT) di Malaysia oleh ER Advocacy Sdn. Bhd.";
+const siteTitle = "Bantuan Mangsa Ah Long: Ugutan, Simbah Cat & Sebar Gambar | Team Email Rakyat (ER Advocacy)";
+const defaultDescription = "Kena ugut Ah Long? Ahlong is harassing or threatening me? Ketahui apa itu Ah Long, cara hadapi kes Ah Long di Malaysia, ugutan simbah cat, sebar gambar IC & panduan lapor polis sah bersama Team Email Rakyat (ER Advocacy Sdn. Bhd.).";
 const siteDescription = description || defaultDescription;
 
-const defaultKeywords = "bantuan mangsa ah long, cara setel hutang ah long, kena ugut ah long apa nak buat, ah long ugut sebar gambar, lapor polis ah long, selesai hutang ah long cara sah, gangguan debt collector, cara hadapi pengutip hutang, aduan kredit komuniti kpkt, rundingan hutang lapuk, khidmat nasihat hutang ah long, er advocacy sdn bhd, raja emel bantuan mangsa ah long, debt settlement malaysia";
+const defaultKeywords = "apa itu ah long, ah long ugut saya, ah long kacau saya, kes ah long malaysia, kena ugut ah long, ah long simbah cat, ah long sebar gambar, ah long datang rumah, ah long kunci pagar, ah long kacau tempat kerja, cara lapor polis ah long, cara selesai hutang ah long, bayar pokok sahaja ah long, tak mampu bayar bunga ah long, bantuan mangsa ah long, nombor telefon bantuan ah long, hotline mangsa ah long, ahlong is harassing me, ahlong cases malaysia, ahlong threatening me, what is ahlong, loan shark harassment malaysia, how to deal with ah long, loan shark splashed paint malaysia, loan shark threatening family, bantuan mangsa ah long, cara setel hutang ah long, gangguan debt collector, aduan kredit komuniti kpkt, er advocacy sdn bhd, team email rakyat, email rakyat, raja emel bantuan mangsa ah long";
 const pageKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
 
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
@@ -58,11 +58,12 @@ const schemaOrg = {
       ],
       "knowsLanguage": ["ms", "en", "zh"],
       "serviceType": [
-        "Khidmat Nasihat Mangsa Ah Long",
-        "Advokasi & Perlindungan Hak Pengguna",
-        "Penyelesaian Gangguan Debt Collector",
-        "Aduan Salah Laku Syarikat Kredit Komuniti KPKT",
-        "Bantuan Draf Laporan Polis & Kertas Siasatan"
+        "Bantuan Kecemasan Mangsa Ah Long (Ahlong Threatening Me / Harassing Me)",
+        "Penyelesaian Kes Ah Long Malaysia",
+        "Panduan Apa Itu Ah Long & Hak Pengguna",
+        "Khidmat Nasihat Selesai Bayar Pokok Sahaja",
+        "Bantuan Laporan Polis Simbah Cat & Sebar Gambar IC",
+        "Advokasi Gangguan Debt Collector & Syarikat Pinjaman"
       ],
       "contactPoint": [
         {
@@ -95,34 +96,50 @@ const schemaOrg = {
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "Apa yang perlu dilakukan jika diugut oleh Ah Long?",
+          "name": "Apa itu Ah Long dan bagaimana mengenalinya? (What is Ah Long)",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Jangan panik dan elakkan daripada terus membayar wang bunga yang tidak berkesudahan. Kumpulkan dan simpan semua bukti seperti mesej WhatsApp, rakaman panggilan, dan slip transaksi akaun bank. Hubungi Team Email Rakyat (ER Advocacy Sdn. Bhd.) untuk mendapatkan panduan menyusun fakta kes kronologi bagi membuat laporan polis teknikal mengikut saluran undang-undang yang sah."
+            "text": "Ah Long adalah peminjam wang haram tanpa lesen di bawah Akta Pemberi Pinjam Wang 1951. Mereka sering mengenakan kadar bunga melampau, memegang kad ATM/IC mangsa, meminta bayaran 'wang proses' upfront, dan menggunakan taktik ugutan, simbah cat atau memeras ugut apabila mangsa tidak mampu membayar bunga harian/mingguan."
           }
         },
         {
           "@type": "Question",
-          "name": "Bolehkah Ah Long menyebarkan gambar atau mengganggu keluarga di tempat kerja?",
+          "name": "Ah Long ugut saya atau kacau keluarga (Ahlong is harassing me / Ahlong threatening me), apa langkah pertama?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Sebarang perbuatan ugutan jenayah, memeras ugut, atau menyebarkan gambar peribadi adalah kesalahan jenayah serius di bawah Kanun Keseksaan dan Akta Komunikasi dan Multimedia 1998. Pasukan kami membantu mangsa merangka laporan rasmi supaya Kertas Siasatan (Investigation Paper) dapat dibuka oleh pihak berkuasa."
+            "text": "Jangan panik dan jangan terus bayar wang bunga kerana bayaran ugutan tidak akan menyelesaikan hutang. Kumpul dan simpan semua bukti seperti mesej WhatsApp, gambar ugutan, nombor telefon, dan transaksi bank. Hubungi Team Email Rakyat untuk panduan menyusun kronologi fakta bagi membuat laporan polis rasmi secara sah dan selamat."
           }
         },
         {
           "@type": "Question",
-          "name": "Bagaimana cara menangani gangguan daripada Debt Collector (Pengutip Hutang)?",
+          "name": "Bagaimana cara selesaikan kes Ah Long di Malaysia jika bunga makin naik? (Kes Ah Long Malaysia)",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Pengutip hutang tertakluk kepada garis panduan undang-undang dan dilarang menggunakan taktik ugutan atau mengganggu pihak ketiga. Kami menyediakan khidmat perundingan bagi membantu semakan baki hutang sebenar serta merundingkan tawaran penyelesaian penuh (full settlement) atau penjadualan semula bayaran yang telus."
+            "text": "Dalam kes Ah Long di Malaysia, kadar faedah haram yang melampau tidak sah di sisi undang-undang. Ramai mangsa terperangkap kerana bayar bunga berganda tanpa mengurangkan wang pokok. Kami membimbing mangsa menggunakan saluran undang-undang untuk menyekat pemerasan dan hanya menyelesaikan jumlah pinjaman pokok sebenar (full settlement modal) secara rasmi."
           }
         },
         {
           "@type": "Question",
-          "name": "Berapa lama masa yang diambil untuk menghentikan gangguan sindiket Ah Long?",
+          "name": "Bolehkah Ah Long simbah cat merah atau sebar gambar IC dan aib saya?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Tindakan segera diambil sebaik sahaja dokumen dan bukti kronologi lengkap disemak oleh pegawai ER Advocacy Sdn. Bhd. Bimbingan teknikal dan saluran undang-undang yang tepat membantu mangsa menyekat ancaman sindiket dengan pantas tanpa perlu terus tunduk kepada pemerasan wang bunga."
+            "text": "Menyimbah cat merah, mengunci pagar rumah, ugut bunuh atau menyebarkan gambar IC dan fitnah maruah mangsa di media sosial/WhatsApp adalah kesalahan jenayah berat di bawah Seksyen 503/506 Kanun Keseksaan dan Seksyen 233 Akta Komunikasi dan Multimedia 1998. Pihak polis boleh membuka Kertas Siasatan (Investigation Paper) dengan bukti laporan yang lengkap."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Boleh ke saya bayar pinjaman pokok sahaja kepada Ah Long?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Boleh dan itu kaedah yang disarankan di sisi undang-undang. Kadar bunga Ah Long adalah haram dan tidak diiktiraf mahkamah. Dengan bantuan advokasi dan sokongan laporan polis, mangsa boleh menghentikan bayaran bunga dan hanya menyelesaikan jumlah pinjaman modal pokok yang diterima sahaja."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Adakah saya akan ditangkap polis jika buat laporan polis kena ugut Ah Long?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tidak. Menjadi mangsa pemerasan atau peminjam bukanlah jenayah yang menyebabkan anda ditangkap. Sebaliknya, polis memerlukan laporan anda untuk menyiasat jenayah ugutan jenayah, khianat harta (simbah cat), dan aktiviti pinjaman haram sindiket."
           }
         }
       ]

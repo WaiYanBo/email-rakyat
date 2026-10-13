@@ -241,7 +241,7 @@ const jsonLdGraph = {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
 
         <!-- Main Article Body -->
-        <article class="lg:col-span-8 w-full min-w-0">
+        <article class="lg:col-span-8 w-full min-w-0 pillar-article no-reveal">
 
           <!-- Law Sections Quick Highlight (Interactive Cards) -->
           {data.lawSections && data.lawSections.length > 0 && (
@@ -407,6 +407,31 @@ const jsonLdGraph = {
 </Layout>
 
 <style is:global>
+  /* Ensure article and pillar content are never hidden by scroll observers */
+  .pillar-article,
+  .pillar-content,
+  .pillar-content *,
+  .no-reveal,
+  .no-reveal * {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+
+  /* Clear fixed navbar on anchor jump */
+  html {
+    scroll-padding-top: 6.5rem;
+    scroll-behavior: smooth;
+  }
+
+  .pillar-content [id],
+  .pillar-article [id],
+  h2[id],
+  h3[id],
+  section[id] {
+    scroll-margin-top: 7rem !important;
+  }
+
   /* Rich Pillar Typography Styling */
   .pillar-content h1 {
     display: none; /* Already rendered in page header */

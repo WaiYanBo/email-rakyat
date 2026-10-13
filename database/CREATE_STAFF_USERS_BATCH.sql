@@ -1,20 +1,16 @@
 
--- 1. Ensure required extensions exist
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DO $$
 DECLARE
-  -- Default temporary password for newly created accounts (change if desired)
   v_default_password TEXT := 'ERakyat@2026!';
   
-  -- Iteration variables
   r RECORD;
   v_new_id UUID;
   v_existing_id UUID;
   v_ident_id_type TEXT;
   
-  -- Read-only permissions JSON: Can view everything, cannot change or manage anything
   v_view_only_perms JSONB := '{
     "view_clients": true,
     "edit_clients": false,
@@ -40,7 +36,6 @@ DECLARE
   }'::jsonb;
 
 BEGIN
-  -- Temporary table with full staff list from document photo
   CREATE TEMP TABLE temp_staff_list (
     full_name TEXT,
     email TEXT

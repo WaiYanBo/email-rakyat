@@ -9,7 +9,7 @@ const panduanCollection = defineCollection({
     description: z.string(),
     publishDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
-    author: z.string().default('Team Email Rakyat (ER Advocacy Sdn. Bhd.)'),
+    author: z.string().default('Team Email Rakyat (The ER Advocacy Sdn. Bhd.)'),
     authorRole: z.string().default('Pegawai Advokasi & Penasihat Hak Pengguna'),
     readTime: z.string().default('12 min bacaan'),
     category: z.string().default('Undang-Undang & Tindakan Kecemasan'),

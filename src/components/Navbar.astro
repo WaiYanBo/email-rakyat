@@ -1,39 +1,50 @@
 ---
 const rawPath = new URL(Astro.request.url).pathname;
-const pathname = rawPath.replace(/\/$/, '') || '/';
+const pathname = rawPath.replace(/\/$/, "") || "/";
 
 const navLinks = [
-  { name: 'Utama', path: '/' },
-  { name: 'Panduan', path: '/panduan' },
-  { name: 'Perkhidmatan', path: '/perkhidmatan' },
-  { name: 'Tentang', path: '/tentang' },
-  { name: 'Berita', path: '/berita' }
+  { name: "Utama", path: "/" },
+  { name: "Panduan", path: "/panduan" },
+  { name: "Perkhidmatan", path: "/perkhidmatan" },
+  { name: "Tentang", path: "/tentang" },
+  { name: "Berita", path: "/berita" },
 ];
 ---
 
-<header id="main-navbar" class="fixed w-full top-0 z-50 transition-all duration-300 ease-in-out bg-transparent py-5">
+<header
+  id="main-navbar"
+  class="fixed w-full top-0 z-50 transition-all duration-300 ease-in-out bg-transparent py-5"
+>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center">
-
-      <a href="/" class="flex-shrink-0 flex items-center gap-3 group">
-        <img src="/Logo.webp" alt="Email Rakyat Logo" width="40" height="40" class="h-10 w-10 group-hover:scale-105 transition-transform duration-300" />
-        <span class="text-white font-extrabold text-xl uppercase tracking-widest hidden sm:block group-hover:text-yellow-500 transition-colors">
-          Email Rakyat
+      <a href="/" class="flex-shrink-0 flex items-center gap-2.5 sm:gap-3.5 group">
+        <img
+          src="/Logo.webp"
+          alt="Email Rakyat Logo"
+          class="h-11 sm:h-12 md:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+        />
+        <span
+          class="text-white font-black text-lg sm:text-xl md:text-2xl uppercase tracking-wider group-hover:text-yellow-400 transition-colors"
+        >
+          EMAIL RAKYAT
         </span>
       </a>
       <nav class="hidden md:flex space-x-6 items-center">
-        {navLinks.map((link) => (
-          <a
-            href={link.path}
-            class={`text-sm font-bold uppercase tracking-wider transition-colors duration-300 hover:text-yellow-400 ${
-              pathname === link.path || (pathname === '/' + link.path.replace('/', ''))
-                ? 'text-yellow-500'
-                : 'text-gray-200'
-            }`}
-          >
-            {link.name}
-          </a>
-        ))}
+        {
+          navLinks.map((link) => (
+            <a
+              href={link.path}
+              class={`text-sm font-bold uppercase tracking-wider transition-colors duration-300 hover:text-yellow-400 ${
+                pathname === link.path ||
+                pathname === "/" + link.path.replace("/", "")
+                  ? "text-yellow-500"
+                  : "text-gray-200"
+              }`}
+            >
+              {link.name}
+            </a>
+          ))
+        }
 
         <div class="flex items-center gap-3 pl-4 border-l border-gray-700">
           <a
@@ -41,7 +52,18 @@ const navLinks = [
             class="inline-flex items-center text-xs font-bold uppercase tracking-wider text-gray-200 hover:text-white transition-colors"
           >
             Log Masuk
-            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+            <svg
+              class="w-4 h-4 ml-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+              ></path></svg
+            >
           </a>
 
           <a
@@ -54,36 +76,69 @@ const navLinks = [
       </nav>
 
       <div class="md:hidden flex items-center">
-        <button id="mobile-menu-btn" type="button" aria-controls="mobile-menu" aria-expanded="false" aria-label="Toggle Menu" class="text-gray-200 hover:text-yellow-500 focus:outline-none transition-colors">
-          <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        <button
+          id="mobile-menu-btn"
+          type="button"
+          aria-controls="mobile-menu"
+          aria-expanded="false"
+          aria-label="Toggle Menu"
+          class="text-gray-200 hover:text-yellow-500 focus:outline-none transition-colors"
+        >
+          <svg
+            class="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
       </div>
     </div>
   </div>
 
-  <div id="mobile-menu" class="hidden md:hidden absolute w-full bg-black/95 backdrop-blur-xl border-t border-gray-800 shadow-2xl">
+  <div
+    id="mobile-menu"
+    class="hidden md:hidden absolute w-full bg-black/95 backdrop-blur-xl border-t border-gray-800 shadow-2xl"
+  >
     <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
-      {navLinks.map((link) => (
-        <a
-          href={link.path}
-          class={`block px-3 py-3 rounded-lg text-base font-bold uppercase tracking-wide transition-colors ${
-            pathname === link.path || (pathname === '/' + link.path.replace('/', ''))
-              ? 'bg-yellow-500/10 text-yellow-500'
-              : 'text-gray-300 hover:bg-gray-800 hover:text-yellow-400'
-          }`}
-        >
-          {link.name}
-        </a>
-      ))}
+      {
+        navLinks.map((link) => (
+          <a
+            href={link.path}
+            class={`block px-3 py-3 rounded-lg text-base font-bold uppercase tracking-wide transition-colors ${
+              pathname === link.path ||
+              pathname === "/" + link.path.replace("/", "")
+                ? "bg-yellow-500/10 text-yellow-500"
+                : "text-gray-300 hover:bg-gray-800 hover:text-yellow-400"
+            }`}
+          >
+            {link.name}
+          </a>
+        ))
+      }
 
       <div class="border-t border-gray-700 my-2 pt-2 space-y-2">
         <a
           href="/portal/login"
           class="flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-sm font-bold uppercase tracking-wide text-gray-300 hover:bg-gray-800 hover:text-yellow-400 transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+            ></path></svg
+          >
           Log Masuk
         </a>
         <a
@@ -98,54 +153,72 @@ const navLinks = [
 </header>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const navbar = document.getElementById('main-navbar');
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
+  document.addEventListener("DOMContentLoaded", () => {
+    const navbar = document.getElementById("main-navbar");
+    const mobileBtn = document.getElementById("mobile-menu-btn");
+    const mobileMenu = document.getElementById("mobile-menu");
 
     if (!navbar || !mobileBtn || !mobileMenu) return;
 
     const handleScroll = () => {
       if (window.scrollY > 20) {
-        navbar.classList.remove('bg-transparent', 'py-5');
-        navbar.classList.add('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
+        navbar.classList.remove("bg-transparent", "py-5");
+        navbar.classList.add(
+          "bg-black/80",
+          "backdrop-blur-md",
+          "shadow-lg",
+          "border-b",
+          "border-gray-800/60",
+          "py-3",
+        );
       } else {
-        navbar.classList.add('bg-transparent', 'py-5');
-        navbar.classList.remove('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'border-b', 'border-gray-800/60', 'py-3');
+        navbar.classList.add("bg-transparent", "py-5");
+        navbar.classList.remove(
+          "bg-black/80",
+          "backdrop-blur-md",
+          "shadow-lg",
+          "border-b",
+          "border-gray-800/60",
+          "py-3",
+        );
       }
     };
 
     handleScroll();
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     const syncMobileMenuBodyScroll = () => {
       const isOpen =
-        !mobileMenu.classList.contains('hidden') && window.matchMedia('(max-width: 767px)').matches;
-      document.body.style.overflow = isOpen ? 'hidden' : '';
+        !mobileMenu.classList.contains("hidden") &&
+        window.matchMedia("(max-width: 767px)").matches;
+      document.body.style.overflow = isOpen ? "hidden" : "";
     };
 
-    mobileBtn.addEventListener('click', (e) => {
+    mobileBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      mobileMenu.classList.toggle('hidden');
-      const expanded = !mobileMenu.classList.contains('hidden');
-      mobileBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      mobileMenu.classList.toggle("hidden");
+      const expanded = !mobileMenu.classList.contains("hidden");
+      mobileBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
       syncMobileMenuBodyScroll();
     });
 
-    window.addEventListener('resize', () => {
-      if (window.matchMedia('(min-width: 768px)').matches) {
-        document.body.style.overflow = '';
+    window.addEventListener("resize", () => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        document.body.style.overflow = "";
       } else {
         syncMobileMenuBodyScroll();
       }
     });
 
-    document.addEventListener('click', (event) => {
+    document.addEventListener("click", (event) => {
       const target = event.target as Node;
-      if (!navbar.contains(target) && !mobileMenu.classList.contains('hidden')) {
-        mobileMenu.classList.add('hidden');
-        mobileBtn.setAttribute('aria-expanded', 'false');
+      if (
+        !navbar.contains(target) &&
+        !mobileMenu.classList.contains("hidden")
+      ) {
+        mobileMenu.classList.add("hidden");
+        mobileBtn.setAttribute("aria-expanded", "false");
         syncMobileMenuBodyScroll();
       }
     });

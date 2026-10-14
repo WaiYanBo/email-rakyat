@@ -617,7 +617,7 @@ export default function PortalSidebar() {
         <div className="p-5 border-b border-slate-200 dark:border-gray-900/60 flex-shrink-0">
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2 min-w-0">
-              <img src="/logo-v2.svg" alt="Logo" className="h-6 w-6 flex-shrink-0" />
+              <img src="/Logo.webp" alt="Logo" className="h-7 w-auto object-contain flex-shrink-0" />
               <h1 className="text-base font-bold text-indigo-900 dark:text-yellow-500 tracking-wide truncate">
                 Staff <span className="text-slate-500 dark:text-slate-400 font-medium">Portal</span>
               </h1>

@@ -4,7 +4,7 @@ metaTitle: "Tindakan Undang-Undang Terhadap Ah Long: Panduan Definitif Mangsa 20
 description: "Panduan definitif YMYL: Ketahui apa berlaku apabila berhenti bayar Ah Long, seksyen undang-undang yang melindungi anda (Akta 400, Seksyen 506 KK), format laporan polis teknikal, dan intervensi ER Advocacy."
 publishDate: 2026-10-13
 updatedDate: 2026-10-13
-author: "Team Email Rakyat (ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "14 min bacaan"
 category: "Undang-Undang & Tindakan Kecemasan"
@@ -204,5 +204,5 @@ Anda tidak perlu menanggung ketakutan dan ugutan ini bersendirian. Undang-undang
 
 * **Talian Kecemasan & WhatsApp Pegawai:** [+6012-6232949](https://WaiYanTeamEmailRakyat.wasap.my)
 * **Waktu Operasi:** 24 Jam (Khidmat Sokongan Kes Kecemasan)
-* **Entiti Berdaftar:** ER Advocacy Sdn. Bhd. (Team Email Rakyat)
+* **Entiti Berdaftar:** The ER Advocacy Sdn. Bhd. (Team Email Rakyat)
 * **Laman Web Rasmi:** [e-rakyat.com](https://e-rakyat.com)

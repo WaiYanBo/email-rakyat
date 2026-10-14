@@ -1,23 +1,29 @@
 {
-  "name": "ER Staff Portal",
-  "short_name": "Portal ER",
-  "description": "Portal aduan dan kehadiran untuk staf ER.",
-  "start_url": "/portal",
+  "name": "Email Rakyat",
+  "short_name": "Email Rakyat",
+  "description": "Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#111827",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,14 +1,14 @@
 ---
 title: "Panduan Tindakan Undang-Undang Mangsa Ah Long: Langkah Demi Langkah Hadapi Ugutan & Cara Selesai Sah"
-metaTitle: "Tindakan Undang-Undang Terhadap Ah Long: Panduan Definitif Mangsa 2026 | Email Rakyat"
-description: "Panduan definitif YMYL: Ketahui apa berlaku apabila berhenti bayar Ah Long, seksyen undang-undang yang melindungi anda (Akta 400, Seksyen 506 KK), format laporan polis teknikal, dan intervensi ER Advocacy."
+metaTitle: "Tindakan Undang-Undang Mangsa Ah Long: Panduan & Langkah Penyelesaian Sah 2026 | Email Rakyat"
+description: "Ketahui hak anda di sisi undang-undang apabila berdepan ugutan Ah Long. Panduan lengkap merangkumi perlindungan Akta 400, Seksyen 506 Kanun Keseksaan, format laporan polis, dan penyelesaian sah."
 publishDate: 2026-10-13
 updatedDate: 2026-10-13
 author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "14 min bacaan"
 category: "Undang-Undang & Tindakan Kecemasan"
-badge: "Panduan Definitif YMYL 2026"
+badge: "Panduan Rasmi 2026"
 image: "/logo.png"
 imageAlt: "Panduan Lengkap Tindakan Undang-Undang Mangsa Ah Long Malaysia"
 keywords:
@@ -75,7 +75,7 @@ Apabila wang simpanan habis dan mangsa mula diugut bunuh, disimbah cat merah, at
 
 > **"Apa yang perlu saya buat sekarang? Bolehkah undang-undang Malaysia melindungi saya, dan bagaimana cara keluar daripada jerat ini secara sah?"**
 
-Panduan definitif ini menyediakan walkthrough komprehensif berlandaskan lunas perundangan Malaysia, hak asasi anda di bawah statut negara, dan protokol intervensi rasmi yang dipraktikkan oleh **Team Email Rakyat (ER Advocacy Sdn. Bhd.)**.
+Panduan ini menyediakan panduan langkah demi langkah berlandaskan lunas perundangan Malaysia, hak anda di bawah statut negara, serta protokol bantuan advokasi yang dipraktikkan oleh **The ER Advocacy Sdn. Bhd. (Team Email Rakyat)**.
 
 ---
 

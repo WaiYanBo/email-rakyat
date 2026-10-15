@@ -34,42 +34,61 @@ import FAQ from '../components/FAQ.astro';
 
         <div class="flex justify-center md:justify-end w-full min-w-0">
 
-          <div class="bg-black/40 backdrop-blur-lg p-4 rounded-2xl shadow-xl border border-gray-700 w-full max-w-[325px] min-w-0">
+          <div class="bg-black/40 backdrop-blur-lg p-3 sm:p-4 rounded-2xl shadow-xl border border-gray-700 w-full max-w-[340px] min-w-0 flex flex-col items-center">
+            <div class="relative w-full aspect-[9/16] min-h-[580px] rounded-xl overflow-hidden bg-gray-900/60 shadow-inner">
+              <iframe
+                id="tiktok-player-iframe"
+                src="https://www.tiktok.com/player/v1/7624967321739726101?autoplay=1&description=1&rel=0"
+                class="w-full h-full border-0 rounded-xl"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allowfullscreen
+                loading="lazy"
+                title="Kisah Sebenar Mangsa Ah Long - Team Email Rakyat"
+              ></iframe>
+            </div>
 
-            <blockquote
-              class="tiktok-embed w-full max-w-full"
-              cite="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
-              data-video-id="7624967321739726101"
-              data-theme="dark"
-              style="max-width: 100%; min-width: 0;"
+            <a
+              href="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mt-3 text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
             >
-              <section></section>
-            </blockquote>
-
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43V13a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.04-1.29v-3.14z"/>
+              </svg>
+              <span>Buka video di TikTok &rarr;</span>
+            </a>
           </div>
-
         </div>
 
       </div>
 
       <script is:inline>
         document.addEventListener("DOMContentLoaded", () => {
-          const section = document.getElementById("section-tiktok-embed");
-          if (!section) return;
+          const iframe = document.getElementById("tiktok-player-iframe");
+          if (!iframe) return;
+
+          const triggerPlay = () => {
+            try {
+              if (iframe.contentWindow) {
+                const playMsg = { "x-tiktok-player": true, type: "play" };
+                iframe.contentWindow.postMessage(playMsg, "*");
+                iframe.contentWindow.postMessage(JSON.stringify(playMsg), "*");
+              }
+            } catch (_) {}
+          };
 
           const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
               if (entry.isIntersecting) {
-                const script = document.createElement("script");
-                script.async = true;
-                script.src = "https://www.tiktok.com/embed.js";
-                document.body.appendChild(script);
-                obs.unobserve(entry.target);
+                triggerPlay();
+                setTimeout(triggerPlay, 1200);
+                obs.disconnect();
               }
             });
-          }, { rootMargin: "200px" });
+          }, { threshold: 0.25 });
 
-          observer.observe(section);
+          observer.observe(iframe);
         });
       </script>
     </section>
@@ -77,16 +96,3 @@ import FAQ from '../components/FAQ.astro';
     <FAQ />
 
 </Layout>
-<style is:global>
-  .tiktok-embed {
-      min-height: 572px;
-  }
-  .tiktok-embed,
-  .tiktok-embed iframe {
-      background-color: transparent !important;
-      border: none !important;
-      border-radius: 0.75rem !important; /* I need you to Matches your rounded-xl design */
-      box-shadow: none !important;
-      max-width: 100% !important;
-  }
-</style>

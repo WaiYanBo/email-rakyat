@@ -73,6 +73,30 @@ const DEFAULT_STAFF_PERMISSIONS: Permissions = {
   manage_leave: false,
 };
 
+const ZERO_PERMISSIONS: Permissions = {
+  view_clients: false,
+  edit_clients: false,
+  view_lod: false,
+  manage_lod: false,
+  view_potential_clients: false,
+  manage_potential_clients: false,
+  view_appointments: false,
+  manage_appointments: false,
+  export_data: false,
+  view_staff: false,
+  edit_staff: false,
+  view_attendance: false,
+  edit_attendance: false,
+  view_snapshot: false,
+  manage_access_control: false,
+  manage_drive: false,
+  manage_hr: false,
+  view_claims: false,
+  manage_claims: false,
+  view_leave: false,
+  manage_leave: false,
+};
+
 const permissionsCache: Record<string, Permissions> = {};
 
 export function usePermissions(initialProfile?: any) {
@@ -100,7 +124,7 @@ export function usePermissions(initialProfile?: any) {
           return;
         }
 
-        if (!currentProf || !currentProf.department) {
+        if (!currentProf || !currentProf.department || !currentProf.status) {
           const { data: profData } = await supabase
             .from('profiles')
             .select(`id, full_name, email, department, status, role, roles(role_name), role_id`)
@@ -111,6 +135,22 @@ export function usePermissions(initialProfile?: any) {
             currentProf = profData;
             if (isMounted) setProfile(profData);
           }
+        }
+
+        // STRICT TERMINATION CHECK: Instantly kill session and revoke all permissions
+        const status = (currentProf?.status || '').trim();
+        if (status === 'Resigned' || status === 'Terminated' || status === 'Inactive') {
+          if (isMounted) {
+            setPermissions(ZERO_PERMISSIONS);
+            setLoading(false);
+          }
+          await supabase.auth.signOut();
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (_e) {}
+          window.location.replace('/portal/login?error=terminated');
+          return;
         }
 
         const roleName = currentProf?.role || currentProf?.roles?.role_name || '';
@@ -204,14 +244,22 @@ export function usePermissions(initialProfile?: any) {
     };
   }, [initialProfile]);
 
-  const isITAdmin = 
+  const isTerminated = 
+    profile?.status === 'Resigned' || 
+    profile?.status === 'Terminated' || 
+    profile?.status === 'Inactive';
+
+  const isITAdmin = !isTerminated && (
     profile?.role?.toLowerCase() === 'it' || 
     profile?.role?.toLowerCase() === 'it admin' || 
     profile?.department?.toLowerCase() === 'it' ||
     profile?.roles?.role_name?.toLowerCase() === 'it admin' ||
-    profile?.roles?.role_name?.toLowerCase() === 'it';
+    profile?.roles?.role_name?.toLowerCase() === 'it'
+  );
 
-  const finalPermissions = isITAdmin ? IT_ADMIN_PERMISSIONS : permissions;
+  const finalPermissions = isTerminated 
+    ? ZERO_PERMISSIONS 
+    : (isITAdmin ? IT_ADMIN_PERMISSIONS : permissions);
 
   return { permissions: finalPermissions, profile, isITAdmin, loading };
 }

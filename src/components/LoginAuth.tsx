@@ -33,6 +33,10 @@ export default function LoginAuth() {
 
         if (prof?.status === 'Resigned' || prof?.status === 'Terminated' || prof?.status === 'Inactive') {
           await supabase.auth.signOut();
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (_e) {}
           setError(lang === 'bm' 
             ? 'Akses ke portal telah ditamatkan kerana kakitangan telah berhenti kerja.' 
             : 'Portal access terminated. This account has been deactivated as the staff member has resigned.');
@@ -101,6 +105,10 @@ export default function LoginAuth() {
 
         if (profileRecord?.status === 'Resigned' || profileRecord?.status === 'Terminated' || profileRecord?.status === 'Inactive') {
           await supabase.auth.signOut();
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (_e) {}
           setError(lang === 'bm' 
             ? 'Akses ke portal telah ditamatkan kerana kakitangan telah berhenti kerja. Sila hubungi pihak pengurusan jika terdapat sebarang pertanyaan.' 
             : 'Portal access terminated. This account has been deactivated as the staff member has resigned. Please contact management for inquiries.');

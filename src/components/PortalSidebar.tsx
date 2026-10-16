@@ -59,7 +59,11 @@ export default function PortalSidebar() {
     if (profileData) {
       if (profileData.status === 'Resigned' || profileData.status === 'Terminated' || profileData.status === 'Inactive') {
         await supabase.auth.signOut();
-        window.location.href = '/portal/login?error=terminated';
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (_e) {}
+        window.location.replace('/portal/login?error=terminated');
         return;
       }
 

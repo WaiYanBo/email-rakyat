@@ -464,6 +464,26 @@ export default function ReportsView() {
       }
 
       if (editingStaff) {
+        const isBeingTerminated = cleanStatus === 'Resigned' || cleanStatus === 'Terminated';
+        const session = await getCurrentSession();
+        if (isBeingTerminated && session?.user?.id === editingStaff.id) {
+          alert(lang === 'bm'
+            ? 'Ralat Keselamatan: Anda tidak boleh menamatkan akaun anda sendiri!'
+            : 'Security Error: You cannot terminate your own active account!');
+          setIsProcessing(false);
+          return;
+        }
+
+        if (isBeingTerminated && editingStaff.status !== cleanStatus) {
+          const confirmMsg = lang === 'bm'
+            ? `AMARAN KESELAMATAN: Anda akan menetapkan status ${editingStaff.full_name} sebagai "${cleanStatus}".\n\nTindakan ini akan:\n1. Membatalkan semua akses dan kebenaran serta-merta.\n2. Menamatkan sesi aktif kakitangan tersebut serta-merta.\n3. Menghalang kakitangan ini daripada melihat sebarang data klien, laporan, atau fail syarikat.\n\nAdakah anda pasti mahu meneruskan penamatan ini?`
+            : `SECURITY WARNING: You are about to mark ${editingStaff.full_name} as "${cleanStatus}".\n\nThis will immediately:\n1. Revoke all portal and database access permissions.\n2. Terminate all active staff sessions.\n3. Permanently lock them out of client records, reports, and company files.\n\nAre you sure you want to proceed with this termination?`;
+          if (!window.confirm(confirmMsg)) {
+            setIsProcessing(false);
+            return;
+          }
+        }
+
         let updatePayload: any = {
           id: editingStaff.id,
           full_name: cleanName,
@@ -491,7 +511,20 @@ export default function ReportsView() {
 
         if (upsertError) throw new Error(`Update failed: ${upsertError.message}`);
 
-        alert('✓ Staff record updated! Month-by-month leave calculation updated.');
+        if (isBeingTerminated) {
+          try {
+            await supabase
+              .from('access_permissions')
+              .delete()
+              .or(`target_id.eq.${editingStaff.id},target_id.eq.${editingStaff.full_name}`);
+          } catch (permErr) {
+            console.warn('Error purging access_permissions:', permErr);
+          }
+        }
+
+        alert(isBeingTerminated 
+          ? `✓ Account for ${editingStaff.full_name} has been terminated. All permissions and sessions revoked.` 
+          : '✓ Staff record updated! Month-by-month leave calculation updated.');
         setIsStaffModalOpen(false);
 
       } else {

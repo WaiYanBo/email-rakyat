@@ -32,4 +32,7 @@ public/models/
 
 # scratch/temporary files
 scratch/
-scripts/
+
+# Database backups & exports
+backups/
+*.csv

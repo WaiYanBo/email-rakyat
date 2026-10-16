@@ -8,14 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // resulting in the menu opening and closing instantly.
 
     // --- 2. MODAL LOGIC (Privacy, Terms, Security) ---
-    const setupModal = (btnId, modalId) => {
+    const setupModal = (btnId, modalId, templateId) => {
         const modalBtn = document.getElementById(btnId);
         const modal = document.getElementById(modalId);
+        const template = document.getElementById(templateId);
         
         if (modalBtn && modal) {
             // Open Modal
             modalBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                if (template && modal.children.length === 0) {
+                    modal.appendChild(template.content.cloneNode(true));
+                }
                 modal.showModal();
                 document.body.style.overflow = 'hidden'; // Lock background scroll
             });
@@ -42,9 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initialize Modals
-    setupModal('btn-privacy', 'modal-privacy');
-    setupModal('btn-terms', 'modal-terms');
-    setupModal('btn-security', 'modal-security');
+    setupModal('btn-privacy', 'modal-privacy', 'template-privacy');
+    setupModal('btn-terms', 'modal-terms', 'template-terms');
+    setupModal('btn-security', 'modal-security', 'template-security');
 
     console.log("Secure Core System: Online (Modals Only)");
 });

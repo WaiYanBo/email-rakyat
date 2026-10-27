@@ -19,11 +19,11 @@ const {
   type = 'website'
 } = Astro.props;
 
-const siteTitle = "Bantuan Mangsa Ah Long: Ugutan, Simbah Cat & Sebar Gambar | Team Email Rakyat (The ER Advocacy)";
-const defaultDescription = "Kena ugut Ah Long? Ahlong is harassing or threatening me? Ketahui apa itu Ah Long, cara hadapi kes Ah Long di Malaysia, ugutan simbah cat, sebar gambar IC & panduan lapor polis sah bersama Team Email Rakyat (The ER Advocacy Sdn. Bhd.).";
+const siteTitle = "Bantuan Mangsa Ah Long: Ugutan, Simbah Cat & Sebar Gambar | Team Email Rakyat";
+const defaultDescription = "Kena ugut Ah Long? Ahlong is harassing or threatening me? Ketahui apa itu Ah Long, cara hadapi kes Ah Long di Malaysia, ugutan simbah cat, sebar gambar IC & panduan lapor polis sah bersama Team Email Rakyat.";
 const siteDescription = description || defaultDescription;
 
-const defaultKeywords = "apa itu ah long, ah long ugut saya, ah long kacau saya, kes ah long malaysia, kena ugut ah long, ah long simbah cat, ah long sebar gambar, ah long datang rumah, ah long kunci pagar, ah long kacau tempat kerja, cara lapor polis ah long, cara selesai hutang ah long, bayar pokok sahaja ah long, tak mampu bayar bunga ah long, bantuan mangsa ah long, nombor telefon bantuan ah long, hotline mangsa ah long, ahlong is harassing me, ahlong cases malaysia, ahlong threatening me, what is ahlong, loan shark harassment malaysia, how to deal with ah long, loan shark splashed paint malaysia, loan shark threatening family, bantuan mangsa ah long, cara setel hutang ah long, gangguan debt collector, aduan kredit komuniti kpkt, er advocacy sdn bhd, team email rakyat, email rakyat, raja emel bantuan mangsa ah long";
+const defaultKeywords = "apa itu ah long, ah long ugut saya, ah long kacau saya, kes ah long malaysia, kena ugut ah long, ah long simbah cat, ah long sebar gambar, ah long datang rumah, ah long kunci pagar, ah long kacau tempat kerja, cara lapor polis ah long, cara selesai hutang ah long, bayar pokok sahaja ah long, tak mampu bayar bunga ah long, bantuan mangsa ah long, nombor telefon bantuan ah long, hotline mangsa ah long, ahlong is harassing me, ahlong cases malaysia, ahlong threatening me, what is ahlong, loan shark harassment malaysia, how to deal with ah long, loan shark splashed paint malaysia, loan shark threatening family, bantuan mangsa ah long, cara setel hutang ah long, gangguan debt collector, aduan kredit komuniti kpkt, team email rakyat, email rakyat, raja emel bantuan mangsa ah long";
 const pageKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
 
 const socialImageURL = new URL(image, Astro.site || Astro.url).href;
@@ -36,17 +36,14 @@ const schemaOrg = {
       "@type": "LegalService",
       "@id": "https://e-rakyat.com/#organization",
       "name": "Team Email Rakyat",
-      "legalName": "The ER Advocacy Sdn. Bhd.",
+      "legalName": "Team Email Rakyat",
       "alternateName": [
         "Email Rakyat",
-        "The ER Advocacy",
-        "The ER Advocacy Sdn Bhd",
-        "ER Advocacy",
-        "ER Advocacy Sdn Bhd",
+        "Pusat Advokasi Pengguna",
         "Pusat Advokasi & Bantuan Mangsa Ah Long Malaysia",
         "Team Raja Emel"
       ],
-      "disambiguatingDescription": "Firma perunding advokasi dan khidmat nasihat mangsa Ah Long swasta berdaftar di Malaysia (The ER Advocacy Sdn Bhd).",
+      "disambiguatingDescription": "Firma perunding advokasi dan khidmat nasihat mangsa Ah Long swasta berdaftar di Malaysia (Team Email Rakyat).",
       "url": "https://e-rakyat.com",
       "logo": new URL("/logo.png", Astro.site || Astro.url).href,
       "image": socialImageURL,
@@ -86,7 +83,7 @@ const schemaOrg = {
       "@id": "https://e-rakyat.com/#website",
       "url": "https://e-rakyat.com",
       "name": "Email Rakyat",
-      "description": "Portal Rasmi Advokasi & Bantuan Mangsa Ah Long Malaysia (The ER Advocacy Sdn. Bhd.)",
+      "description": "Portal Rasmi Advokasi & Bantuan Mangsa Ah Long Malaysia (Team Email Rakyat)",
       "publisher": {
         "@id": "https://e-rakyat.com/#organization"
       },
@@ -153,7 +150,7 @@ const schemaOrg = {
 <meta name="title" content={title || siteTitle} />
 <meta name="description" content={siteDescription} />
 <meta name="keywords" content={pageKeywords} />
-<meta name="author" content="Team Email Rakyat (The ER Advocacy Sdn. Bhd.)" />
+<meta name="author" content="Team Email Rakyat" />
 <link rel="canonical" href={canonicalURL} />
 <meta name="theme-color" content="#111827" />
 

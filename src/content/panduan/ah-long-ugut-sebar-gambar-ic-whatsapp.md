@@ -4,7 +4,7 @@ metaTitle: "Ah Long Ugut Sebar Gambar & IC WhatsApp: Cara Hentikan & Tindakan Un
 description: "Kena ugut Ah Long nak sebar gambar IC atau fitnah di group WhatsApp? Ketahui peruntukan Seksyen 506 Kanun Keseksaan, Seksyen 233 AKMM, dan langkah teknikal hentikan ugutan serta-merta."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "9 min bacaan"
 category: "Tindakan Jenayah & Ugutan Siber"
@@ -80,7 +80,7 @@ Langkah ini meneutralkan kuasa ugutan sindiket kerana rakan dan keluarga anda su
 Hadir ke Bahagian Siasatan Jenayah Komersial (JSJK) di balai polis atau Ibu Pejabat Polis Daerah (IPD). Pastikan laporan anda merakamkan fakta jenayah pemerasan, ugutan mencemarkan reputasi di bawah Seksyen 506 Kanun Keseksaan, dan penyalahgunaan akaun keldai (*mule account*).
 
 ### Langkah 5: Dapatkan Bimbingan Advokasi Profesional Sah
-Bantuan perunding berdaftar seperti [Team Email Rakyat (The ER Advocacy)](/) amat penting untuk membantu menyusun fakta kes, menghentikan bayaran bunga haram, dan menguruskan perundingan modal pokok sahaja secara sah.
+Bantuan perunding berdaftar seperti [Team Email Rakyat](/) amat penting untuk membantu menyusun fakta kes, menghentikan bayaran bunga haram, dan menguruskan perundingan modal pokok sahaja secara sah.
 
 ---
 

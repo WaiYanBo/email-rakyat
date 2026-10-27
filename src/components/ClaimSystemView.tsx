@@ -1589,7 +1589,7 @@ export default function ClaimSystemView({ profile: initialProfile, mode = 'auto'
                       </label>
                       <input
                         type="text"
-                        placeholder={isBm ? 'cth: Pejabat ER Advocaci' : 'e.g. ER Advocacy Office'}
+                        placeholder={isBm ? 'cth: Pejabat Email Rakyat' : 'e.g. Email Rakyat Office'}
                         value={startLocation}
                         onChange={(e) => setStartLocation(e.target.value)}
                         className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-semibold text-slate-900 dark:text-white"

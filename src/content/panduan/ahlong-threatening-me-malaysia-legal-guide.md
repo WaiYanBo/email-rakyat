@@ -4,7 +4,7 @@ metaTitle: "Ahlong is Threatening Me in Malaysia: Legal Protection, Police Repor
 description: "Is an unlicensed loan shark (Ah Long) harassing or threatening you or your family in Malaysia? Learn your legal rights under Section 506 Penal Code, Section 29B Moneylenders Act, and how to stop threats legally."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Consumer Rights Advocacy & Debt Protection Firm Malaysia"
 readTime: "11 min read"
 category: "Legal Protection & Emergency Action"
@@ -87,8 +87,8 @@ Shame is the syndicate’s primary weapon. Neutralize it by informing family mem
 ### Step 4: Lodge a Formal Police Report (PDRM JSJK)
 Head to the Commercial Crime Investigation Department (JSJK) at your nearest District Police Headquarters (IPD). State clearly that you are a victim of extortion under Section 384/506 of the Penal Code and provide the syndicate’s mule bank account numbers for freezing.
 
-### Step 5: Engage a Licensed Advocacy Firm (The ER Advocacy)
-Dealing with aggressive runners alone is intimidating. As a registered corporate advocacy firm in Malaysia, [Team Email Rakyat (The ER Advocacy Sdn. Bhd.)](/) intervenes to:
+### Step 5: Engage a Licensed Advocacy Firm (Team Email Rakyat)
+Dealing with aggressive runners alone is intimidating. As a registered corporate advocacy firm in Malaysia, [Team Email Rakyat](/) intervenes to:
 * Conduct a forensic audit of the net principal actually received versus amounts already paid.
 * Facilitate legitimate settlement on the net principal only, legally terminating all unlawful interest.
 * Obtain formal settlement clearance to guarantee you are never harassed again.

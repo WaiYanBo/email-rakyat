@@ -4,7 +4,7 @@ metaTitle: "Cara Selesaikan Hutang Ah Long (Bayar Pokok Sahaja Tanpa Bunga) | Pa
 description: "Ketahui kaedah sah menyelesaikan hutang Ah Long di Malaysia dengan membayar modal pokok sahaja tanpa bunga haram berlandaskan Akta Pemberi Pinjam Wang 1951 Seksyen 5(2) dan Akta Kontrak 1950."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "11 min bacaan"
 category: "Penyelesaian Kewangan & Advokasi Sah"
@@ -77,8 +77,8 @@ Dapatkan penyata bank rasmi (PDF/cetakan) yang menunjukkan:
 ### Langkah 3: Failkan Laporan Polis Rasmi
 Buat laporan polis yang mendokumentasikan jumlah wang sebenar yang dipinjam, jumlah yang telah dibayar, serta ancaman ugutan jenayah pemerasan. Sila rujuk [Panduan Format Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long) untuk contoh draf kenyataan yang lengkap.
 
-### Langkah 4: Lantik Perunding Advokasi Sah (The ER Advocacy)
-Menghadapi sindiket secara bersendirian sering mengundang ugutan kasar. Melalui perkhidmatan profesional [Team Email Rakyat (The ER Advocacy Sdn. Bhd.)](/), pegawai advokasi kami bertindak sebagai pihak ketiga rasmi untuk:
+### Langkah 4: Lantik Perunding Advokasi Sah (Team Email Rakyat)
+Menghadapi sindiket secara bersendirian sering mengundang ugutan kasar. Melalui perkhidmatan profesional [Team Email Rakyat](/), pegawai advokasi kami bertindak sebagai pihak ketiga rasmi untuk:
 * Mengaudit akaun pinjaman anda secara forensik.
 * Mengemukakan tawaran penyelesaian baki pokok sahaja berasaskan fakta undang-undang dan laporan polis.
 * Memastikan sindiket menandatangani atau mengesahkan pelepasan hutang (Settlement Clearance) agar tiada tuntutan berulang di kemudian hari.

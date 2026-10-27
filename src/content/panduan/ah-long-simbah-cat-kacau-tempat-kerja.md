@@ -4,7 +4,7 @@ metaTitle: "Ah Long Kacau Tempat Kerja & Simbah Cat: Tindakan Polis & Seksyen 29
 description: "Ah Long ganggu pejabat, ugut majikan atau simbah cat merah di rumah keluarga? Ketahui tindakan kecemasan, peruntukan Seksyen 29B Akta 400, dan cara melindungi tempat kerja serta keselamatan ahli keluarga."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "10 min bacaan"
 category: "Keselamatan Rumah & Tempat Kerja"
@@ -83,7 +83,7 @@ Jika sindiket mula menelefon talian pejabat, menghantar mesej kepada bahagian Su
 
 ## Dapatkan Perlindungan & Pengantaraan Sah
 
-Tindakan melarikan diri atau berpindah rumah bukanlah penyelesaian jangka panjang. Pengalaman [Team Email Rakyat (The ER Advocacy)](/) menunjukkan bahawa sindiket beroperasi menggunakan 'runner' upahan. Apabila tindakan undang-undang rasmi dan laporan teknikal difailkan dengan tepat, runner akan berundur kerana risiko tangkapan dan sebatan di bawah Seksyen 29B adalah amat tinggi.
+Tindakan melarikan diri atau berpindah rumah bukanlah penyelesaian jangka panjang. Pengalaman [Team Email Rakyat](/) menunjukkan bahawa sindiket beroperasi menggunakan 'runner' upahan. Apabila tindakan undang-undang rasmi dan laporan teknikal difailkan dengan tepat, runner akan berundur kerana risiko tangkapan dan sebatan di bawah Seksyen 29B adalah amat tinggi.
 
 * Baca panduan terperinci [Format Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long).
 * Untuk bantuan kecemasan dan pengurusan gangguan tempat kerja, hubungi [Talian Khidmat Nasihat Email Rakyat](/hubungi) sekarang.

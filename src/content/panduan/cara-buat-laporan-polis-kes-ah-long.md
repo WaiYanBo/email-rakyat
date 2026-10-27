@@ -4,7 +4,7 @@ metaTitle: "Cara Buat Laporan Polis Kes Ah Long: Contoh Report & Senarai Balai P
 description: "Panduan lengkap cara buat laporan polis kes ugutan Ah Long. Termasuk format contoh repot polis, cara tangani ketakutan ditangkap, semakan akaun keldai SemakMule, dan direktori balai polis IPD seluruh Malaysia."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "12 min bacaan"
 category: "Prosedur Polis & Bukti Perundangan"
@@ -103,4 +103,4 @@ Berikut adalah sebahagian daripada cawangan Ibu Pejabat Polis Daerah (IPD) dan b
 Laporan polis adalah benteng undang-undang pertama. Namun untuk menyelesaikan pertikaian hutang secara mutlak, anda memerlukan perundingan sah bagi menutup fail ceti haram berkenaan.
 
 * Layari [Panduan Tindakan Undang-Undang Mangsa Ah Long](/panduan/tindakan-undang-undang-ah-long) untuk melihat peruntukan Akta 400.
-* Dapatkan bimbingan menyusun dokumen dan perundingan bayar pokok sahaja bersama [Team Email Rakyat (The ER Advocacy)](/) melalui [Talian Khidmat Nasihat Kami](/hubungi).
+* Dapatkan bimbingan menyusun dokumen dan perundingan bayar pokok sahaja bersama [Team Email Rakyat](/) melalui [Talian Khidmat Nasihat Kami](/hubungi).

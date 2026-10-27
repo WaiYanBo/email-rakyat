@@ -4,7 +4,7 @@ metaTitle: "Tindakan Undang-Undang Mangsa Ah Long: Panduan & Langkah Penyelesaia
 description: "Ketahui hak anda di sisi undang-undang apabila berdepan ugutan Ah Long. Panduan lengkap merangkumi perlindungan Akta 400, Seksyen 506 Kanun Keseksaan, format laporan polis, dan penyelesaian sah."
 publishDate: 2026-10-13
 updatedDate: 2026-10-13
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "14 min bacaan"
 category: "Undang-Undang & Tindakan Kecemasan"
@@ -25,7 +25,7 @@ keywords:
   - "seksyen 427 simbah cat merah"
   - "format laporan polis ah long"
   - "cara buat laporan polis kena ugut ah long"
-  - "er advocacy selesaikan hutang ah long"
+  - "advokasi selesaikan hutang ah long"
   - "bayar pokok sahaja ah long"
   - "what is ahlong"
 lawSections:
@@ -56,15 +56,15 @@ lawSections:
     legalPenalty: "Denda maksimum RM50,000 atau penjara sehingga 1 tahun atau kedua-duanya."
 faqs:
   - question: "Apakah yang akan berlaku jika saya berhenti membayar wang bunga Ah Long hari ini?"
-    answer: "Sindiket akan memulakan perang psikologi melalui mesej WhatsApp kasar, ugutan sebar gambar IC, dan panggilan ancaman. Namun, membayar bunga ugutan TIDAK PERNAH menyelesaikan hutang. Dengan strategi undang-undang, sokongan laporan polis teknikal, dan intervensi ER Advocacy, ancaman ini boleh disekat secara sah sementara rundingan modal pokok dijalankan."
+    answer: "Sindiket akan memulakan perang psikologi melalui mesej WhatsApp kasar, ugutan sebar gambar IC, dan panggilan ancaman. Namun, membayar bunga ugutan TIDAK PERNAH menyelesaikan hutang. Dengan strategi undang-undang, sokongan laporan polis teknikal, dan intervensi Team Email Rakyat, ancaman ini boleh disekat secara sah sementara rundingan modal pokok dijalankan."
   - question: "Bolehkah Ah Long mengheret saya ke mahkamah atau memfailkan kebankrapan?"
     answer: "Sama sekali TIDAK. Ah Long adalah sindiket pinjaman haram tanpa lesen di bawah Akta 400. Di bawah Seksyen 15 Akta Pemberi Pinjam Wang 1951, segala kontrak pinjaman haram adalah BATAL dan tidak boleh dikuatkuasakan di mana-mana mahkamah sivil di Malaysia. Mereka tiada locus standi untuk mengambil tindakan undang-undang sivil."
   - question: "Mengapa laporan polis saya sebelum ini diklasifikasikan sebagai 'Rujuk Majistret' (NOD) dan bagaimana membetulkannya?"
     answer: "Kebanyakan mangsa membuat laporan berbentuk umum (cover report) yang ditulis sebagai 'perselisihan hutang sivil', menyebabkan polis tidak dapat membuka fail jenayah. Laporan teknikal mesti mengandungi elemen jenayah spesifik seperti seksyen Kanun Keseksaan, butiran akaun keldai, bukti mesej ugutan fizikal/maruah, dan desakan membuka Kertas Siasatan (Investigation Paper)."
   - question: "Adakah saya dibenarkan di sisi undang-undang untuk hanya membayar pinjaman pokok asal?"
     answer: "Ya. Prinsip keadilan undang-undang dan panduan advokasi menetapkan bahawa peminjam hanya bertanggungjawab ke atas jumlah tunai bersih yang diterima (modal pokok). Faedah harian/mingguan yang mencekik darah adalah tidak sah dan tidak wajib dibayar."
-  - question: "Bagaimanakah ER Advocacy campur tangan untuk melindungi mangsa?"
-    answer: "ER Advocacy bertindak sebagai perunding advokasi berdaftar. Kami membimbing mangsa menyusun kronologi fakta kes, menyediakan draf laporan polis teknikal yang kukuh, mengeluarkan notis advokasi perlindungan pengguna rasmi, dan menjadi benteng perantara supaya sindiket menghentikan gangguan pemerasan."
+  - question: "Bagaimanakah Team Email Rakyat campur tangan untuk melindungi mangsa?"
+    answer: "Team Email Rakyat bertindak sebagai perunding advokasi berdaftar. Kami membimbing mangsa menyusun kronologi fakta kes, menyediakan draf laporan polis teknikal yang kukuh, mengeluarkan notis advokasi perlindungan pengguna rasmi, dan menjadi benteng perantara supaya sindiket menghentikan gangguan pemerasan."
 ---
 
 # Panduan Tindakan Undang-Undang Mangsa Ah Long: Langkah Demi Langkah Hadapi Ugutan & Cara Selesai Sah
@@ -75,7 +75,7 @@ Apabila wang simpanan habis dan mangsa mula diugut bunuh, disimbah cat merah, at
 
 > **"Apa yang perlu saya buat sekarang? Bolehkah undang-undang Malaysia melindungi saya, dan bagaimana cara keluar daripada jerat ini secara sah?"**
 
-Panduan ini menyediakan panduan langkah demi langkah berlandaskan lunas perundangan Malaysia, hak anda di bawah statut negara, serta protokol bantuan advokasi yang dipraktikkan oleh **The ER Advocacy Sdn. Bhd. (Team Email Rakyat)**.
+Panduan ini menyediakan panduan langkah demi langkah berlandaskan lunas perundangan Malaysia, hak anda di bawah statut negara, serta protokol bantuan advokasi yang dipraktikkan oleh **Team Email Rakyat**.
 
 ---
 
@@ -162,17 +162,17 @@ Apabila membuat laporan polis di Balai Polis berhampiran, pastikan butiran berik
 
 ---
 
-## Fasa 4: Protokol Intervensi Profesional ER Advocacy (Team Email Rakyat)
+## Fasa 4: Protokol Intervensi Profesional Team Email Rakyat
 
-Bagi mangsa yang tidak mampu menghadapi tekanan sindiket secara bersendirian, **ER Advocacy Sdn. Bhd. (Team Email Rakyat)** menyediakan intervensi profesional yang berintegriti dan sah di sisi undang-undang.
+Bagi mangsa yang tidak mampu menghadapi tekanan sindiket secara bersendirian, **Team Email Rakyat** menyediakan intervensi profesional yang berintegriti dan sah di sisi undang-undang.
 
-> **PROTOKOL INTERVENSI 4 LANGKAH ER ADVOCACY**
+> **PROTOKOL INTERVENSI 4 LANGKAH TEAM EMAIL RAKYAT**
 > * **Langkah 1: Analisis Audit Liabiliti & Kronologi Bukti** — Semakan rekod transaksi: Modal pokok diterima vs jumlah bunga dibayar.
 > * **Langkah 2: Penyediaan Draf Laporan Polis Teknikal PDRM** — Menyusun fakta kronologi berasaskan peruntukan statut Kanun Keseksaan.
 > * **Langkah 3: Pengeluaran Notis Perlindungan Advokasi Rasmi** — Menegakkan hak statutori Akta 400 dan menghentikan pemerasan bunga haram.
 > * **Langkah 4: Penstrukturan Penyelesaian Sah & Selamat** — Menamatkan pemerasan; fokus hanya pada modal pokok sah yang dipersetujui.
 
-### Prinsip Operasi ER Advocacy:
+### Prinsip Operasi Team Email Rakyat:
 * **Bukan Rundingan Bawah Meja:** Kami tidak membayar wang suapan, tidak berkompromi dengan gangsterisme, dan tidak meminta pinjaman baharu bagi pihak anda.
 * **Perlindungan Berlandaskan Statut:** Kami menggunakan instrumen undang-undang negara untuk memaksa sindiket menghentikan pemerasan dan membatalkan faedah harian haram.
 * **Kerahsiaan 100% Terpelihara:** Identiti mangsa dan keluarga dilindungi sepenuhnya di bawah etika perundingan advokasi sulit.
@@ -204,5 +204,5 @@ Anda tidak perlu menanggung ketakutan dan ugutan ini bersendirian. Undang-undang
 
 * **Talian Kecemasan & WhatsApp Pegawai:** [+6012-6232949](https://WaiYanTeamEmailRakyat.wasap.my)
 * **Waktu Operasi:** 24 Jam (Khidmat Sokongan Kes Kecemasan)
-* **Entiti Berdaftar:** The ER Advocacy Sdn. Bhd. (Team Email Rakyat)
+* **Khidmat Advokasi:** Team Email Rakyat
 * **Laman Web Rasmi:** [e-rakyat.com](https://e-rakyat.com)

@@ -4,7 +4,7 @@ metaTitle: "Gangguan Debt Collector Malaysia: Hak Peminjam, Had BNM & Hutang Lap
 description: "Diancam pengutip hutang bank atau debt collector ugut datang rumah? Ketahui garis panduan Bank Negara Malaysia (BNM), Akta Had Masa 1953 bagi hutang lapuk, dan cara mencabar caj tidak munasabah."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "11 min bacaan"
 category: "Hak Pengguna & Perlindungan Kewangan"
@@ -81,7 +81,7 @@ Sekiranya anda berdepan agensi pengutip hutang yang biadab atau mengugut mencero
 3. **Failkan Aduan Rasmi ke BNMLINK & AKPK:**
    Kemukakan aduan kepada pihak bank utama dan portal aduan Bank Negara Malaysia (telelink.bnm.gov.my). Bank boleh mengenakan penalti atau menamatkan kontrak agensi kutipan yang melanggar garis panduan.
 4. **Rundingan 'Full & Final Settlement' Melalui Advokasi:**
-   Jika anda berhasrat membersihkan rekod CCRIS/CTOS, jangan bayar jumlah bunga faedah tambahan yang tidak masuk akal. [The ER Advocacy (Team Email Rakyat)](/) boleh membantu merundingkan diskaun bayaran penuh sekali gus (*waiver of interest*) yang menjimatkan sehingga 50%–70% daripada jumlah tuntutan.
+   Jika anda berhasrat membersihkan rekod CCRIS/CTOS, jangan bayar jumlah bunga faedah tambahan yang tidak masuk akal. [Team Email Rakyat](/) boleh membantu merundingkan diskaun bayaran penuh sekali gus (*waiver of interest*) yang menjimatkan sehingga 50%–70% daripada jumlah tuntutan.
 
 ---
 

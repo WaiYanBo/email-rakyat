@@ -4,7 +4,7 @@ metaTitle: "Pinjaman Berlesen Tapi Macam Ah Long? Cara Aduan Kredit Komuniti KPK
 description: "Syarikat kredit komuniti mengenakan bunga melampau, menahan kad bank ATM atau bertindak kasar? Ketahui had undang-undang Akta 400 dan cara aduan rasmi ke KPKT & PDRM."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
-author: "Team Email Rakyat (The ER Advocacy Sdn. Bhd.)"
+author: "Team Email Rakyat"
 authorRole: "Firma Advokasi & Perlindungan Hak Pengguna Malaysia"
 readTime: "10 min bacaan"
 category: "Kredit Komuniti & Kawal Selia KPKT"

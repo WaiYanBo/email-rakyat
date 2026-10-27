@@ -561,7 +561,7 @@ export default function AppointmentsView() {
       }
     }
 
-    return `*ER Advocacy Client Appointment*
+    return `*Team Email Rakyat Client Appointment*
 * Client: ${apt.client_name || '-'}
 * Date: ${formattedDate}
 * Time: ${apt.appointment_time || '-'}
@@ -583,10 +583,10 @@ Please take note. Thank you.`;
     if (lang === 'en') {
       return `Dear ${apt.client_name},
 
-Your consultation appointment with ER Advocacy has been scheduled as follows:
+Your consultation appointment with Team Email Rakyat has been scheduled as follows:
 Date: ${formattedDate}
 Time: ${apt.appointment_time}
-Location / Mode: ${apt.location || 'ER Advocacy Office'}
+Location / Mode: ${apt.location || 'Email Rakyat Office'}
 Officer In Charge: ${apt.pic_name}
 
 Please let us know if you have any questions or require rescheduling. Thank you.`;
@@ -594,10 +594,10 @@ Please let us know if you have any questions or require rescheduling. Thank you.
 
     return `Salam sejahtera ${apt.client_name},
 
-Temujanji anda bersama ER Advocacy telah dijadualkan seperti butiran berikut:
+Temujanji anda bersama Team Email Rakyat telah dijadualkan seperti butiran berikut:
 Tarikh: ${formattedDate}
 Masa: ${apt.appointment_time}
-Mod / Lokasi: ${apt.location || 'Pejabat ER Advocacy'}
+Mod / Lokasi: ${apt.location || 'Pejabat Email Rakyat'}
 PIC Bertugas: ${apt.pic_name}
 
 Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terima kasih.`;
@@ -618,7 +618,7 @@ Sila maklumkan sekiranya terdapat sebarang pertanyaan atau perubahan masa. Terim
       }
     }
 
-    return `*ER Advocacy Client Appointment [JADUAL SEMULA / RESCHEDULED]*
+    return `*Team Email Rakyat Client Appointment [JADUAL SEMULA / RESCHEDULED]*
 * Client: ${apt.client_name || '-'}
 * Tarikh Baharu / New Date: ${formattedDate}
 * Masa Baharu / New Time: ${apt.appointment_time || '-'}
@@ -640,10 +640,10 @@ Sila kemas kini jadual anda. Please update your schedule. Thank you.`;
     if (lang === 'en') {
       return `Dear ${apt.client_name},
 
-Kindly be informed that your consultation appointment with ER Advocacy has been RESCHEDULED to:
+Kindly be informed that your consultation appointment with Team Email Rakyat has been RESCHEDULED to:
 New Date: ${formattedDate}
 New Time: ${apt.appointment_time}
-Location / Mode: ${apt.location || 'ER Advocacy Office'}
+Location / Mode: ${apt.location || 'Email Rakyat Office'}
 Officer In Charge: ${apt.pic_name}
 
 Please let us know if this timing works for you. Thank you.`;
@@ -651,10 +651,10 @@ Please let us know if this timing works for you. Thank you.`;
 
     return `Salam sejahtera ${apt.client_name},
 
-Dimaklumkan bahawa temujanji konsultasi anda bersama ER Advocacy telah DIJADUALKAN SEMULA seperti butiran berikut:
+Dimaklumkan bahawa temujanji konsultasi anda bersama Team Email Rakyat telah DIJADUALKAN SEMULA seperti butiran berikut:
 Tarikh Baharu: ${formattedDate}
 Masa Baharu: ${apt.appointment_time}
-Mod / Lokasi: ${apt.location || 'Pejabat ER Advocacy'}
+Mod / Lokasi: ${apt.location || 'Pejabat Email Rakyat'}
 PIC Bertugas: ${apt.pic_name}
 
 Sila maklumkan sekiranya waktu ini sesuai untuk anda. Terima kasih.`;

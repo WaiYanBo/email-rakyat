@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import SEO from '../components/SEO.astro';
 import '../styles/global.css';
+import '../styles/public.css';
 import '@fontsource-variable/nunito-sans';
 
 interface Props {
@@ -97,6 +98,22 @@ const isPortal = currentPath.startsWith('/portal');
         {!isPortal && (
           <>
             <script is:inline>
+              (function() {
+                try {
+                  var stored = localStorage.getItem('public-theme');
+                  var theme = stored || 'dark';
+                  document.documentElement.setAttribute('data-theme', theme);
+                  if (theme === 'light') {
+                    document.documentElement.classList.add('theme-light');
+                    document.documentElement.classList.remove('theme-dark');
+                  } else {
+                    document.documentElement.classList.add('theme-dark');
+                    document.documentElement.classList.remove('theme-light');
+                  }
+                } catch (e) {}
+              })();
+            </script>
+            <script is:inline>
               window.loadGtag = function() {
                 if (window.gtagLoaded) return;
                 window.gtagLoaded = true;
@@ -139,7 +156,7 @@ const isPortal = currentPath.startsWith('/portal');
 
     <body class:list={[
         "font-sans min-h-screen flex flex-col",
-        isPortal ? "portal-layout bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300" : "bg-gray-900 text-white"
+        isPortal ? "portal-layout bg-gray-50 text-gray-900 dark:bg-black dark:text-gray-100 transition-colors duration-300" : "site-public"
     ]}>
 
         {!isPortal && <Navbar />}
@@ -150,69 +167,65 @@ const isPortal = currentPath.startsWith('/portal');
 
         {!isPortal && (
             <>
-                <div id="cookie-overlay" class="fixed bottom-0 inset-x-0 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-md z-[60] hidden transition-all duration-300">
-                    <div id="cookie-step-1" class="bg-gray-900/95 border-t sm:border border-gray-700/80 sm:rounded-2xl p-4 sm:p-5 shadow-[0_12px_36px_rgba(0,0,0,0.8)] backdrop-blur-md flex flex-col gap-2.5">
+                <div id="cookie-overlay" class="fixed bottom-0 inset-x-0 sm:bottom-6 sm:left-6 sm:right-auto sm:max-w-sm z-[60] hidden">
+                    <div id="cookie-step-1" class="bg-[var(--site-surface)] border-t sm:border border-[var(--site-line)] sm:rounded-xl p-5 shadow-2xl flex flex-col gap-3">
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-                            <h3 class="text-sm sm:text-base font-bold text-white">Privasi & Analitik Laman Web</h3>
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <h3 class="text-sm font-bold text-[var(--site-heading)]">Privasi &amp; Analitik</h3>
                         </div>
-                        <p class="text-xs text-gray-300 leading-relaxed">
-                            Laman web ini mengumpul beberapa data awanama (tanpa maklumat peribadi) dan kuki untuk analisis bagi membantu kami memahami isu rakyat dan menambah baik platform ini.
+                        <p class="text-xs text-[var(--site-muted)] leading-relaxed">
+                            Laman web ini mengumpul data awanama (tanpa maklumat peribadi) dan kuki untuk analisis bagi membantu kami menambah baik platform ini.
                         </p>
-                        <div class="flex items-center justify-end gap-2 w-full pt-1">
-                            <button id="btn-decline" class="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 font-semibold transition text-xs text-center flex-1 sm:flex-none">Tolak</button>
-                            <button id="btn-manage" class="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold transition text-xs text-center flex-1 sm:flex-none">Tetapan Manual</button>
-                            <button id="btn-accept-all" class="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold transition text-xs text-center flex-1 sm:flex-none">Terima Semua</button>
+                        <div class="flex items-center justify-end gap-3 w-full pt-1 text-xs">
+                            <button id="btn-decline" class="text-[var(--site-subtle)] hover:text-[var(--site-heading)] font-semibold transition-colors">Tolak</button>
+                            <button id="btn-manage" class="text-[var(--site-subtle)] hover:text-[var(--site-heading)] font-semibold transition-colors">Tetapan</button>
+                            <button id="btn-accept-all" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-sm">Terima semua</button>
                         </div>
                     </div>
 
-                    <div id="cookie-step-2" class="bg-gray-900/95 border-t sm:border border-gray-700/80 sm:rounded-2xl p-4 sm:p-5 shadow-[0_12px_36px_rgba(0,0,0,0.8)] backdrop-blur-md flex flex-col gap-2 hidden"></div>
+                    <div id="cookie-step-2" class="bg-[var(--site-surface)] border-t sm:border border-[var(--site-line)] sm:rounded-xl p-5 shadow-2xl flex flex-col gap-2 hidden"></div>
                     <template id="template-cookie-step-2">
-                        <h3 class="text-sm sm:text-base font-bold text-white mb-1">Tetapan Kuki Manual</h3>
-                        <p class="text-xs text-gray-300 mb-3">
-                            Sila pilih data yang anda benarkan kami kumpul. Kami menghargai privasi anda.
+                        <h3 class="text-sm font-bold text-[var(--site-heading)] mb-1">Tetapan Kuki</h3>
+                        <p class="text-xs text-[var(--site-muted)] mb-3">
+                            Pilih data yang anda benarkan kami kumpul.
                         </p>
-                        <div class="space-y-3 mb-4">
-                            <div class="flex items-start justify-between p-2.5 bg-gray-950/80 rounded-lg border border-gray-800">
+                        <div class="divide-y divide-[var(--site-line)] border-y border-[var(--site-line)] mb-4">
+                            <div class="flex items-start justify-between py-3">
                                 <div class="pr-3">
-                                    <h4 class="text-white font-semibold text-xs">Analitik Tanpa Nama (Wajib)</h4>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">Merekodkan masa skrin menggunakan ID sementara. <strong>Tiada data peribadi dikumpul.</strong></p>
+                                    <h4 class="text-[var(--site-heading)] font-semibold text-xs">Analitik tanpa nama (wajib)</h4>
+                                    <p class="text-[11px] text-[var(--site-subtle)] mt-0.5">Merekod masa skrin menggunakan ID sementara. Tiada data peribadi dikumpul.</p>
                                 </div>
-                                <input type="checkbox" checked disabled class="mt-1 w-4 h-4 accent-green-500 opacity-50 cursor-not-allowed" aria-label="Wajib">
+                                <input type="checkbox" checked disabled class="mt-1 w-4 h-4 accent-amber-500 opacity-50 cursor-not-allowed" aria-label="Wajib">
                             </div>
-                            <div class="flex items-start justify-between p-2.5 bg-gray-950/80 rounded-lg border border-gray-800">
+                            <div class="flex items-start justify-between py-3">
                                 <div class="pr-3">
-                                    <h4 class="text-white font-semibold text-xs">Analitik Peranti (Pilihan)</h4>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">Merekod jenis peranti (Telefon/Komputer) bagi menambah baik susunan paparan UI.</p>
+                                    <h4 class="text-[var(--site-heading)] font-semibold text-xs">Analitik peranti (pilihan)</h4>
+                                    <p class="text-[11px] text-[var(--site-subtle)] mt-0.5">Merekod jenis peranti bagi menambah baik paparan.</p>
                                 </div>
-                                <input type="checkbox" id="toggle-device" class="mt-1 w-4 h-4 accent-green-500 cursor-pointer" aria-label="Pilihan Peranti">
+                                <input type="checkbox" id="toggle-device" class="mt-1 w-4 h-4 accent-amber-500 cursor-pointer" aria-label="Pilihan Peranti">
                             </div>
                         </div>
-                        <div class="flex gap-2 w-full">
-                            <button id="btn-back" class="w-1/3 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold transition text-xs">Kembali</button>
-                            <button id="btn-save-prefs" class="w-2/3 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold transition text-xs">Simpan Pilihan</button>
+                        <div class="flex items-center justify-end gap-3 w-full text-xs">
+                            <button id="btn-back" class="text-[var(--site-subtle)] hover:text-[var(--site-heading)] font-semibold transition-colors">Kembali</button>
+                            <button id="btn-save-prefs" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-sm">Simpan pilihan</button>
                         </div>
                     </template>
                 </div>
 
                 <Footer />
 
-                <button id="back-to-top" aria-label="Kembali ke atas" class="fixed bottom-18 sm:bottom-24 right-4 sm:right-6 z-40 bg-gray-800/90 backdrop-blur-md border border-gray-700 hover:bg-green-500 hover:border-green-500 text-gray-300 hover:text-white w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.5)] flex items-center justify-center transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:scale-110">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <button id="back-to-top" aria-label="Kembali ke atas" class="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-40 bg-[var(--site-surface)] border border-[var(--site-line)] hover:border-[var(--site-accent)] text-[var(--site-muted)] hover:text-[var(--site-accent)] w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                     </svg>
                 </button>
 
-                <div id="whatsapp-fab" class="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 group animate-bounce-slow transition-opacity duration-300">
-                    <div class="absolute inset-0 bg-green-500 rounded-full animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite] opacity-60 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-                    <a href="https://WaiYanTeamEmailRakyat.wasap.my" target="_blank" onclick="gtag_report_conversion();" class="relative flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white w-12 h-12 sm:w-auto sm:h-auto sm:px-4 sm:py-3 rounded-full shadow-[0_0_20px_rgba(34,197,94,0.5)] transition-all hover:scale-105 active:scale-95" aria-label="Contact on WhatsApp">
-                        <svg class="w-6 h-6 fill-current flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <div id="whatsapp-fab" class="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 transition-opacity duration-300">
+                    <a href="https://WaiYanTeamEmailRakyat.wasap.my" target="_blank" onclick="gtag_report_conversion();" class="flex items-center justify-center gap-2 bg-[#1f9d55] hover:bg-[#1a8a4a] text-white w-12 h-12 sm:w-auto sm:h-auto sm:px-4 sm:py-2.5 rounded-full shadow-lg shadow-black/40 transition-colors" aria-label="Contact on WhatsApp">
+                        <svg class="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.304-5.292c0-5.448 4.435-9.88 9.884-9.88 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                         </svg>
-                        <div class="hidden sm:flex flex-col text-left">
-                            <span class="text-[10px] uppercase font-bold text-green-100 tracking-wider">Perlukan Bantuan?</span>
-                            <span class="text-sm font-black leading-none">WHATSAPP KAMI</span>
-                        </div>
+                        <span class="hidden sm:inline text-sm font-medium">WhatsApp kami</span>
                     </a>
                 </div>
             </>

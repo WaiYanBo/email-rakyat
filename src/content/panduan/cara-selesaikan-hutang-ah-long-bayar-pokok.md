@@ -75,7 +75,7 @@ Dapatkan penyata bank rasmi (PDF/cetakan) yang menunjukkan:
 * Semua transaksi pindahan wang keluar ke akaun sindiket dari hari pertama sehingga hari ini.
 
 ### Langkah 3: Failkan Laporan Polis Rasmi
-Buat laporan polis yang mendokumentasikan jumlah wang sebenar yang dipinjam, jumlah yang telah dibayar, serta ancaman ugutan jenayah pemerasan. Sila rujuk [Panduan Format Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long) untuk contoh draf kenyataan yang lengkap.
+Buat laporan polis yang mendokumentasikan jumlah wang sebenar yang dipinjam, jumlah yang telah dibayar, serta ancaman ugutan jenayah pemerasan. Sila rujuk [Panduan Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long) untuk bimbingan penyediaan laporan yang lengkap.
 
 ### Langkah 4: Lantik Perunding Advokasi Sah (Team Email Rakyat)
 Menghadapi sindiket secara bersendirian sering mengundang ugutan kasar. Melalui perkhidmatan profesional [Team Email Rakyat](/), pegawai advokasi kami bertindak sebagai pihak ketiga rasmi untuk:

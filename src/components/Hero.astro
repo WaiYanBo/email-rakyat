@@ -1,103 +1,131 @@
 ---
-import { Image } from 'astro:assets';
-import defaultBg from '../assets/background.webp';
+import { Image } from "astro:assets";
+import defaultBg from "../assets/hero-executive.jpg";
+
+interface Props {
+  line1?: string;
+  line2?: string;
+  line3?: string;
+  showDetails?: boolean;
+  backgroundImage?: any;
+}
 
 const {
-  line1 = "Hubungi Segera!!",
-  line2 = "Kami Bantu Anda",
-  line3 = "Hanya Dengan Cara Yang Sah!",
+  line1 = "Selesaikan Isu Ah Long Secara Sah.",
+  line2 = "Sulit · Profesional · Berlandaskan Undang-Undang",
   showDetails = true,
-  backgroundImage = defaultBg
+  backgroundImage = defaultBg,
 } = Astro.props;
-
-const heightClass = showDetails
-  ? "min-h-[640px] md:min-h-[720px] lg:min-h-[82vh]"
-  : "min-h-[260px] md:min-h-[320px]";
-
-const safePaddingClass = showDetails
-  ? "pt-32 pb-16 sm:pt-36 sm:pb-20 md:pt-40 md:pb-24"
-  : "pt-28 pb-12 sm:pt-32 sm:pb-14 md:pt-36 md:pb-16";
 ---
 
-<section class={`no-reveal relative ${heightClass} ${safePaddingClass} flex items-center justify-center bg-gray-900 transition-all duration-500`}>
+{showDetails ? (
+  <section class="hero-banner relative min-h-[75vh] md:min-h-[84vh] pt-36 pb-20 md:pt-44 md:pb-28 flex items-end bg-[#070c18] text-white overflow-hidden">
+    <!-- Crisp Professional Banner Photography -->
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <Image
+        src={backgroundImage}
+        alt="Team Email Rakyat Pusat Advokasi Pengguna Malaysia"
+        class="w-full h-full object-cover object-center opacity-100"
+        loading="eager"
+        fetchpriority="high"
+        widths={[640, 1024, 1536, 1920]}
+        sizes="100vw"
+      />
+      <!-- Balanced Cinematic Gradient so the Photo Shines Through Clearly -->
+      <div class="absolute inset-0 bg-gradient-to-t from-[#070c18] via-[#070c18]/55 to-[#070c18]/40" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#070c18]/85 via-[#070c18]/40 to-transparent" />
+    </div>
 
-  <div class="absolute inset-0 z-0 overflow-hidden">
-    <Image
-      src={backgroundImage}
-      alt="Background Pattern"
-      class="w-full h-full object-cover opacity-100"
-      loading="eager"
-      fetchpriority="high"
-      decoding="async"
-      widths={[640, 768, 1024, 1280, 1536]}
-      sizes="(max-width: 768px) 100vw, 100vw"
-    />
-    <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90"></div>
-  </div>
-
-  <div class="relative z-10 text-center px-4 max-w-5xl mx-auto w-full">
-    {showDetails ? (
-      <div class="flex flex-col items-center justify-center w-full">
-        <a href="/hubungi" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 transition-all backdrop-blur-sm mb-3 group">
-          <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-          <span class="text-yellow-400 tracking-[0.2em] text-xs sm:text-sm uppercase font-bold drop-shadow-md group-hover:text-yellow-300">
-            Hubungi Kami Segera
-          </span>
-        </a>
-
-        <h1 class="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-black text-white uppercase tracking-tight drop-shadow-2xl text-center leading-tight max-w-4xl">
-          Bantuan Mangsa Ah Long & Khidmat Nasihat Hutang Sah
-        </h1>
-
-        <p class="text-xs sm:text-sm md:text-base font-semibold text-gray-300 uppercase tracking-widest mt-3 max-w-2xl">
-          Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)
+    <div class="site-container relative z-10 w-full">
+      <div class="max-w-2xl">
+        <p class="font-mono text-xs uppercase tracking-[0.22em] text-[#f0c351] mb-4 drop-shadow">
+          Team Email Rakyat &middot; Malaysia
         </p>
 
-        <div class="mt-4 space-y-1">
-          <p class="text-sm md:text-base font-bold text-yellow-400 uppercase tracking-wider drop-shadow-lg">
-            {line1}
-          </p>
-          <p class="text-sm md:text-base font-bold text-white uppercase tracking-wider drop-shadow-lg">
-            {line2}
-          </p>
-          <p class="text-sm md:text-base font-bold text-yellow-400 uppercase tracking-wider drop-shadow-lg">
-            {line3}
-          </p>
-        </div>
+        <h1
+          class="h-display text-white tracking-tight mb-5 drop-shadow-md"
+          style="color: #ffffff !important;"
+        >
+          Selesaikan Isu Ah Long
+          <span class="text-[#f0c351] block mt-1">Secara Sah.</span>
+        </h1>
 
-        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full">
-          <a
-            href="/hubungi"
-            class="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-yellow-500 px-7 py-3.5 text-sm font-black uppercase tracking-wider text-black shadow-[0_0_24px_rgba(234,179,8,0.25)] transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
-          >
+        <p
+          class="hero-subtitle text-sm sm:text-base text-slate-200 tracking-wide mb-9 drop-shadow"
+          style="color: #f1f5f9 !important;"
+        >
+          Sulit &middot; Profesional &middot; Berlandaskan Undang-Undang
+        </p>
+
+        <div class="flex flex-wrap items-center gap-6">
+          <a href="/hubungi" class="btn-primary !bg-[#e2b03a] hover:!bg-[#f0c351] !text-[#070c18]">
             Dapatkan Bantuan
           </a>
+
           <a
             href="/perkhidmatan"
-            class="inline-flex w-full sm:w-auto items-center justify-center rounded-full border border-gray-500 bg-black/40 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-300 hover:border-yellow-500 hover:text-yellow-400"
+            class="link-arrow text-white hover:text-[#f0c351] py-2 drop-shadow"
+            style="color: #ffffff !important;"
           >
             Lihat Perkhidmatan
           </a>
         </div>
-
-        <p class="mt-4 text-xs md:text-sm uppercase tracking-[0.25em] text-gray-300 font-medium">
-          Sulit • Profesional • Berlandaskan Undang-Undang
-        </p>
       </div>
-    ) : (
-      <div class="flex flex-col items-center justify-center text-center max-w-4xl mx-auto px-4">
-        <div class="w-12 h-1 bg-yellow-500 mb-4"></div>
+    </div>
+  </section>
+) : (
+  <header class="hero-banner relative min-h-[340px] md:min-h-[420px] pt-36 pb-14 md:pt-44 md:pb-20 flex items-end bg-[#070c18] text-white border-b border-white/10 overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <Image
+        src={backgroundImage}
+        alt={line1}
+        class="w-full h-full object-cover object-center opacity-100"
+        loading="eager"
+        widths={[640, 1024, 1536, 1920]}
+        sizes="100vw"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#070c18] via-[#070c18]/50 to-[#070c18]/40" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#070c18]/80 via-[#070c18]/35 to-transparent" />
+    </div>
 
-        <h1 class="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-wide drop-shadow-2xl leading-tight">
-          {line1}
-        </h1>
+    <div class="site-container relative z-10 w-full">
+      <div class="max-w-2xl">
         {line2 && (
-          <p class="text-xs sm:text-sm text-yellow-500 font-semibold uppercase tracking-widest mt-2">
+          <p class="font-mono text-xs uppercase tracking-[0.2em] text-[#f0c351] mb-3 drop-shadow">
             {line2}
           </p>
         )}
-      </div>
-    )}
 
-  </div>
-</section>
+        <h1
+          class="h-page text-white tracking-tight drop-shadow-md"
+          style="color: #ffffff !important;"
+        >
+          {line1}
+        </h1>
+      </div>
+    </div>
+  </header>
+)}
+
+<style is:global>
+  html[data-theme="light"] .hero-banner .h-display,
+  html[data-theme="light"] .hero-banner .h-page,
+  html.theme-light .hero-banner .h-display,
+  html.theme-light .hero-banner .h-page,
+  .hero-banner .h-display,
+  .hero-banner .h-page {
+    color: #ffffff !important;
+  }
+
+  html[data-theme="light"] .hero-banner .link-arrow,
+  html.theme-light .hero-banner .link-arrow,
+  .hero-banner .link-arrow {
+    color: #ffffff !important;
+  }
+
+  html[data-theme="light"] .hero-banner .link-arrow:hover,
+  html.theme-light .hero-banner .link-arrow:hover,
+  .hero-banner .link-arrow:hover {
+    color: #f0c351 !important;
+  }
+</style>

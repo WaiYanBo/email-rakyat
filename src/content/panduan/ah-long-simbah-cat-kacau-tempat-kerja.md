@@ -85,5 +85,5 @@ Jika sindiket mula menelefon talian pejabat, menghantar mesej kepada bahagian Su
 
 Tindakan melarikan diri atau berpindah rumah bukanlah penyelesaian jangka panjang. Pengalaman [Team Email Rakyat](/) menunjukkan bahawa sindiket beroperasi menggunakan 'runner' upahan. Apabila tindakan undang-undang rasmi dan laporan teknikal difailkan dengan tepat, runner akan berundur kerana risiko tangkapan dan sebatan di bawah Seksyen 29B adalah amat tinggi.
 
-* Baca panduan terperinci [Format Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long).
+* Baca panduan terperinci [Panduan Laporan Polis Kes Ah Long](/panduan/cara-buat-laporan-polis-kes-ah-long).
 * Untuk bantuan kecemasan dan pengurusan gangguan tempat kerja, hubungi [Talian Khidmat Nasihat Email Rakyat](/hubungi) sekarang.

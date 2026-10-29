@@ -1,123 +1,205 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Hero from '../components/Hero.astro';
-import Features from '../components/Features.astro';
-import FAQ from '../components/FAQ.astro';
+import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import Features from "../components/Features.astro";
+import FAQ from "../components/FAQ.astro";
 ---
 
 <Layout
   title="Bantuan Mangsa Ah Long: Ugutan, Simbah Cat & Sebar Gambar | Team Email Rakyat"
   description="Ah Long ugut saya? Ahlong is harassing or threatening me? Ketahui apa itu Ah Long, cara hadapi kes Ah Long di Malaysia, simbah cat, ugutan sebar gambar IC & panduan lapor polis sah bersama Team Email Rakyat."
 >
-    <Hero />
-    <Features />
-    <section id="section-tiktok-embed" class="py-20 px-6 border-b border-gray-800 bg-gradient-to-b from-[#0b1220] to-[#05070d]">
-      <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+  <Hero />
+  <Features />
 
-        <div class="text-left">
-          <h2 class="text-3xl md:text-4xl font-black text-white mb-6">
-            Kes Sebenar Mangsa Ah Long
+  <section
+    id="section-tiktok-embed"
+    class="site-section bg-[var(--site-surface)]"
+  >
+    <div class="site-container">
+      <div class="grid md:grid-cols-12 gap-12 lg:gap-16 items-center">
+        <div class="md:col-span-7">
+          <span class="eyebrow mb-3">Pendedahan Video</span>
+          <h2 class="h-section mt-2 mb-6">
+            Kes Sebenar Mangsa Ah Long di Malaysia.
           </h2>
 
-          <p class="text-gray-400 text-lg mb-6 leading-relaxed">
-            Dengarkan kisah sebenar mangsa yang terjebak dengan hutang Ah Long
-            sehingga mencecah jutaan ringgit. Ketahui bagaimana situasi ini berlaku
-            dan langkah yang boleh diambil untuk keluar dari masalah secara sah.
+          <p class="body-text mb-8">
+            Dengarkan rakaman pendedahan bagaimana sindiket pinjaman haram
+            memerangkap peminjam dengan bunga berlipat ganda, dan bagaimana isu
+            ini dapat diselesaikan berlandaskan peruntukan undang-undang rasmi.
           </p>
 
-          <ul class="space-y-3 text-gray-300">
-            <li>✔ Kisah sebenar mangsa hutang</li>
-            <li>✔ Risiko pinjaman tidak berlesen</li>
-            <li>✔ Cara penyelesaian yang sah</li>
+          <ul
+            class="border-t border-[var(--site-line)] divide-y divide-[var(--site-line)] text-sm text-[var(--site-text)]"
+          >
+            <li class="py-4 flex items-baseline gap-5">
+              <span
+                class="font-mono text-xs font-bold text-[var(--site-accent)] tracking-widest shrink-0"
+                >01</span
+              >
+              <span class="font-medium"
+                >Kronologi sebenar jerat pinjaman tidak berlesen</span
+              >
+            </li>
+            <li class="py-4 flex items-baseline gap-5">
+              <span
+                class="font-mono text-xs font-bold text-[var(--site-accent)] tracking-widest shrink-0"
+                >02</span
+              >
+              <span class="font-medium"
+                >Kesan psikologi terhadap mangsa dan keluarga</span
+              >
+            </li>
+            <li class="py-4 flex items-baseline gap-5">
+              <span
+                class="font-mono text-xs font-bold text-[var(--site-accent)] tracking-widest shrink-0"
+                >03</span
+              >
+              <span class="font-medium"
+                >Langkah teknikal menghentikan ugutan serta-merta</span
+              >
+            </li>
           </ul>
+
+          <div class="mt-8">
+            <a
+              href="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="link-arrow text-sm"
+            >
+              Tonton di saluran rasmi TikTok
+            </a>
+          </div>
         </div>
 
-        <div class="flex justify-center md:justify-end w-full min-w-0">
-
-          <div class="bg-black/40 backdrop-blur-lg p-3 sm:p-4 rounded-2xl shadow-xl border border-gray-700 w-full max-w-[340px] min-w-0 flex flex-col items-center">
+        <div class="md:col-span-5 flex justify-center md:justify-end">
+          <!-- Smartphone Device Frame (Necessary Border for Video Separation) -->
+          <div
+            class="w-full max-w-[310px] tiktok-phone-frame p-2.5 rounded-[32px] transition-all duration-300"
+          >
             <div
               id="tiktok-facade-container"
-              class="relative w-full aspect-[9/16] min-h-[540px] sm:min-h-[580px] rounded-xl overflow-hidden bg-gradient-to-b from-gray-900 via-black to-gray-950 shadow-inner flex flex-col items-center justify-center p-6 text-center cursor-pointer group"
+              class="relative w-full aspect-[9/16] overflow-hidden rounded-[22px] bg-slate-950 flex flex-col items-center justify-center p-6 text-center cursor-pointer group select-none"
               role="button"
               tabindex="0"
               aria-label="Tonton Kisah Sebenar Mangsa Ah Long di TikTok"
             >
-              <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-500/10 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-
-              <div class="relative z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 border border-gray-700 text-xs text-gray-300 mb-6 backdrop-blur-sm">
-                <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43V13a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.04-1.29v-3.14z"/>
-                </svg>
-                <span>Video TikTok Rasmi</span>
+              <!-- Phone Speaker Notch -->
+              <div
+                class="absolute top-2.5 left-1/2 -translate-x-1/2 w-14 h-1 rounded-full bg-slate-800 pointer-events-none z-10"
+              >
               </div>
 
-              <div class="relative z-10 w-20 h-20 rounded-full bg-yellow-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.5)] group-hover:scale-110 group-hover:bg-yellow-400 transition-all duration-300">
-                <svg class="w-8 h-8 ml-1 fill-current" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
+              <!-- Ambient Subtle Depth Gradient -->
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950 pointer-events-none"
+              >
               </div>
 
-              <h3 class="relative z-10 text-white font-bold text-base mt-6 group-hover:text-yellow-400 transition-colors">
+              <span
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e2b03a]/15 border border-[#e2b03a]/35 font-mono text-[10px] uppercase tracking-[0.2em] text-[#f0c351] mb-5 relative z-10"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-[#f0c351] animate-pulse"
+                ></span>
+                Rakaman Rasmi
+              </span>
+
+              <!-- Prominent Play Button with Pulse Halo -->
+              <div class="relative mb-5 z-10">
+                <div
+                  class="absolute -inset-2 rounded-full bg-[#e2b03a]/25 blur-md group-hover:bg-[#e2b03a]/50 transition-all duration-300"
+                >
+                </div>
+                <div
+                  class="relative w-16 h-16 rounded-full bg-[#e2b03a] text-[#070c18] flex items-center justify-center shadow-lg shadow-[#e2b03a]/30 group-hover:scale-110 group-hover:bg-[#f0c351] transition-all duration-300"
+                >
+                  <svg
+                    class="w-6 h-6 ml-1 fill-current"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 5v14l11-7z"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <h3
+                class="text-sm font-bold text-white tracking-tight mb-1.5 relative z-10"
+                style="color: #ffffff !important;"
+              >
                 Kisah Sebenar Mangsa Ah Long
               </h3>
-              <p class="relative z-10 text-xs text-gray-400 mt-1">
-                Sentuh untuk memainkan video
+              <p
+                class="text-xs text-slate-300 group-hover:text-[#f0c351] transition-colors relative z-10 flex items-center gap-1 justify-center"
+                style="color: #cbd5e1 !important;"
+              >
+                <span>Klik untuk memainkan video</span>
+                <span class="transition-transform group-hover:translate-x-1"
+                  >&rarr;</span
+                >
               </p>
+
+              <!-- Phone Bottom Bar Indicator -->
+              <div
+                class="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 rounded-full bg-slate-800/80 pointer-events-none z-10"
+              >
+              </div>
 
               <template id="tiktok-iframe-template">
                 <iframe
                   id="tiktok-player-iframe"
                   src="https://www.tiktok.com/player/v1/7624967321739726101?autoplay=1&description=1&rel=0"
-                  class="w-full h-full border-0 rounded-xl"
+                  class="w-full h-full border-0 rounded-[22px]"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                   allowfullscreen
                   title="Kisah Sebenar Mangsa Ah Long - Team Email Rakyat"
                 ></iframe>
               </template>
             </div>
-
-            <a
-              href="https://www.tiktok.com/@teamemail.rakyat/video/7624967321739726101"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="mt-3 text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
-            >
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43V13a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.04-1.29v-3.14z"/>
-              </svg>
-              <span>Buka video di TikTok &rarr;</span>
-            </a>
           </div>
         </div>
-
       </div>
+    </div>
 
-      <script is:inline>
-        document.addEventListener("DOMContentLoaded", () => {
-          const container = document.getElementById("tiktok-facade-container");
-          const template = document.getElementById("tiktok-iframe-template");
-          if (!container || !template) return;
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", () => {
+        const container = document.getElementById("tiktok-facade-container");
+        const template = document.getElementById("tiktok-iframe-template");
+        if (!container || !template) return;
 
-          const loadIframe = () => {
-            if (container.dataset.loaded) return;
-            container.dataset.loaded = "true";
-            container.innerHTML = "";
-            container.classList.remove("cursor-pointer", "items-center", "justify-center", "p-6", "text-center");
-            const clone = template.content.cloneNode(true);
-            container.appendChild(clone);
-          };
+        const loadIframe = () => {
+          if (container.dataset.loaded) return;
+          container.dataset.loaded = "true";
+          container.innerHTML = "";
+          container.classList.remove(
+            "cursor-pointer",
+            "items-center",
+            "justify-center",
+            "p-8",
+            "p-6",
+            "text-center",
+          );
+          const clone = template.content.cloneNode(true);
+          container.appendChild(clone);
+        };
 
-          container.addEventListener("click", loadIframe, { once: true });
-          container.addEventListener("keydown", (e) => {
+        container.addEventListener("click", loadIframe, { once: true });
+        container.addEventListener(
+          "keydown",
+          (e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               loadIframe();
             }
-          }, { once: true });
-        });
-      </script>
-    </section>
+          },
+          { once: true },
+        );
+      });
+    </script>
+  </section>
 
-    <FAQ />
-
+  <FAQ />
 </Layout>

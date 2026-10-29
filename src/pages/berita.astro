@@ -2,7 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
 import { Image } from "astro:assets";
-import beritaBg from "../assets/berita.webp";
+import beritaBg from "../assets/banner-berita.jpg";
 import icWarningImg from "../assets/FOR RISEMALAYSIA PURPOSE.jpg";
 
 const newsSeries = [
@@ -56,7 +56,7 @@ const newsSeries = [
         videoId: "WwjMB9csqJA",
         category: "ISU SEMASA",
         date: "09 OCT 2025",
-        title: "Siapa cakap kami rakyat Malaysia takut pergi misi bantuan gaza",
+        title: "Siapa cakap kami tidak berani pergi misi bantuan gaza",
         thumbnail: "https://img.youtube.com/vi/WwjMB9csqJA/hqdefault.jpg",
         duration: "02:33",
     },
@@ -67,15 +67,32 @@ const newsSeries = [
     title="Berita & Panduan Keselamatan Mangsa Ah Long | Email Rakyat"
     description="Tonton video pendedahan kes sebenar, tips elak perangkap pinjaman wang haram, panduan keselamatan palang IC, dan hak anda sebagai pengguna di Malaysia."
 >
-    <Hero line1="BERITA" showDetails={false} backgroundImage={beritaBg} />
+    <Hero
+      line1="Berita & Media"
+      line2="Liputan & Pendedahan Kes Sebenar"
+      showDetails={false}
+      backgroundImage={beritaBg}
+    />
 
-    <div class="max-w-7xl mx-auto px-4 py-20 w-full">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+    <main class="site-container py-16 md:py-24">
+        <!-- Header -->
+        <div class="max-w-3xl mb-16 md:mb-20">
+            <span class="eyebrow eyebrow-accent mb-4 block">Pendedahan &amp; Arkib Media</span>
+            <h2 class="h-page mb-6">
+                Liputan berita dan kupasan kes sebenar.
+            </h2>
+            <p class="lead">
+                Koleksi video pendedahan taktik sindiket pinjaman tanpa lesen, hak perundangan mangsa, dan panduan perlindungan keluarga oleh Team Email Rakyat.
+            </p>
+        </div>
+
+        <!-- Video Catalogue: Clean Editorial Layout (No Outer Card Boxes) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12 border-t border-[var(--site-line)] pt-12 md:pt-16">
             {
                 newsSeries.map((item) => (
-                    <div class="bg-gray-900/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-xl border border-gray-700/50 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)] hover:-translate-y-2 hover:scale-[1.02] transition-all duration-500 ease-out group flex flex-col h-full relative z-10 hover:z-20">
+                    <article class="flex flex-col items-start group">
                         <div
-                            class="relative aspect-video bg-black flex-shrink-0 cursor-pointer play-trigger overflow-hidden"
+                            class="relative aspect-video w-full bg-[var(--site-surface-subtle)] rounded overflow-hidden border border-[var(--site-line)] cursor-pointer play-trigger mb-4"
                             data-video={item.videoId}
                         >
                             <img
@@ -83,79 +100,106 @@ const newsSeries = [
                                 alt={item.title}
                                 width="480"
                                 height="360"
-                                class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                                class="w-full h-full object-cover"
                                 loading="lazy"
                             />
-                            <div class="absolute top-4 left-4 bg-yellow-500 text-black text-xs font-extrabold px-3 py-1 rounded shadow-md uppercase tracking-wide">
-                                {item.category}
-                            </div>
-                            <div class="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded">
+                            <div class="absolute bottom-3 right-3 bg-[#070c18]/90 text-white font-mono text-[11px] px-2 py-0.5 rounded border border-white/15 shadow-sm">
                                 {item.duration}
                             </div>
-                            <div class="absolute inset-0 flex items-center justify-center w-full h-full bg-black/10 group-hover:bg-black/40 transition-colors duration-500">
-                                <div class="w-16 h-16 bg-black/60 backdrop-blur-md rounded-full border-2 border-white/80 flex items-center justify-center group-hover:scale-125 group-hover:border-yellow-400 transition-all duration-500 ease-out shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.6)]">
-                                    <span class="ml-1 text-white group-hover:text-yellow-400 text-2xl transition-colors duration-500">
-                                        ▶
-                                    </span>
+                            <div class="absolute inset-0 flex items-center justify-center video-play-overlay">
+                                <div class="w-12 h-12 rounded-full video-play-btn flex items-center justify-center">
+                                    <svg class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-8 flex flex-col flex-grow text-center items-center justify-between bg-gradient-to-b from-transparent to-black/20">
-                            <div class="w-full">
-                                <div class="text-yellow-500 text-sm font-bold mb-3 uppercase tracking-wider group-hover:text-yellow-400 transition-colors duration-300">
-                                    {item.date}
-                                </div>
-                                <h3 class="text-white font-bold text-xl leading-snug mb-8 line-clamp-3 group-hover:text-yellow-50 transition-colors duration-300">
-                                    {item.title}
-                                </h3>
+                        <div class="w-full flex flex-col flex-grow">
+                            <div class="flex items-center gap-2 text-xs font-mono text-[var(--site-subtle)] uppercase mb-2">
+                                <span>{item.date}</span>
+                                <span>·</span>
+                                <span class="text-[var(--site-accent)] font-bold">{item.category}</span>
                             </div>
-
+                            <h3 class="text-lg font-bold text-[var(--site-heading)] leading-snug mb-4 group-hover:text-[var(--site-accent)] transition-colors line-clamp-2">
+                                {item.title}
+                            </h3>
                             <button
-                                class="w-full max-w-[240px] bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-3.5 px-6 rounded-full text-sm uppercase tracking-wider shadow-[0_4px_14px_0_rgba(234,179,8,0.39)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.3)] hover:-translate-y-0.5 transition-all duration-300 play-trigger mt-auto"
+                                type="button"
+                                class="link-arrow play-trigger mt-auto text-sm text-left"
                                 data-video={item.videoId}
                             >
                                 Tonton Video
                             </button>
                         </div>
-                    </div>
+                    </article>
                 ))
             }
         </div>
-    </div>
 
+        <!-- IC Safety Advisory: Minimalist Editorial Notice (Zero Outer Box) -->
+        <section class="site-section mt-16 md:mt-24">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
+                <div class="md:col-span-5">
+                    <div class="bg-[var(--site-surface)] p-3 rounded border border-[var(--site-line)] inline-block shadow-sm">
+                        <Image
+                            src={icWarningImg}
+                            alt="Contoh Cara Palang Kad Pengenalan (IC)"
+                            class="w-full max-w-[340px] h-auto object-contain"
+                        />
+                    </div>
+                </div>
+
+                <div class="md:col-span-7 space-y-4">
+                    <span class="eyebrow text-red-500 dark:text-red-400 block">Langkah Keselamatan Wajib</span>
+                    <h2 class="h-section">
+                        Panduan Palang Kad Pengenalan (IC)
+                    </h2>
+                    <p class="body-text text-base leading-relaxed">
+                        Apabila anda perlu memberikan salinan Kad Pengenalan secara atas talian untuk sebarang urusan, <strong class="text-[var(--site-heading)] font-bold">jangan sesekali serahkan salinan kosong</strong>.
+                    </p>
+                    <div class="border-l-2 border-[var(--site-accent)] pl-4 py-1 text-sm text-[var(--site-muted)] leading-relaxed">
+                        Sila pastikan anda meletakkan palang/watermark dua garisan lurus melintang dan nyatakan tujuan serahan spesifik pada bucu penjuru IC anda (seperti contoh gambar). Langkah ini penting bagi menyekat sindiket daripada memanipulasi dokumen pengenalan anda untuk pinjaman tanpa izin.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Video Modal Container -->
     <div
         id="video-modal"
         class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4"
     >
         <div
             id="modal-overlay"
-            class="absolute inset-0 bg-black bg-opacity-95 backdrop-blur-md cursor-pointer transition-opacity duration-300"
+            class="absolute inset-0 bg-black/90 backdrop-blur-sm cursor-pointer transition-opacity duration-300"
         >
         </div>
         <div
-            class="relative w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.8)] border border-gray-700/80"
+            class="relative w-full max-w-4xl bg-zinc-950 rounded-lg overflow-hidden border border-white/15 shadow-2xl"
         >
             <button
                 id="close-modal"
-                class="absolute top-4 right-4 z-30 text-white/70 hover:text-white bg-black/50 hover:bg-red-500 w-10 h-10 rounded-full flex items-center justify-center text-2xl font-bold transition-all shadow-lg"
+                class="absolute top-3 right-3 z-30 text-white/70 hover:text-white bg-black/60 hover:bg-white/10 w-9 h-9 rounded flex items-center justify-center text-xl transition-colors border border-white/10"
+                aria-label="Tutup video"
                 >&times;</button
             >
 
             <div
-                class="relative aspect-video w-full flex items-center justify-center bg-gray-900"
+                class="relative aspect-video w-full flex items-center justify-center bg-black"
             >
                 <div
                     id="loading-spinner"
                     class="absolute z-10 flex flex-col items-center justify-center hidden"
                 >
                     <div
-                        class="animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-yellow-500 mb-4 shadow-lg"
+                        class="animate-spin rounded-full h-10 w-10 border-2 border-white/20 border-t-[var(--site-accent)] mb-3"
                     >
                     </div>
                     <span
-                        class="text-yellow-500 text-sm font-bold tracking-widest animate-pulse"
-                        >MEMUATKAN...</span
+                        class="text-xs font-mono uppercase text-[var(--site-subtle)] tracking-wider"
+                        >Memuatkan video...</span
                     >
                 </div>
 
@@ -167,54 +211,6 @@ const newsSeries = [
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen></iframe>
-            </div>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 pt-16 mt-8 pb-20 w-full relative z-10">
-        <div
-            class="bg-red-950/40 backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-8 border border-red-600/50 shadow-[0_0_30px_rgba(220,38,38,0.2)]"
-        >
-            <div class="w-full md:w-1/3 flex justify-center">
-                <div
-                    class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg"
-                >
-                    <Image
-                        src={icWarningImg}
-                        alt="Contoh Cara Palang Kad Pengenalan (IC)"
-                        class="w-full max-w-[350px] h-auto rounded-md object-contain"
-                    />
-                </div>
-            </div>
-            <div class="w-full md:w-2/3">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="text-3xl md:text-4xl">⚠️</span>
-                    <h2
-                        class="text-2xl md:text-3xl font-extrabold text-red-500 uppercase tracking-wider"
-                    >
-                        AMARAN KESELAMATAN IC
-                    </h2>
-                </div>
-                <p class="text-gray-200 text-lg leading-relaxed mb-5">
-                    Apabila anda perlu memberikan salinan Kad Pengenalan (IC)
-                    secara atas talian untuk sebarang urusan, <strong
-                        >JANGAN</strong
-                    > berikan salinan kosong.
-                </p>
-                <div
-                    class="bg-black/50 p-5 rounded-lg border-l-4 border-yellow-500"
-                >
-                    <p
-                        class="text-yellow-400 text-[17px] font-semibold leading-relaxed"
-                    >
-                        Sila pastikan anda meletakkan palang/watermark dan
-                        nyatakan tujuan serahan (seperti yang ditunjukkan di
-                        dalam gambar) pada bucu penjuru IC anda. Langkah ini
-                        amat penting bagi mengelakkan maklumat peribadi anda
-                        disalahgunakan oleh pihak ketiga, sindiket penipuan,
-                        atau Ah Long.
-                    </p>
-                </div>
             </div>
         </div>
     </div>

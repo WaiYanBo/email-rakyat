@@ -98,7 +98,7 @@ const jsonLdGraph = {
             "@type": "FAQPage",
             "@id": `${canonicalUrl}#faq`,
             "mainEntity": data.faqs.map((faq) => ({
-              "@type": "@Question",
+              "@type": "Question",
               "name": faq.question,
               "acceptedAnswer": {
                 "@type": "Answer",
@@ -130,104 +130,93 @@ const jsonLdGraph = {
     <script type="application/ld+json" set:html={JSON.stringify(jsonLdGraph)} />
   </Fragment>
 
-  <div class="w-full bg-black text-gray-200 pt-28 sm:pt-32 md:pt-36 pb-28 selection:bg-yellow-500 selection:text-black">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- Top Header Banner (Dark Backdrop so Navbar Camouflage works seamlessly) -->
+  <header class="hero-banner relative pt-32 pb-12 md:pt-36 md:pb-16 bg-[#070c18] text-white border-b border-white/10">
+    <div class="site-container">
+      <!-- Breadcrumbs -->
+      <nav aria-label="Breadcrumb" class="mb-6 flex flex-wrap items-center gap-2 text-xs font-mono text-slate-400">
+        <a href="/" class="hover:text-[#f0c351] transition-colors" style="color: #cbd5e1 !important;">Utama</a>
+        <span>/</span>
+        <a href="/panduan" class="hover:text-[#f0c351] transition-colors" style="color: #cbd5e1 !important;">Panduan</a>
+        <span>/</span>
+        <span class="text-[#f0c351] truncate max-w-[220px] sm:max-w-md">{data.title}</span>
+      </nav>
 
-      <!-- Urgent Hotline Alert Box (Clear spacing below fixed Navbar) -->
-      <aside aria-label="Talian Kecemasan" class="mb-8 p-3.5 sm:p-4 rounded-2xl bg-red-950/70 border border-red-500/40 shadow-lg backdrop-blur-md">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div class="flex items-center gap-2.5">
-            <span class="flex h-2.5 w-2.5 relative shrink-0">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+      <div class="flex flex-wrap items-center gap-3 mb-4 text-xs font-mono uppercase">
+        <span class="text-[#f0c351] font-bold">{data.badge}</span>
+        <span class="text-slate-500">·</span>
+        <span class="text-slate-300" style="color: #cbd5e1 !important;">{data.category}</span>
+        <span class="text-slate-500">·</span>
+        <span class="text-slate-300" style="color: #cbd5e1 !important;">⏱ {data.readTime}</span>
+      </div>
+
+      <h1 class="h-page text-white max-w-4xl mb-5" style="color: #ffffff !important;">
+        {data.title}
+      </h1>
+
+      <p class="hero-subtitle text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed max-w-3xl mb-8" style="color: #f1f5f9 !important;">
+        {data.description}
+      </p>
+
+      <!-- Author & Date Bar (Divided Line, Zero Box) -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-white/15 text-xs">
+        <div>
+          <p class="font-bold text-white uppercase tracking-wider" style="color: #ffffff !important;">{data.author}</p>
+          <p class="text-slate-300 text-[11px]" style="color: #cbd5e1 !important;">{data.authorRole}</p>
+        </div>
+        <div class="text-[11px] font-mono text-slate-300 flex flex-col sm:items-end" style="color: #cbd5e1 !important;">
+          <span>Diterbitkan: <strong class="text-white" style="color: #ffffff !important;">{formattedPublishDate}</strong></span>
+          {formattedUpdateDate && (
+            <span>Dikemas kini: <strong class="text-[#f0c351]">{formattedUpdateDate}</strong></span>
+          )}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="w-full bg-[var(--site-bg)] text-[var(--site-text)] py-12 md:py-16">
+    <div class="site-container">
+
+      <!-- Urgent Hotline Notice (Divided Line, No Box) -->
+      <aside aria-label="Talian Kecemasan" class="mb-10 pb-8 border-b border-[var(--site-line)]">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-2 w-2 relative shrink-0">
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
-            <p class="text-xs sm:text-sm font-semibold text-red-200 leading-snug">
-              Sedang diugut atau diserang Ah Long sekarang? Jangan panik & jangan terus bayar bunga ugutan.
+            <p class="text-xs sm:text-sm font-semibold text-[var(--site-heading)] leading-snug">
+              Sedang diugut atau diserang Ah Long sekarang? Jangan panik &amp; jangan terus bayar wang bunga ugutan.
             </p>
           </div>
           <a
             href="https://WaiYanTeamEmailRakyat.wasap.my"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider transition-all shrink-0 w-full sm:w-auto"
+            class="btn-primary !py-2 !px-4 !text-xs shrink-0"
           >
             <span>WhatsApp Kecemasan</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            <span aria-hidden="true">→</span>
           </a>
         </div>
       </aside>
 
-      <!-- Breadcrumbs -->
-      <nav aria-label="Breadcrumb" class="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
-        <a href="/" class="hover:text-yellow-400 transition-colors">Utama</a>
-        <span>/</span>
-        <a href="/panduan" class="hover:text-yellow-400 transition-colors">Panduan</a>
-        <span>/</span>
-        <span class="text-yellow-500 truncate max-w-[200px] sm:max-w-md">{data.title}</span>
-      </nav>
-
-      <!-- Header Section -->
-      <header class="mb-10 sm:mb-12 border-b border-gray-800 pb-8 sm:pb-10">
-        <div class="flex flex-wrap items-center gap-2.5 mb-4">
-          <span class="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] sm:text-xs font-black uppercase tracking-wider">
-            {data.badge}
-          </span>
-          <span class="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-gray-400 text-[10px] sm:text-xs font-medium">
-            {data.category}
-          </span>
-          <span class="text-[11px] sm:text-xs text-gray-500">
-            ⏱ {data.readTime}
-          </span>
-        </div>
-
-        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-5 sm:mb-6">
-          {data.title}
-        </h1>
-
-        <p class="text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed max-w-4xl font-normal mb-6 sm:mb-8">
-          {data.description}
-        </p>
-
-        <!-- E-E-A-T Author Card -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/40 flex items-center justify-center text-yellow-400 font-black text-sm shrink-0">
-              ER
-            </div>
-            <div>
-              <p class="text-xs font-bold text-white uppercase tracking-wider">{data.author}</p>
-              <p class="text-[11px] text-gray-400">{data.authorRole}</p>
-            </div>
-          </div>
-          <div class="text-[11px] text-gray-400 flex flex-col sm:items-end border-t sm:border-t-0 border-zinc-800/80 pt-2 sm:pt-0">
-            <span>Diterbitkan: <strong class="text-gray-300">{formattedPublishDate}</strong></span>
-            {formattedUpdateDate && (
-              <span>Dikemas kini: <strong class="text-yellow-400">{formattedUpdateDate}</strong></span>
-            )}
-          </div>
-        </div>
-      </header>
-
       <!-- Mobile Quick TOC Accordion (< lg only) -->
       {headings && headings.length > 0 && (
-        <details class="lg:hidden mb-8 p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 open:border-yellow-500/40">
-          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-xs uppercase tracking-wider text-yellow-400">
-            <span class="flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
-              Lompat Ke Bahagian Panduan ({headings.filter(h => h.depth <= 3).length})
-            </span>
-            <svg class="w-4 h-4 text-gray-400 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <details class="lg:hidden mb-8 pb-6 border-b border-[var(--site-line)]">
+          <summary class="flex items-center justify-between cursor-pointer list-none font-bold text-xs font-mono uppercase tracking-wider text-[var(--site-accent)]">
+            <span>Lompat Ke Bahagian Panduan ({headings.filter(h => h.depth <= 3).length})</span>
+            <span class="text-[var(--site-subtle)]">▼</span>
           </summary>
-          <nav class="mt-3 pt-3 border-t border-zinc-800 space-y-2 text-xs">
+          <nav class="mt-3 pt-3 border-t border-[var(--site-line)] space-y-2 text-xs">
             {headings
               .filter((h) => h.depth <= 3)
               .map((heading) => (
                 <a
                   href={`#${heading.slug}`}
-                  class={`block transition-colors hover:text-yellow-400 py-0.5 ${
+                  class={`block transition-colors hover:text-[var(--site-accent)] py-0.5 ${
                     heading.depth === 2
-                      ? 'font-bold text-gray-200 pl-0'
-                      : 'text-gray-400 pl-3 border-l border-zinc-700 hover:border-yellow-500'
+                      ? 'font-bold text-[var(--site-heading)] pl-0'
+                      : 'text-[var(--site-muted)] pl-3 border-l border-[var(--site-line)]'
                   }`}
                 >
                   {heading.text}
@@ -237,78 +226,73 @@ const jsonLdGraph = {
         </details>
       )}
 
-      <!-- Grid Layout: Article on Left (8 cols) + Sticky Sidebar on Right (4 cols) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+      <!-- Editorial Split: Article on Left (8 cols) + Sticky Sidebar on Right (4 cols) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
 
-        <!-- Main Article Body -->
+        <!-- Main Article Body (Pure Editorial Typography, Zero Outer Box) -->
         <article class="lg:col-span-8 w-full min-w-0 pillar-article no-reveal">
 
-          <!-- Law Sections Quick Highlight (Interactive Cards) -->
+          <!-- Law Sections Quick Highlight (Editorial Divided List, Zero Boxes) -->
           {data.lawSections && data.lawSections.length > 0 && (
-            <section class="mb-10 sm:mb-12 p-5 sm:p-7 md:p-8 rounded-3xl bg-zinc-900/90 border border-yellow-500/30 shadow-2xl">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="text-yellow-500 text-lg">⚖️</span>
-                <span class="text-[10px] sm:text-xs font-black uppercase tracking-widest text-yellow-500">
-                  Perisai Statut Perundangan Malaysia
-                </span>
-              </div>
-              <h2 class="text-lg sm:text-xl md:text-2xl font-black text-white mb-5 sm:mb-6">
-                Seksyen Undang-Undang Yang Melindungi Mangsa Ah Long
+            <section class="mb-12 border-b border-[var(--site-line)] pb-8">
+              <span class="eyebrow eyebrow-accent mb-2 block">
+                Perisai Statut Perundangan Malaysia
+              </span>
+              <h2 class="text-xl md:text-2xl font-bold text-[var(--site-heading)] mb-6">
+                Seksyen Undang-Undang Yang Melindungi Mangsa
               </h2>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+              <div class="divide-y divide-[var(--site-line)] border-t border-[var(--site-line)]">
                 {data.lawSections.map((law) => (
-                  <div class="p-4 rounded-xl bg-black/60 border border-zinc-800 hover:border-yellow-500/40 transition-colors flex flex-col justify-between">
-                    <div>
-                      <p class="text-[10px] font-black uppercase tracking-wider text-yellow-400 mb-1">
-                        {law.section}
-                      </p>
-                      <h3 class="text-xs sm:text-sm font-bold text-white mb-1.5 leading-snug">
-                        {law.title}
-                      </h3>
-                      <p class="text-xs text-gray-400 leading-relaxed mb-3">
-                        {law.description}
-                      </p>
-                    </div>
-                    <div class="pt-2 border-t border-zinc-800/80 text-[10px] text-red-400 font-semibold leading-tight">
+                  <div class="py-5">
+                    <p class="text-xs font-mono font-bold uppercase tracking-wider text-[var(--site-accent)] mb-1">
+                      {law.section}
+                    </p>
+                    <h3 class="text-base font-bold text-[var(--site-heading)] mb-1.5 leading-snug">
+                      {law.title}
+                    </h3>
+                    <p class="body-text text-sm leading-relaxed mb-2">
+                      {law.description}
+                    </p>
+                    <p class="text-xs font-mono font-semibold text-red-500">
                       Hukuman: {law.legalPenalty}
-                    </div>
+                    </p>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          <!-- Markdown Content Body with Pillar Custom Typography -->
+          <!-- Markdown Content Body (Unboxed Editorial Text) -->
           <div class="pillar-content break-words">
             <Content />
           </div>
 
-          <!-- FAQ Accordion (Rendered from Zod Schema) -->
+          <!-- FAQ Accordion (Divided Lines, Zero Boxes) -->
           {data.faqs && data.faqs.length > 0 && (
-            <section class="mt-14 sm:mt-16 pt-10 sm:pt-12 border-t border-gray-800">
-              <div class="mb-6 sm:mb-8">
-                <span class="text-[10px] font-black tracking-widest uppercase text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+            <section class="mt-14 sm:mt-16 pt-10 sm:pt-12 border-t border-[var(--site-line)]">
+              <div class="mb-8">
+                <span class="eyebrow eyebrow-accent mb-2 block">
                   Soalan Lazim Perundangan
                 </span>
-                <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-white mt-3 mb-2">
+                <h2 class="text-2xl font-bold text-[var(--site-heading)] mb-2">
                   Soalan Kerap Ditanya Mengenai Tindakan Undang-Undang
                 </h2>
-                <p class="text-xs sm:text-sm text-gray-400">
+                <p class="body-text text-sm">
                   Jawapan rasmi dan bimbingan keselamatan berlandaskan statut undang-undang jenayah Malaysia.
                 </p>
               </div>
 
-              <div class="space-y-3.5 sm:space-y-4">
+              <div class="border-t border-[var(--site-line)] divide-y divide-[var(--site-line)]">
                 {data.faqs.map((faq, idx) => (
-                  <details class="group p-4 sm:p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 open:border-yellow-500/50 open:bg-zinc-900 transition-all">
-                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-xs sm:text-sm md:text-base text-white group-hover:text-yellow-400 transition-colors">
-                      <span class="flex items-start gap-2.5 sm:gap-3 pr-4">
-                        <span class="text-yellow-500 font-mono text-xs sm:text-sm mt-0.5">{String(idx + 1).padStart(2, '0')}.</span>
+                  <details class="disclosure group py-5">
+                    <summary class="flex justify-between items-center cursor-pointer list-none font-bold text-sm sm:text-base text-[var(--site-heading)] hover:text-[var(--site-accent)] transition-colors">
+                      <span class="flex items-start gap-3 pr-4">
+                        <span class="text-[var(--site-accent)] font-mono text-xs mt-0.5">{String(idx + 1).padStart(2, '0')}.</span>
                         <span>{faq.question}</span>
                       </span>
-                      <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 transition-transform duration-300 group-open:rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                      <span class="disclosure-icon"></span>
                     </summary>
-                    <div class="mt-3 pt-3 border-t border-zinc-800 text-xs sm:text-sm text-gray-300 leading-relaxed pl-5 sm:pl-7">
+                    <div class="mt-3 text-sm text-[var(--site-muted)] leading-relaxed pl-7">
                       <p>{faq.answer}</p>
                     </div>
                   </details>
@@ -317,44 +301,43 @@ const jsonLdGraph = {
             </section>
           )}
 
-          <!-- Bottom Help CTA Card -->
-          <footer class="mt-14 sm:mt-16 p-6 sm:p-8 md:p-10 rounded-3xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-yellow-500/30 text-center">
-            <h2 class="text-xl sm:text-2xl font-black text-white mb-3">
+          <!-- Bottom Help CTA (Unboxed) -->
+          <footer class="mt-16 pt-12 border-t border-[var(--site-line)]">
+            <h2 class="text-2xl font-bold text-[var(--site-heading)] mb-3">
               Jangan Tanggung Ketakutan Ini Bersendirian
             </h2>
-            <p class="text-xs sm:text-sm text-gray-400 max-w-xl mx-auto mb-6 leading-relaxed">
+            <p class="body-text text-sm max-w-xl mb-6">
               Pegawai advokasi Team Email Rakyat sedia membimbing anda menyusun kronologi fakta kes dan laporan polis teknikal untuk menghentikan pemerasan serta-merta.
             </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div class="flex flex-wrap items-center gap-4">
               <a
                 href="https://WaiYanTeamEmailRakyat.wasap.my"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-xl transition-all"
+                class="btn-primary"
               >
                 <span>Dapatkan Bantuan Sulit Sekarang</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                <span aria-hidden="true">→</span>
               </a>
               <a
                 href="/hubungi"
-                class="inline-flex w-full sm:w-auto items-center justify-center px-7 py-3.5 rounded-full border border-zinc-700 hover:border-yellow-500 text-gray-200 hover:text-white font-bold text-xs uppercase tracking-wider transition-all"
+                class="btn-secondary"
               >
-                Borang Temu Janji Rasmi
+                Hubungi Kami
               </a>
             </div>
           </footer>
 
         </article>
 
-        <!-- Desktop Sidebar (TOC + Action Box) -->
-        <aside class="lg:col-span-4 w-full space-y-6">
-          <div class="sticky top-28 space-y-6">
+        <!-- Desktop Sidebar (Left Border Divider, Zero Boxes) -->
+        <aside class="lg:col-span-4 w-full lg:border-l border-[var(--site-line)] lg:pl-8">
+          <div class="sticky top-28 space-y-10">
 
             <!-- Desktop Table of Contents -->
             {headings && headings.length > 0 && (
-              <div class="hidden lg:block p-6 rounded-2xl bg-zinc-900/80 border border-zinc-800 backdrop-blur-md">
-                <h2 class="text-xs font-black uppercase tracking-wider text-yellow-400 mb-4 flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+              <div class="hidden lg:block pb-8 border-b border-[var(--site-line)]">
+                <h2 class="text-xs font-mono font-bold uppercase tracking-wider text-[var(--site-accent)] mb-4">
                   Isi Kandungan Panduan
                 </h2>
                 <nav class="space-y-2 text-xs max-h-[50vh] overflow-y-auto pr-2">
@@ -363,10 +346,10 @@ const jsonLdGraph = {
                     .map((heading) => (
                       <a
                         href={`#${heading.slug}`}
-                        class={`block transition-colors hover:text-yellow-400 ${
+                        class={`block transition-colors hover:text-[var(--site-accent)] ${
                           heading.depth === 2
-                            ? 'font-bold text-gray-200 pl-0 py-0.5'
-                            : 'text-gray-400 pl-3 border-l border-zinc-700 hover:border-yellow-500 py-0.5'
+                            ? 'font-bold text-[var(--site-heading)] pl-0 py-0.5'
+                            : 'text-[var(--site-muted)] pl-3 border-l border-[var(--site-line)] hover:border-[var(--site-accent)] py-0.5'
                         }`}
                       >
                         {heading.text}
@@ -376,26 +359,28 @@ const jsonLdGraph = {
               </div>
             )}
 
-            <!-- Quick Action Box -->
-            <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-yellow-500/10 via-zinc-900/90 to-zinc-950 border border-yellow-500/30 text-center">
-              <span class="inline-block px-2.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 font-bold text-[10px] uppercase tracking-widest mb-2">
-                Bantuan Percuma
+            <!-- Quick Action Note (Unboxed) -->
+            <div class="space-y-3">
+              <span class="eyebrow eyebrow-accent block">
+                Semakan Kes Percuma
               </span>
-              <h3 class="text-sm sm:text-base font-bold text-white mb-2">
+              <h3 class="text-lg font-bold text-[var(--site-heading)]">
                 Perlukan Semakan Kes Anda?
               </h3>
-              <p class="text-xs text-gray-400 mb-4 leading-relaxed">
-                Hantar bukti ugutan WhatsApp dan transaksi kepada pegawai bertugas kami untuk semakan liabiliti secara percuma & sulit.
+              <p class="body-text text-xs leading-relaxed">
+                Hantar bukti ugutan WhatsApp dan rekod transaksi kepada pegawai bertugas kami untuk semakan liabiliti secara percuma &amp; sulit.
               </p>
-              <a
-                href="https://WaiYanTeamEmailRakyat.wasap.my"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex w-full items-center justify-center gap-2 py-3 px-4 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg transition-all"
-              >
-                <span>Hubungi Pegawai Bertugas</span>
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.82 11.82 0 018.413 3.488 11.82 11.82 0 013.48 8.405c-.003 6.558-5.338 11.893-11.893 11.893h-.005a11.88 11.88 0 01-5.683-1.448L.057 24z"/></svg>
-              </a>
+              <div class="pt-2">
+                <a
+                  href="https://WaiYanTeamEmailRakyat.wasap.my"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-primary w-full text-xs !py-2.5"
+                >
+                  <span>Hubungi Pegawai Bertugas</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
 
           </div>
@@ -432,34 +417,38 @@ const jsonLdGraph = {
     scroll-margin-top: 7rem !important;
   }
 
-  /* Rich Pillar Typography Styling */
+  /* Theme-Adaptive Rich Pillar Typography Styling */
   .pillar-content h1 {
-    display: none; /* Already rendered in page header */
+    display: none;
   }
 
   .pillar-content h2 {
     font-size: 1.35rem;
-    font-weight: 900;
-    color: #ffffff;
+    font-weight: 800;
+    color: var(--site-heading);
     margin-top: 2.25rem;
     margin-bottom: 0.85rem;
     line-height: 1.3;
     letter-spacing: -0.02em;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+    border-bottom: 1px solid var(--site-line-strong);
+  }
+
+  .pillar-content h2:first-child {
+    margin-top: 0;
   }
 
   @media (min-width: 640px) {
     .pillar-content h2 {
-      font-size: 1.75rem;
-      margin-top: 2.75rem;
+      font-size: 1.65rem;
+      margin-top: 2.5rem;
     }
   }
 
   .pillar-content h3 {
     font-size: 1.1rem;
-    font-weight: 800;
-    color: #facc15;
+    font-weight: 700;
+    color: var(--site-accent);
     margin-top: 1.75rem;
     margin-bottom: 0.65rem;
     line-height: 1.35;
@@ -472,30 +461,29 @@ const jsonLdGraph = {
   }
 
   .pillar-content p {
-    font-size: 0.925rem;
-    color: #d1d5db;
+    font-size: 0.95rem;
+    color: var(--site-muted);
     line-height: 1.8;
     margin-bottom: 1.15rem;
   }
 
   @media (min-width: 640px) {
     .pillar-content p {
-      font-size: 0.975rem;
+      font-size: 1rem;
     }
   }
 
   .pillar-content blockquote {
-    border-left: 4px solid #eab308;
-    background: rgba(24, 24, 27, 0.85);
-    padding: 1rem 1.15rem;
-    border-radius: 0 0.75rem 0.75rem 0;
+    border-left: 3px solid var(--site-accent);
+    padding: 0.5rem 0 0.5rem 1.25rem;
     margin: 1.35rem 0;
-    color: #f3f4f6;
+    color: var(--site-heading);
   }
 
   .pillar-content blockquote p {
     margin-bottom: 0.5rem;
     font-weight: 500;
+    color: var(--site-text);
   }
 
   .pillar-content blockquote p:last-child {
@@ -505,7 +493,7 @@ const jsonLdGraph = {
   .pillar-content ul, .pillar-content ol {
     margin: 1.15rem 0;
     padding-left: 1.25rem;
-    color: #d1d5db;
+    color: var(--site-muted);
   }
 
   .pillar-content ul {
@@ -518,24 +506,25 @@ const jsonLdGraph = {
 
   .pillar-content li {
     margin-bottom: 0.5rem;
-    line-height: 1.65;
-    font-size: 0.9rem;
-  }
-
-  @media (min-width: 640px) {
-    .pillar-content li {
-      font-size: 0.95rem;
-    }
+    line-height: 1.7;
+    font-size: 0.95rem;
   }
 
   .pillar-content strong {
-    color: #ffffff;
+    color: var(--site-heading);
     font-weight: 700;
+  }
+
+  .pillar-content a {
+    color: var(--site-accent);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .pillar-content hr {
     border: 0;
-    border-top: 1px solid #27272a;
+    border-top: 1px solid var(--site-line);
     margin: 2.25rem 0;
   }
 </style>

@@ -5,169 +5,155 @@ const socialLinks = [
   {
     name: "Facebook",
     href: "https://www.facebook.com/teamemailrakyat",
-    icon: "M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"
   },
   {
     name: "Instagram",
     href: "https://www.instagram.com/teamemailrakyat/",
-    icon: "M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 01-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 017.8 2m0 2a3.8 3.8 0 00-3.8 3.8v8.4A3.8 3.8 0 007.8 20h8.4a3.8 3.8 0 003.8-3.8V7.8A3.8 3.8 0 0016.2 4H7.8z"
   },
   {
     name: "TikTok",
     href: "https://www.tiktok.com/@teamemail.rakyat?is_from_webapp=1&sender_device=pc",
-    icon: "M12.5 5.5v8.7a2.7 2.7 0 11-2.7-2.7h.5V9a5.2 5.2 0 105.2 5.2V7.6c1 .4 2.1.5 3.2.3v-2.5c-.9 0-1.8-.3-2.5-.8-.6-.5-1.1-1.2-1.3-1.9h-2.4z"
   },
   {
     name: "YouTube",
     href: "https://www.youtube.com/@emailrakyat",
-    icon: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
   },
   {
     name: "Email",
     href: "https://mail.google.com/mail/?view=cm&fs=1&to=aduan@e-rakyat.com",
-    icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z m16 3.38V6H4v1.38l8 4 8-4zM4 18h16v-8.38l-8 4-8-4V18z"
   },
   {
     name: "LinkedIn",
     href: "https://www.linkedin.com/showcase/email-rakyat/",
-    icon: "M20.447 20.452h-3.554v-5.569c0-1.328-.475-2.236-1.986-2.236-1.081 0-1.722.722-2.004 1.418-.103.249-.129.597-.129.946v5.441h-3.554s.05-8.736 0-9.646h3.554v1.364c.425-.654 1.185-1.585 2.882-1.585 2.105 0 3.685 1.374 3.685 4.331l-.016 5.536zM5.337 8.855c-1.144 0-1.915-.762-1.915-1.715 0-.957.77-1.715 1.946-1.715 1.177 0 1.915.758 1.915 1.715 0 .953-.738 1.715-1.946 1.715zm1.446 11.597H3.894V9.421h2.789v10.031zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0"
   }
 ];
 
 const securityFeatures = [
-  { name: "HTTPS / TLS Encryption", status: "ACTIVE", color: "text-green-500" },
-  { name: "HSTS Protection", status: "ENFORCED", color: "text-green-500" },
-  { name: "X-Frame Anti-Clickjack", status: "DENY", color: "text-green-500" },
-  { name: "Cloudflare Shield", status: "STANDBY", color: "text-yellow-500" },
+  { name: "HTTPS / TLS Encryption", status: "ACTIVE", color: "text-emerald-400" },
+  { name: "HSTS Protection", status: "ENFORCED", color: "text-emerald-400" },
+  { name: "X-Frame Anti-Clickjack", status: "DENY", color: "text-emerald-400" },
+  { name: "Cloudflare Shield", status: "STANDBY", color: "text-amber-400" },
 ];
 ---
 
-<footer class="bg-black text-gray-400 border-t border-gray-800 pt-12 pb-32 sm:pb-24 md:pb-16 mt-auto relative z-30">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<footer class="bg-[var(--site-surface)] text-[var(--site-muted)] border-t border-[var(--site-line)] pt-16 pb-28 sm:pb-20 mt-auto relative z-30">
+  <div class="site-container">
 
-    <div class="flex flex-col items-center mb-10">
-      <h3 class="text-xs font-bold text-yellow-500 uppercase tracking-[0.2em] mb-6">
-        Ikuti Kami Di Media Sosial
-      </h3>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 pb-12 border-b border-[var(--site-line)]">
+      <div class="md:col-span-6">
+        <h3 class="text-base font-bold text-[var(--site-heading)] tracking-tight mb-2">
+          Email Rakyat
+        </h3>
+        <p class="body-text text-xs max-w-md">
+          Pusat advokasi dan khidmat nasihat hak pengguna di Malaysia. Membantu mangsa pinjaman tidak berlesen keluar daripada tekanan sindiket secara sah berlandaskan undang-undang statut negara.
+        </p>
+      </div>
 
-      <div class="flex flex-wrap justify-center gap-6 md:gap-8">
-        {socialLinks.map((link) => (
-          <a
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group relative flex items-center justify-center w-12 h-12 rounded-lg bg-gray-900 border border-gray-800 hover:border-yellow-500 hover:bg-yellow-500 hover:text-black transition-all duration-300"
-            aria-label={link.name}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill={link.name === "Facebook" || link.name === "TikTok" || link.name === "YouTube" || link.name === "Email" || link.name === "LinkedIn" ? "currentColor" : "none"}
-              stroke={link.name === "Instagram" ? "currentColor" : "none"}
-              stroke-width={link.name === "Instagram" ? "2" : "0"}
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="transition-transform group-hover:scale-110"
+      <div class="md:col-span-6 md:flex md:flex-col md:items-end">
+        <span class="pill-accent mb-3">Saluran Rasmi</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-xs">
+          {socialLinks.map((link) => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[var(--site-muted)] hover:text-[var(--site-accent)] font-medium transition-colors"
             >
-              <path d={link.icon}></path>
-            </svg>
-            <span class="absolute -bottom-8 opacity-0 group-hover:opacity-100 text-[10px] font-bold uppercase tracking-wider text-yellow-500 transition-opacity duration-300">
               {link.name}
-            </span>
-          </a>
-        ))}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
 
-    <div class="border-t border-gray-800/50 mb-8"></div>
-
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-      <div class="text-sm">
-        &copy; {currentYear} <span class="text-white font-bold tracking-wide">EMAIL RAKYAT</span>. All rights reserved.
+    <div class="py-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+      <div class="flex flex-wrap gap-x-6 gap-y-2 text-[var(--site-muted)] font-medium">
+        <a href="/" class="hover:text-[var(--site-accent)] transition-colors">Utama</a>
+        <a href="/panduan" class="hover:text-[var(--site-accent)] transition-colors">Panduan</a>
+        <a href="/perkhidmatan" class="hover:text-[var(--site-accent)] transition-colors">Perkhidmatan</a>
+        <a href="/tentang" class="hover:text-[var(--site-accent)] transition-colors">Tentang Kami</a>
+        <a href="/berita" class="hover:text-[var(--site-accent)] transition-colors">Berita</a>
       </div>
 
-      <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium uppercase tracking-wide">
-        <a href="/panduan" class="hover:text-yellow-500 transition-colors">Pusat Panduan</a>
-        <a href="/panduan/tindakan-undang-undang-ah-long" class="hover:text-yellow-500 transition-colors">Panduan Ah Long</a>
-        <button id="btn-privacy" class="hover:text-yellow-500 transition-colors focus:outline-none">Privacy Policy</button>
-        <button id="btn-terms" class="hover:text-yellow-500 transition-colors focus:outline-none">Terms of Service</button>
-        <button id="btn-security" class="hover:text-yellow-500 transition-colors flex items-center gap-2 focus:outline-none">
-          Security Status
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--site-subtle)]">
+        <button id="btn-privacy" class="hover:text-[var(--site-heading)] transition-colors focus:outline-none">Privasi</button>
+        <button id="btn-terms" class="hover:text-[var(--site-heading)] transition-colors focus:outline-none">Terma</button>
+        <button id="btn-security" class="hover:text-[var(--site-heading)] transition-colors flex items-center gap-1.5 focus:outline-none">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          Status Sistem
         </button>
       </div>
     </div>
 
-    <div class="mt-6 pt-6 border-t border-gray-850 text-[11px] text-gray-500 leading-relaxed text-center px-4">
-      <p class="max-w-3xl mx-auto">
-        <strong class="text-gray-400 font-semibold">Identiti Khidmat:</strong> <strong class="text-gray-300 font-semibold">ER Advocacy Sdn Bhd</strong> merupakan sebuah platform perunding advokasi dan khidmat nasihat swasta berdaftar di Malaysia. Perkhidmatan kami adalah khidmat nasihat profesional berlandaskan undang-undang bagi membantu individu yang terkesan dengan pinjaman tidak berlesen (Ah Long) dan isu hutang secara sah.
+    <div class="pt-6 border-t border-[var(--site-line)] text-[11px] text-[var(--site-subtle)] flex flex-col md:flex-row justify-between gap-4">
+      <div>
+        &copy; {currentYear} Email Rakyat. Hak cipta terpelihara.
+      </div>
+      <p class="max-w-xl md:text-right leading-relaxed">
+        <strong class="text-[var(--site-muted)] font-semibold">Identiti Khidmat:</strong> ER Advocacy Sdn Bhd merupakan sebuah platform perunding advokasi dan khidmat nasihat swasta berdaftar di Malaysia. Perkhidmatan kami adalah khidmat nasihat profesional berlandaskan undang-undang bagi membantu individu yang terkesan dengan pinjaman tidak berlesen (Ah Long) dan isu hutang secara sah.
       </p>
     </div>
+
   </div>
 
-  <dialog id="modal-privacy" class="backdrop:bg-black/90 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto bg-gray-900 border border-gray-700 rounded-xl shadow-2xl text-left"></dialog>
+  <dialog id="modal-privacy" class="backdrop:bg-black/85 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto border border-[var(--site-line)] rounded-xl shadow-2xl text-left"></dialog>
   <template id="template-privacy">
-    <div class="relative bg-gray-900 text-gray-300 p-8 max-h-[80vh] overflow-y-auto">
-        <button class="close-modal absolute top-4 right-4 text-gray-500 hover:text-white text-2xl">&times;</button>
-        <h3 class="text-xl font-black text-white mb-4 uppercase tracking-wide border-b border-gray-700 pb-2">Polisi Privasi <span class="text-yellow-500">"Zero-Knowledge"</span></h3>
-        <div class="prose prose-invert prose-sm">
-            <p><strong>1. Pengumpulan Data:</strong> Kami hanya mengumpul data yang anda berikan secara sukarela. Kami <strong>TIDAK</strong> menggunakan penjejak (trackers) pihak ketiga.</p>
-            <p><strong>2. Kerahsiaan:</strong> Maklumat anda tidak akan dijual kepada agensi kutipan hutang atau bank. Data anda disulitkan (Encrypted).</p>
-            <p><strong>3. Pemadaman:</strong> Anda berhak memohon pemadaman rekod komunikasi pada bila-bila masa.</p>
+    <div class="relative bg-[#0d1526] text-slate-200 p-8 max-h-[80vh] overflow-y-auto rounded-xl">
+        <button class="close-modal absolute top-4 right-4 text-slate-400 hover:text-white text-2xl">&times;</button>
+        <h3 class="text-xl font-extrabold text-white mb-4 uppercase tracking-wide border-b border-slate-800 pb-3">Polisi Privasi <span class="text-[#e2b03a]">"Zero-Knowledge"</span></h3>
+        <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+            <p><strong class="text-white">1. Pengumpulan Data:</strong> Kami hanya mengumpul data yang anda berikan secara sukarela. Kami <strong>TIDAK</strong> menggunakan penjejak (trackers) pihak ketiga.</p>
+            <p><strong class="text-white">2. Kerahsiaan:</strong> Maklumat anda tidak akan dijual kepada agensi kutipan hutang atau bank. Data anda disulitkan (Encrypted).</p>
+            <p><strong class="text-white">3. Pemadaman:</strong> Anda berhak memohon pemadaman rekod komunikasi pada bila-bila masa.</p>
         </div>
-        <button class="close-modal mt-6 w-full bg-gray-800 hover:bg-yellow-600 hover:text-black text-white font-bold py-2 rounded transition-colors text-sm uppercase">Faham & Tutup</button>
+        <button class="close-modal mt-6 w-full bg-[#e2b03a] hover:bg-[#f0c351] text-[#070c18] font-bold py-2.5 rounded-lg transition-colors text-xs uppercase tracking-wider">Faham &amp; Tutup</button>
     </div>
   </template>
 
-  <dialog id="modal-terms" class="backdrop:bg-black/90 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto bg-gray-900 border border-gray-700 rounded-xl shadow-2xl text-left"></dialog>
+  <dialog id="modal-terms" class="backdrop:bg-black/85 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto border border-[var(--site-line)] rounded-xl shadow-2xl text-left"></dialog>
   <template id="template-terms">
-    <div class="relative bg-gray-900 text-gray-300 p-8 max-h-[80vh] overflow-y-auto">
-        <button class="close-modal absolute top-4 right-4 text-gray-500 hover:text-white text-2xl">&times;</button>
-        <h3 class="text-xl font-black text-white mb-4 uppercase tracking-wide border-b border-gray-700 pb-2">Penafian & <span class="text-yellow-500">Syarat</span></h3>
-        <div class="prose prose-invert prose-sm">
-            <p><strong>1. Bukan PDRM/Peguam:</strong> Email Rakyat adalah platform khidmat nasihat sosial. Kami bukan pengganti polis atau firma guaman.</p>
-            <p><strong>2. Tanggungjawab:</strong> Anda bersetuju memberikan maklumat benar. Laporan palsu tidak akan dilayan.</p>
-            <p><strong>3. Liabiliti:</strong> Kami tidak bertanggungjawab atas kerugian yang timbul. Sila rujuk peguam bertauliah untuk tindakan mahkamah.</p>
+    <div class="relative bg-[#0d1526] text-slate-200 p-8 max-h-[80vh] overflow-y-auto rounded-xl">
+        <button class="close-modal absolute top-4 right-4 text-slate-400 hover:text-white text-2xl">&times;</button>
+        <h3 class="text-xl font-extrabold text-white mb-4 uppercase tracking-wide border-b border-slate-800 pb-3">Penafian &amp; <span class="text-[#e2b03a]">Syarat</span></h3>
+        <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+            <p><strong class="text-white">1. Bukan PDRM/Peguam:</strong> Email Rakyat adalah platform khidmat nasihat sosial. Kami bukan pengganti polis atau firma guaman.</p>
+            <p><strong class="text-white">2. Tanggungjawab:</strong> Anda bersetuju memberikan maklumat benar. Laporan palsu tidak akan dilayan.</p>
+            <p><strong class="text-white">3. Liabiliti:</strong> Kami tidak bertanggungjawab atas kerugian yang timbul. Sila rujuk peguam bertauliah untuk tindakan mahkamah.</p>
         </div>
-        <button class="close-modal mt-6 w-full bg-gray-800 hover:bg-yellow-600 hover:text-black text-white font-bold py-2 rounded transition-colors text-sm uppercase">Setuju & Tutup</button>
+        <button class="close-modal mt-6 w-full bg-[#e2b03a] hover:bg-[#f0c351] text-[#070c18] font-bold py-2.5 rounded-lg transition-colors text-xs uppercase tracking-wider">Setuju &amp; Tutup</button>
     </div>
   </template>
 
-  <dialog id="modal-security" class="backdrop:bg-black/90 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto bg-gray-900 border border-green-500/30 rounded-xl shadow-[0_0_50px_rgba(34,197,94,0.15)] text-left"></dialog>
+  <dialog id="modal-security" class="backdrop:bg-black/85 backdrop:backdrop-blur-sm bg-transparent p-0 w-full max-w-2xl open:animate-fade-in m-auto border border-emerald-500/30 rounded-xl shadow-2xl text-left"></dialog>
   <template id="template-security">
-    <div class="relative bg-black text-gray-300 p-8 max-h-[80vh] overflow-y-auto">
-        <button class="close-modal absolute top-4 right-4 text-gray-500 hover:text-white text-2xl">&times;</button>
+    <div class="relative bg-[#070c18] text-slate-200 p-8 max-h-[80vh] overflow-y-auto rounded-xl">
+        <button class="close-modal absolute top-4 right-4 text-slate-400 hover:text-white text-2xl">&times;</button>
 
-        <div class="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
-             <span class="relative flex h-4 w-4">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
+        <div class="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
+             <span class="relative flex h-3.5 w-3.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
             </span>
-            <h3 class="text-lg font-mono font-bold text-green-500 uppercase tracking-widest">System Operational</h3>
+            <h3 class="text-base font-mono font-bold text-emerald-400 uppercase tracking-widest">System Operational</h3>
         </div>
 
         <div class="grid grid-cols-1 gap-3 mb-6">
             {securityFeatures.map(feature => (
-                <div class="bg-gray-900/50 p-3 rounded border border-gray-800 flex justify-between items-center">
-                    <span class="text-gray-400 font-mono text-xs uppercase">{feature.name}</span>
-                    <span class={`font-mono font-bold text-[10px] border px-2 py-0.5 rounded ${feature.color} border-current bg-black`}>
+                <div class="bg-[#0d1526] p-3.5 rounded-lg border border-slate-800 flex justify-between items-center">
+                    <span class="text-slate-300 font-mono text-xs uppercase">{feature.name}</span>
+                    <span class={`font-mono font-bold text-[10px] border px-2 py-0.5 rounded ${feature.color} border-current`}>
                         {feature.status}
                     </span>
                 </div>
             ))}
         </div>
 
-        <div class="text-[10px] font-mono text-gray-400 text-center">
-            Dilindungi Penyulitan Data (TLS 1.3 & Akta PDPA) <br>
+        <div class="text-[11px] font-mono text-slate-400 text-center">
+            Dilindungi Penyulitan Data (TLS 1.3 &amp; Akta PDPA) <br />
             Server Node: Netlify Edge (Global)
         </div>
 
-        <button class="close-modal mt-6 w-full border border-green-500/50 text-green-500 hover:bg-green-500 hover:text-black font-mono font-bold py-2 rounded transition-colors text-xs uppercase">Tutup Status Keselamatan</button>
+        <button class="close-modal mt-6 w-full border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 font-mono font-bold py-2.5 rounded-lg transition-colors text-xs uppercase">Tutup Status Keselamatan</button>
     </div>
   </template>
 
@@ -177,8 +163,4 @@ const securityFeatures = [
 <style>
   dialog[open] { animation: fadeIn 0.3s ease-out; }
   @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-  dialog div::-webkit-scrollbar { width: 6px; }
-  dialog div::-webkit-scrollbar-track { background: #111; }
-  dialog div::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 </style>

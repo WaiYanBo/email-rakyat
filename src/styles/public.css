@@ -1,0 +1,707 @@
+/* =========================================================
+   PUBLIC WEBSITE — Clean Editorial Design System (Zero Unnecessary Boxes)
+   Every rule is scoped to `.site-public` (set on <body> of the
+   public website only) so the Staff Portal is never affected.
+   Supports Dark Mode ("Royal Midnight & Champagne Gold")
+   and Light Mode ("Warm Alabaster, Oxford Navy & Burnished Gold").
+   ========================================================= */
+
+:root {
+  --site-bg: #070c18;
+  --site-surface: #0d1526;
+  --site-surface-subtle: #141f36;
+  --site-text: #e2e8f0;
+  --site-heading: #ffffff;
+  --site-muted: #cbd5e1;
+  --site-subtle: #94a3b8;
+  --site-line: rgba(148, 163, 184, 0.15);
+  --site-line-strong: rgba(226, 176, 58, 0.4);
+  --site-accent: #e2b03a;
+  --site-accent-hover: #f0c351;
+  --site-accent-subtle: rgba(226, 176, 58, 0.12);
+  --site-emerald: #10b981;
+  --site-emerald-hover: #059669;
+  --site-btn-text: #070c18;
+  --site-nav-bg: rgba(7, 12, 24, 0.94);
+  --site-nav-border: rgba(148, 163, 184, 0.14);
+}
+
+html[data-theme="light"],
+html.theme-light {
+  --site-bg: #faf8f5;
+  --site-surface: #f3f0ea;
+  --site-surface-subtle: #eae5dc;
+  --site-text: #1e293b;
+  --site-heading: #0a1120;
+  --site-muted: #475569;
+  --site-subtle: #64748b;
+  --site-line: rgba(15, 23, 42, 0.11);
+  --site-line-strong: rgba(180, 131, 30, 0.4);
+  --site-accent: #b4831e;
+  --site-accent-hover: #966b14;
+  --site-accent-subtle: rgba(180, 131, 30, 0.10);
+  --site-emerald: #059669;
+  --site-emerald-hover: #047857;
+  --site-btn-text: #ffffff;
+  --site-nav-bg: rgba(250, 248, 245, 0.95);
+  --site-nav-border: rgba(15, 23, 42, 0.09);
+}
+
+.site-public {
+  font-family: "Nunito Sans Variable", "Nunito Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-color: var(--site-bg);
+  color: var(--site-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.site-public ::selection {
+  background: var(--site-accent);
+  color: var(--site-btn-text);
+}
+
+/* ---------- Layout ---------- */
+.site-public .site-container {
+  width: 100%;
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .site-public .site-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-public .site-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.site-public .site-section {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  border-top: 1px solid var(--site-line);
+}
+
+@media (min-width: 768px) {
+  .site-public .site-section {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+/* ---------- Clean Editorial Typography (No Pill Boxes) ---------- */
+.site-public .eyebrow,
+.site-public .eyebrow-accent,
+.site-public .pill-accent {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--site-accent);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+.site-public .h-display {
+  font-size: clamp(2.1rem, 6.2vw, 4.5rem);
+  line-height: 1.06;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--site-heading);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.site-public .h-page {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--site-heading);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.site-public .h-display.text-white,
+.site-public .h-page.text-white {
+  color: #ffffff !important;
+}
+
+.site-public .h-section {
+  font-size: clamp(1.45rem, 3.6vw, 2.65rem);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--site-heading);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.site-public .h-item {
+  font-size: 1.15rem;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--site-heading);
+  overflow-wrap: break-word;
+}
+
+.site-public .lead {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--site-muted);
+  font-weight: 400;
+}
+
+@media (min-width: 768px) {
+  .site-public .lead {
+    font-size: 1.18rem;
+  }
+}
+
+.site-public .body-text {
+  font-size: 0.985rem;
+  line-height: 1.8;
+  color: var(--site-muted);
+}
+
+.site-public .meta {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--site-subtle);
+}
+
+/* ---------- Lines ---------- */
+.site-public .hairline {
+  border-color: var(--site-line);
+}
+
+.site-public .rule {
+  height: 1px;
+  width: 100%;
+  background: var(--site-line);
+}
+
+.site-public .list-divided > * + * {
+  border-top: 1px solid var(--site-line);
+}
+
+/* ---------- Actions & Minimalist Accents ---------- */
+.site-public .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 0.375rem;
+  background: var(--site-accent);
+  color: var(--site-btn-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.site-public .btn-primary:hover {
+  background: var(--site-accent-hover);
+  transform: translateY(-1px);
+}
+
+.site-public .btn-whatsapp,
+.site-public .btn-emerald {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 0.375rem;
+  background: #10b981;
+  color: #ffffff !important;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.site-public .btn-whatsapp:hover,
+.site-public .btn-emerald:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.site-public .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--site-line-strong);
+  color: var(--site-heading);
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.site-public .btn-secondary:hover {
+  border-bottom-color: var(--site-accent);
+  color: var(--site-accent);
+  background: transparent;
+}
+
+.site-public .link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--site-accent);
+  transition: all 0.2s ease;
+}
+
+.site-public .link-arrow::after {
+  content: "→";
+  transition: transform 0.2s ease;
+}
+
+.site-public .link-arrow:hover {
+  color: var(--site-accent-hover);
+  transform: translateX(2px);
+}
+
+.site-public .link-plain {
+  color: var(--site-muted);
+  transition: color 0.2s ease;
+}
+
+.site-public .link-plain:hover {
+  color: var(--site-heading);
+}
+
+/* ---------- Disclosure (FAQ) ---------- */
+.site-public details.disclosure > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.site-public details.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.site-public details.disclosure .disclosure-icon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.site-public details.disclosure .disclosure-icon::before,
+.site-public details.disclosure .disclosure-icon::after {
+  content: "";
+  position: absolute;
+  background: var(--site-accent);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.site-public details.disclosure .disclosure-icon::before {
+  top: 6.5px;
+  left: 0;
+  width: 14px;
+  height: 1.5px;
+}
+
+.site-public details.disclosure .disclosure-icon::after {
+  top: 0;
+  left: 6.25px;
+  width: 1.5px;
+  height: 14px;
+}
+
+.site-public details.disclosure[open] .disclosure-icon::after {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+/* ---------- Scroll reveal (subtle) ---------- */
+.site-public .reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.site-public .reveal-on-scroll.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-public .reveal-on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- Baseline High-Contrast Text Mappings ---------- */
+.site-public .text-neutral-400,
+.site-public .text-gray-400,
+.site-public .text-gray-300,
+.site-public .text-neutral-300 {
+  color: var(--site-muted) !important;
+}
+
+.site-public .text-neutral-500,
+.site-public .text-gray-500 {
+  color: var(--site-subtle) !important;
+}
+
+/* ---------- Theme Adaptation Utilities ---------- */
+html[data-theme="light"] .site-public .text-white:not(.hero-banner *):not(.hero-banner),
+html.theme-light .site-public .text-white:not(.hero-banner *):not(.hero-banner) {
+  color: var(--site-heading) !important;
+}
+
+html[data-theme="light"] .site-public .text-neutral-400,
+html[data-theme="light"] .site-public .text-gray-400,
+html[data-theme="light"] .site-public .text-gray-300,
+html[data-theme="light"] .site-public .text-neutral-300,
+html.theme-light .site-public .text-neutral-400,
+html.theme-light .site-public .text-gray-400,
+html.theme-light .site-public .text-gray-300,
+html.theme-light .site-public .text-neutral-300 {
+  color: var(--site-muted) !important;
+}
+
+html[data-theme="light"] .site-public .text-neutral-500,
+html[data-theme="light"] .site-public .text-gray-500,
+html.theme-light .site-public .text-neutral-500,
+html.theme-light .site-public .text-gray-500 {
+  color: var(--site-subtle) !important;
+}
+
+html[data-theme="light"] .site-public .bg-\[\#0b0b0c\],
+html[data-theme="light"] .site-public .bg-\[\#0b0b0c\]\/90,
+html[data-theme="light"] .site-public .bg-black,
+html[data-theme="light"] .site-public .bg-black\/80,
+html[data-theme="light"] .site-public .bg-zinc-950,
+html[data-theme="light"] .site-public .bg-zinc-900,
+html[data-theme="light"] .site-public .bg-zinc-900\/80,
+html[data-theme="light"] .site-public .bg-gray-900,
+html.theme-light .site-public .bg-\[\#0b0b0c\],
+html.theme-light .site-public .bg-\[\#0b0b0c\]\/90,
+html.theme-light .site-public .bg-black,
+html.theme-light .site-public .bg-black\/80,
+html.theme-light .site-public .bg-zinc-950,
+html.theme-light .site-public .bg-zinc-900,
+html.theme-light .site-public .bg-zinc-900\/80,
+html.theme-light .site-public .bg-gray-900 {
+  background-color: var(--site-bg) !important;
+}
+
+html[data-theme="light"] .site-public .border-white\/10,
+html[data-theme="light"] .site-public .border-white\/15,
+html[data-theme="light"] .site-public .border-white\/20,
+html[data-theme="light"] .site-public .border-zinc-800,
+html[data-theme="light"] .site-public .border-gray-800,
+html.theme-light .site-public .border-white\/10,
+html.theme-light .site-public .border-white\/15,
+html.theme-light .site-public .border-white\/20,
+html.theme-light .site-public .border-zinc-800,
+html.theme-light .site-public .border-gray-800 {
+  border-color: var(--site-line) !important;
+}
+
+html[data-theme="light"] .site-public .divide-white\/10 > * + *,
+html.theme-light .site-public .divide-white\/10 > * + * {
+  border-color: var(--site-line) !important;
+}
+
+html[data-theme="light"] .site-public .btn-secondary,
+html.theme-light .site-public .btn-secondary {
+  border-bottom-color: var(--site-line-strong);
+  color: var(--site-heading);
+  background: transparent;
+}
+
+html[data-theme="light"] .site-public .btn-secondary:hover,
+html.theme-light .site-public .btn-secondary:hover {
+  border-bottom-color: var(--site-accent);
+  color: var(--site-accent);
+  background: transparent;
+}
+
+html[data-theme="light"] .site-public .btn-primary,
+html.theme-light .site-public .btn-primary {
+  background: var(--site-accent);
+  color: var(--site-btn-text);
+}
+
+html[data-theme="light"] .site-public .btn-primary:hover,
+html.theme-light .site-public .btn-primary:hover {
+  background: var(--site-accent-hover);
+}
+
+html[data-theme="light"] .site-public footer,
+html.theme-light .site-public footer {
+  background-color: var(--site-surface) !important;
+  border-top-color: var(--site-line) !important;
+}
+
+html[data-theme="light"] .site-public #cookie-step-1,
+html[data-theme="light"] .site-public #cookie-step-2,
+html.theme-light .site-public #cookie-step-1,
+html.theme-light .site-public #cookie-step-2 {
+  background-color: var(--site-surface) !important;
+  border-color: var(--site-line-strong) !important;
+}
+
+html[data-theme="light"] .site-public #mobile-menu,
+html.theme-light .site-public #mobile-menu {
+  background-color: var(--site-bg) !important;
+  border-bottom-color: var(--site-line) !important;
+}
+
+/* ---------- Theme Toggle Icon Visibility ---------- */
+.theme-icon-sun {
+  display: block;
+}
+.theme-icon-moon {
+  display: none;
+}
+
+html[data-theme="light"] .theme-icon-sun,
+html.theme-light .theme-icon-sun {
+  display: none !important;
+}
+
+html[data-theme="light"] .theme-icon-moon,
+html.theme-light .theme-icon-moon {
+  display: block !important;
+}
+
+/* ---------- Navbar Theme & Camouflage Adaptations ---------- */
+.site-public header#main-navbar {
+  transition: background-color 0.3s ease, border-color 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Camouflage resting at top */
+.site-public header#main-navbar.navbar-at-top {
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.site-public header#main-navbar.navbar-at-top .brand-title {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.site-public header#main-navbar.navbar-at-top .nav-link-item {
+  color: rgba(241, 245, 249, 0.92) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.site-public header#main-navbar.navbar-at-top .nav-link-item:hover {
+  color: #f0c351 !important;
+}
+
+.site-public header#main-navbar.navbar-at-top .nav-link-active {
+  color: #e2b03a !important;
+}
+
+.site-public header#main-navbar.navbar-at-top #theme-toggle-desktop,
+.site-public header#main-navbar.navbar-at-top #theme-toggle-mobile,
+.site-public header#main-navbar.navbar-at-top #mobile-menu-btn {
+  color: rgba(241, 245, 249, 0.92) !important;
+}
+
+.site-public header#main-navbar.navbar-at-top .portal-staff-link {
+  color: rgba(203, 213, 225, 0.88) !important;
+}
+
+.site-public header#main-navbar.navbar-at-top .portal-staff-link:hover {
+  color: #ffffff !important;
+}
+
+/* Solid frosted glass on scroll */
+.site-public header#main-navbar.navbar-scrolled {
+  background-color: var(--site-nav-bg) !important;
+  border-bottom-color: var(--site-nav-border) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* ---------- Hero Banner (Always Dark Backdrops Across All Themes) ---------- */
+html[data-theme="light"] .site-public .hero-banner,
+html[data-theme="light"] .site-public .hero-banner *,
+html.theme-light .site-public .hero-banner,
+html.theme-light .site-public .hero-banner *,
+.site-public .hero-banner,
+.site-public .hero-banner * {
+  --site-heading: #ffffff;
+}
+
+html[data-theme="light"] .site-public .hero-banner,
+html.theme-light .site-public .hero-banner,
+.site-public .hero-banner {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .site-public .hero-banner .h-display,
+html[data-theme="light"] .site-public .hero-banner .h-page,
+html.theme-light .site-public .hero-banner .h-display,
+html.theme-light .site-public .hero-banner .h-page,
+.site-public .hero-banner .h-display,
+.site-public .hero-banner .h-page {
+  color: #ffffff !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
+}
+
+html[data-theme="light"] .site-public .hero-banner .hero-subtitle,
+html[data-theme="light"] .site-public .hero-banner p.text-slate-200,
+html[data-theme="light"] .site-public .hero-banner p.text-slate-100,
+html.theme-light .site-public .hero-banner .hero-subtitle,
+html.theme-light .site-public .hero-banner p.text-slate-200,
+html.theme-light .site-public .hero-banner p.text-slate-100,
+.site-public .hero-banner .hero-subtitle,
+.site-public .hero-banner p.text-slate-200,
+.site-public .hero-banner p.text-slate-100 {
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+
+html[data-theme="light"] .site-public .hero-banner .link-arrow,
+html.theme-light .site-public .hero-banner .link-arrow,
+.site-public .hero-banner .link-arrow {
+  color: #ffffff !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+
+html[data-theme="light"] .site-public .hero-banner .link-arrow:hover,
+html.theme-light .site-public .hero-banner .link-arrow:hover,
+.site-public .hero-banner .link-arrow:hover {
+  color: #f0c351 !important;
+}
+
+.site-public .hero-banner .link-arrow::after {
+  color: inherit !important;
+}
+
+/* ---------- Video Play Button Theme Adaptations (Dark & Light Mode) ---------- */
+.site-public .video-play-overlay {
+  background-color: rgba(7, 12, 24, 0.35);
+  transition: background-color 0.25s ease;
+}
+
+.site-public .video-play-btn {
+  background-color: rgba(15, 23, 42, 0.88);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+.site-public .group:hover .video-play-btn {
+  background-color: var(--site-accent) !important;
+  color: #070c18 !important;
+  border-color: var(--site-accent) !important;
+  transform: scale(1.1);
+}
+
+/* Light Mode adaptations for Play Button and Video Cards */
+html[data-theme="light"] .site-public .video-play-overlay,
+html.theme-light .site-public .video-play-overlay {
+  background-color: rgba(15, 23, 42, 0.18) !important;
+}
+
+html[data-theme="light"] .site-public .video-play-btn,
+html.theme-light .site-public .video-play-btn {
+  background-color: #ffffff !important;
+  color: #0a1120 !important;
+  border: 1px solid rgba(15, 23, 42, 0.18) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15) !important;
+}
+
+html[data-theme="light"] .site-public .group:hover .video-play-btn,
+html.theme-light .site-public .group:hover .video-play-btn {
+  background-color: var(--site-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--site-accent) !important;
+  transform: scale(1.1);
+}
+
+/* TikTok Phone Mockup Video Player (Necessary Bordered Frame) */
+.site-public .tiktok-phone-frame {
+  background-color: #0f172a;
+  border: 3px solid #334155;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] .site-public .tiktok-phone-frame,
+html.theme-light .site-public .tiktok-phone-frame {
+  background-color: #1e293b !important;
+  border: 3px solid #475569 !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 4px #e2e8f0 !important;
+}
+
+.site-public #tiktok-facade-container {
+  background-color: #020617 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme="light"] .site-public #tiktok-facade-container,
+html.theme-light .site-public #tiktok-facade-container {
+  background-color: #020617 !important;
+  border: 1px solid #1e293b !important;
+}
+
+.site-public #tiktok-facade-container h3 {
+  color: #ffffff !important;
+}
+
+.site-public #tiktok-facade-container p {
+  color: #cbd5e1 !important;
+}
+
+/* ---------- Mobile & Abnormal Screen Adaptations (Foldables, Dual Screens, Ultra-Narrow) ---------- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .site-public #whatsapp-fab {
+    bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+    right: calc(1rem + env(safe-area-inset-right)) !important;
+  }
+  .site-public #back-to-top {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
+    right: calc(1rem + env(safe-area-inset-right)) !important;
+  }
+}
+
+/* Ensure images, video frames, and embeds never cause horizontal scroll on narrow screens */
+.site-public img,
+.site-public video,
+.site-public iframe {
+  max-width: 100%;
+}
+
+/* Modal sizing for small mobile screens (Fold / Flip / iPhone SE) */
+.site-public dialog {
+  max-width: calc(100vw - 2rem) !important;
+  margin: auto !important;
+}

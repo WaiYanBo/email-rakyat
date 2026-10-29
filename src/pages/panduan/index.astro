@@ -1,5 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Hero from '../../components/Hero.astro';
+import defaultBg from '../../assets/banner-panduan.jpg';
 import { getCollection } from 'astro:content';
 
 const guides = await getCollection('panduan');
@@ -18,166 +20,129 @@ const pageDesc = "Koleksi panduan dan rujukan undang-undang sah bagi mangsa pinj
   title={pageTitle}
   description={pageDesc}
 >
-  <div class="w-full bg-black text-white pt-28 sm:pt-32 md:pt-36 pb-28 selection:bg-yellow-500 selection:text-black">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+  <Hero
+    line1="Pusat Panduan"
+    line2="Rujukan Hak & Undang-Undang Malaysia"
+    showDetails={false}
+    backgroundImage={defaultBg}
+  />
 
-      <!-- Breadcrumbs -->
-      <nav aria-label="Breadcrumb" class="mb-6 flex items-center space-x-2 text-xs text-gray-400">
-        <a href="/" class="hover:text-yellow-400 transition-colors">Utama</a>
-        <span>/</span>
-        <span class="text-yellow-500">Pusat Panduan & Advokasi</span>
-      </nav>
+  <main class="site-container py-16 md:py-24">
 
-      <!-- Page Header -->
-      <header class="mb-14 text-center max-w-3xl mx-auto">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold uppercase tracking-widest mb-4">
-          <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-          Pusat Rujukan Undang-Undang & Advokasi Sah
-        </div>
-        <h1 class="text-3xl sm:text-5xl font-black text-white uppercase tracking-tight mb-4">
-          Panduan Lengkap <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600">Mangsa Ah Long</span>
-        </h1>
-        <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
-          Rujukan komprehensif berlandaskan statut undang-undang Malaysia (Akta 400 & Kanun Keseksaan) untuk membantu anda memahami hak perundangan dan keluar daripada perangkap ceti haram secara sah.
-        </p>
-      </header>
-
-      <!-- Featured Guide Hero Card -->
-      {featuredGuide && (
-        <section class="mb-16">
-          <div class="relative overflow-hidden rounded-3xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-yellow-500/30 p-8 sm:p-12 shadow-[0_0_50px_rgba(234,179,8,0.08)]">
-            <div class="absolute -top-24 -right-24 w-72 h-72 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 max-w-3xl">
-              <div class="flex flex-wrap items-center gap-3 mb-4">
-                <span class="px-3 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-black uppercase tracking-wider">
-                  ⭐ Panduan Utama
-                </span>
-                <span class="text-xs text-gray-400">
-                  {featuredGuide.data.readTime}
-                </span>
-                <span class="text-xs text-yellow-500 font-semibold">
-                  {featuredGuide.data.category}
-                </span>
-              </div>
-
-              <h2 class="text-2xl sm:text-4xl font-black text-white leading-tight mb-4 hover:text-yellow-400 transition-colors">
-                <a href={`/panduan/${featuredGuide.id.replace(/\.mdx?$/, '')}`}>
-                  {featuredGuide.data.title}
-                </a>
-              </h2>
-
-              <p class="text-gray-300 text-sm sm:text-base leading-relaxed mb-6 font-normal">
-                {featuredGuide.data.description}
-              </p>
-
-              <!-- Highlights chips -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-                <div class="p-3 rounded-xl bg-black/50 border border-zinc-800 text-xs">
-                  <span class="text-yellow-400 block font-bold mb-0.5">⚖️ Seksyen Undang-Undang</span>
-                  <span class="text-gray-400 text-[11px]">Akta 400 & Seksyen 506 KK</span>
-                </div>
-                <div class="p-3 rounded-xl bg-black/50 border border-zinc-800 text-xs">
-                  <span class="text-red-400 block font-bold mb-0.5">🚨 Format Laporan Polis</span>
-                  <span class="text-gray-400 text-[11px]">Draf teknikal buka kertas siasatan</span>
-                </div>
-                <div class="p-3 rounded-xl bg-black/50 border border-zinc-800 text-xs">
-                  <span class="text-green-400 block font-bold mb-0.5">🛡️ Protokol Intervensi</span>
-                  <span class="text-gray-400 text-[11px]">Advokasi sah & bayar pokok</span>
-                </div>
-              </div>
-
-              <a
-                href={`/panduan/${featuredGuide.id.replace(/\.mdx?$/, '')}`}
-                class="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs uppercase tracking-wider transition-all duration-300 shadow-lg hover:scale-105"
-              >
-                <span>Baca Panduan Penuh Sekarang</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-              </a>
-            </div>
+    <!-- Featured Guide: Clean Editorial Feature (Zero Box) -->
+    {featuredGuide && (
+      <section class="mb-20 border-t border-b border-[var(--site-line)] py-12 md:py-16">
+        <div class="max-w-4xl">
+          <div class="flex items-center gap-3 mb-4 text-xs font-mono text-[var(--site-subtle)] uppercase">
+            <span class="text-[var(--site-accent)] font-bold">Panduan Pilihan</span>
+            <span>·</span>
+            <span>{featuredGuide.data.category}</span>
+            <span>·</span>
+            <span>{featuredGuide.data.readTime}</span>
           </div>
-        </section>
-      )}
 
-      <!-- All Guides Grid -->
-      <section>
-        <div class="flex items-center justify-between mb-8 border-b border-zinc-800 pb-4">
-          <h2 class="text-xl font-black uppercase tracking-tight text-white">
-            Semua Panduan Khusus ({sortedGuides.length})
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--site-heading)] tracking-tight leading-tight mb-4">
+            <a href={`/panduan/${featuredGuide.id.replace(/\.mdx?$/, '')}`} class="hover:text-[var(--site-accent)] transition-colors">
+              {featuredGuide.data.title}
+            </a>
           </h2>
-          <span class="text-xs text-gray-500">Sentiasa dikemas kini</span>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedGuides.map((guide) => {
-            const slug = guide.id.replace(/\.mdx?$/, '');
-            return (
-              <article class="flex flex-col justify-between p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-yellow-500/50 transition-all duration-300 group">
-                <div>
-                  <div class="flex items-center justify-between gap-2 mb-3">
-                    <span class="px-2.5 py-0.5 rounded-full bg-zinc-800 text-yellow-400 text-[10px] font-bold uppercase tracking-wider">
-                      {guide.data.category}
-                    </span>
-                    <span class="text-[11px] text-gray-500">
-                      {guide.data.readTime}
-                    </span>
-                  </div>
+          <p class="body-text text-base md:text-lg mb-8 leading-relaxed">
+            {featuredGuide.data.description}
+          </p>
 
-                  <h3 class="text-lg font-bold text-white mb-2 leading-snug group-hover:text-yellow-400 transition-colors">
-                    <a href={`/panduan/${slug}`}>
-                      {guide.data.title}
-                    </a>
-                  </h3>
-
-                  <p class="text-xs text-gray-400 leading-relaxed line-clamp-3 mb-4">
-                    {guide.data.description}
-                  </p>
-                </div>
-
-                <div class="pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-                  <span class="text-gray-500 text-[11px]">
-                    Oleh {guide.data.author.split('(')[0].trim()}
-                  </span>
-                  <a
-                    href={`/panduan/${slug}`}
-                    class="font-bold text-yellow-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1"
-                  >
-                    Baca
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  </a>
-                </div>
-              </article>
-            );
-          })}
+          <a
+            href={`/panduan/${featuredGuide.id.replace(/\.mdx?$/, '')}`}
+            class="btn-primary"
+          >
+            <span>Baca Panduan Lengkap</span>
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </section>
+    )}
 
-      <!-- Need Immediate Help Banner -->
-      <section class="mt-20 p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 text-center max-w-2xl mx-auto">
-        <h3 class="text-xl font-bold text-white mb-2">
+    <!-- All Guides: Clean Minimalist Linear Catalogue (Zero Boxes) -->
+    <section>
+      <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-[var(--site-line)]">
+        <h2 class="text-xl font-bold text-[var(--site-heading)] tracking-tight">
+          Semua Panduan Khusus ({sortedGuides.length})
+        </h2>
+        <span class="text-xs font-mono text-[var(--site-subtle)]">Disusun mengikut tarikh</span>
+      </div>
+
+      <div class="divide-y divide-[var(--site-line)]">
+        {sortedGuides.map((guide, index) => {
+          const slug = guide.id.replace(/\.mdx?$/, '');
+          return (
+            <article class="py-8 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-start">
+              <div class="md:col-span-1 text-xs font-mono font-bold text-[var(--site-accent)]">
+                {String(index + 1).padStart(2, '0')}
+              </div>
+
+              <div class="md:col-span-8">
+                <div class="flex items-center gap-2 text-xs font-mono text-[var(--site-subtle)] uppercase mb-2">
+                  <span class="text-[var(--site-accent)] font-bold">{guide.data.category}</span>
+                  <span>·</span>
+                  <span>{guide.data.readTime}</span>
+                </div>
+
+                <h3 class="text-xl font-bold text-[var(--site-heading)] mb-3">
+                  <a href={`/panduan/${slug}`} class="hover:text-[var(--site-accent)] transition-colors">
+                    {guide.data.title}
+                  </a>
+                </h3>
+
+                <p class="body-text text-sm leading-relaxed mb-4">
+                  {guide.data.description}
+                </p>
+
+                <span class="text-xs text-[var(--site-subtle)]">
+                  Oleh {guide.data.author.split('(')[0].trim()}
+                </span>
+              </div>
+
+              <div class="md:col-span-3 md:text-right pt-2 md:pt-0">
+                <a
+                  href={`/panduan/${slug}`}
+                  class="link-arrow text-sm"
+                >
+                  Baca
+                </a>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- Immediate Help Note (Zero Box) -->
+    <aside class="mt-20 pt-12 border-t border-[var(--site-line)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div>
+        <h3 class="text-lg font-bold text-[var(--site-heading)] mb-1">
           Perlukan Bantuan Segera Hari Ini?
         </h3>
-        <p class="text-xs sm:text-sm text-gray-400 mb-6 leading-relaxed">
-          Jika anda atau keluarga sedang berdepan ugutan secara langsung, hubungi talian bantuan kecemasan Team Email Rakyat untuk tindakan pantas.
+        <p class="body-text text-sm">
+          Jika anda berdepan ugutan langsung daripada pihak sindiket, hubungi talian pegawai bertugas kami segera.
         </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href="https://WaiYanTeamEmailRakyat.wasap.my"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3 rounded-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs uppercase tracking-wider transition-all"
-          >
-            <span>Talian WhatsApp Kecemasan</span>
-          </a>
-          <a
-            href="/bantuan"
-            class="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3 rounded-full border border-zinc-700 hover:border-yellow-500 text-white font-bold text-xs uppercase tracking-wider transition-all"
-          >
-            Halaman Talian Bantuan
-          </a>
-        </div>
-      </section>
+      </div>
 
-    </div>
-  </div>
+      <div class="flex items-center gap-4 shrink-0">
+        <a
+          href="https://WaiYanTeamEmailRakyat.wasap.my"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-primary"
+        >
+          WhatsApp Kecemasan
+        </a>
+        <a
+          href="/hubungi"
+          class="btn-secondary"
+        >
+          Hubungi Kami
+        </a>
+      </div>
+    </aside>
+  </main>
 </Layout>

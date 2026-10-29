@@ -1,7 +1,7 @@
 ---
-title: "Cara Buat Laporan Polis Kes Ah Long: Format Contoh Report, Saluran JSJK & Senarai Balai Polis"
-metaTitle: "Cara Buat Laporan Polis Kes Ah Long: Contoh Report & Senarai Balai Polis JSJK 2026"
-description: "Panduan lengkap cara buat laporan polis kes ugutan Ah Long. Termasuk format contoh repot polis, cara tangani ketakutan ditangkap, semakan akaun keldai SemakMule, dan direktori balai polis IPD seluruh Malaysia."
+title: "Cara Buat Laporan Polis Kes Ah Long: Prosedur Rasmi, Saluran JSJK & Bimbingan Advokasi"
+metaTitle: "Cara Buat Laporan Polis Kes Ah Long: Saluran JSJK & Senarai Balai Polis 2026"
+description: "Panduan lengkap prosedur buat laporan polis kes ugutan Ah Long di Malaysia. Bimbingan penyusunan fakta teknikal, semakan akaun keldai SemakMule, dan direktori balai polis IPD."
 publishDate: 2026-10-14
 updatedDate: 2026-10-15
 author: "Team Email Rakyat"
@@ -13,7 +13,7 @@ image: "/logo.png"
 imageAlt: "Panduan Lengkap Cara Buat Laporan Polis Kes Ah Long Malaysia"
 keywords:
   - "cara buat laporan polis kes ah long"
-  - "contoh report polis kena ugut ah long"
+  - "bimbingan laporan polis ah long"
   - "takut buat report polis ah long"
   - "akaun keldai semak mule"
   - "balai polis aduan ah long"
@@ -48,23 +48,18 @@ Sebelum hadir ke balai polis atau Ibu Pejabat Polis Daerah (IPD), pastikan anda 
 
 ---
 
-## Format Contoh Laporan Polis Kena Ugut Ah Long
+## Penyediaan Draf Kronologi Laporan Polis Bersama Team Email Rakyat
 
-Gunakan draf kronologi fakta di bawah sebagai rujukan semasa memberikan keterangan kepada pegawai polis bertugas di kaunter aduan:
+Penyusunan laporan polis untuk kes sindiket pinjaman tidak berlesen memerlukan ketelitian kronologi dan ketepatan fakta teknikal. Laporan yang lengkap dan tersusun rapi amat penting bagi membolehkan pegawai penyiasat polis membuka kertas siasatan di bawah seksyen jenayah yang tepat (seperti Seksyen 384/506 Kanun Keseksaan bagi pemerasan atau pengesanan akaun keldai).
 
-```text
-CONTOH LAPORAN POLIS:
+Anda **tidak perlu risau atau bersusah payah merangka laporan polis sendiri**. Sebagai pusat advokasi dan perlindungan pengguna, **pasukan Team Email Rakyat akan menguruskan dan mendrafkan laporan polis teknikal yang lengkap untuk anda**:
 
-Pada tarikh [Tarikh Mula Pinjam] lebih kurang jam [Masa], semasa saya berada di [Lokasi/Alamat], saya telah berurusan dengan satu iklan pinjaman wang dalam talian melalui aplikasi WhatsApp menggunakan nombor [Nombor Telefon Sindiket]. 
+* **Audit Aliran Transaksi:** Kami menyemak modal pokok bersih yang diterima berbanding bayaran yang telah dibuat untuk membuktikan penindasan kadar bunga tidak sah.
+* **Penyusunan Kronologi Fakta:** Mengumpulkan tangkap layar ugutan WhatsApp, rakaman panggilan, dan butiran akaun pihak ketiga secara berstruktur mengikut kehendak perundangan.
+* **Draf Laporan Rasmi:** Menyediakan kenyataan fakta lengkap yang sedia untuk diserahkan semasa membuat laporan di balai polis atau IPD.
+* **Perlindungan Lanjut:** Menasihati langkah keselamatan seterusnya agar anda dan keluarga tidak terus diganggu atau diperdaya sindiket.
 
-Saya telah memohon pinjaman sebanyak RM[Jumlah Pohon] atas desakan kewangan. Namun begitu, pada tarikh [Tarikh Terima], sindiket hanya memasukkan wang berjumlah RM[Jumlah Sebenar Diterima] ke akaun bank [Nama Bank & No Akaun Anda], tetapi mereka menuntut saya membayar balik sebanyak RM[Jumlah Dituntut] dalam tempoh [Contoh: 5 hari].
-
-Sehingga kini, saya telah membuat bayaran berjumlah RM[Jumlah Keseluruhan Yang Telah Dibayar] ke dalam akaun-akaun pihak ketiga atas arahan mereka. Walau bagaimanapun, sindiket berkenaan terus mengenakan caj bunga yang melampau dan enggan mengiktiraf bayaran modal pokok.
-
-Mulai tarikh [Tarikh Mula Ugutan], saya dan keluarga telah menerima pelbagai ugutan jenayah melalui panggilan dan pesanan WhatsApp daripada nombor [Senarai Nombor Suspek]. Suspek telah mengugut untuk [Nyatakan ugutan sebenar: contohnya menyebarkan gambar MyKad saya kepada kenalan telefon / menyimbah cat merah ke rumah saya di alamat ... / datang mengganggu tempat kerja saya].
-
-Tujuan saya membuat laporan polis ini adalah kerana bimbangkan keselamatan diri dan keluarga saya daripada ancaman jenayah pemerasan (Seksyen 384/506 Kanun Keseksaan). Saya juga memohon siasatan dijalankan ke atas akaun-akaun keldai yang digunakan oleh sindiket ini, dan sebagai rujukan rasmi sekiranya berlaku sebarang kejadian tidak diingini pada masa hadapan.
-```
+Untuk membolehkan pihak kami mendraf laporan dan menyusun bukti kes anda, sila hubungi [Talian Bantuan Team Email Rakyat](/hubungi) atau hubungi pegawai bertugas kami di [WhatsApp Rasmi](https://WaiYanTeamEmailRakyat.wasap.my).
 
 ---
 

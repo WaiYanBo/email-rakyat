@@ -77,8 +77,8 @@ const newsSeries = [
     <main class="site-container py-16 md:py-24">
         <!-- Header -->
         <div class="max-w-3xl mb-16 md:mb-20">
-            <span class="eyebrow eyebrow-accent mb-4 block">Pendedahan &amp; Arkib Media</span>
-            <h2 class="h-page mb-6">
+            <span class="eyebrow eyebrow-accent mb-4">Pendedahan &amp; Arkib Media</span>
+            <h2 class="h-page mt-2 mb-6">
                 Liputan berita dan kupasan kes sebenar.
             </h2>
             <p class="lead">
@@ -86,50 +86,60 @@ const newsSeries = [
             </p>
         </div>
 
-        <!-- Video Catalogue: Clean Editorial Layout (No Outer Card Boxes) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12 border-t border-[var(--site-line)] pt-12 md:pt-16">
+        <!-- Video Catalogue: Editorial Linear Rows Divided by Hairlines (Zero Boxed Grids, Only Necessary Video Thumbnail Frames) -->
+        <div class="border-y border-[var(--site-line)] divide-y divide-[var(--site-line)]">
             {
-                newsSeries.map((item) => (
-                    <article class="flex flex-col items-start group">
-                        <div
-                            class="relative aspect-video w-full bg-[var(--site-surface-subtle)] rounded overflow-hidden border border-[var(--site-line)] cursor-pointer play-trigger mb-4"
-                            data-video={item.videoId}
-                        >
-                            <img
-                                src={item.thumbnail}
-                                alt={item.title}
-                                width="480"
-                                height="360"
-                                class="w-full h-full object-cover"
-                                loading="lazy"
-                            />
-                            <div class="absolute bottom-3 right-3 bg-[#070c18]/90 text-white font-mono text-[11px] px-2 py-0.5 rounded border border-white/15 shadow-sm">
-                                {item.duration}
-                            </div>
-                            <div class="absolute inset-0 flex items-center justify-center video-play-overlay">
-                                <div class="w-12 h-12 rounded-full video-play-btn flex items-center justify-center">
-                                    <svg class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M8 5v14l11-7z"/>
-                                    </svg>
+                newsSeries.map((item, idx) => (
+                    <article class="editorial-row py-8 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-center group">
+                        <div class="md:col-span-5 lg:col-span-4">
+                            <div
+                                class="relative aspect-video w-full bg-[var(--site-surface-subtle)] rounded overflow-hidden border border-[var(--site-line)] cursor-pointer play-trigger"
+                                data-video={item.videoId}
+                            >
+                                <img
+                                    src={item.thumbnail}
+                                    alt={item.title}
+                                    width="480"
+                                    height="360"
+                                    class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                                    loading="lazy"
+                                />
+                                <div class="absolute bottom-3 right-3 bg-[#060b16]/90 text-white font-mono text-[11px] px-2 py-0.5 rounded border border-white/15 shadow-sm">
+                                    {item.duration}
+                                </div>
+                                <div class="absolute inset-0 flex items-center justify-center video-play-overlay">
+                                    <div class="w-12 h-12 rounded-full video-play-btn flex items-center justify-center">
+                                        <svg class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="w-full flex flex-col flex-grow">
-                            <div class="flex items-center gap-2 text-xs font-mono text-[var(--site-subtle)] uppercase mb-2">
+                        <div class="md:col-span-7 lg:col-span-8 flex flex-col items-start">
+                            <div class="flex items-center gap-3 text-xs font-mono text-[var(--site-subtle)] uppercase mb-2.5">
+                                <span class="text-[var(--site-accent)] font-bold">0{idx + 1}</span>
+                                <span>·</span>
                                 <span>{item.date}</span>
                                 <span>·</span>
                                 <span class="text-[var(--site-accent)] font-bold">{item.category}</span>
                             </div>
-                            <h3 class="text-lg font-bold text-[var(--site-heading)] leading-snug mb-4 group-hover:text-[var(--site-accent)] transition-colors line-clamp-2">
-                                {item.title}
+                            <h3 class="text-xl md:text-2xl font-bold text-[var(--site-heading)] leading-snug mb-4 group-hover:text-[var(--site-accent)] transition-colors tracking-tight">
+                                <button
+                                    type="button"
+                                    class="play-trigger text-left"
+                                    data-video={item.videoId}
+                                >
+                                    {item.title}
+                                </button>
                             </h3>
                             <button
                                 type="button"
-                                class="link-arrow play-trigger mt-auto text-sm text-left"
+                                class="link-arrow play-trigger text-sm text-left"
                                 data-video={item.videoId}
                             >
-                                Tonton Video
+                                Tonton Rakaman Video
                             </button>
                         </div>
                     </article>
@@ -137,8 +147,8 @@ const newsSeries = [
             }
         </div>
 
-        <!-- IC Safety Advisory: Minimalist Editorial Notice (Zero Outer Box) -->
-        <section class="site-section mt-16 md:mt-24">
+        <!-- IC Safety Advisory: Minimalist Editorial Notice (Zero Outer Box, Only Necessary Photo Frame) -->
+        <section class="site-section mt-16 md:mt-24 !border-t-0 !pt-4">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
                 <div class="md:col-span-5">
                     <div class="bg-[var(--site-surface)] p-3 rounded border border-[var(--site-line)] inline-block shadow-sm">
@@ -151,14 +161,14 @@ const newsSeries = [
                 </div>
 
                 <div class="md:col-span-7 space-y-4">
-                    <span class="eyebrow text-red-500 dark:text-red-400 block">Langkah Keselamatan Wajib</span>
+                    <span class="eyebrow text-red-500 dark:text-red-400">Langkah Keselamatan Wajib</span>
                     <h2 class="h-section">
                         Panduan Palang Kad Pengenalan (IC)
                     </h2>
                     <p class="body-text text-base leading-relaxed">
                         Apabila anda perlu memberikan salinan Kad Pengenalan secara atas talian untuk sebarang urusan, <strong class="text-[var(--site-heading)] font-bold">jangan sesekali serahkan salinan kosong</strong>.
                     </p>
-                    <div class="border-l-2 border-[var(--site-accent)] pl-4 py-1 text-sm text-[var(--site-muted)] leading-relaxed">
+                    <div class="border-l-2 border-[var(--site-accent)] pl-5 py-1 text-sm md:text-base text-[var(--site-muted)] leading-relaxed">
                         Sila pastikan anda meletakkan palang/watermark dua garisan lurus melintang dan nyatakan tujuan serahan spesifik pada bucu penjuru IC anda (seperti contoh gambar). Langkah ini penting bagi menyekat sindiket daripada memanipulasi dokumen pengenalan anda untuk pinjaman tanpa izin.
                     </div>
                 </div>

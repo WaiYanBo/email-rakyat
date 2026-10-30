@@ -76,25 +76,25 @@ const legalFacts = [
 <!-- Section 1: Focus Areas (Clean Divided List, Zero Boxes) -->
 <section class="site-section bg-[var(--site-bg)]">
   <div class="site-container">
-    <div class="max-w-2xl mb-14">
+    <div class="max-w-2xl mb-14 md:mb-16">
       <span class="eyebrow mb-3">Bidang Bantuan</span>
       <h2 class="h-section mt-2">
         Bimbingan Profesional &amp; Berlandaskan Undang-Undang.
       </h2>
-      <p class="body-text mt-4">
+      <p class="lead mt-4">
         Kami menyediakan khidmat nasihat swasta bagi membantu masyarakat menyelesaikan pertikaian pinjaman haram dan perlindungan hak pengguna.
       </p>
     </div>
 
-    <div class="list-divided border-t border-[var(--site-line)]">
+    <div class="list-divided border-y border-[var(--site-line)]">
       {focusAreas.map((item) => (
-        <article class="py-8 md:py-10 flex flex-col md:flex-row md:items-baseline justify-between gap-4 md:gap-8">
+        <article class="editorial-row group py-8 md:py-10 flex flex-col md:flex-row md:items-baseline justify-between gap-4 md:gap-8">
           <div class="flex items-baseline gap-6 md:w-5/12">
-            <span class="font-mono text-xs font-bold text-[var(--site-accent)] tracking-widest shrink-0">
+            <span class="font-mono text-sm font-bold text-[var(--site-accent)] tracking-widest shrink-0">
               {item.num}
             </span>
-            <h3 class="h-item text-[var(--site-heading)]">
-              {item.title}
+            <h3 class="text-lg md:text-xl font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors tracking-tight">
+              <a href={item.href}>{item.title}</a>
             </h3>
           </div>
 
@@ -116,8 +116,8 @@ const legalFacts = [
 <!-- Section 2: Principles & Philosophy (Editorial Split, Zero Boxes) -->
 <section class="site-section bg-[var(--site-surface)]">
   <div class="site-container">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-      <div class="lg:col-span-5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+      <div class="lg:col-span-5 lg:sticky lg:top-28">
         <span class="eyebrow mb-3">Pendekatan Kami</span>
         <h2 class="h-section mt-2 mb-6">
           Advokasi Tegas, Bebas Dari Suapan &amp; Kompromi.
@@ -125,22 +125,22 @@ const legalFacts = [
         <p class="body-text text-base leading-relaxed mb-8">
           Ramai mangsa terperangkap kerana takut bersuara atau tidak memahami tatakelola undang-undang. Kami bertindak sebagai penasihat bebas untuk mengembalikan ketenteraman hidup anda tanpa jalan pintas yang merugikan.
         </p>
-        <div class="pt-6 border-t border-[var(--site-line)]">
-          <p class="meta text-xs md:text-sm leading-relaxed">
+        <div class="border-l-2 border-[var(--site-accent)] pl-5 py-1">
+          <p class="meta text-xs md:text-sm leading-relaxed text-[var(--site-muted)]">
             Perkhidmatan kami tertakluk kepada etika kerahsiaan maklumat peribadi dan tidak melibatkan sebarang pinjaman baharu bagi pihak anda.
           </p>
         </div>
       </div>
 
       <div class="lg:col-span-7">
-        <div class="list-divided border-t border-[var(--site-line)]">
+        <div class="list-divided border-y border-[var(--site-line)]">
           {principles.map((p, idx) => (
-            <div class="py-7 flex gap-6 items-baseline">
-              <span class="font-mono text-xs font-bold text-[var(--site-accent)] tracking-widest shrink-0">
+            <div class="editorial-row py-8 flex gap-6 items-baseline">
+              <span class="font-mono text-sm font-bold text-[var(--site-accent)] tracking-widest shrink-0">
                 0{idx + 1}
               </span>
               <div>
-                <h3 class="text-base font-bold text-[var(--site-heading)] mb-2">
+                <h3 class="text-lg font-bold text-[var(--site-heading)] tracking-tight mb-2">
                   {p.title}
                 </h3>
                 <p class="body-text text-sm md:text-base leading-relaxed">
@@ -155,32 +155,38 @@ const legalFacts = [
   </div>
 </section>
 
-<!-- Section 3: Legal Facts & Clarifications (Pure Editorial Typography, Zero Boxes) -->
+<!-- Section 3: Legal Facts & Clarifications (Pure Editorial Divided Rows, Zero Boxes/Grids) -->
 <section class="site-section bg-[var(--site-bg)]">
   <div class="site-container">
-    <div class="max-w-2xl mb-14">
+    <div class="max-w-2xl mb-14 md:mb-16">
       <span class="eyebrow mb-3">Fakta Undang-Undang</span>
       <h2 class="h-section mt-2">
         Hak Anda Di Sisi Undang-Undang Malaysia.
       </h2>
-      <p class="body-text text-base mt-4">
+      <p class="lead mt-4">
         Ketahui asas perundangan penting sebelum membuat sebarang keputusan atau bayaran tambahan.
       </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12 border-t border-[var(--site-line)] pt-12">
+    <div class="list-divided border-y border-[var(--site-line)]">
       {legalFacts.map((fact) => (
-        <div>
-          <span class="font-mono text-xs font-bold text-[var(--site-accent)] uppercase tracking-widest block mb-2">
-            {fact.statute}
-          </span>
-          <h3 class="text-lg font-bold text-[var(--site-heading)] tracking-tight mb-2">
-            {fact.title}
-          </h3>
-          <p class="body-text text-sm md:text-base leading-relaxed">
-            {fact.desc}
-          </p>
-        </div>
+        <article class="editorial-row py-8 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-baseline">
+          <div class="md:col-span-3">
+            <span class="font-mono text-xs font-bold text-[var(--site-accent)] uppercase tracking-widest">
+              {fact.statute}
+            </span>
+          </div>
+          <div class="md:col-span-4">
+            <h3 class="text-lg md:text-xl font-bold text-[var(--site-heading)] tracking-tight">
+              {fact.title}
+            </h3>
+          </div>
+          <div class="md:col-span-5">
+            <p class="body-text text-sm md:text-base leading-relaxed">
+              {fact.desc}
+            </p>
+          </div>
+        </article>
       ))}
     </div>
   </div>

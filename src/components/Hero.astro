@@ -19,27 +19,28 @@ const {
 ---
 
 {showDetails ? (
-  <section class="hero-banner relative min-h-[75vh] md:min-h-[84vh] pt-36 pb-20 md:pt-44 md:pb-28 flex items-end bg-[#070c18] text-white overflow-hidden">
+  <section class="hero-banner relative min-h-[82vh] md:min-h-[88vh] pt-36 pb-14 md:pt-44 md:pb-16 flex flex-col justify-end bg-[#060b16] text-white overflow-hidden">
     <!-- Crisp Professional Banner Photography -->
     <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <Image
         src={backgroundImage}
         alt="Team Email Rakyat Pusat Advokasi Pengguna Malaysia"
-        class="w-full h-full object-cover object-center opacity-100"
+        class="w-full h-full object-cover object-center opacity-100 scale-[1.01]"
         loading="eager"
         fetchpriority="high"
         widths={[640, 1024, 1536, 1920]}
         sizes="100vw"
       />
       <!-- Balanced Cinematic Gradient so the Photo Shines Through Clearly -->
-      <div class="absolute inset-0 bg-gradient-to-t from-[#070c18] via-[#070c18]/55 to-[#070c18]/40" />
-      <div class="absolute inset-0 bg-gradient-to-r from-[#070c18]/85 via-[#070c18]/40 to-transparent" />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/60 to-[#060b16]/35" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#060b16]/88 via-[#060b16]/45 to-transparent" />
     </div>
 
     <div class="site-container relative z-10 w-full">
       <div class="max-w-2xl">
-        <p class="font-mono text-xs uppercase tracking-[0.22em] text-[#f0c351] mb-4 drop-shadow">
-          Team Email Rakyat &middot; Malaysia
+        <p class="inline-flex items-center gap-3 font-mono text-xs font-bold uppercase tracking-[0.22em] text-[#f2c659] mb-4 drop-shadow">
+          <span class="w-6 h-[1.5px] bg-[#f2c659] inline-block"></span>
+          <span>Team Email Rakyat &middot; Malaysia</span>
         </p>
 
         <h1
@@ -47,34 +48,51 @@ const {
           style="color: #ffffff !important;"
         >
           Selesaikan Isu Ah Long
-          <span class="text-[#f0c351] block mt-1">Secara Sah.</span>
+          <span class="text-[#f2c659] block mt-1">Secara Sah.</span>
         </h1>
 
         <p
-          class="hero-subtitle text-sm sm:text-base text-slate-200 tracking-wide mb-9 drop-shadow"
+          class="hero-subtitle text-sm sm:text-base md:text-lg text-slate-200 leading-relaxed max-w-xl mb-9 drop-shadow"
           style="color: #f1f5f9 !important;"
         >
-          Sulit &middot; Profesional &middot; Berlandaskan Undang-Undang
+          Perundingan advokasi pengguna swasta yang sulit, tegas, dan berlandaskan peruntukan statut undang-undang negara.
         </p>
 
         <div class="flex flex-wrap items-center gap-6">
-          <a href="/hubungi" class="btn-primary !bg-[#e2b03a] hover:!bg-[#f0c351] !text-[#070c18]">
-            Dapatkan Bantuan
+          <a href="/hubungi" class="btn-primary !bg-[#e2b03a] hover:!bg-[#f2c659] !text-[#060b16]">
+            <span>Dapatkan Bantuan Sulit</span>
+            <span aria-hidden="true">→</span>
           </a>
 
           <a
             href="/perkhidmatan"
-            class="link-arrow text-white hover:text-[#f0c351] py-2 drop-shadow"
+            class="link-arrow text-white hover:text-[#f2c659] py-2 drop-shadow"
             style="color: #ffffff !important;"
           >
-            Lihat Perkhidmatan
+            Lihat Skop Perkhidmatan
           </a>
+        </div>
+      </div>
+
+      <!-- Architectural Key Credentials Strip (Zero Boxes, Open Hairline Top Border) -->
+      <div class="mt-14 md:mt-20 pt-8 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-12 max-w-3xl">
+        <div>
+          <span class="block text-2xl sm:text-3xl font-extrabold text-[#f2c659] tracking-tight">20+ Tahun</span>
+          <span class="block text-xs text-slate-300 mt-1" style="color: #cbd5e1 !important;">Pengalaman Advokasi &amp; Media</span>
+        </div>
+        <div>
+          <span class="block text-2xl sm:text-3xl font-extrabold text-white tracking-tight" style="color: #ffffff !important;">20,000+</span>
+          <span class="block text-xs text-slate-300 mt-1" style="color: #cbd5e1 !important;">Aduan Rakyat Diselesaikan</span>
+        </div>
+        <div class="col-span-2 sm:col-span-1 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/10">
+          <span class="block text-2xl sm:text-3xl font-extrabold text-white tracking-tight" style="color: #ffffff !important;">100% Sah</span>
+          <span class="block text-xs text-slate-300 mt-1" style="color: #cbd5e1 !important;">Berlandaskan Statut &amp; Sulit</span>
         </div>
       </div>
     </div>
   </section>
 ) : (
-  <header class="hero-banner relative min-h-[340px] md:min-h-[420px] pt-36 pb-14 md:pt-44 md:pb-20 flex items-end bg-[#070c18] text-white border-b border-white/10 overflow-hidden">
+  <header class="hero-banner relative min-h-[340px] md:min-h-[420px] pt-36 pb-14 md:pt-44 md:pb-20 flex items-end bg-[#060b16] text-white border-b border-white/10 overflow-hidden">
     <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <Image
         src={backgroundImage}
@@ -84,15 +102,16 @@ const {
         widths={[640, 1024, 1536, 1920]}
         sizes="100vw"
       />
-      <div class="absolute inset-0 bg-gradient-to-t from-[#070c18] via-[#070c18]/50 to-[#070c18]/40" />
-      <div class="absolute inset-0 bg-gradient-to-r from-[#070c18]/80 via-[#070c18]/35 to-transparent" />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#060b16] via-[#060b16]/55 to-[#060b16]/35" />
+      <div class="absolute inset-0 bg-gradient-to-r from-[#060b16]/85 via-[#060b16]/40 to-transparent" />
     </div>
 
     <div class="site-container relative z-10 w-full">
       <div class="max-w-2xl">
         {line2 && (
-          <p class="font-mono text-xs uppercase tracking-[0.2em] text-[#f0c351] mb-3 drop-shadow">
-            {line2}
+          <p class="inline-flex items-center gap-3 font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#f2c659] mb-3 drop-shadow">
+            <span class="w-6 h-[1.5px] bg-[#f2c659] inline-block"></span>
+            <span>{line2}</span>
           </p>
         )}
 
@@ -126,6 +145,6 @@ const {
   html[data-theme="light"] .hero-banner .link-arrow:hover,
   html.theme-light .hero-banner .link-arrow:hover,
   .hero-banner .link-arrow:hover {
-    color: #f0c351 !important;
+    color: #f2c659 !important;
   }
 </style>

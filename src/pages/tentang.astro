@@ -8,15 +8,33 @@ import chairmanImg from "../assets/chairman.webp";
 import ceoImg from "../assets/ceo.webp";
 import cfoImg from "../assets/CFO.webp";
 
+const coreValues = [
+  {
+    num: "01",
+    title: "Integriti Mutlak",
+    desc: "Prinsip teguh tanpa sebarang kompromi dengan sindiket. Setiap nasihat dan tindakan berlandaskan peruntukan undang-undang Malaysia."
+  },
+  {
+    num: "02",
+    title: "Kerahsiaan Terpelihara",
+    desc: "Maklumat dan identiti pengadu dilindungi sepenuhnya dalam zon perundingan yang selamat, peribadi, dan beretika."
+  },
+  {
+    num: "03",
+    title: "Profesionalisme Berdokumen",
+    desc: "Setiap tindakan disokong fakta kukuh, rekod kronologi berdokumen, dan prosedur advokasi rasmi yang teratur."
+  }
+];
+
 const leadership = [
   {
     name: "Raja Emel",
     role: "Pengasas (Founder)",
     image: chairmanImg,
     description: `
-      <p class="mb-2">Raja Emel merupakan seorang bekas pengamal media arus perdana New Straits Times dan aktivis masyarakat yang berpengalaman lebih kurang 20 tahun. Sepanjang tempoh tersebut, beliau telah menyelesaikan kira-kira 20,000 aduan rakyat Malaysia, dengan pendekatan unik menggunakan medium emel sepenuhnya, sehingga digelar “Raja Emel”.</p>
+      <p class="mb-3">Raja Emel merupakan seorang bekas pengamal media arus perdana New Straits Times dan aktivis masyarakat yang berpengalaman lebih kurang 20 tahun. Sepanjang tempoh tersebut, beliau telah menyelesaikan kira-kira 20,000 aduan rakyat Malaysia, dengan pendekatan unik menggunakan medium emel sepenuhnya, sehingga digelar “Raja Emel”.</p>
 
-      <p class="mb-2">Beliau mempunyai minat mendalam dalam memperjuangkan dan menyelesaikan isu-isu rakyat, berlandaskan ilmu, pengalaman serta kefahaman terhadap sistem dan tatakelola agensi berkaitan. Gabungan pengalaman media, kemahiran komunikasi dan ketekunan dalam tindakan telah membolehkan beliau membantu rakyat mendapatkan keadilan serta penyelesaian yang sewajarnya.</p>
+      <p class="mb-3">Beliau mempunyai minat mendalam dalam memperjuangkan dan menyelesaikan isu-isu rakyat, berlandaskan ilmu, pengalaman serta kefahaman terhadap sistem dan tatakelola agensi berkaitan. Gabungan pengalaman media, kemahiran komunikasi dan ketekunan dalam tindakan telah membolehkan beliau membantu rakyat mendapatkan keadilan serta penyelesaian yang sewajarnya.</p>
 
       <p>Beliau juga dikenali sebagai seorang pejuang rakyat yang kental dan berprinsip, tidak pernah gentar atau takut dalam memperjuangkan isu-isu rakyat, walaupun berdepan tekanan, cabaran atau halangan daripada pihak berkepentingan.</p>
     `,
@@ -26,9 +44,9 @@ const leadership = [
     role: "Ketua Pegawai Eksekutif (CEO)",
     image: ceoImg,
     description: `
-      <p class="mb-2">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran. Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat. Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
+      <p class="mb-3">Tuan Jazz merupakan seorang individu yang berdedikasi dan berprinsip, dengan pengalaman dalam pengurusan operasi perniagaan, sokongan konsultansi, serta penyelarasan pentadbiran. Beliau juga aktif dalam kerja-kerja aktivisme dan advokasi, khususnya dalam usaha meningkatkan kesedaran awam, sokongan komuniti, serta inisiatif berkaitan hak dan kebajikan masyarakat. Penglibatan ini mencerminkan komitmen beliau terhadap tanggungjawab sosial, ketelusan, dan penglibatan awam yang bermakna.</p>
 
-      <p class="mb-2">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh. Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah. Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
+      <p class="mb-3">Selain pengalaman operasi, Tuan Jazz memiliki kemahiran perhubungan awam dan komunikasi yang kukuh. Beliau berpengalaman dalam mengurus hubungan dengan pihak berkepentingan, mengendalikan komunikasi sensitif, menyelaras penyampaian mesej awam, serta berinteraksi dengan pelbagai lapisan masyarakat secara profesional dan berhemah. Keupayaan beliau berkomunikasi secara jelas dan strategik membolehkan beliau menjadi penghubung berkesan antara organisasi, masyarakat awam, dan pihak berkuasa berkaitan.</p>
 
       <p>Dikenali dengan integriti, ketelitian, dan pendekatan yang tenang dalam situasi mencabar, Tuan Jazz menggabungkan pengetahuan praktikal perniagaan dengan nilai advokasi yang kukuh. Beliau terus memperkasa kemahiran dan pengalamannya melalui penglibatan langsung dan kerjasama strategik, dengan matlamat menyumbang secara positif kepada pembangunan organisasi, pemerkasaan komuniti, dan impak jangka panjang yang mampan.</p>
     `,
@@ -38,9 +56,9 @@ const leadership = [
     role: "Ketua Pegawai Kewangan (CFO)",
     image: cfoImg,
     description: `
-      <p class="mb-2">Muhammad Hafiz merupakan seorang profesional korporat dengan hampir 20 tahun pengalaman dalam bidang kewangan, pembangunan perniagaan, operasi dan pengurusan strategik merangkumi pelbagai industri termasuk keusahawanan, hartanah, teknologi informasi, kejuteraan, makanan & minuman, pusat data, analisis pemasaran, pengurusan acara, peruncitan, perkhidmatan, pemasaran, kecergasan, kitar semula, dan aktivis.</p>
+      <p class="mb-3">Muhammad Hafiz merupakan seorang profesional korporat dengan hampir 20 tahun pengalaman dalam bidang kewangan, pembangunan perniagaan, operasi dan pengurusan strategik merangkumi pelbagai industri termasuk keusahawanan, hartanah, teknologi informasi, kejuteraan, makanan & minuman, pusat data, analisis pemasaran, pengurusan acara, peruncitan, perkhidmatan, pemasaran, kecergasan, kitar semula, dan aktivis.</p>
 
-      <p class="mb-2">Sebagai Chief Financial Officer (CFO), beliau bertanggungjawab menerajui strategi kewangan syarikat, pengurusan cash flow, kawalan kos, tadbir urus serta menyokong keputusan perniagaan melalui analisis kewangan dan perancangan strategik.</p>
+      <p>Sebagai Chief Financial Officer (CFO), beliau bertanggungjawab menerajui strategi kewangan syarikat, pengurusan cash flow, kawalan kos, tadbir urus serta menyokong keputusan perniagaan melalui analisis kewangan dan perancangan strategik.</p>
     `,
   },
 ];
@@ -58,45 +76,41 @@ const leadership = [
   />
 
   <main class="site-container py-16 md:py-24">
-    <!-- Philosophy & Mission (Editorial, Zero Boxes) -->
-    <section class="max-w-3xl mb-20 md:mb-28">
-      <span class="pill-accent mb-4">Falsafah &amp; Misi</span>
-      <h2 class="h-page mt-2 mb-6">
-        Memperkasa hak, memulihkan maruah dan kehidupan.
-      </h2>
-      <p class="lead mb-6">
-        <strong class="text-[var(--site-heading)] font-bold">Team Email Rakyat</strong> ditubuhkan sebagai benteng pertahanan pengguna. Misi kami adalah menyediakan khidmat perundingan yang bebas, tegas, dan berfakta bagi membebaskan masyarakat daripada belenggu penindasan dan pinjaman tanpa lesen.
-      </p>
-      <p class="body-text text-sm">
-        <span class="text-[var(--site-heading)] font-bold">Identiti Khidmat:</span> Pusat perunding advokasi dan khidmat nasihat swasta berdaftar di Malaysia dalam bidang perlindungan hak pengguna dan penyelesaian hutang secara sah berlandaskan undang-undang.
-      </p>
-    </section>
-
-    <!-- Core Values: Minimalist 3-Column without card boxes -->
-    <section class="site-section">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
-        <div>
-          <span class="text-xs font-mono text-[var(--site-accent)] font-bold block mb-3">01 / NILAI TERAS</span>
-          <h3 class="h-item mb-2">Integriti Mutlak</h3>
+    <!-- Philosophy & Mission + Core Values (Editorial Split, Zero Boxes) -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mb-20 md:mb-28">
+      <div class="lg:col-span-6">
+        <span class="pill-accent mb-4">Falsafah &amp; Misi</span>
+        <h2 class="h-page mt-2 mb-6">
+          Memperkasa hak, memulihkan maruah dan kehidupan.
+        </h2>
+        <p class="lead mb-6">
+          <strong class="text-[var(--site-heading)] font-bold">Team Email Rakyat</strong> ditubuhkan sebagai benteng pertahanan pengguna. Misi kami adalah menyediakan khidmat perundingan yang bebas, tegas, dan berfakta bagi membebaskan masyarakat daripada belenggu penindasan dan pinjaman tanpa lesen.
+        </p>
+        <div class="border-l-2 border-[var(--site-accent)] pl-5 py-1">
           <p class="body-text text-sm">
-            Prinsip teguh tanpa sebarang kompromi dengan sindiket. Setiap nasihat dan tindakan berlandaskan peruntukan undang-undang Malaysia.
+            <strong class="text-[var(--site-heading)] font-bold">Identiti Khidmat:</strong> Pusat perunding advokasi dan khidmat nasihat swasta berdaftar di Malaysia dalam bidang perlindungan hak pengguna dan penyelesaian hutang secara sah berlandaskan undang-undang.
           </p>
         </div>
+      </div>
 
-        <div>
-          <span class="text-xs font-mono text-[var(--site-accent)] font-bold block mb-3">02 / NILAI TERAS</span>
-          <h3 class="h-item mb-2">Kerahsiaan Terpelihara</h3>
-          <p class="body-text text-sm">
-            Maklumat dan identiti pengadu dilindungi sepenuhnya dalam zon perundingan yang selamat, peribadi, dan beretika.
-          </p>
-        </div>
-
-        <div>
-          <span class="text-xs font-mono text-[var(--site-accent)] font-bold block mb-3">03 / NILAI TERAS</span>
-          <h3 class="h-item mb-2">Profesionalisme</h3>
-          <p class="body-text text-sm">
-            Setiap tindakan disokong fakta kukuh, rekod kronologi berdokumen, dan prosedur advokasi rasmi yang teratur.
-          </p>
+      <div class="lg:col-span-6">
+        <span class="eyebrow mb-4">Prinsip &amp; Nilai Teras</span>
+        <div class="border-y border-[var(--site-line)] divide-y divide-[var(--site-line)] mt-2">
+          {coreValues.map((val) => (
+            <div class="editorial-row py-7 flex gap-6 items-baseline">
+              <span class="text-xs font-mono text-[var(--site-accent)] font-bold tracking-widest shrink-0">
+                {val.num}
+              </span>
+              <div>
+                <h3 class="text-lg font-bold text-[var(--site-heading)] tracking-tight mb-1.5">
+                  {val.title}
+                </h3>
+                <p class="body-text text-sm md:text-base leading-relaxed">
+                  {val.desc}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -111,10 +125,10 @@ const leadership = [
         </p>
       </div>
 
-      <div class="divide-y divide-[var(--site-line)]">
+      <div class="border-t border-[var(--site-line)] divide-y divide-[var(--site-line)]">
         {
           leadership.map((leader) => (
-            <article class="py-12 md:py-16 first:pt-0 last:pb-0 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
+            <article class="py-12 md:py-16 last:pb-0 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
               <div class="md:col-span-4 lg:col-span-3">
                 <div class="aspect-[3/4] w-full max-w-[240px] overflow-hidden rounded border border-[var(--site-line)] bg-[var(--site-surface)] shadow-sm">
                   <Image
@@ -126,17 +140,17 @@ const leadership = [
               </div>
 
               <div class="md:col-span-8 lg:col-span-9">
-                <div class="mb-4">
-                  <span class="text-xs font-mono font-bold text-[var(--site-accent)] uppercase tracking-wider block mb-1">
+                <div class="mb-5">
+                  <span class="eyebrow mb-2">
                     {leader.role}
                   </span>
-                  <h3 class="text-2xl md:text-3xl font-bold text-[var(--site-heading)] tracking-tight">
+                  <h3 class="text-2xl md:text-3xl font-extrabold text-[var(--site-heading)] tracking-tight mt-1">
                     {leader.name}
                   </h3>
                 </div>
 
                 <div
-                  class="body-text space-y-3 leading-relaxed text-sm md:text-base text-[var(--site-muted)]"
+                  class="body-text leading-relaxed text-sm md:text-base text-[var(--site-muted)] max-w-3xl"
                   set:html={leader.description}
                 />
               </div>

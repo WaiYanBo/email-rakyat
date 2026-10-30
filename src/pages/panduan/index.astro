@@ -75,7 +75,7 @@ const pageDesc = "Koleksi panduan dan rujukan undang-undang sah bagi mangsa pinj
         {sortedGuides.map((guide, index) => {
           const slug = guide.id.replace(/\.mdx?$/, '');
           return (
-            <article class="py-8 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-start">
+            <article class="editorial-row group py-8 md:py-10 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-start">
               <div class="md:col-span-1 text-xs font-mono font-bold text-[var(--site-accent)]">
                 {String(index + 1).padStart(2, '0')}
               </div>
@@ -87,17 +87,17 @@ const pageDesc = "Koleksi panduan dan rujukan undang-undang sah bagi mangsa pinj
                   <span>{guide.data.readTime}</span>
                 </div>
 
-                <h3 class="text-xl font-bold text-[var(--site-heading)] mb-3">
-                  <a href={`/panduan/${slug}`} class="hover:text-[var(--site-accent)] transition-colors">
+                <h3 class="text-xl md:text-2xl font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors tracking-tight mb-3">
+                  <a href={`/panduan/${slug}`}>
                     {guide.data.title}
                   </a>
                 </h3>
 
-                <p class="body-text text-sm leading-relaxed mb-4">
+                <p class="body-text text-sm md:text-base leading-relaxed mb-4">
                   {guide.data.description}
                 </p>
 
-                <span class="text-xs text-[var(--site-subtle)]">
+                <span class="text-xs font-mono text-[var(--site-subtle)]">
                   Oleh {guide.data.author.split('(')[0].trim()}
                 </span>
               </div>
@@ -107,7 +107,7 @@ const pageDesc = "Koleksi panduan dan rujukan undang-undang sah bagi mangsa pinj
                   href={`/panduan/${slug}`}
                   class="link-arrow text-sm"
                 >
-                  Baca
+                  Baca Panduan
                 </a>
               </div>
             </article>

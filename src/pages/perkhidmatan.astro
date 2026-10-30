@@ -31,22 +31,22 @@ const steps = [
   {
     id: 1,
     title: "Kumpul Bukti",
-    description: "Analisis bukti ancaman dan pengesahan fakta kes."
+    description: "Analisis bukti ancaman, resit transaksi, dan pengesahan fakta kes secara terperinci."
   },
   {
     id: 2,
     title: "Draf Repot",
-    description: "Penyusunan fakta kronologi untuk laporan polis yang teknikal."
+    description: "Penyusunan fakta kronologi untuk laporan polis teknikal yang merangkumi elemen jenayah spesifik."
   },
   {
     id: 3,
     title: "Proses Undang-Undang",
-    description: "Desakan agar Kertas Siasatan (Investigation Paper) dibuka untuk pendakwaan."
+    description: "Desakan rasmi agar Kertas Siasatan (Investigation Paper) dibuka untuk tindakan pendakwaan."
   },
   {
     id: 4,
     title: "Pemantauan Kes",
-    description: "Rekod corak gangguan susulan sebagai bukti tambahan."
+    description: "Rekod corak gangguan susulan sebagai bukti tambahan sehingga kes selesai sepenuhnya."
   }
 ];
 ---
@@ -65,8 +65,8 @@ const steps = [
   <main class="site-container py-16 md:py-24">
     <!-- Header -->
     <div class="max-w-3xl mb-16 md:mb-20">
-      <span class="eyebrow eyebrow-accent mb-4 block">Bidang Kuasa &amp; Skop Tindakan</span>
-      <h2 class="h-page mb-6">
+      <span class="eyebrow eyebrow-accent mb-4">Bidang Kuasa &amp; Skop Tindakan</span>
+      <h2 class="h-page mt-2 mb-6">
         Solusi advokasi, bimbingan fakta, dan perlindungan pengguna.
       </h2>
       <p class="lead">
@@ -75,10 +75,10 @@ const steps = [
     </div>
 
     <!-- Services: Clean Linear Divided List (Zero Boxes) -->
-    <section class="border-t border-[var(--site-line)] divide-y divide-[var(--site-line)]">
+    <section class="border-y border-[var(--site-line)] divide-y divide-[var(--site-line)]">
       {
         services.map((service, index) => (
-          <article id={service.id} class="py-10 md:py-14 scroll-mt-28 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-start">
+          <article id={service.id} class="editorial-row py-10 md:py-14 scroll-mt-28 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-10 items-baseline">
             <div class="md:col-span-1 text-sm font-mono font-bold text-[var(--site-accent)]">
               {String(index + 1).padStart(2, "0")}
             </div>
@@ -99,32 +99,36 @@ const steps = [
       }
     </section>
 
-    <!-- Methodology: Clean 4-Phase Flow (Zero Boxes) -->
-    <section class="site-section mt-16 md:mt-24">
-      <div class="max-w-2xl mb-14 md:mb-16">
-        <span class="eyebrow eyebrow-accent mb-3 block">Metodologi Tindakan</span>
-        <h2 class="h-section">Proses 4 Fasa Pemulihan Kes</h2>
-        <p class="lead mt-3">
-          Langkah kerja sistematik dan berlandaskan statut undang-undang bagi menjamin keselamatan mangsa dan keluarga.
-        </p>
-      </div>
+    <!-- Methodology: Clean Divided Editorial Rows (Zero Boxes / Grids) -->
+    <section class="site-section mt-16 md:mt-24 !border-t-0 !pt-0">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div class="lg:col-span-5 lg:sticky lg:top-28">
+          <span class="eyebrow eyebrow-accent mb-3">Metodologi Tindakan</span>
+          <h2 class="h-section mt-2 mb-4">Proses 4 Fasa Pemulihan Kes</h2>
+          <p class="lead">
+            Langkah kerja sistematik dan berlandaskan statut undang-undang bagi menjamin keselamatan mangsa dan keluarga.
+          </p>
+        </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 border-t border-[var(--site-line)] pt-10">
-        {
-          steps.map((step) => (
-            <div class="flex flex-col">
-              <span class="text-xs font-mono font-bold text-[var(--site-accent)] mb-3 block">
-                FASA {String(step.id).padStart(2, "0")}
-              </span>
-              <h3 class="h-item mb-2 text-[var(--site-heading)]">
-                {step.title}
-              </h3>
-              <p class="body-text text-sm leading-relaxed">
-                {step.description}
-              </p>
-            </div>
-          ))
-        }
+        <div class="lg:col-span-7 border-y border-[var(--site-line)] divide-y divide-[var(--site-line)]">
+          {
+            steps.map((step) => (
+              <div class="editorial-row py-8 flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-8">
+                <span class="text-xs font-mono font-bold text-[var(--site-accent)] tracking-widest shrink-0">
+                  FASA {String(step.id).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 class="text-lg md:text-xl font-bold mb-2 text-[var(--site-heading)] tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p class="body-text text-sm md:text-base leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
       </div>
     </section>
   </main>

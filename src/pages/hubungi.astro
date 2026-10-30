@@ -5,6 +5,24 @@ import { Image } from "astro:assets";
 
 import hubungiBg from "../assets/banner-hubungi.jpg";
 import shazzImg from "../assets/shazz.webp";
+
+const prepItems = [
+  {
+    num: "01",
+    title: "Butiran Kes",
+    desc: "Nama pihak terlibat, punca pinjaman, tempoh gangguan, dan sama ada melibatkan ceti haram (Ah Long), ejen kutipan hutang, atau syarikat kredit berlesen."
+  },
+  {
+    num: "02",
+    title: "Bukti Sokongan",
+    desc: "Tangkap layar mesej WhatsApp, rakaman panggilan, nombor akaun bank pihak terlibat, resit transaksi bayaran, surat ugutan, atau bukti gangguan fizikal."
+  },
+  {
+    num: "03",
+    title: "Status Semasa",
+    desc: "Maklumkan jika laporan polis telah dibuat, jika wujud ancaman fizikal secara langsung, atau jika anda memerlukan panduan teknikal untuk tindakan selanjutnya."
+  }
+];
 ---
 
 <Layout
@@ -21,10 +39,8 @@ import shazzImg from "../assets/shazz.webp";
   <main class="site-container py-16 md:py-24">
     <!-- Header -->
     <div class="max-w-3xl mb-16 md:mb-20">
-      <span class="eyebrow eyebrow-accent mb-4 block"
-        >Saluran Perhubungan Rasmi</span
-      >
-      <h2 class="h-page mb-6">Hubungi talian bantuan dan khidmat nasihat.</h2>
+      <span class="eyebrow eyebrow-accent mb-4">Saluran Perhubungan Rasmi</span>
+      <h2 class="h-page mt-2 mb-6">Hubungi talian bantuan dan khidmat nasihat.</h2>
       <p class="lead">
         Sekiranya anda memerlukan bimbingan kecemasan atau ingin membuat temu
         janji konsultasi, sila hubungi pegawai bertugas kami. Segala maklumat
@@ -39,12 +55,8 @@ import shazzImg from "../assets/shazz.webp";
       <!-- Officer in Charge -->
       <div class="md:col-span-7 space-y-8">
         <div>
-          <span
-            class="text-xs font-mono font-bold text-[var(--site-accent)] uppercase tracking-wider block mb-2"
-          >
-            Pegawai Bertugas
-          </span>
-          <div class="flex items-center gap-4">
+          <span class="eyebrow mb-4">Pegawai Bertugas</span>
+          <div class="flex items-center gap-4 mt-2">
             <Image
               src={shazzImg}
               alt="Puan Shazz Medley"
@@ -52,11 +64,11 @@ import shazzImg from "../assets/shazz.webp";
             />
             <div>
               <h3
-                class="text-xl md:text-2xl font-bold text-[var(--site-heading)]"
+                class="text-xl md:text-2xl font-bold text-[var(--site-heading)] tracking-tight"
               >
                 Puan Shazz Medley
               </h3>
-              <p class="text-xs text-[var(--site-muted)]">
+              <p class="text-xs font-mono uppercase tracking-wider text-[var(--site-muted)] mt-0.5">
                 Pengurus Pentadbiran
               </p>
             </div>
@@ -64,7 +76,7 @@ import shazzImg from "../assets/shazz.webp";
         </div>
 
         <div
-          class="border-t border-[var(--site-line)] divide-y divide-[var(--site-line)] pt-2"
+          class="border-y border-[var(--site-line)] divide-y divide-[var(--site-line)]"
         >
           <!-- WhatsApp Link -->
           <a
@@ -72,15 +84,15 @@ import shazzImg from "../assets/shazz.webp";
             target="_blank"
             rel="noopener noreferrer"
             onclick="return gtag_report_conversion('https://WaiYanTeamEmailRakyat.wasap.my');"
-            class="flex items-center justify-between py-5 transition-colors group"
+            class="editorial-row flex items-center justify-between py-6 transition-colors group"
           >
             <div>
               <span
-                class="text-xs font-mono text-[var(--site-subtle)] uppercase block mb-1"
+                class="text-xs font-mono text-[var(--site-subtle)] uppercase tracking-wider block mb-1"
                 >WhatsApp / Panggilan Rasmi</span
               >
               <span
-                class="text-base font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors"
+                class="text-lg md:text-xl font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors tracking-tight"
               >
                 012-623 2949
               </span>
@@ -96,16 +108,16 @@ import shazzImg from "../assets/shazz.webp";
             data-domain="e-rakyat.com"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center justify-between py-5 transition-colors group"
+            class="editorial-row flex items-center justify-between py-6 transition-colors group"
           >
             <div>
               <span
-                class="text-xs font-mono text-[var(--site-subtle)] uppercase block mb-1"
+                class="text-xs font-mono text-[var(--site-subtle)] uppercase tracking-wider block mb-1"
                 >E-Mel Pertanyaan Rasmi</span
               >
               <span
                 id="email-display"
-                class="text-base font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors break-all"
+                class="text-lg md:text-xl font-bold text-[var(--site-heading)] group-hover:text-[var(--site-accent)] transition-colors break-all tracking-tight"
               >
                 Klik untuk paparkan emel
               </span>
@@ -144,105 +156,71 @@ import shazzImg from "../assets/shazz.webp";
         class="md:col-span-5 border-t md:border-t-0 md:border-l border-[var(--site-line)] pt-8 md:pt-0 md:pl-10 space-y-6"
       >
         <div>
-          <span
-            class="text-xs font-mono font-bold text-[var(--site-accent)] uppercase tracking-wider block mb-2"
-          >
-            Jadual Operasi
-          </span>
-          <h3 class="text-xl font-bold text-[var(--site-heading)] mb-4">
+          <span class="eyebrow mb-3">Jadual Operasi</span>
+          <h3 class="text-xl font-bold text-[var(--site-heading)] tracking-tight mt-2 mb-5">
             Waktu Pejabat &amp; Konsultasi
           </h3>
-          <dl class="space-y-4 text-sm">
-            <div>
+          <dl class="divide-y divide-[var(--site-line)] border-y border-[var(--site-line)] text-sm">
+            <div class="py-3.5 flex justify-between items-baseline gap-4">
               <dt class="text-[var(--site-subtle)] text-xs font-mono uppercase">
                 Hari Bertugas
               </dt>
-              <dd
-                class="text-[var(--site-heading)] font-semibold text-base mt-0.5"
-              >
+              <dd class="text-[var(--site-heading)] font-bold text-right">
                 Selasa hingga Ahad
               </dd>
             </div>
-            <div>
+            <div class="py-3.5 flex justify-between items-baseline gap-4">
               <dt class="text-[var(--site-subtle)] text-xs font-mono uppercase">
-                Waktu Beroperasi
+                Waktu Operasi
               </dt>
-              <dd
-                class="text-[var(--site-heading)] font-semibold text-base mt-0.5"
-              >
+              <dd class="text-[var(--site-heading)] font-bold text-right">
                 10:00 Pagi – 6:00 Petang
               </dd>
             </div>
-            <div>
+            <div class="py-3.5 flex justify-between items-baseline gap-4">
               <dt class="text-[var(--site-subtle)] text-xs font-mono uppercase">
                 Hari Cuti
               </dt>
-              <dd class="text-[var(--site-muted)] mt-0.5">Setiap hari Isnin</dd>
+              <dd class="text-[var(--site-muted)] text-right">Setiap hari Isnin</dd>
             </div>
           </dl>
         </div>
 
-        <div
-          class="pt-4 border-t border-[var(--site-line)] text-xs text-[var(--site-subtle)] leading-relaxed"
-        >
+        <div class="border-l-2 border-[var(--site-accent)] pl-4 py-1 text-xs text-[var(--site-muted)] leading-relaxed">
           Sesi bersemuka hanya melalui temu janji awal bagi memastikan pegawai
           penyiasat berkaitan bersedia mengkaji fail anda.
         </div>
       </div>
     </div>
 
-    <!-- Preparation Checklist: Minimalist 3-Column (Zero Boxes) -->
+    <!-- Preparation Checklist: Clean Divided Rows (Zero Boxes/Grids) -->
     <section class="site-section mt-16 md:mt-24">
-      <div class="max-w-2xl mb-12">
-        <span class="eyebrow eyebrow-accent mb-3 block">Panduan Persediaan</span
-        >
-        <h2 class="h-section">Sebelum Menghubungi Kami</h2>
-        <p class="lead mt-3">
-          Sediakan butiran ringkas di bawah bagi memudahkan kami menilai fakta
-          kes anda dengan cepat dan tepat.
-        </p>
-      </div>
-
-      <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 border-t border-[var(--site-line)] pt-10"
-      >
-        <div>
-          <span
-            class="text-xs font-mono font-bold text-[var(--site-accent)] block mb-3"
-            >01 / DOKUMEN</span
-          >
-          <h3 class="h-item mb-2 text-[var(--site-heading)]">Butiran Kes</h3>
-          <p class="body-text text-sm">
-            Nama pihak terlibat, punca pinjaman, tempoh gangguan, dan sama ada
-            melibatkan ceti haram (Ah Long), ejen kutipan hutang, atau syarikat
-            kredit berlesen.
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div class="lg:col-span-5 lg:sticky lg:top-28">
+          <span class="eyebrow eyebrow-accent mb-3">Panduan Persediaan</span>
+          <h2 class="h-section mt-2 mb-4">Sebelum Menghubungi Kami</h2>
+          <p class="lead">
+            Sediakan butiran ringkas ini bagi memudahkan kami menilai fakta
+            kes anda dengan cepat dan tepat.
           </p>
         </div>
 
-        <div>
-          <span
-            class="text-xs font-mono font-bold text-[var(--site-accent)] block mb-3"
-            >02 / DOKUMEN</span
-          >
-          <h3 class="h-item mb-2 text-[var(--site-heading)]">Bukti Sokongan</h3>
-          <p class="body-text text-sm">
-            Tangkap layar mesej WhatsApp, rakaman panggilan, nombor akaun bank
-            pihak terlibat, resit transaksi bayaran, surat ugutan, atau bukti
-            gangguan fizikal.
-          </p>
-        </div>
-
-        <div>
-          <span
-            class="text-xs font-mono font-bold text-[var(--site-accent)] block mb-3"
-            >03 / DOKUMEN</span
-          >
-          <h3 class="h-item mb-2 text-[var(--site-heading)]">Status Semasa</h3>
-          <p class="body-text text-sm">
-            Maklumkan jika laporan polis telah dibuat, jika wujud ancaman
-            fizikal secara langsung, atau jika anda memerlukan panduan teknikal
-            untuk tindakan selanjutnya.
-          </p>
+        <div class="lg:col-span-7 border-y border-[var(--site-line)] divide-y divide-[var(--site-line)]">
+          {prepItems.map((item) => (
+            <div class="editorial-row py-8 flex flex-col sm:flex-row sm:items-baseline gap-3 sm:gap-8">
+              <span class="text-xs font-mono font-bold text-[var(--site-accent)] tracking-widest shrink-0">
+                {item.num} / DOKUMEN
+              </span>
+              <div>
+                <h3 class="text-lg md:text-xl font-bold mb-2 text-[var(--site-heading)] tracking-tight">
+                  {item.title}
+                </h3>
+                <p class="body-text text-sm md:text-base leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

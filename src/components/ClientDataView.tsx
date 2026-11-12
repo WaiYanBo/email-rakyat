@@ -452,7 +452,7 @@ export default function ClientDataView() {
       let dbReceipts: Record<string, any> = {};
       const sourceReceipts = freshClient?.payment_receipts ?? viewingClient?.payment_receipts;
       if (typeof sourceReceipts === 'string') {
-        try { dbReceipts = JSON.parse(sourceReceipts); } catch {}
+        try { dbReceipts = JSON.parse(sourceReceipts); } catch { }
       } else if (sourceReceipts && typeof sourceReceipts === 'object') {
         dbReceipts = { ...sourceReceipts };
       }
@@ -652,7 +652,7 @@ export default function ClientDataView() {
       try {
         let existingReceipts: Record<string, any> = {};
         if (typeof viewingClient.payment_receipts === 'string') {
-          try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
+          try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch { }
         } else if (viewingClient.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
           existingReceipts = { ...viewingClient.payment_receipts };
         }
@@ -720,7 +720,7 @@ export default function ClientDataView() {
         } else if (docType === 'payment_receipt') {
           let existingReceipts: Record<string, any> = {};
           if (typeof viewingClient.payment_receipts === 'string') {
-            try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch {}
+            try { existingReceipts = JSON.parse(viewingClient.payment_receipts); } catch { }
           } else if (viewingClient.payment_receipts && typeof viewingClient.payment_receipts === 'object') {
             existingReceipts = { ...viewingClient.payment_receipts };
           }
@@ -1155,7 +1155,7 @@ export default function ClientDataView() {
 
     let currentReceipts: Record<string, any> = {};
     if (typeof currentData?.payment_receipts === 'string') {
-      try { currentReceipts = JSON.parse(currentData.payment_receipts); } catch {}
+      try { currentReceipts = JSON.parse(currentData.payment_receipts); } catch { }
     } else if (currentData?.payment_receipts && typeof currentData.payment_receipts === 'object') {
       currentReceipts = { ...currentData.payment_receipts };
     }
@@ -1636,7 +1636,7 @@ export default function ClientDataView() {
       if (typeof editingClient?.payment_receipts === 'string') {
         try {
           updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
-        } catch {}
+        } catch { }
       } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
         updatedReceiptsMap = { ...editingClient.payment_receipts };
       }
@@ -1667,7 +1667,7 @@ export default function ClientDataView() {
             if (savedClientId) {
               try {
                 await supabase.from('clients').update(newAgreementData).eq('id', savedClientId);
-              } catch (_e) {}
+              } catch (_e) { }
             }
           }
         }
@@ -2044,7 +2044,7 @@ export default function ClientDataView() {
                                 {file.name}
                               </p>
                               <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
-                                {new Date(file.created_at).toLocaleDateString()} &middot; {file.size ? (file.size > 1024*1024 ? `${(file.size/(1024*1024)).toFixed(1)} MB` : `${Math.round(file.size/1024)} KB`) : ''}
+                                {new Date(file.created_at).toLocaleDateString()} &middot; {file.size ? (file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`) : ''}
                               </p>
                             </div>
                           </div>
@@ -2535,517 +2535,433 @@ export default function ClientDataView() {
                       lang={lang}
                     />
 
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const lastIdx = policeReportsList.length - 1;
-                        if (lastIdx >= 0) {
-                          const lastDate = (document.querySelector(`input[name="report_date_${lastIdx}"]`) as HTMLInputElement)?.value;
-                          const lastNo = (document.querySelector(`input[name="report_no_${lastIdx}"]`) as HTMLInputElement)?.value;
-                          if (!lastDate?.trim() && !lastNo?.trim()) {
-                            alert(lang === 'bm' ? 'Sila isikan laporan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous report first before adding a new one.');
-                            return;
-                          }
-                        }
-                        setPoliceReportsList([...policeReportsList, { date: '', no: '' }]);
-                      }}
-                      className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
-                    >
-                      + ADD
-                    </button>
-                  </div>
-
-                  {policeReportsList.map((rp, idx) => (
-                    <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
-                      {policeReportsList.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm"
-                        >
-                          ×
-                        </button>
-                      )}
-                      <DateInput
-                        name={`report_date_${idx}`}
-                        label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
-                        defaultValue={rp.date}
-                        lang={lang}
-                      />
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'reportNo', lang)}</label>
-                        <input type="text" name={`report_no_${idx}`} defaultValue={rp.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="sm:col-span-2 mt-4 mb-1 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                      {t('clients', 'reportLocation', lang)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const turnOnManual = !isCustomIpk || !isCustomIpd || !isCustomBalai;
-                        setIsCustomIpk(turnOnManual);
-                        setIsCustomIpd(turnOnManual);
-                        setIsCustomBalai(turnOnManual);
-                      }}
-                      className="text-[11px] font-bold text-indigo-600 dark:text-yellow-500 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      {isCustomIpk && isCustomIpd && isCustomBalai ? (
-                        <>{lang === 'bm' ? '📋 Tukar ke Mod Dropdown' : '📋 Switch to Dropdown Mode'}</>
-                      ) : (
-                        <>{lang === 'bm' ? '✏️ Tukar ke Mod Taip Manual' : '✏️ Switch to Manual Mode'}</>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {`${t('clients', 'statePolice', lang)}`}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomIpk(!isCustomIpk)}
-                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
-                      >
-                        {isCustomIpk ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
-                      </button>
-                    </div>
-
-                    {isCustomIpk ? (
-                      <input
-                        type="text"
-                        name="report_location_ipk"
-                        value={selectedIpk}
-                        onChange={(e) => {
-                          setSelectedIpk(e.target.value);
-                          setSelectedIpd('');
-                        }}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
-                        placeholder={lang === 'bm' ? 'Masukkan IPK / Negeri (cth: IPK Selangor Baru)' : 'Enter IPK / State (e.g. New IPK)'}
-                      />
-                    ) : (
-                      <select
-                        name="report_location_ipk"
-                        value={selectedIpk}
-                        onChange={(e) => {
-                          if (e.target.value === '__CUSTOM__') {
-                            setIsCustomIpk(true);
-                            setSelectedIpk('');
-                            setSelectedIpd('');
-                          } else {
-                            setSelectedIpk(e.target.value);
-                            setSelectedIpd('');
-                          }
-                        }}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
-                      >
-                        <option value="">{lang === 'bm' ? '-- Pilih Kontinjen / Negeri (IPK) --' : '-- Select Police Contingent / State (IPK) --'}</option>
-                        {Object.keys(policeLocations).map(ipk => (
-                          <option key={ipk} value={ipk}>{ipk}</option>
-                        ))}
-                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
-                          ✏️ {lang === 'bm' ? '+ Taip IPK Baru / Custom Manual...' : '+ Type Custom IPK Manually...'}
-                        </option>
-                      </select>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {`${t('clients', 'districtPolice', lang)}`}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomIpd(!isCustomIpd)}
-                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
-                      >
-                        {isCustomIpd ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
-                      </button>
-                    </div>
-
-                    {isCustomIpd ? (
-                      <input
-                        type="text"
-                        name="report_location_ipd"
-                        value={selectedIpd}
-                        onChange={(e) => setSelectedIpd(e.target.value)}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
-                        placeholder={lang === 'bm' ? 'Masukkan IPD (cth: IPD Kuala Langat Baru)' : 'Enter IPD (e.g. New IPD)'}
-                      />
-                    ) : (
-                      <select
-                        name="report_location_ipd"
-                        value={selectedIpd}
-                        onChange={(e) => {
-                          if (e.target.value === '__CUSTOM__') {
-                            setIsCustomIpd(true);
-                            setSelectedIpd('');
-                          } else {
-                            setSelectedIpd(e.target.value);
-                          }
-                        }}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
-                      >
-                        <option value="">{lang === 'bm' ? '-- Pilih Daerah (IPD) --' : '-- Select District (IPD) --'}</option>
-                        {selectedIpk && policeLocations[selectedIpk] ? (
-                          Object.keys(policeLocations[selectedIpk]).map(ipd => (
-                            <option key={ipd} value={ipd}>{ipd}</option>
-                          ))
-                        ) : null}
-                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
-                          ✏️ {lang === 'bm' ? '+ Taip IPD Baru / Custom Manual...' : '+ Type Custom IPD Manually...'}
-                        </option>
-                      </select>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {`${t('clients', 'policeStation', lang)}`}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomBalai(!isCustomBalai)}
-                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
-                      >
-                        {isCustomBalai ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
-                      </button>
-                    </div>
-
-                    {isCustomBalai ? (
-                      <input
-                        type="text"
-                        name="report_location_balai"
-                        value={selectedBalai}
-                        onChange={(e) => setSelectedBalai(e.target.value)}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
-                        placeholder={lang === 'bm' ? 'Masukkan Balai (cth: Balai Polis Banting)' : 'Enter Police Station'}
-                      />
-                    ) : (
-                      <select
-                        name="report_location_balai"
-                        value={selectedBalai}
-                        onChange={(e) => {
-                          if (e.target.value === '__CUSTOM__') {
-                            setIsCustomBalai(true);
-                            setSelectedBalai('');
-                          } else {
-                            setSelectedBalai(e.target.value);
-                          }
-                        }}
-                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
-                      >
-                        <option value="">{lang === 'bm' ? '-- Pilih Balai Polis --' : '-- Select Police Station --'}</option>
-                        {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? (
-                          policeLocations[selectedIpk][selectedIpd].map(balai => (
-                            <option key={balai} value={balai}>{balai}</option>
-                          ))
-                        ) : null}
-                        <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
-                          ✏️ {lang === 'bm' ? '+ Taip Balai Baru / Custom Manual...' : '+ Type Custom Station Manually...'}
-                        </option>
-                      </select>
-                    )}
-                  </div>
-
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const lastIdx = ipList.length - 1;
-                        if (lastIdx >= 0) {
-                          const lastNo = (document.querySelector(`input[name="ip_no_${lastIdx}"]`) as HTMLInputElement)?.value;
-                          const lastPem = (document.querySelector(`select[name="ip_pem_${lastIdx}"]`) as HTMLSelectElement)?.value;
-                          if (!lastNo?.trim() && !lastPem?.trim()) {
-                            alert(lang === 'bm' ? 'Sila isikan kertas siasatan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous investigation paper first before adding a new one.');
-                            return;
-                          }
-                        }
-                        setIpList([...ipList, { date: '', no: '', pem: '', officer: '' }]);
-                      }}
-                      className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
-                    >
-                      + ADD
-                    </button>
-                  </div>
-
-                  {ipList.map((ip, idx) => (
-                    <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
-                      {ipList.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setIpList(ipList.filter((_, i) => i !== idx))}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm z-10"
-                        >
-                          ×
-                        </button>
-                      )}
-                      <DateInput
-                        name={`ip_date_${idx}`}
-                        label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
-                        defaultValue={ip.date}
-                        lang={lang}
-                      />
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipNo', lang)}</label>
-                        <input type="text" name={`ip_no_${idx}`} defaultValue={ip.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipPem1', lang)}</label>
-                        <select name={`ip_pem_${idx}`} defaultValue={ip.pem} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]">
-                          <option value="">{lang === 'bm' ? 'Pilih PEM' : 'Select PEM'}</option>
-                          <option value="PEM 1">PEM 1</option>
-                          <option value="PEM 2">PEM 2</option>
-                          <option value="PEM 3">PEM 3</option>
-                          <option value="PEM 4">PEM 4</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipOfficer', lang)}</label>
-                        <input type="text" name={`ip_officer_${idx}`} defaultValue={ip.officer} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'agreementForm', lang)}</h3>
-                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">{t('clients', 'agreementSubtitle', lang)}</span>
-                  </div>
-                  <div className="sm:col-span-2 space-y-2 bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                      {lang === 'bm' ? 'Muat Naik Salinan Borang Perjanjian Fizikal (PDF / Gambar)' : 'Upload Physical Agreement Scanned Copy (PDF / Image)'}
-                    </label>
-                    <input
-                      type="file"
-                      name="agreement_file"
-                      accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
-                      className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-zinc-800 dark:file:text-yellow-400 cursor-pointer"
-                    />
-                    {editingClient?.agreement_url && (
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-1">
-                        <span>✓</span> {lang === 'bm' ? 'Perjanjian telah dimuat naik sebelum ini (pilih fail baru jika mahu menggantikannya).' : 'Agreement previously uploaded (choose a new file to replace).'}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
-                    <input type="number" name="PACKAGE (RM)" step="any" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
-                    <input type="number" name="TOTAL PAID (RM)" step="any" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
-                    <input type="number" name="PENDING (RM)" step="any" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
-                    <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
-                    {paymentList.length < 10 && (
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'policeReport', lang)}</h3>
                       <button
                         type="button"
                         onClick={() => {
-                          const currentTotal = paymentList.length;
-                          const isPreviousFilled = paymentList.every(p => {
-                            const amt = document.querySelector(`input[name="payment_amt_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
-                            const dt = document.querySelector(`input[name="payment_date_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
-                            return (amt && amt.value) || (dt && dt.value);
-                          });
-                          if (!isPreviousFilled && currentTotal > 0) {
-                            alert(lang === 'bm' ? 'Sila isikan maklumat bayaran sebelumnya dahulu.' : 'Please fill in the previous payment details first.');
-                            return;
+                          const lastIdx = policeReportsList.length - 1;
+                          if (lastIdx >= 0) {
+                            const lastDate = (document.querySelector(`input[name="report_date_${lastIdx}"]`) as HTMLInputElement)?.value;
+                            const lastNo = (document.querySelector(`input[name="report_no_${lastIdx}"]`) as HTMLInputElement)?.value;
+                            if (!lastDate?.trim() && !lastNo?.trim()) {
+                              alert(lang === 'bm' ? 'Sila isikan laporan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous report first before adding a new one.');
+                              return;
+                            }
                           }
-                          setPaymentList([...paymentList, { amount: '', date: '' }]);
+                          setPoliceReportsList([...policeReportsList, { date: '', no: '' }]);
                         }}
-                        className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                        className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
                       >
                         + ADD
                       </button>
-                    )}
-                  </div>
-                  {paymentList.map((pay, idx) => (
-                    <div key={`pay-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newList = [...paymentList];
-                          newList.splice(idx, 1);
-                          setPaymentList(newList);
-                          setTimeout(handleFinancialChange, 100);
-                        }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors cursor-pointer"
-                      >
-                        ×
-                      </button>
-                      <div className="space-y-1">
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                          {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
-                        </label>
-                        <input type="number" name={`payment_amt_${idx}`} step="any" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                      </div>
-                      <DateInput
-                        name={`payment_date_${idx}`}
-                        label={lang === 'bm' ? `Tarikh Bayaran ${idx + 1} (DD/MM/YYYY)` : `Payment Date ${idx + 1} (DD/MM/YYYY)`}
-                        defaultValue={pay.date}
-                        lang={lang}
-                      />
-                      <div className="sm:col-span-2 space-y-1 mt-1 pt-2 border-t border-slate-200/60 dark:border-gray-700/50">
-                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
-                          {lang === 'bm' ? `Resit / Slip Bayaran Klien (Ansuran Ke-${idx + 1})` : `Client Receipt / Bank Slip (${idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment)`}
-                        </label>
-                        <input
-                          type="file"
-                          name={`payment_receipt_file_${idx}`}
-                          accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
-                          className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-zinc-700 file:text-slate-700 dark:file:text-zinc-200 cursor-pointer"
+                    </div>
+
+                    {policeReportsList.map((rp, idx) => (
+                      <div key={`pr-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
+                        {policeReportsList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setPoliceReportsList(policeReportsList.filter((_, i) => i !== idx))}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm"
+                          >
+                            ×
+                          </button>
+                        )}
+                        <DateInput
+                          name={`report_date_${idx}`}
+                          label={`${t('clients', 'reportDate', lang)} (DD/MM/YYYY)`}
+                          defaultValue={rp.date}
+                          lang={lang}
                         />
-                        {(() => {
-                          const prefix = idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`;
-                          let rMap: any = {};
-                          if (typeof editingClient?.payment_receipts === 'string') {
-                            try { rMap = JSON.parse(editingClient.payment_receipts); } catch {}
-                          } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
-                            rMap = editingClient.payment_receipts;
-                          }
-                          const existing = rMap[prefix.toLowerCase()] || rMap[prefix];
-                          if (!existing) return null;
-                          const rUrl = existing.url || existing.drive_url || existing.filePath;
-                          return (
-                            <div className="flex items-center justify-between text-[11px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 mt-1.5">
-                              <span className="flex items-center gap-1.5 truncate">
-                                <span>📎</span>
-                                <span className="font-semibold">{existing.fileName || (lang === 'bm' ? 'Resit telah dilampirkan' : 'Receipt uploaded')}</span>
-                                <span className="text-slate-400 dark:text-zinc-500">({lang === 'bm' ? 'pilih fail baru untuk ganti' : 'choose new file to replace'})</span>
-                              </span>
-                              {rUrl && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleViewDocument(e, rUrl)}
-                                  className="text-emerald-700 dark:text-emerald-300 font-bold hover:underline ml-2 flex-shrink-0 cursor-pointer flex items-center gap-1"
-                                >
-                                  <span>👁️</span>
-                                  <span>{lang === 'bm' ? 'Lihat Resit' : 'View Receipt'}</span>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'reportNo', lang)}</label>
+                          <input type="text" name={`report_no_${idx}`} defaultValue={rp.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}</h3>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'caseStatusLabel', lang)}</label>
-                    <div className="relative">
-                      <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} data-custom-select className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
-                        <option value="PENDING">PENDING</option>
-                        <option value="COMPLETED">COMPLETED</option>
-                        <option value="DROPPED">DROPPED</option>
-                        <option value="KIV">KIV</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
+                    ))}
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
-                        {t('clients', 'caseCategoryLabel', lang)}
-                      </label>
+                    <div className="sm:col-span-2 mt-4 mb-1 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                        {t('clients', 'reportLocation', lang)}
+                      </span>
                       <button
                         type="button"
                         onClick={() => {
-                          if (isCustomCaseCategory) {
-                            setIsCustomCaseCategory(false);
-                          } else {
-                            setIsCustomCaseCategory(true);
-                            setCustomCaseCategoryVal('');
-                          }
+                          const turnOnManual = !isCustomIpk || !isCustomIpd || !isCustomBalai;
+                          setIsCustomIpk(turnOnManual);
+                          setIsCustomIpd(turnOnManual);
+                          setIsCustomBalai(turnOnManual);
                         }}
-                        className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer font-bold"
+                        className="text-[11px] font-bold text-indigo-600 dark:text-yellow-500 hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        {isCustomCaseCategory
-                          ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown')
-                          : (lang === 'bm' ? '✏️ + Tambah Kategori Manual' : '✏️ + Add Custom Category')}
+                        {isCustomIpk && isCustomIpd && isCustomBalai ? (
+                          <>{lang === 'bm' ? '📋 Tukar ke Mod Dropdown' : '📋 Switch to Dropdown Mode'}</>
+                        ) : (
+                          <>{lang === 'bm' ? '✏️ Tukar ke Mod Taip Manual' : '✏️ Switch to Manual Mode'}</>
+                        )}
                       </button>
                     </div>
 
-                    {isCustomCaseCategory ? (
-                      <div className="flex gap-2 items-center">
+                    <div className="sm:col-span-2 space-y-1">
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {`${t('clients', 'statePolice', lang)}`}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomIpk(!isCustomIpk)}
+                          className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                        >
+                          {isCustomIpk ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                        </button>
+                      </div>
+
+                      {isCustomIpk ? (
                         <input
                           type="text"
-                          name="CASE CATEGORY"
-                          value={customCaseCategoryVal}
-                          onChange={(e) => setCustomCaseCategoryVal(e.target.value)}
-                          onBlur={() => {
-                            if (customCaseCategoryVal.trim()) {
-                              registerNewCategory(customCaseCategoryVal);
+                          name="report_location_ipk"
+                          value={selectedIpk}
+                          onChange={(e) => {
+                            setSelectedIpk(e.target.value);
+                            setSelectedIpd('');
+                          }}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                          placeholder={lang === 'bm' ? 'Masukkan IPK / Negeri (cth: IPK Selangor Baru)' : 'Enter IPK / State (e.g. New IPK)'}
+                        />
+                      ) : (
+                        <select
+                          name="report_location_ipk"
+                          value={selectedIpk}
+                          onChange={(e) => {
+                            if (e.target.value === '__CUSTOM__') {
+                              setIsCustomIpk(true);
+                              setSelectedIpk('');
+                              setSelectedIpd('');
+                            } else {
+                              setSelectedIpk(e.target.value);
+                              setSelectedIpd('');
                             }
                           }}
-                          placeholder={lang === 'bm' ? 'Masukkan Kategori Kes Baru (cth: Scam Victim / E-Wallet)' : 'Enter New Case Category (e.g. Scam Victim / E-Wallet)'}
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
-                          required
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                        >
+                          <option value="">{lang === 'bm' ? '-- Pilih Kontinjen / Negeri (IPK) --' : '-- Select Police Contingent / State (IPK) --'}</option>
+                          {Object.keys(policeLocations).map(ipk => (
+                            <option key={ipk} value={ipk}>{ipk}</option>
+                          ))}
+                          <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                            ✏️ {lang === 'bm' ? '+ Taip IPK Baru / Custom Manual...' : '+ Type Custom IPK Manually...'}
+                          </option>
+                        </select>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {`${t('clients', 'districtPolice', lang)}`}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomIpd(!isCustomIpd)}
+                          className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                        >
+                          {isCustomIpd ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                        </button>
+                      </div>
+
+                      {isCustomIpd ? (
+                        <input
+                          type="text"
+                          name="report_location_ipd"
+                          value={selectedIpd}
+                          onChange={(e) => setSelectedIpd(e.target.value)}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                          placeholder={lang === 'bm' ? 'Masukkan IPD (cth: IPD Kuala Langat Baru)' : 'Enter IPD (e.g. New IPD)'}
                         />
+                      ) : (
+                        <select
+                          name="report_location_ipd"
+                          value={selectedIpd}
+                          onChange={(e) => {
+                            if (e.target.value === '__CUSTOM__') {
+                              setIsCustomIpd(true);
+                              setSelectedIpd('');
+                            } else {
+                              setSelectedIpd(e.target.value);
+                            }
+                          }}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                        >
+                          <option value="">{lang === 'bm' ? '-- Pilih Daerah (IPD) --' : '-- Select District (IPD) --'}</option>
+                          {selectedIpk && policeLocations[selectedIpk] ? (
+                            Object.keys(policeLocations[selectedIpk]).map(ipd => (
+                              <option key={ipd} value={ipd}>{ipd}</option>
+                            ))
+                          ) : null}
+                          <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                            ✏️ {lang === 'bm' ? '+ Taip IPD Baru / Custom Manual...' : '+ Type Custom IPD Manually...'}
+                          </option>
+                        </select>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {`${t('clients', 'policeStation', lang)}`}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomBalai(!isCustomBalai)}
+                          className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer"
+                        >
+                          {isCustomBalai ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown') : (lang === 'bm' ? '✏️ Taip Manual' : '✏️ Type Manually')}
+                        </button>
+                      </div>
+
+                      {isCustomBalai ? (
+                        <input
+                          type="text"
+                          name="report_location_balai"
+                          value={selectedBalai}
+                          onChange={(e) => setSelectedBalai(e.target.value)}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                          placeholder={lang === 'bm' ? 'Masukkan Balai (cth: Balai Polis Banting)' : 'Enter Police Station'}
+                        />
+                      ) : (
+                        <select
+                          name="report_location_balai"
+                          value={selectedBalai}
+                          onChange={(e) => {
+                            if (e.target.value === '__CUSTOM__') {
+                              setIsCustomBalai(true);
+                              setSelectedBalai('');
+                            } else {
+                              setSelectedBalai(e.target.value);
+                            }
+                          }}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer"
+                        >
+                          <option value="">{lang === 'bm' ? '-- Pilih Balai Polis --' : '-- Select Police Station --'}</option>
+                          {selectedIpk && selectedIpd && policeLocations[selectedIpk]?.[selectedIpd] ? (
+                            policeLocations[selectedIpk][selectedIpd].map(balai => (
+                              <option key={balai} value={balai}>{balai}</option>
+                            ))
+                          ) : null}
+                          <option value="__CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                            ✏️ {lang === 'bm' ? '+ Taip Balai Baru / Custom Manual...' : '+ Type Custom Station Manually...'}
+                          </option>
+                        </select>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'investigationPaper', lang)}</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lastIdx = ipList.length - 1;
+                          if (lastIdx >= 0) {
+                            const lastNo = (document.querySelector(`input[name="ip_no_${lastIdx}"]`) as HTMLInputElement)?.value;
+                            const lastPem = (document.querySelector(`select[name="ip_pem_${lastIdx}"]`) as HTMLSelectElement)?.value;
+                            if (!lastNo?.trim() && !lastPem?.trim()) {
+                              alert(lang === 'bm' ? 'Sila isikan kertas siasatan sebelumnya terlebih dahulu sebelum menambah yang baru.' : 'Please fill out the previous investigation paper first before adding a new one.');
+                              return;
+                            }
+                          }
+                          setIpList([...ipList, { date: '', no: '', pem: '', officer: '' }]);
+                        }}
+                        className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-yellow-500/10 dark:text-yellow-500 dark:hover:bg-yellow-500/20 text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                      >
+                        + ADD
+                      </button>
+                    </div>
+
+                    {ipList.map((ip, idx) => (
+                      <div key={`ip-${idx}`} className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative mt-2">
+                        {ipList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setIpList(ipList.filter((_, i) => i !== idx))}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors shadow-sm z-10"
+                          >
+                            ×
+                          </button>
+                        )}
+                        <DateInput
+                          name={`ip_date_${idx}`}
+                          label={`${t('clients', 'ipDate', lang)} (DD/MM/YYYY)`}
+                          defaultValue={ip.date}
+                          lang={lang}
+                        />
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipNo', lang)}</label>
+                          <input type="text" name={`ip_no_${idx}`} defaultValue={ip.no} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipPem1', lang)}</label>
+                          <select name={`ip_pem_${idx}`} defaultValue={ip.pem} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]">
+                            <option value="">{lang === 'bm' ? 'Pilih PEM' : 'Select PEM'}</option>
+                            <option value="PEM 1">PEM 1</option>
+                            <option value="PEM 2">PEM 2</option>
+                            <option value="PEM 3">PEM 3</option>
+                            <option value="PEM 4">PEM 4</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'ipOfficer', lang)}</label>
+                          <input type="text" name={`ip_officer_${idx}`} defaultValue={ip.officer} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'agreementForm', lang)}</h3>
+                      <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">{t('clients', 'agreementSubtitle', lang)}</span>
+                    </div>
+                    <div className="sm:col-span-2 space-y-2 bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                        {lang === 'bm' ? 'Muat Naik Salinan Borang Perjanjian Fizikal (PDF / Gambar)' : 'Upload Physical Agreement Scanned Copy (PDF / Image)'}
+                      </label>
+                      <input
+                        type="file"
+                        name="agreement_file"
+                        accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                        className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-zinc-800 dark:file:text-yellow-400 cursor-pointer"
+                      />
+                      {editingClient?.agreement_url && (
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-1">
+                          <span>✓</span> {lang === 'bm' ? 'Perjanjian telah dimuat naik sebelum ini (pilih fail baru jika mahu menggantikannya).' : 'Agreement previously uploaded (choose a new file to replace).'}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
+                      <input type="number" name="PACKAGE (RM)" step="any" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
+                      <input type="number" name="TOTAL PAID (RM)" step="any" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
+                      <input type="number" name="PENDING (RM)" step="any" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
+                      <input type="text" name="Invoice Ref No" defaultValue={editingClient?.["Invoice Ref No"] || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1 flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider">{lang === 'bm' ? 'Jadual Ansuran Pembayaran' : 'Installment Payment Schedule'}</h4>
+                      {paymentList.length < 10 && (
                         <button
                           type="button"
                           onClick={() => {
-                            if (customCaseCategoryVal.trim()) {
-                              registerNewCategory(customCaseCategoryVal);
-                              setSelectedCaseCategory(customCaseCategoryVal.trim());
-                              setIsCustomCaseCategory(false);
+                            const currentTotal = paymentList.length;
+                            const isPreviousFilled = paymentList.every(p => {
+                              const amt = document.querySelector(`input[name="payment_amt_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
+                              const dt = document.querySelector(`input[name="payment_date_${paymentList.indexOf(p)}"]`) as HTMLInputElement;
+                              return (amt && amt.value) || (dt && dt.value);
+                            });
+                            if (!isPreviousFilled && currentTotal > 0) {
+                              alert(lang === 'bm' ? 'Sila isikan maklumat bayaran sebelumnya dahulu.' : 'Please fill in the previous payment details first.');
+                              return;
                             }
+                            setPaymentList([...paymentList, { amount: '', date: '' }]);
                           }}
-                          className="px-3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-bold text-xs rounded-xl flex-shrink-0 transition-colors cursor-pointer min-h-[48px]"
-                          title={lang === 'bm' ? 'Daftar Kategori' : 'Register Category'}
+                          className="px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer"
                         >
-                          + Add
+                          + ADD
                         </button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <select
-                          name="CASE CATEGORY"
-                          value={selectedCaseCategory}
-                          onChange={(e) => {
-                            if (e.target.value === '__ADD_CUSTOM__') {
-                              setIsCustomCaseCategory(true);
-                              setCustomCaseCategoryVal('');
-                            } else {
-                              setSelectedCaseCategory(e.target.value);
-                            }
+                      )}
+                    </div>
+                    {paymentList.map((pay, idx) => (
+                      <div key={`pay-${idx}`} className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 items-end bg-slate-50 dark:bg-gray-800/30 p-4 rounded-xl border border-slate-100 dark:border-gray-800 relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newList = [...paymentList];
+                            newList.splice(idx, 1);
+                            setPaymentList(newList);
+                            setTimeout(handleFinancialChange, 100);
                           }}
-                          className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none"
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-500/40 transition-colors cursor-pointer"
                         >
-                          {registeredCategories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                          <option value="__ADD_CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
-                            {lang === 'bm' ? '+ Add' : '+ Add'}
-                          </option>
+                          ×
+                        </button>
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                            {idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment
+                          </label>
+                          <input type="number" name={`payment_amt_${idx}`} step="any" defaultValue={pay.amount} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                        </div>
+                        <DateInput
+                          name={`payment_date_${idx}`}
+                          label={lang === 'bm' ? `Tarikh Bayaran ${idx + 1} (DD/MM/YYYY)` : `Payment Date ${idx + 1} (DD/MM/YYYY)`}
+                          defaultValue={pay.date}
+                          lang={lang}
+                        />
+                        <div className="sm:col-span-2 space-y-1 mt-1 pt-2 border-t border-slate-200/60 dark:border-gray-700/50">
+                          <label className="block text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                            {lang === 'bm' ? `Resit / Slip Bayaran Klien (Ansuran Ke-${idx + 1})` : `Client Receipt / Bank Slip (${idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`} Payment)`}
+                          </label>
+                          <input
+                            type="file"
+                            name={`payment_receipt_file_${idx}`}
+                            accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                            className="w-full text-xs text-slate-500 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-zinc-700 file:text-slate-700 dark:file:text-zinc-200 cursor-pointer"
+                          />
+                          {(() => {
+                            const prefix = idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`;
+                            let rMap: any = {};
+                            if (typeof editingClient?.payment_receipts === 'string') {
+                              try { rMap = JSON.parse(editingClient.payment_receipts); } catch { }
+                            } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
+                              rMap = editingClient.payment_receipts;
+                            }
+                            const existing = rMap[prefix.toLowerCase()] || rMap[prefix];
+                            if (!existing) return null;
+                            const rUrl = existing.url || existing.drive_url || existing.filePath;
+                            return (
+                              <div className="flex items-center justify-between text-[11px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 mt-1.5">
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <span>📎</span>
+                                  <span className="font-semibold">{existing.fileName || (lang === 'bm' ? 'Resit telah dilampirkan' : 'Receipt uploaded')}</span>
+                                  <span className="text-slate-400 dark:text-zinc-500">({lang === 'bm' ? 'pilih fail baru untuk ganti' : 'choose new file to replace'})</span>
+                                </span>
+                                {rUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleViewDocument(e, rUrl)}
+                                    className="text-emerald-700 dark:text-emerald-300 font-bold hover:underline ml-2 flex-shrink-0 cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span>👁️</span>
+                                    <span>{lang === 'bm' ? 'Lihat Resit' : 'View Receipt'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Status & Kategori Kes' : 'Case Status & Category'}</h3>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'caseStatusLabel', lang)}</label>
+                      <div className="relative">
+                        <select name="CASE STATUS" defaultValue={editingClient?.["CASE STATUS"] || 'PENDING'} data-custom-select className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none">
+                          <option value="PENDING">PENDING</option>
+                          <option value="COMPLETED">COMPLETED</option>
+                          <option value="DROPPED">DROPPED</option>
+                          <option value="KIV">KIV</option>
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -3053,35 +2969,119 @@ export default function ClientDataView() {
                           </svg>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'remarkCatatan', lang)}</label>
-                    <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none min-h-[100px]"></textarea>
-                  </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">
+                          {t('clients', 'caseCategoryLabel', lang)}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isCustomCaseCategory) {
+                              setIsCustomCaseCategory(false);
+                            } else {
+                              setIsCustomCaseCategory(true);
+                              setCustomCaseCategoryVal('');
+                            }
+                          }}
+                          className="text-[10px] text-slate-400 hover:text-indigo-600 dark:hover:text-yellow-500 underline cursor-pointer font-bold"
+                        >
+                          {isCustomCaseCategory
+                            ? (lang === 'bm' ? '↩️ Pilih Senarai' : '↩️ Pick Dropdown')
+                            : (lang === 'bm' ? '✏️ + Tambah Kategori Manual' : '✏️ + Add Custom Category')}
+                        </button>
+                      </div>
 
-                  <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'lodTitle', lang)}</h3>
-                  </div>
-                  <DateInput
-                    name="lod_date"
-                    label={`${t('clients', 'lodDate', lang)} (DD/MM/YYYY)`}
-                    defaultValue={editingClient?.lod_date || ''}
-                    lang={lang}
-                  />
-                  <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodClaimAmount', lang)}`}</label>
-                    <input type="text" name="lod_claim_amount" defaultValue={editingClient?.lod_claim_amount || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodRemark', lang)}`}</label>
-                    <input type="text" name="lod_remark" defaultValue={editingClient?.lod_remark || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
-                  </div>
+                      {isCustomCaseCategory ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            name="CASE CATEGORY"
+                            value={customCaseCategoryVal}
+                            onChange={(e) => setCustomCaseCategoryVal(e.target.value)}
+                            onBlur={() => {
+                              if (customCaseCategoryVal.trim()) {
+                                registerNewCategory(customCaseCategoryVal);
+                              }
+                            }}
+                            placeholder={lang === 'bm' ? 'Masukkan Kategori Kes Baru (cth: Scam Victim / E-Wallet)' : 'Enter New Case Category (e.g. Scam Victim / E-Wallet)'}
+                            className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (customCaseCategoryVal.trim()) {
+                                registerNewCategory(customCaseCategoryVal);
+                                setSelectedCaseCategory(customCaseCategoryVal.trim());
+                                setIsCustomCaseCategory(false);
+                              }
+                            }}
+                            className="px-3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-yellow-500 dark:text-black font-bold text-xs rounded-xl flex-shrink-0 transition-colors cursor-pointer min-h-[48px]"
+                            title={lang === 'bm' ? 'Daftar Kategori' : 'Register Category'}
+                          >
+                            + Add
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <select
+                            name="CASE CATEGORY"
+                            value={selectedCaseCategory}
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_CUSTOM__') {
+                                setIsCustomCaseCategory(true);
+                                setCustomCaseCategoryVal('');
+                              } else {
+                                setSelectedCaseCategory(e.target.value);
+                              }
+                            }}
+                            className="w-full pl-4 pr-10 py-3 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 min-h-[48px] cursor-pointer appearance-none"
+                          >
+                            {registeredCategories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                            <option value="__ADD_CUSTOM__" className="font-bold text-indigo-600 dark:text-yellow-500">
+                              {lang === 'bm' ? '+ Add' : '+ Add'}
+                            </option>
+                          </select>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-550 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                  <input type="hidden" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} />
-                  <input type="hidden" name="Report" defaultValue={editingClient?.Report || ''} />
-                  <input type="hidden" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} />
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'remarkCatatan', lang)}</label>
+                      <textarea name="REMARK" defaultValue={editingClient?.REMARK || ''} rows={3} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none min-h-[100px]"></textarea>
+                    </div>
+
+                    <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{t('clients', 'lodTitle', lang)}</h3>
+                    </div>
+                    <DateInput
+                      name="lod_date"
+                      label={`${t('clients', 'lodDate', lang)} (DD/MM/YYYY)`}
+                      defaultValue={editingClient?.lod_date || ''}
+                      lang={lang}
+                    />
+                    <div className="space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodClaimAmount', lang)}`}</label>
+                      <input type="text" name="lod_claim_amount" defaultValue={editingClient?.lod_claim_amount || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{`${t('clients', 'lodRemark', lang)}`}</label>
+                      <input type="text" name="lod_remark" defaultValue={editingClient?.lod_remark || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                    </div>
+
+                    <input type="hidden" name="Investigation Paper" defaultValue={editingClient?.["Investigation Paper"] || ''} />
+                    <input type="hidden" name="Report" defaultValue={editingClient?.Report || ''} />
+                    <input type="hidden" name="Action Taken by police" defaultValue={editingClient?.["Action Taken by police"] || ''} />
 
                   </div>
                 </div>

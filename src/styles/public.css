@@ -401,9 +401,20 @@ html.theme-light {
 }
 
 /* ---------- Theme Adaptation Utilities ---------- */
-html[data-theme="light"] .site-public .text-white:not(.hero-banner *):not(.hero-banner),
-html.theme-light .site-public .text-white:not(.hero-banner *):not(.hero-banner) {
+html[data-theme="light"] .site-public .text-white:not(.hero-banner *):not(.hero-banner):not(.video-duration-badge):not(.video-duration-badge *):not(#whatsapp-fab *):not(#whatsapp-fab):not(#video-modal *):not(#video-modal):not(dialog *):not(dialog),
+html.theme-light .site-public .text-white:not(.hero-banner *):not(.hero-banner):not(.video-duration-badge):not(.video-duration-badge *):not(#whatsapp-fab *):not(#whatsapp-fab):not(#video-modal *):not(#video-modal):not(dialog *):not(dialog) {
   color: var(--site-heading) !important;
+}
+
+.site-public .video-duration-badge,
+.site-public .video-duration-badge *,
+html[data-theme="light"] .site-public .video-duration-badge,
+html[data-theme="light"] .site-public .video-duration-badge *,
+html.theme-light .site-public .video-duration-badge,
+html.theme-light .site-public .video-duration-badge * {
+  background-color: rgba(6, 11, 22, 0.92) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 html[data-theme="light"] .site-public .text-neutral-400,

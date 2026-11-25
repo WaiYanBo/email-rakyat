@@ -2,7 +2,7 @@
   "name": "Email Rakyat",
   "short_name": "Email Rakyat",
   "description": "Pusat Advokasi & Perlindungan Pengguna Malaysia (Team Email Rakyat)",
-  "start_url": "/",
+  "start_url": "/portal",
   "display": "standalone",
   "background_color": "#0a0e17",
   "theme_color": "#0a0e17",

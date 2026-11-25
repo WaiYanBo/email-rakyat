@@ -25,7 +25,7 @@ const getSortValue = (obj: any, key: string) => {
     const num = Number(val);
     return isNaN(num) ? 0 : num;
   }
-  if (['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(key)) {
+  if (['CONSULTATION FEE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'].includes(key)) {
     if (obj._parsedNumericValues?.[key] !== undefined) return obj._parsedNumericValues[key];
     const rawNumber = String(obj[key] || '0').replace(/[^0-9.-]+/g, '');
     return parseFloat(rawNumber) || 0;
@@ -175,6 +175,24 @@ const parseAmount = (val: any): number => {
   return parseFloat(clean) || 0;
 };
 
+const getConsultationFee = (client: any): number => {
+  if (!client) return 0;
+  if (client['CONSULTATION FEE (RM)'] !== undefined && client['CONSULTATION FEE (RM)'] !== null && client['CONSULTATION FEE (RM)'] !== '') {
+    return parseAmount(client['CONSULTATION FEE (RM)']);
+  }
+  if (client.consultation_fee !== undefined && client.consultation_fee !== null && client.consultation_fee !== '') {
+    return parseAmount(client.consultation_fee);
+  }
+  let receiptsObj = client.payment_receipts;
+  if (typeof receiptsObj === 'string') {
+    try { receiptsObj = JSON.parse(receiptsObj); } catch { receiptsObj = null; }
+  }
+  if (receiptsObj && typeof receiptsObj === 'object' && receiptsObj._consultation_fee !== undefined) {
+    return parseAmount(receiptsObj._consultation_fee);
+  }
+  return 0;
+};
+
 const parseMonthYear = (dateStr: any) => {
   if (!dateStr) return null;
   const s = String(dateStr).trim().toUpperCase();
@@ -222,7 +240,7 @@ const SortHeader = ({ label, sortKey, currentSort, onClick }: any) => (
 const EXPANDED_COLUMNS_ORDER = [
   'No', 'NAME', 'IC NUMBER', 'PHONE NUMBER', 'EMAIL', 'ADDRESS', 'DATE',
   'CASE CATEGORY', 'CASE STATUS',
-  'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
+  'CONSULTATION FEE (RM)', 'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
   '1st PAYMENT', '1st PAYMENT DATE', '2nd PAYMENT', '2nd PAYMENT DATE', '3rd PAYMENT', '3rd PAYMENT DATE',
   '4th PAYMENT', '4th PAYMENT DATE', '5th PAYMENT', '5th PAYMENT DATE', '6th PAYMENT', '6th PAYMENT DATE',
   '7th PAYMENT', '7th PAYMENT DATE', '8th PAYMENT', '8th PAYMENT DATE', '9th PAYMENT', '9th PAYMENT DATE',
@@ -259,6 +277,7 @@ const hasPaymentReceipt = (client: any, paymentKey: string): boolean => {
   if (cleanKey && (receiptsObj[cleanKey] || receiptsObj[`payment_${cleanKey}`])) return true;
 
   for (const k of Object.keys(receiptsObj)) {
+    if (k.startsWith('_')) continue;
     const normK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
     const normTarget = paymentKey.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (normK === normTarget || (cleanKey && normK.includes(cleanKey))) {
@@ -282,7 +301,7 @@ const getMissingReceiptsCount = (client: any): number => {
 
 
 const getOrderedKeys = (clientObj: any) => {
-  const availableKeys = Object.keys(clientObj || {});
+  const availableKeys = Array.from(new Set([...Object.keys(clientObj || {}), 'CONSULTATION FEE (RM)']));
   const orderedKeys = EXPANDED_COLUMNS_ORDER.filter(k => availableKeys.includes(k));
   const extraKeys = availableKeys.filter(k =>
     !EXPANDED_COLUMNS_ORDER.includes(k) &&
@@ -337,6 +356,8 @@ const getExportHeaderLabel = (key: string, lang: string) => {
       return isBm ? 'IPD' : 'IPD';
     case 'report_location_balai':
       return isBm ? 'Balai Polis' : 'Police Station';
+    case 'CONSULTATION FEE (RM)':
+      return isBm ? 'Yuran Konsultasi (RM)' : 'Consultation Fee (RM)';
     case 'PACKAGE (RM)':
       return isBm ? 'Pakej (RM)' : 'Package (RM)';
     case 'TOTAL PAID (RM)':
@@ -432,7 +453,7 @@ const formatJsonValue = (val: any) => {
 const isNumericKey = (key: string) => {
   return [
     'No', 'NO',
-    'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
+    'CONSULTATION FEE (RM)', 'PACKAGE (RM)', 'TOTAL PAID (RM)', 'PENDING (RM)',
     '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT',
     '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'
   ].includes(key);
@@ -446,6 +467,7 @@ const formatStandardClient = (client: any, lang: string) => {
     [lang === 'bm' ? 'No. Telefon' : 'Phone Number']: client["PHONE NUMBER"] || '-',
     [lang === 'bm' ? 'No. Kad Pengenalan' : 'IC Number']: client["IC NUMBER"] || '-',
     [lang === 'bm' ? 'Kategori Kes' : 'Case Category']: client["CASE CATEGORY"] || '-',
+    [lang === 'bm' ? 'Yuran Konsultasi (RM)' : 'Consultation Fee (RM)']: getConsultationFee(client),
     [lang === 'bm' ? 'Jumlah Dibayar (RM)' : 'Total Paid (RM)']: parseAmount(client["TOTAL PAID (RM)"]),
     [lang === 'bm' ? 'Belum Bayar (RM)' : 'Pending (RM)']: parseAmount(client["PENDING (RM)"]),
     [lang === 'bm' ? 'Pakej (RM)' : 'Package (RM)']: parseAmount(client["PACKAGE (RM)"]),
@@ -461,7 +483,7 @@ const formatExpandedClient = (client: any, lang: string, orderedKeys: string[]) 
   const formatted: Record<string, any> = {};
   for (const key of orderedKeys) {
     const label = getExportHeaderLabel(key, lang);
-    const val = client[key];
+    const val = key === 'CONSULTATION FEE (RM)' ? getConsultationFee(client) : client[key];
 
     if (key === 'No') {
       const numVal = val !== null && val !== undefined ? Number(val) : null;
@@ -574,6 +596,7 @@ export default function ClientTable({
     if (k === 'ACTION TAKEN BY POLICE' || k === 'ACTION TAKEN') return lang === 'bm' ? 'Tindakan Pihak Polis' : 'Action Taken by police';
     if (k === 'REMARK') return lang === 'bm' ? 'Catatan' : 'Remark';
     if (k === 'NO') return lang === 'bm' ? 'No' : 'No';
+    if (k === 'CONSULTATION FEE (RM)' || k === 'CONSULTATION FEE') return lang === 'bm' ? 'Yuran Konsultasi (RM)' : 'Consultation Fee (RM)';
     if (k === 'PACKAGE (RM)' || k === 'PACKAGE') return lang === 'bm' ? 'Pakej (RM)' : 'Package (RM)';
     if (k === 'TOTAL PAID (RM)' || k === 'PAID') return lang === 'bm' ? 'Jumlah Dibayar (RM)' : 'Total Paid (RM)';
     if (k === 'PENDING (RM)' || k === 'PENDING') return lang === 'bm' ? 'Belum Bayar (RM)' : 'Pending (RM)';
@@ -595,7 +618,10 @@ export default function ClientTable({
         }
       }
 
-      const numericValues: Record<string, number> = {};
+      const consultFeeVal = getConsultationFee(client);
+      const numericValues: Record<string, number> = {
+        'CONSULTATION FEE (RM)': consultFeeVal
+      };
       const numericKeys = ['TOTAL PAID (RM)', 'PENDING (RM)', 'PACKAGE (RM)', '1st PAYMENT', '2nd PAYMENT', '3rd PAYMENT', '4th PAYMENT', '5th PAYMENT', '6th PAYMENT', '7th PAYMENT', '8th PAYMENT', '9th PAYMENT', '10th PAYMENT'];
       for (const k of numericKeys) {
         const raw = String(client[k] || '0').replace(/[^0-9.-]+/g, '');
@@ -608,6 +634,7 @@ export default function ClientTable({
 
       return {
         ...client,
+        'CONSULTATION FEE (RM)': consultFeeVal,
         _parsedDateVal: parsedDateVal,
         _parsedNoVal: parsedNoVal,
         _parsedNumericValues: numericValues
@@ -1248,7 +1275,15 @@ export default function ClientTable({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                        <div className="bg-cyan-50 dark:bg-cyan-950/20 p-2 rounded-xl border border-cyan-100 dark:border-cyan-900/30">
+                          <span className="text-[9px] uppercase font-bold text-cyan-700 dark:text-cyan-400 block">
+                            {lang === 'bm' ? 'Konsultasi' : 'Consultation'}
+                          </span>
+                          <span className="font-extrabold text-xs text-cyan-700 dark:text-cyan-400 mt-0.5 block font-mono">
+                            RM {formatCurrency(getConsultationFee(client))}
+                          </span>
+                        </div>
                         <div className="bg-slate-50 dark:bg-gray-800/50 p-2 rounded-xl">
                           <span className="text-[9px] uppercase font-bold text-slate-400 dark:text-zinc-500 block">
                             {lang === 'bm' ? 'Pakej' : 'Package'}
@@ -1266,7 +1301,7 @@ export default function ClientTable({
                           </span>
                           {(() => {
                             const missing = getMissingReceiptsCount(client);
-                            const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                            const installmentsPaid = Math.max(0, parseAmount(client["TOTAL PAID (RM)"]) - getConsultationFee(client));
                             if (missing > 0) {
                               return (
                                 <span
@@ -1277,7 +1312,7 @@ export default function ClientTable({
                                   <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
                                 </span>
                               );
-                            } else if (totalPaidNum > 0) {
+                            } else if (installmentsPaid > 0) {
                               return (
                                 <span
                                   title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}
@@ -1336,6 +1371,7 @@ export default function ClientTable({
                     <tr>
                       <SortHeader label={getLabel("NAME")} sortKey="NAME" currentSort={sort} onClick={handleSort} />
                       <SortHeader label={getLabel("PHONE")} sortKey="PHONE NUMBER" currentSort={sort} onClick={handleSort} />
+                      <SortHeader label={getLabel("CONSULTATION FEE")} sortKey="CONSULTATION FEE (RM)" currentSort={sort} onClick={handleSort} />
                       <SortHeader label={getLabel("PENDING")} sortKey="PENDING (RM)" currentSort={sort} onClick={handleSort} />
                       <SortHeader label={getLabel("PAID")} sortKey="TOTAL PAID (RM)" currentSort={sort} onClick={handleSort} />
                       <SortHeader label={getLabel("PACKAGE")} sortKey="PACKAGE (RM)" currentSort={sort} onClick={handleSort} />
@@ -1490,13 +1526,14 @@ export default function ClientTable({
                               </div>
                             </td>
                             <td className="px-4 py-3.5 text-slate-700 dark:text-zinc-300 font-mono min-w-[150px] max-w-[190px] whitespace-normal break-words leading-tight">{client["PHONE NUMBER"]}</td>
+                            <td className="px-4 py-3.5 font-mono text-cyan-700 dark:text-cyan-400">{getConsultationFee(client)}</td>
                             <td className="px-4 py-3.5 font-mono text-amber-600 dark:text-yellow-500">{client["PENDING (RM)"] || '0'}</td>
                             <td className="px-4 py-3.5 font-mono text-slate-800 dark:text-zinc-200">
                               <div className="flex flex-col items-start gap-0.5">
                                 <span>{client["TOTAL PAID (RM)"] || '0'}</span>
                                 {(() => {
                                   const missing = getMissingReceiptsCount(client);
-                                  const totalPaidNum = parseAmount(client["TOTAL PAID (RM)"]);
+                                  const installmentsPaid = Math.max(0, parseAmount(client["TOTAL PAID (RM)"]) - getConsultationFee(client));
                                   if (missing > 0) {
                                     return (
                                       <span
@@ -1507,7 +1544,7 @@ export default function ClientTable({
                                         <span>{missing} {lang === 'bm' ? 'tiada resit' : 'no receipt'}</span>
                                       </span>
                                     );
-                                  } else if (totalPaidNum > 0) {
+                                  } else if (installmentsPaid > 0) {
                                     return (
                                       <span
                                         title={lang === 'bm' ? 'Semua bayaran ada resit' : 'All payments have receipts attached'}

@@ -120,6 +120,41 @@ const SectionHeader = ({ icon, title }: { icon: React.ReactNode; title: string }
   </div>
 );
 
+const getConsultationFee = (client: any): number => {
+  if (!client) return 0;
+  if (client['CONSULTATION FEE (RM)'] !== undefined && client['CONSULTATION FEE (RM)'] !== null && client['CONSULTATION FEE (RM)'] !== '') {
+    return parseSafeAmount(client['CONSULTATION FEE (RM)']);
+  }
+  if (client.consultation_fee !== undefined && client.consultation_fee !== null && client.consultation_fee !== '') {
+    return parseSafeAmount(client.consultation_fee);
+  }
+  let receiptsObj = client.payment_receipts;
+  if (typeof receiptsObj === 'string') {
+    try { receiptsObj = JSON.parse(receiptsObj); } catch { receiptsObj = null; }
+  }
+  if (receiptsObj && typeof receiptsObj === 'object' && receiptsObj._consultation_fee !== undefined) {
+    return parseSafeAmount(receiptsObj._consultation_fee);
+  }
+  return 0;
+};
+
+const getBaseServicePackage = (client: any): number => {
+  if (!client) return 0;
+  let receiptsObj = client.payment_receipts;
+  if (typeof receiptsObj === 'string') {
+    try { receiptsObj = JSON.parse(receiptsObj); } catch { receiptsObj = null; }
+  }
+  const consultFee = getConsultationFee(client);
+  const totalPkg = parseSafeAmount(client['PACKAGE (RM)']);
+  if (receiptsObj && typeof receiptsObj === 'object' && receiptsObj._service_package !== undefined) {
+    const storedBase = parseSafeAmount(receiptsObj._service_package);
+    if (Math.abs((storedBase + consultFee) - totalPkg) < 0.01) {
+      return storedBase;
+    }
+  }
+  return Math.max(0, totalPkg - consultFee);
+};
+
 export default function ClientDataView() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -143,6 +178,7 @@ export default function ClientDataView() {
     if (k === 'ACTION TAKEN BY POLICE') return lang === 'bm' ? 'Tindakan Pihak Polis' : 'Action Taken by police';
     if (k === 'REMARK') return lang === 'bm' ? 'Catatan' : 'Remark';
     if (k === 'NO') return lang === 'bm' ? 'No' : 'No';
+    if (k === 'CONSULTATION FEE (RM)' || k === 'CONSULTATION FEE') return lang === 'bm' ? 'Yuran Konsultasi (RM)' : 'Consultation Fee (RM)';
     if (k === 'PACKAGE (RM)') return lang === 'bm' ? 'Pakej (RM)' : 'Package (RM)';
     if (k === 'TOTAL PAID (RM)') return lang === 'bm' ? 'Jumlah Dibayar (RM)' : 'Total Paid (RM)';
     if (k === 'PENDING (RM)') return lang === 'bm' ? 'Belum Bayar (RM)' : 'Pending (RM)';
@@ -1068,6 +1104,7 @@ export default function ClientDataView() {
                   "PHONE NUMBER": '-',
                   "IC NUMBER": '-',
                   "CASE CATEGORY": '-',
+                  "CONSULTATION FEE (RM)": '0',
                   "TOTAL PAID (RM)": '0',
                   "PENDING (RM)": '0',
                   "PACKAGE (RM)": '0',
@@ -1096,6 +1133,7 @@ export default function ClientDataView() {
             const combined = [...clientsData, ...filteredVirtuals];
             const safeData = combined.map((c, idx) => ({
               ...c,
+              'CONSULTATION FEE (RM)': getConsultationFee(c),
               _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
             }));
             setDbClients(safeData);
@@ -1299,6 +1337,7 @@ export default function ClientDataView() {
     if (!clientsData) return [];
     return clientsData.map((c, idx) => ({
       ...c,
+      'CONSULTATION FEE (RM)': getConsultationFee(c),
       _stableKey: c.id || c.No || c.NO || c['IC NUMBER'] || `fallback-row-${idx}`
     }));
   };
@@ -1448,22 +1487,33 @@ export default function ClientDataView() {
   };
 
   const handleFinancialChange = () => {
+    const consultInput = document.querySelector('input[name="CONSULTATION FEE (RM)"]') as HTMLInputElement;
+    const basePkgInput = document.querySelector('input[name="SERVICE_PACKAGE_BASE"]') as HTMLInputElement;
     const pkgInput = document.querySelector('input[name="PACKAGE (RM)"]') as HTMLInputElement;
     const pendingInput = document.querySelector('input[name="PENDING (RM)"]') as HTMLInputElement;
     const paidInput = document.querySelector('input[name="TOTAL PAID (RM)"]') as HTMLInputElement;
 
-    let totalPaid = 0;
+    const consultVal = parseFloat(consultInput?.value || '0') || 0;
+    const basePkgVal = parseFloat(basePkgInput?.value || '0') || 0;
+
+    let installmentsPaid = 0;
     document.querySelectorAll('input[name^="payment_amt_"]').forEach((input) => {
-      totalPaid += parseFloat((input as HTMLInputElement).value) || 0;
+      installmentsPaid += parseFloat((input as HTMLInputElement).value) || 0;
     });
+
+    const totalPkg = basePkgVal + consultVal;
+    const totalPaid = consultVal + installmentsPaid;
+    const pendingVal = Math.max(0, basePkgVal - installmentsPaid);
+
+    if (pkgInput) {
+      pkgInput.value = totalPkg % 1 === 0 ? totalPkg.toString() : totalPkg.toFixed(2);
+    }
 
     if (paidInput) {
       paidInput.value = totalPaid % 1 === 0 ? totalPaid.toString() : totalPaid.toFixed(2);
     }
 
-    if (pkgInput && pendingInput) {
-      const pkgVal = parseFloat(pkgInput.value) || 0;
-      const pendingVal = Math.max(0, pkgVal - totalPaid);
+    if (pendingInput) {
       pendingInput.value = pendingVal % 1 === 0 ? pendingVal.toString() : pendingVal.toFixed(2);
     }
   };
@@ -1523,12 +1573,18 @@ export default function ClientDataView() {
       const allowedStatuses = ['PENDING', 'COMPLETED', 'DROPPED', 'KIV'];
       const rawStatus = (data['CASE STATUS'] as string) || 'PENDING';
 
-      let autoTotalPaid = 0;
+      const consultationFee = parseSafeAmount(data['CONSULTATION FEE (RM)']);
+      const servicePkgBase = data['SERVICE_PACKAGE_BASE'] !== undefined
+        ? parseSafeAmount(data['SERVICE_PACKAGE_BASE'])
+        : Math.max(0, parseSafeAmount(data['PACKAGE (RM)']) - consultationFee);
+
+      let installmentsPaid = 0;
       for (let i = 0; i < 10; i++) {
-        autoTotalPaid += parseSafeAmount(data[`payment_amt_${i}`]);
+        installmentsPaid += parseSafeAmount(data[`payment_amt_${i}`]);
       }
-      const pkg = parseSafeAmount(data['PACKAGE (RM)']);
-      const autoPending = Math.max(0, pkg - autoTotalPaid);
+      const pkg = servicePkgBase + consultationFee;
+      const autoTotalPaid = consultationFee + installmentsPaid;
+      const autoPending = Math.max(0, servicePkgBase - installmentsPaid);
 
       const getPaymentValue = (val: any) => {
         if (val === undefined || val === null || String(val).trim() === '') return null;
@@ -1568,7 +1624,18 @@ export default function ClientDataView() {
         }
       }
 
-      const clientPayload = {
+      let updatedReceiptsMap: Record<string, any> = {};
+      if (typeof editingClient?.payment_receipts === 'string') {
+        try {
+          updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
+        } catch { }
+      } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
+        updatedReceiptsMap = { ...editingClient.payment_receipts };
+      }
+      updatedReceiptsMap._consultation_fee = consultationFee;
+      updatedReceiptsMap._service_package = servicePkgBase;
+
+      const clientPayload: Record<string, any> = {
         No: data.No ? parseInt(data.No as string, 10) : null,
         NAME: clientName,
         'IC NUMBER': sanitizeInput((data['IC NUMBER'] as string) || '', 20),
@@ -1576,9 +1643,11 @@ export default function ClientDataView() {
         DATE: sanitizeInput((data.DATE as string) || '', 20),
         'CASE CATEGORY': sanitizeInput((data['CASE CATEGORY'] as string) || '', 100),
         'CASE STATUS': allowedStatuses.includes(rawStatus) ? rawStatus : 'PENDING',
+        'CONSULTATION FEE (RM)': consultationFee,
         'TOTAL PAID (RM)': autoTotalPaid,
         'PENDING (RM)': autoPending,
         'PACKAGE (RM)': pkg,
+        payment_receipts: updatedReceiptsMap,
         ADDRESS: sanitizeInput((data.ADDRESS as string) || '', 500),
         EMAIL: sanitizeInput((data.EMAIL as string) || '', 100),
         REMARK: sanitizeInput((data.REMARK as string) || '', 1000),
@@ -1622,24 +1691,29 @@ export default function ClientDataView() {
 
       let savedClientId = editingClient?.id;
       if (editingClient && !editingClient.isVirtual) {
-        const { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
+        let { error } = await supabase.from('clients').update(clientPayload).eq('id', editingClient.id);
+        if (error && (error.code === 'PGRST204' || error.message?.includes('CONSULTATION FEE'))) {
+          const fallbackPayload = { ...clientPayload };
+          delete fallbackPayload['CONSULTATION FEE (RM)'];
+          const retry = await supabase.from('clients').update(fallbackPayload).eq('id', editingClient.id);
+          error = retry.error;
+        }
         if (error) throw error;
         await writeAuditLog('UPDATE', editingClient.id, clientPayload);
       } else {
-        const { data: insertedData, error } = await supabase.from('clients').insert([clientPayload]).select('id').single();
+        let { data: insertedData, error } = await supabase.from('clients').insert([clientPayload]).select('id').single();
+        if (error && (error.code === 'PGRST204' || error.message?.includes('CONSULTATION FEE'))) {
+          const fallbackPayload = { ...clientPayload };
+          delete fallbackPayload['CONSULTATION FEE (RM)'];
+          const retry = await supabase.from('clients').insert([fallbackPayload]).select('id').single();
+          insertedData = retry.data;
+          error = retry.error;
+        }
         if (error) throw error;
         if (insertedData) savedClientId = insertedData.id;
       }
 
       let newAgreementData: any = null;
-      let updatedReceiptsMap: Record<string, any> = {};
-      if (typeof editingClient?.payment_receipts === 'string') {
-        try {
-          updatedReceiptsMap = JSON.parse(editingClient.payment_receipts);
-        } catch { }
-      } else if (editingClient?.payment_receipts && typeof editingClient.payment_receipts === 'object') {
-        updatedReceiptsMap = { ...editingClient.payment_receipts };
-      }
       let hasNewReceiptUpload = false;
 
       try {
@@ -2082,9 +2156,19 @@ export default function ClientDataView() {
                     }
                     title={lang === 'bm' ? 'Maklumat Kewangan' : 'Financial Information'}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <ViewField
+                      label={t('clients', 'consultationFeeShort', lang)}
+                      value={`RM ${getConsultationFee(viewingClient)}`}
+                      lang={lang}
+                    />
                     <ViewField
                       label={t('clients', 'servicePackage', lang)}
+                      value={`RM ${getBaseServicePackage(viewingClient)}`}
+                      lang={lang}
+                    />
+                    <ViewField
+                      label={t('clients', 'totalPackageWithConsult', lang)}
                       value={viewingClient['PACKAGE (RM)'] !== null && viewingClient['PACKAGE (RM)'] !== '' ? `RM ${viewingClient['PACKAGE (RM)']}` : ''}
                       lang={lang}
                     />
@@ -2840,17 +2924,72 @@ export default function ClientDataView() {
                     <div className="sm:col-span-2 border-b border-slate-100 dark:border-gray-800 pb-2 mt-4 mb-1">
                       <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{lang === 'bm' ? 'Maklumat Kewangan & Pakej' : 'Financial & Package Details'}</h3>
                     </div>
+                    <div className="space-y-1">
+                      <label htmlFor="client-consultation-fee" className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'consultationFee', lang)}</label>
+                      <input
+                        id="client-consultation-fee"
+                        type="number"
+                        name="CONSULTATION FEE (RM)"
+                        step="any"
+                        min="0"
+                        aria-describedby="consultation-fee-hint"
+                        defaultValue={editingClient ? (getConsultationFee(editingClient) || '0') : ''}
+                        onChange={handleFinancialChange}
+                        placeholder="0"
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                      />
+                      <p id="consultation-fee-hint" className="text-[11px] text-cyan-700 dark:text-cyan-400 font-medium pt-0.5">
+                        {t('clients', 'consultationFeeHint', lang)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="client-service-package" className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
+                      <input
+                        id="client-service-package"
+                        type="number"
+                        name="SERVICE_PACKAGE_BASE"
+                        step="any"
+                        min="0"
+                        defaultValue={editingClient ? (getBaseServicePackage(editingClient) || '0') : ''}
+                        onChange={handleFinancialChange}
+                        placeholder="0"
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                      />
+                    </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'servicePackage', lang)} (RM)</label>
-                      <input type="number" name="PACKAGE (RM)" step="any" defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} onChange={handleFinancialChange} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <label htmlFor="client-total-package" className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPackageWithConsult', lang)} (RM)</label>
+                      <input
+                        id="client-total-package"
+                        type="number"
+                        name="PACKAGE (RM)"
+                        step="any"
+                        readOnly
+                        defaultValue={editingClient?.["PACKAGE (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80"
+                      />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
-                      <input type="number" name="TOTAL PAID (RM)" step="any" readOnly defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80" />
+                      <label htmlFor="client-total-paid" className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'totalPaidReceived', lang)} (RM)</label>
+                      <input
+                        id="client-total-paid"
+                        type="number"
+                        name="TOTAL PAID (RM)"
+                        step="any"
+                        readOnly
+                        defaultValue={editingClient?.["TOTAL PAID (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none min-h-[48px] cursor-not-allowed opacity-80"
+                      />
                     </div>
                     <div className="space-y-1">
-                      <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
-                      <input type="number" name="PENDING (RM)" step="any" defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''} className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]" />
+                      <label htmlFor="client-pending-balance" className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">{t('clients', 'pendingBalance', lang)} (RM)</label>
+                      <input
+                        id="client-pending-balance"
+                        type="number"
+                        name="PENDING (RM)"
+                        step="any"
+                        defaultValue={editingClient?.["PENDING (RM)"]?.toString().replace(/[^0-9.]/g, '') || ''}
+                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/40 border border-slate-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 min-h-[48px]"
+                      />
                     </div>
                     <div className="sm:col-span-2 space-y-1">
                       <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 uppercase tracking-wide">Invoice Ref No</label>
